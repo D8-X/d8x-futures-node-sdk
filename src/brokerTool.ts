@@ -17,8 +17,13 @@ export default class BrokerTool extends WriteAccessHandler {
   /*
   TODO:
   - get lot size
-  - purchase n lots
-  - get broker fee
+  - purchase n lots:
+      brokerDepositToDefaultFund(poolId, amountLots)
+  - fees:
+      getFeeForBrokerVolume
+      determineExchangeFee
+      getBrokerDesignation
+      getFeeForBrokerDesignation
   - get fee for trader and broker
   - sign {trader address, deadline, broker fee}
   */
