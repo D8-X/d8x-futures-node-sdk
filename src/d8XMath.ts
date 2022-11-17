@@ -57,7 +57,7 @@ export function floatToABK64x64(x: number): BigNumber {
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
-  let strX = parseFloat(x).toFixed(18);
+  let strX = Number(x).toFixed(18);
   const arrX = strX.split(".");
   let xInt = BigNumber.from(arrX[0]);
   let xDec = BigNumber.from(arrX[1]);
