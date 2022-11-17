@@ -1,5 +1,6 @@
+import ethers from "ethers";
 import WriteAccessHandler from "./writeAccessHandler";
-import { NodeSDKConfig } from "./nodeSDKTypes";
+import { NodeSDKConfig, ERC20_ABI } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { floatToABK64x64 } from "./d8XMath";
 /**
@@ -16,8 +17,15 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     super(config, privateKey);
   }
 
-  // move to market data:
-  public getParticipationValue(poolname: string) {
+  // move to market data?
+  public async getParticipationValue(poolSymbolName: string) {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let shareTokenAddr = this.poolStaticInfos[poolId - 1].shareTokenAddr;
+    let shareToken = new ethers.Contract(shareTokenAddr, ERC20_ABI, this.signer);
+
     /*
     let token = await getTokenInstance(SHARE_TOKEN_ADDR, ERC20_ABI, NODE_URL, pk);
     let pool = await manager.getLiquidityPool(1);
