@@ -55,9 +55,9 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *  Add liquidity to the PnL participant fund. The address gets pool shares in return.
    * @param poolname  name of pool symbol (e.g. MATIC)
    * @param amountCC  amount in pool-collateral currency
-   * @return transaction hash
+   * @return transaction object
    */
-  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<string> {
+  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ethers.providers.TransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -65,16 +65,19 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     let tx = await this.proxyContract.addLiquidity(poolId, floatToABK64x64(amountCC), {
       gasLimit: this.gasLimit,
     });
-    return tx.hash;
+    return tx;
   }
 
   /**
    * Remove liquidity from the pool
    * @param poolSymbolName name of pool symbol (e.g. MATIC)
    * @param amountPoolShares amount in pool-tokens, removes everything if > available amount
-   * @return transaction hash
+   * @return transaction object
    */
-  public async removeLiquidity(poolSymbolName: string, amountPoolShares: number): Promise<string> {
+  public async removeLiquidity(
+    poolSymbolName: string,
+    amountPoolShares: number
+  ): Promise<ethers.providers.TransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -82,7 +85,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     let tx = await this.proxyContract.addLiquidity(poolId, floatToABK64x64(amountPoolShares), {
       gasLimit: this.gasLimit,
     });
-    return tx.hash;
+    return tx;
   }
 
   /*

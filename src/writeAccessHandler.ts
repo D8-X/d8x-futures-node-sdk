@@ -14,7 +14,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
   protected privateKey: string;
   protected traderAddr: string = "";
   protected signer: ethers.Wallet | null = null;
-  protected gasLimit: number = 5_000_000;
+  protected gasLimit: number = 15_000_000;
   protected chainId: number = 0;
   /**
    * Constructor
