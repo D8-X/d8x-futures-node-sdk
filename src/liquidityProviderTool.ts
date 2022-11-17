@@ -61,7 +61,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.symbolOfPoolId);
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let tx = await this.proxyContract.addLiquidity(poolId, floatToABK64x64(amountPoolShares), {
       gasLimit: this.gasLimit,
     });
