@@ -63,7 +63,7 @@ describe("readOnly", () => {
     });
 
     it("get pool id", async () => {
-      let id = mktData.getPoolIdFromSymbol("MATIC");
+      let id = mktData.getPoolIdFromSymbol("ETH-USD-MATIC");
       console.log("pool id", id);
       let sym = mktData.getSymbolFromPoolId(id);
     });

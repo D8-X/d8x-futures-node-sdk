@@ -191,7 +191,7 @@ export default class PerpetualDataHandler {
     let symbols = symbol.split("-");
     //in case user provided ETH-USD-MATIC instead of MATIC; or similar
     if (symbols.length == 3) {
-      symbol = symbol[2];
+      symbol = symbols[2];
     }
     let cleanSymbol = to4Chars(symbol);
     cleanSymbol = cleanSymbol.replace(/\0/g, "");
