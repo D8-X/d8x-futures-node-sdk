@@ -81,7 +81,7 @@ describe("readOnly", () => {
     });
     it("getParticipationValue", async () => {
       let val = await liqProvTool.getParticipationValue("MATIC");
-      console.log("pool sharetoken value", val);
+      console.log("pool sharetoken value", val.value);
     });
   });
 });

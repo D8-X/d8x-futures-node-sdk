@@ -22,7 +22,9 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    * in poolSymbol-currency (e.g. MATIC, USDC)
    * @param poolSymbolName pool symbol name (e.g. MATIC)
    */
-  public async getParticipationValue(poolSymbolName: string): Promise<number> {
+  public async getParticipationValue(
+    poolSymbolName: string
+  ): Promise<{ value: number; shareTokenBalance: number; poolShareToken: string }> {
     if (
       this.proxyContract == null ||
       this.signer == null ||
@@ -38,7 +40,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     let dShareTokenBalanceOfAddr = await shareToken.balanceOf(this.traderAddr);
     let shareTokenBalanceOfAddr = dec18ToFloat(dShareTokenBalanceOfAddr);
     if (shareTokenBalanceOfAddr == 0) {
-      return 0;
+      return { value: 0, shareTokenBalance: 0, poolShareToken: shareTokenAddr };
     }
     let pool = await this.proxyContract.getLiquidityPool(poolId);
     let fPnLParticipantFundCash = pool.fPnLparticipantsCashCC;
@@ -48,7 +50,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
 
     let totalSupply = dec18ToFloat(dTotalSupply);
     let valueCC = (shareTokenBalanceOfAddr / totalSupply) * pnlParticipantFundCash;
-    return valueCC;
+    return { value: valueCC, shareTokenBalance: shareTokenBalanceOfAddr, poolShareToken: shareTokenAddr };
   }
 
   /**
