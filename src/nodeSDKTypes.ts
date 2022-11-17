@@ -24,103 +24,105 @@ export const ORDER_TYPE_STOP_MARKET = "STOP_MARKET";
 export const ORDER_TYPE_STOP_LIMIT = "STOP_LIMIT";
 export const BUY_SIDE = "BUY";
 export const SELL_SIDE = "SELL";
+export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
-    nodeURL: string;
-    proxyAddr: string;
-    proxyABILocation: string;
-    limitOrderBookFactoryAddr: string;
-    limitOrderBookABILocation: string;
-    limitOrderBookFactoryABILocation: string;
-    gasLimit?: number | undefined;
+  nodeURL: string;
+  proxyAddr: string;
+  proxyABILocation: string;
+  limitOrderBookFactoryAddr: string;
+  limitOrderBookABILocation: string;
+  limitOrderBookFactoryABILocation: string;
+  gasLimit?: number | undefined;
 }
 
 export interface MarginAccount {
-    symbol: string;
-    positionNotionalBaseCCY: number;
-    side: string;
-    entryPrice: number;
-    leverage: number;
-    markPrice: number;
-    unrealizedPnlQuoteCCY: number;
-    unrealizedFundingCollateralCCY: number;
-    liquidationPrice: [number, number | undefined];
-    liquidationLvg: number;
-    collToQuoteConversion: number;
+  symbol: string;
+  positionNotionalBaseCCY: number;
+  side: string;
+  entryPrice: number;
+  leverage: number;
+  markPrice: number;
+  unrealizedPnlQuoteCCY: number;
+  unrealizedFundingCollateralCCY: number;
+  collateralCC: number;
+  liquidationPrice: [number, number | undefined];
+  liquidationLvg: number;
+  collToQuoteConversion: number;
 }
 
 export enum CollaterlCCY {
-    QUOTE = 0,
-    BASE,
-    QUANTO,
+  QUOTE = 0,
+  BASE,
+  QUANTO,
 }
 export interface PerpetualStaticInfo {
-    id: number;
-    limitOrderBookAddr: string;
-    maintenanceMarginRate: number;
-    collateralCurrencyType: CollaterlCCY;
+  id: number;
+  limitOrderBookAddr: string;
+  maintenanceMarginRate: number;
+  collateralCurrencyType: CollaterlCCY;
 }
 
 export interface ExchangeInfo {
-    pools: PoolState[];
+  pools: PoolState[];
 }
 export interface PoolState {
-    isRunning: boolean;
-    marginTokenAddr: string;
-    poolShareTokenAddr: string;
-    defaultFundCashCC: number;
-    pnlParticipantCashCC: number;
-    totalAMMFundCashCC: number;
-    totalTargetAMMFundSizeCC: number;
-    brokerCollateralLotSize: number;
-    perpetuals: PerpetualState[];
+  isRunning: boolean;
+  marginTokenAddr: string;
+  poolShareTokenAddr: string;
+  defaultFundCashCC: number;
+  pnlParticipantCashCC: number;
+  totalAMMFundCashCC: number;
+  totalTargetAMMFundSizeCC: number;
+  brokerCollateralLotSize: number;
+  perpetuals: PerpetualState[];
 }
 
 export interface PerpetualState {
-    id: number;
-    state: string;
-    baseCurrency: string;
-    quoteCurrency: string;
-    indexPrice: number;
-    collToQuoteIndexPrice: number;
-    markPrice: number;
-    currentFundingRateBps: number;
-    initialMarginRate: number;
-    maintenanceMarginRate: number;
-    openInterestBC: number;
-    maxPositionBC: number;
+  id: number;
+  state: string;
+  baseCurrency: string;
+  quoteCurrency: string;
+  indexPrice: number;
+  collToQuoteIndexPrice: number;
+  markPrice: number;
+  currentFundingRateBps: number;
+  initialMarginRate: number;
+  maintenanceMarginRate: number;
+  openInterestBC: number;
+  maxPositionBC: number;
 }
 
 export interface Order {
-    symbol: string;
-    side: string;
-    type: string;
-    quantity: number;
-    reduceOnly?: boolean | undefined;
-    limitPrice?: number | undefined;
-    keepPositionLvg?: boolean | undefined;
-    brokerFeeTbps?: number | undefined;
-    brokerAddr?: string | undefined;
-    brokerSignature?: BytesLike | undefined;
-    stopPrice?: number | undefined;
-    leverage?: number | undefined;
-    deadline?: number | undefined;
-    timestamp: number;
+  symbol: string;
+  side: string;
+  type: string;
+  quantity: number;
+  reduceOnly?: boolean | undefined;
+  limitPrice?: number | undefined;
+  keepPositionLvg?: boolean | undefined;
+  brokerFeeTbps?: number | undefined;
+  brokerAddr?: string | undefined;
+  brokerSignature?: BytesLike | undefined;
+  stopPrice?: number | undefined;
+  leverage?: number | undefined;
+  deadline?: number | undefined;
+  timestamp: number;
 }
 
 export interface SmartContractOrder {
-    flags: BigNumberish;
-    iPerpetualId: BigNumberish;
-    brokerFeeTbps: BigNumberish;
-    traderAddr: string;
-    brokerAddr: string;
-    referrerAddr: string;
-    brokerSignature: BytesLike;
-    fAmount: BigNumberish;
-    fLimitPrice: BigNumberish;
-    fTriggerPrice: BigNumberish;
-    fLeverage: BigNumberish;
-    iDeadline: BigNumberish;
-    createdTimestamp: BigNumberish;
+  flags: BigNumberish;
+  iPerpetualId: BigNumberish;
+  brokerFeeTbps: BigNumberish;
+  traderAddr: string;
+  brokerAddr: string;
+  referrerAddr: string;
+  brokerSignature: BytesLike;
+  fAmount: BigNumberish;
+  fLimitPrice: BigNumberish;
+  fTriggerPrice: BigNumberish;
+  fLeverage: BigNumberish;
+  iDeadline: BigNumberish;
+  createdTimestamp: BigNumberish;
 }
 /*
         t32 flags;
