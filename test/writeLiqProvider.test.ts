@@ -43,7 +43,7 @@ describe("LP: write and spoil gas and tokens", () => {
     });
     it("remove", async () => {
       let tx = await liqProvTool.removeLiquidity("MATIC", 25);
-      tx.wait();
+      await tx.wait();
       console.log("tx hash=", tx.hash);
     });
     it("getParticipationValue", async () => {
