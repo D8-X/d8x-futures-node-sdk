@@ -1,6 +1,6 @@
 import WriteAccessHandler from "./writeAccessHandler";
 import { NodeSDKConfig } from "./nodeSDKTypes";
-
+//import { PerpetualDataHandler } from "./perpetualDataHandler";
 /**
  * LiquidityProviderTool
  * Methods to provide liquidity
@@ -31,6 +31,20 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     console.log("Share Token Balance of Addr = ", shareTokenBalanceOfAddr);
     console.log("Value Balance of Addr (BTCs) = ", shareTokenBalanceOfAddr/totalSupply * pnlParticipantFundCash);
     */
+  }
+
+  /**
+   *
+   * @param poolname
+   * @param amountCC
+   */
+  public addLiquidity(poolname: string, amountCC: number): string | undefined {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    return "";
+    //let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
+    //let orderBookAddr = this.symbolToPerpStaticInfo.get(cleanSymbol)?.limitOrderBookAddr;
   }
 
   /*

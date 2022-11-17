@@ -61,5 +61,11 @@ describe("readOnly", () => {
       let mgn = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
       console.log("mgn=", mgn);
     });
+
+    it("get pool id", async () => {
+      let id = mktData.getPoolIdFromSymbol("MATIC");
+      console.log("pool id", id);
+      let sym = mktData.getSymbolFromPoolId(id);
+    });
   });
 });

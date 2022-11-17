@@ -43,7 +43,7 @@ export default class PerpetualDataHandler {
   //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
   //this is initialized in the createProxyInstance function
   protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
-
+  protected symbolOfPoolId: Array<string>;
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
@@ -70,7 +70,7 @@ export default class PerpetualDataHandler {
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
     this.nestedPerpetualIDs = new Array<Array<number>>();
-
+    this.symbolOfPoolId = new Array<string>();
     this.proxyAddr = config.proxyAddr;
     this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
     this.nodeURL = config.nodeURL;
@@ -151,6 +151,7 @@ export default class PerpetualDataHandler {
       if (poolCCY == undefined) {
         throw Error("Pool only has quanto perps, unable to determine collateral currency");
       }
+      this.symbolOfPoolId.push(poolCCY);
       currentSymbols = currentSymbols.map((x) => x + "-" + poolCCY);
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
@@ -164,6 +165,34 @@ export default class PerpetualDataHandler {
       // push margin token address into map
       this.symbolToTokenAddrMap.set(poolCCY, poolMarginTokenAddr);
     }
+  }
+
+  public getSymbolFromPoolId(poolId: number): string {
+    return PerpetualDataHandler._getSymbolFromPoolId(poolId, this.symbolOfPoolId);
+  }
+
+  public getPoolIdFromSymbol(symbol: string): number {
+    return PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.symbolOfPoolId);
+  }
+
+  protected static _getSymbolFromPoolId(poolId: number, symbolOfPoolId: string[]): string {
+    let idx = poolId - 1;
+    return symbolOfPoolId[idx];
+  }
+
+  protected static _getPoolIdFromSymbol(symbol: string, symbolOfPoolId: string[]): number {
+    let symbols = symbol.split("-");
+    //in case user provided ETH-USD-MATIC instead of MATIC; or similar
+    if (symbols.length == 3) {
+      symbol = symbol[2];
+    }
+    let cleanSymbol = to4Chars(symbol);
+    cleanSymbol = cleanSymbol.replace(/\0/g, "");
+    let j = symbolOfPoolId.indexOf(cleanSymbol);
+    if (j == -1) {
+      throw new Error(`no pool found for symbol ${symbol}`);
+    }
+    return j + 1;
   }
 
   public static async getNestedPerpetualIds(_proxyContract: ethers.Contract): Promise<number[][]> {
