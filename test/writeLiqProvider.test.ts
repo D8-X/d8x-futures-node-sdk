@@ -21,6 +21,7 @@ let liqProvTool: LiquidityProviderTool;
 describe("LP: write and spoil gas and tokens", () => {
   beforeAll(async () => {
     config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    //config = PerpetualDataHandler.readSDKConfig("../config/oldConfig.json");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
