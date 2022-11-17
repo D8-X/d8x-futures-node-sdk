@@ -14,5 +14,29 @@
     "test": "jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "name": "@d8x/d8x-futures-node-sdk",
+  "description": "Node TypeScript SDK for D8X Perpetual Futures",
+  "version": "0.0.1",
+  "main": "babel.config.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/D8-X/d8x-futures-node-sdk.git"
+  },
+  "keywords": [
+    "d8x",
+    "perpetuals",
+    "node",
+    "sdk",
+    "api"
+  ],
+  "author": "d8x",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/D8-X/d8x-futures-node-sdk/issues"
+  },
+  "homepage": "https://github.com/D8-X/d8x-futures-node-sdk#readme"
 }
