@@ -466,6 +466,11 @@ export default class PerpetualDataHandler {
     return flag;
   }
 
+  /**
+   * Read config file into NodeSDKConfig interface
+   * @param fileLocation json-file with required variables for config
+   * @returns NodeSDKConfig
+   */
   public static readSDKConfig(fileLocation: string): NodeSDKConfig {
     let configFile = require(fileLocation);
     let config: NodeSDKConfig = <NodeSDKConfig>configFile;
