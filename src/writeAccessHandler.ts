@@ -2,6 +2,7 @@ import { BigNumber, BigNumberish, ethers, Wallet } from "ethers";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { NodeSDKConfig, MAX_UINT_256, ERC20_ABI } from "./nodeSDKTypes";
 import { to4Chars } from "./utils";
+import { floatToDec18 } from "./d8XMath";
 
 /**
  * This is a parent class for the classes that require
@@ -48,7 +49,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @param amount optional, amount to approve if not 'infinity'
    * @returns transaction hash
    */
-  public async setAllowance(symbol: string, amount: BigNumber = MAX_UINT_256): Promise<string> {
+  public async setAllowance(symbol: string, amount: number | undefined = undefined): Promise<string> {
     //extract margin-currency name
     let symbolarr = symbol.split("-");
     symbol = symbol.length == 3 ? symbolarr[2] : symbolarr[0];
@@ -59,7 +60,13 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     if (marginTokenAddr == undefined || this.signer == null) {
       throw Error("No margin token or signer defined, call createProxyInstance");
     }
-    return WriteAccessHandler._setAllowance(marginTokenAddr, this.proxyAddr, this.signer, amount);
+    let amountDec18;
+    if (amount == undefined) {
+      amountDec18 = MAX_UINT_256;
+    } else {
+      amountDec18 = floatToDec18(amount);
+    }
+    return WriteAccessHandler._setAllowance(marginTokenAddr, this.proxyAddr, this.signer, amountDec18);
   }
 
   protected static async _setAllowance(
