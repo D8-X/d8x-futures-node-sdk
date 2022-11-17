@@ -15,7 +15,7 @@ let mktData: MarketData;
 let orderIds: string[];
 let wallet: ethers.Wallet;
 
-describe("utireadOnly", () => {
+describe("readOnly", () => {
   beforeAll(async function () {
     config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
     if (RPC != undefined) {
@@ -50,6 +50,16 @@ describe("utireadOnly", () => {
     it("exchange info", async () => {
       let info: ExchangeInfo = await mktData.exchangeInfo();
       console.log(info);
+    });
+    it("openOrders", async () => {
+      let ordersStruct = await mktData.openOrders(wallet.address, "ETH-USD-MATIC");
+      console.log("order ids=", ordersStruct.orderIds);
+      console.log("orders   =", ordersStruct.orders);
+      orderIds = ordersStruct.orderIds;
+    });
+    it("get margin info", async () => {
+      let mgn = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
+      console.log("mgn=", mgn);
     });
   });
 });
