@@ -2,7 +2,7 @@ import { BigNumber } from "ethers";
 const BN = BigNumber;
 
 export const ONE_64x64 = BN.from("0x10000000000000000");
-
+export const DECIMALS = BN.from(10).pow(BN.from(18));
 /**
  * Convert ABK64x64 bigint-format to float.
  * Result = x/2^64 if big number, x/2^29 if number
