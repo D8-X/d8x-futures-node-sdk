@@ -156,7 +156,7 @@ export default class PerpetualDataHandler {
         poolId: j + 1,
         poolMarginSymbol: poolCCY,
         poolMarginTokenAddr: poolMarginTokenAddr,
-        shareTokenAddr: pool.shareTokenAddr,
+        shareTokenAddr: pool.shareTokenAddress,
       };
       this.poolStaticInfos.push(info);
       currentSymbols = currentSymbols.map((x) => x + "-" + poolCCY);

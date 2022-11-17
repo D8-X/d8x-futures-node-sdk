@@ -4,6 +4,7 @@ import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
+import LiquidityProviderTool from "../src/liquidityProviderTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -12,6 +13,7 @@ jest.setTimeout(150000);
 let config: NodeSDKConfig;
 let proxyContract: ethers.Contract;
 let mktData: MarketData;
+let liqProvTool: LiquidityProviderTool;
 let orderIds: string[];
 let wallet: ethers.Wallet;
 
@@ -44,7 +46,7 @@ describe("readOnly", () => {
         expect(false);
       }
       mktData = new MarketData(config);
-      mktData.createProxyInstance();
+      await mktData.createProxyInstance();
       wallet = new ethers.Wallet(pk);
     });
     it("exchange info", async () => {
@@ -66,6 +68,20 @@ describe("readOnly", () => {
       let id = mktData.getPoolIdFromSymbol("ETH-USD-MATIC");
       console.log("pool id", id);
       let sym = mktData.getSymbolFromPoolId(id);
+    });
+  });
+  describe("Liquidity Provider", () => {
+    beforeAll(async () => {
+      if (pk == undefined) {
+        console.log(`Define private key: export PK="CA52A..."`);
+        expect(false);
+      }
+      liqProvTool = new LiquidityProviderTool(config, pk);
+      await liqProvTool.createProxyInstance();
+    });
+    it("getParticipationValue", async () => {
+      let val = await liqProvTool.getParticipationValue("MATIC");
+      console.log("pool sharetoken value", val);
     });
   });
 });
