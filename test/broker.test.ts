@@ -37,7 +37,7 @@ describe("write and spoil gas and tokens", () => {
       console.log(`could not retrieve lot size for symbol ${symbol}`);
       expect(false);
     } else {
-      console.log(`lot size for ${symbol} is ${lotSizeSC} MATIC`);
+      console.log(`lot size for ${symbol} pool is ${lotSizeSC} MATIC`);
       lotSize = lotSizeSC;
     }
   });
@@ -47,15 +47,48 @@ describe("write and spoil gas and tokens", () => {
     console.log(`set allowance tx hash = ${txHash}`);
   });
 
+  it("should get broker designation [1]", async () => {
+    let symbol = "ETH-USD-MATIC";
+    let lots = await brokerTool.getBrokerDesignation(symbol);
+    console.log(`current broker designation: ${lots}`);
+  });
+
   it("should deposit a lot", async () => {
     let symbol = "MATIC";
     //** UNCOMENT TO ENABLE DEPOSIT
-    //let tx = await brokerTool.brokerDepositToDefaultFund(symbol, 1);
-    //console.log(`broker deposit transaction hash = ${tx}`);
-    //
+    let tx = await brokerTool.brokerDepositToDefaultFund(symbol, 1);
+    console.log(`broker deposit transaction hash = ${tx.hash}`);
+    // need to wait before next test to see lots increase
+    await tx.wait();
+    //*/
   });
 
-  it("should determine exchange fee", async () => {
+  it("should get broker designation [2]", async () => {
+    let symbol = "BTC-USD-MATIC";
+    let lots = await brokerTool.getBrokerDesignation(symbol);
+    console.log(`new broker designation: ${lots}`);
+  });
+
+  it("should get fee for broker volume", async () => {
+    let symbol = "BTC-USD-MATIC";
+    let fee = await brokerTool.getFeeForBrokerVolume(symbol);
+    console.log(`fee based on broker volume is ${10_000 * fee!} bps`);
+  });
+
+  it("should determine total exchange fee, for unspecified trader", async () => {
+    let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 0.5,
+      leverage: 2,
+      timestamp: Date.now(),
+    };
+    let fee = await brokerTool.determineExchangeFee(order);
+    console.log(`exchange fee for generic trader is ${10_000 * fee!} basis points`);
+  });
+
+  it("should determine total exchange fee, for a trader who is a token holder", async () => {
     let order: Order = {
       symbol: "ETH-USD-MATIC",
       side: "BUY",
@@ -64,7 +97,8 @@ describe("write and spoil gas and tokens", () => {
       leverage: 2,
       timestamp: Date.now(),
     };
-    let fee = await brokerTool.determineExchangeFee(order);
-    console.log(`exchange fee is ${fee} basis points`);
+    const myAddress = new ethers.Wallet(pk).address;
+    let fee = await brokerTool.determineExchangeFee(order, myAddress);
+    console.log(`exchange fee for my wallet is ${10_000 * fee!} basis points`);
   });
 });
