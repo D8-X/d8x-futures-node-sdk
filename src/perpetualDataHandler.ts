@@ -10,6 +10,7 @@ import {
   COLLATERAL_CURRENCY_QUOTE,
   BUY_SIDE,
   SELL_SIDE,
+  CLOSED_SIDE,
   ORDER_MAX_DURATION_SEC,
   ZERO_ADDRESS,
   ORDER_TYPE_LIMIT,
@@ -187,31 +188,38 @@ export default class PerpetualDataHandler {
   ): Promise<MarginAccount> {
     let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
     let perpId = PerpetualDataHandler.symbolToPerpetualId(cleanSymbol, symbolToPerpStaticInfo);
+    const idx_cash = 3;
     const idx_notional = 4;
     const idx_locked_in = 5;
     const idx_mark_price = 8;
     const idx_lvg = 7;
     const idx_s3 = 9;
     let traderState = await _proxyContract.getTraderState(perpId, traderAddr);
-    let [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
-      cleanSymbol,
-      traderState,
-      symbolToPerpStaticInfo
-    );
-    let fLockedIn = traderState[idx_locked_in];
-    let side = traderState[idx_locked_in] > 0 ? BUY_SIDE : SELL_SIDE;
-    let entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
+    let isEmpty = traderState[idx_notional] == 0;
+    let cash = ABK64x64ToFloat(traderState[idx_cash]);
+    let S2Liq, S3Liq, tau, pnl, unpaidFundingCC, fLockedIn, side, entryPrice;
+    if (!isEmpty) {
+      [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
+        cleanSymbol,
+        traderState,
+        symbolToPerpStaticInfo
+      );
+      fLockedIn = traderState[idx_locked_in];
+      side = traderState[idx_locked_in] > 0 ? BUY_SIDE : SELL_SIDE;
+      entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
+    }
     let mgn: MarginAccount = {
       symbol: symbol,
-      positionNotionalBaseCCY: ABK64x64ToFloat(traderState[idx_notional]),
-      side: side,
-      entryPrice: entryPrice,
-      leverage: ABK64x64ToFloat(traderState[idx_lvg]),
+      positionNotionalBaseCCY: isEmpty ? 0 : ABK64x64ToFloat(traderState[idx_notional]),
+      side: isEmpty ? CLOSED_SIDE : side,
+      entryPrice: isEmpty ? 0 : entryPrice,
+      leverage: isEmpty ? 0 : ABK64x64ToFloat(traderState[idx_lvg]),
       markPrice: ABK64x64ToFloat(traderState[idx_mark_price].abs()),
-      unrealizedPnlQuoteCCY: pnl,
-      unrealizedFundingCollateralCCY: unpaidFundingCC,
-      liquidationLvg: 1 / tau,
-      liquidationPrice: [S2Liq, S3Liq],
+      unrealizedPnlQuoteCCY: isEmpty ? 0 : pnl,
+      unrealizedFundingCollateralCCY: isEmpty ? 0 : unpaidFundingCC,
+      collateralCC: cash,
+      liquidationLvg: isEmpty ? 0 : 1 / tau,
+      liquidationPrice: isEmpty ? [0, 0] : [S2Liq, S3Liq],
       collToQuoteConversion: ABK64x64ToFloat(traderState[idx_s3]),
     };
     return mgn;
