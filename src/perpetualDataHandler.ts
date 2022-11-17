@@ -1,453 +1,474 @@
 import { ethers, BigNumber } from "ethers";
 import {
-    NodeSDKConfig,
-    MAX_64x64,
-    Order,
-    SmartContractOrder,
-    CollaterlCCY,
-    PerpetualStaticInfo,
-    COLLATERAL_CURRENCY_BASE,
-    COLLATERAL_CURRENCY_QUOTE,
-    BUY_SIDE,
-    SELL_SIDE,
-    ORDER_MAX_DURATION_SEC,
-    ZERO_ADDRESS,
-    ORDER_TYPE_LIMIT,
-    ORDER_TYPE_MARKET,
-    ORDER_TYPE_STOP_MARKET,
-    ORDER_TYPE_STOP_LIMIT,
-    MASK_LIMIT_ORDER,
-    MASK_CLOSE_ONLY,
-    MASK_KEEP_POS_LEVERAGE,
-    MASK_MARKET_ORDER,
-    MASK_STOP_ORDER,
-    MarginAccount,
+  NodeSDKConfig,
+  MAX_64x64,
+  Order,
+  SmartContractOrder,
+  CollaterlCCY,
+  PerpetualStaticInfo,
+  COLLATERAL_CURRENCY_BASE,
+  COLLATERAL_CURRENCY_QUOTE,
+  BUY_SIDE,
+  SELL_SIDE,
+  ORDER_MAX_DURATION_SEC,
+  ZERO_ADDRESS,
+  ORDER_TYPE_LIMIT,
+  ORDER_TYPE_MARKET,
+  ORDER_TYPE_STOP_MARKET,
+  ORDER_TYPE_STOP_LIMIT,
+  MASK_LIMIT_ORDER,
+  MASK_CLOSE_ONLY,
+  MASK_KEEP_POS_LEVERAGE,
+  MASK_MARKET_ORDER,
+  MASK_STOP_ORDER,
+  MarginAccount,
 } from "./nodeSDKTypes";
 import { fromBytes4HexString, to4Chars, combineFlags, containsFlag } from "./utils";
 import {
-    ABK64x64ToFloat,
-    floatToABK64x64,
-    div64x64,
-    calculateLiquidationPriceCollateralQuanto,
-    calculateLiquidationPriceCollateralBase,
-    calculateLiquidationPriceCollateralQuote,
+  ABK64x64ToFloat,
+  floatToABK64x64,
+  div64x64,
+  calculateLiquidationPriceCollateralQuanto,
+  calculateLiquidationPriceCollateralBase,
+  calculateLiquidationPriceCollateralQuote,
 } from "./d8XMath";
+import { Config } from "jest";
 
 /**
  * Parent class for AccountTrade and MarketData that handles
  * common data and chain operations
  */
 export default class PerpetualDataHandler {
-    //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
-    //this is initialized in the createProxyInstance function
-    protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
+  //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
+  //this is initialized in the createProxyInstance function
+  protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
 
-    //map margin token of the form MATIC or ETH or USDC into
-    //the address of the margin token
-    protected symbolToTokenAddrMap: Map<string, string>;
+  //map margin token of the form MATIC or ETH or USDC into
+  //the address of the margin token
+  protected symbolToTokenAddrMap: Map<string, string>;
 
-    protected proxyContract: ethers.Contract | null = null;
-    protected proxyABI: ethers.ContractInterface;
-    protected proxyAddr: string;
-    // limit order book
-    protected lobFactoryContract: ethers.Contract | null = null;
-    protected lobFactoryABI: ethers.ContractInterface;
-    protected lobFactoryAddr: string;
-    protected lobABI: ethers.ContractInterface;
-    protected nodeURL: string;
-    protected provider: ethers.providers.JsonRpcProvider | null = null;
+  protected proxyContract: ethers.Contract | null = null;
+  protected proxyABI: ethers.ContractInterface;
+  protected proxyAddr: string;
+  // limit order book
+  protected lobFactoryContract: ethers.Contract | null = null;
+  protected lobFactoryABI: ethers.ContractInterface;
+  protected lobFactoryAddr: string;
+  protected lobABI: ethers.ContractInterface;
+  protected nodeURL: string;
+  protected provider: ethers.providers.JsonRpcProvider | null = null;
 
-    private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
+  private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
 
-    // pools are numbered consecutively starting at 1
-    // nestedPerpetualIDs contains an array for each pool
-    // each pool-array contains perpetual ids
-    protected nestedPerpetualIDs: number[][];
+  // pools are numbered consecutively starting at 1
+  // nestedPerpetualIDs contains an array for each pool
+  // each pool-array contains perpetual ids
+  protected nestedPerpetualIDs: number[][];
 
-    public constructor(config: NodeSDKConfig) {
-        this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
-        this.symbolToTokenAddrMap = new Map<string, string>();
-        this.nestedPerpetualIDs = new Array<Array<number>>();
+  public constructor(config: NodeSDKConfig) {
+    this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
+    this.symbolToTokenAddrMap = new Map<string, string>();
+    this.nestedPerpetualIDs = new Array<Array<number>>();
 
-        this.proxyAddr = config.proxyAddr;
-        this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
-        this.nodeURL = config.nodeURL;
-        this.proxyABI = require(config.proxyABILocation);
-        this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
-        this.lobABI = require(config.limitOrderBookABILocation);
+    this.proxyAddr = config.proxyAddr;
+    this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
+    this.nodeURL = config.nodeURL;
+    this.proxyABI = require(config.proxyABILocation);
+    this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
+    this.lobABI = require(config.limitOrderBookABILocation);
+  }
+
+  protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
+    this.signerOrProvider = signerOrProvider;
+    this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
+    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr, this.lobFactoryABI, signerOrProvider);
+    await this._fillSymbolMaps(this.proxyContract);
+  }
+
+  /**
+   * Returns the order-book contract for the symbol if found or fails
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @returns order book contract for the perpetual
+   */
+  public getOrderBookContract(symbol: string): ethers.Contract {
+    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
+    let orderBookAddr = this.symbolToPerpStaticInfo.get(cleanSymbol)?.limitOrderBookAddr;
+    if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
+      throw Error(`no limit order book found for ${symbol} or no signer`);
     }
+    let lobContract = new ethers.Contract(orderBookAddr, this.lobABI, this.signerOrProvider);
+    return lobContract;
+  }
 
-    protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
-        this.signerOrProvider = signerOrProvider;
-        this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
-        this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr, this.lobFactoryABI, signerOrProvider);
-        await this._fillSymbolMaps(this.proxyContract);
+  /**
+   * Called when initializing. This function fills this.symbolToTokenAddrMap,
+   * and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo
+   *
+   */
+  protected async _fillSymbolMaps(proxyContract: ethers.Contract) {
+    if (proxyContract == null || this.lobFactoryContract == null) {
+      throw Error("proxy or limit order book not defined");
     }
-
-    /**
-     * Returns the order-book contract for the symbol if found or fails
-     * @param symbol symbol of the form ETH-USD-MATIC
-     * @returns order book contract for the perpetual
-     */
-    public getOrderBookContract(symbol: string): ethers.Contract {
-        let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-        let orderBookAddr = this.symbolToPerpStaticInfo.get(cleanSymbol)?.limitOrderBookAddr;
-        if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
-            throw Error(`no limit order book found for ${symbol} or no signer`);
+    this.nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(proxyContract);
+    for (let j = 0; j < this.nestedPerpetualIDs.length; j++) {
+      let pool = await proxyContract.getLiquidityPool(j + 1);
+      let poolMarginTokenAddr = pool.marginTokenAddress;
+      let perpetualIDs = this.nestedPerpetualIDs[j];
+      let poolCCY: string | undefined = undefined;
+      let currentSymbols: string[] = [];
+      let currentLimitOrderBookAddr: string[] = [];
+      let ccy: CollaterlCCY[] = [];
+      let mgnRate: number[] = [];
+      for (let k = 0; k < perpetualIDs.length; k++) {
+        let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
+        let base = fromBytes4HexString(perp.S2BaseCCY);
+        let quote = fromBytes4HexString(perp.S2QuoteCCY);
+        currentSymbols.push(base + "-" + quote);
+        mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
+        // try to find a limit order book
+        let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
+        currentLimitOrderBookAddr.push(lobAddr);
+        // we find out the pool currency by looking at all perpetuals
+        // unless for quanto perpetuals, we know the pool currency
+        // from the perpetual. This fails if we have a pool with only
+        // quanto perpetuals
+        if (poolCCY == undefined) {
+          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
+            poolCCY = base;
+            ccy.push(CollaterlCCY.BASE);
+          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
+            poolCCY = quote;
+            ccy.push(CollaterlCCY.QUOTE);
+          } else {
+            ccy.push(CollaterlCCY.QUANTO);
+          }
         }
-        let lobContract = new ethers.Contract(orderBookAddr, this.lobABI, this.signerOrProvider);
-        return lobContract;
-    }
-
-    /**
-     * Called when initializing. This function fills this.symbolToTokenAddrMap,
-     * and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo
-     *
-     */
-    protected async _fillSymbolMaps(proxyContract: ethers.Contract) {
-        if (proxyContract == null || this.lobFactoryContract == null) {
-            throw Error("proxy or limit order book not defined");
-        }
-        this.nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(proxyContract);
-        for (let j = 0; j < this.nestedPerpetualIDs.length; j++) {
-            let pool = await proxyContract.getLiquidityPool(j + 1);
-            let poolMarginTokenAddr = pool.marginTokenAddress;
-            let perpetualIDs = this.nestedPerpetualIDs[j];
-            let poolCCY: string | undefined = undefined;
-            let currentSymbols: string[] = [];
-            let currentLimitOrderBookAddr: string[] = [];
-            let ccy: CollaterlCCY[] = [];
-            let mgnRate: number[] = [];
-            for (let k = 0; k < perpetualIDs.length; k++) {
-                let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
-                let base = fromBytes4HexString(perp.S2BaseCCY);
-                let quote = fromBytes4HexString(perp.S2QuoteCCY);
-                currentSymbols.push(base + "-" + quote);
-                mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
-                // try to find a limit order book
-                let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
-                currentLimitOrderBookAddr.push(lobAddr);
-                // we find out the pool currency by looking at all perpetuals
-                // unless for quanto perpetuals, we know the pool currency
-                // from the perpetual. This fails if we have a pool with only
-                // quanto perpetuals
-                if (poolCCY == undefined) {
-                    if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-                        poolCCY = base;
-                        ccy.push(CollaterlCCY.BASE);
-                    } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
-                        poolCCY = quote;
-                        ccy.push(CollaterlCCY.QUOTE);
-                    } else {
-                        ccy.push(CollaterlCCY.QUANTO);
-                    }
-                }
-            }
-            if (perpetualIDs.length == 0) {
-                continue;
-            }
-            if (poolCCY == undefined) {
-                throw Error("Pool only has quanto perps, unable to determine collateral currency");
-            }
-            currentSymbols = currentSymbols.map((x) => x + "-" + poolCCY);
-            // push into map
-            for (let k = 0; k < perpetualIDs.length; k++) {
-                this.symbolToPerpStaticInfo.set(currentSymbols[k], {
-                    id: perpetualIDs[k],
-                    limitOrderBookAddr: currentLimitOrderBookAddr[k],
-                    maintenanceMarginRate: mgnRate[k],
-                    collateralCurrencyType: ccy[k],
-                });
-            }
-            // push margin token address into map
-            this.symbolToTokenAddrMap.set(poolCCY, poolMarginTokenAddr);
-        }
-    }
-
-    public static async getNestedPerpetualIds(_proxyContract: ethers.Contract): Promise<number[][]> {
-        let poolCount = await _proxyContract.getPoolCount();
-        let poolIds: number[][] = new Array(poolCount);
-        for (let i = 1; i < poolCount + 1; i++) {
-            let perpetualCount = await _proxyContract.getPerpetualCountInPool(i);
-            poolIds[i - 1] = new Array(perpetualCount);
-            for (let j = 0; j < perpetualCount; j++) {
-                let id = await _proxyContract.getPerpetualId(i, j);
-                poolIds[i - 1][j] = id;
-            }
-        }
-        return poolIds;
-    }
-
-    public static async getMarginAccount(
-        traderAddr: string,
-        symbol: string,
-        symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-        _proxyContract: ethers.Contract
-    ): Promise<MarginAccount> {
-        let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-        let perpId = PerpetualDataHandler.symbolToPerpetualId(cleanSymbol, symbolToPerpStaticInfo);
-        const idx_notional = 4;
-        const idx_locked_in = 5;
-        const idx_mark_price = 8;
-        const idx_lvg = 7;
-        const idx_s3 = 9;
-        let traderState = await _proxyContract.getTraderState(perpId, traderAddr);
-        let [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(cleanSymbol, traderState, symbolToPerpStaticInfo);
-        let fLockedIn = traderState[idx_locked_in];
-        let side = traderState[idx_locked_in] > 0 ? BUY_SIDE : SELL_SIDE;
-        let entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
-        let mgn: MarginAccount = {
-            symbol: symbol,
-            positionNotionalBaseCCY: ABK64x64ToFloat(traderState[idx_notional]),
-            side: side,
-            entryPrice: entryPrice,
-            leverage: ABK64x64ToFloat(traderState[idx_lvg]),
-            markPrice: ABK64x64ToFloat(traderState[idx_mark_price].abs()),
-            unrealizedPnlQuoteCCY: pnl,
-            unrealizedFundingCollateralCCY: unpaidFundingCC,
-            liquidationLvg: 1 / tau,
-            liquidationPrice: [S2Liq, S3Liq],
-            collToQuoteConversion: ABK64x64ToFloat(traderState[idx_s3]),
-        };
-        return mgn;
-    }
-
-    /**
-     * Liquidation price
-     * @param cleanSymbol symbol after calling symbolToBytes4Symbol
-     * @param traderState BigInt array according to smart contract
-     * @param symbolToPerpStaticInfo mapping symbol->PerpStaticInfo
-     * @returns liquidation mark-price, corresponding collateral/quote conversion
-     */
-    protected static _calculateLiquidationPrice(
-        cleanSymbol: string,
-        traderState: BigNumber[],
-        symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
-    ): [number, number, number, number, number] {
-        const idx_availableCashCC = 2;
-        const idx_cash = 3;
-        const idx_notional = 4;
-        const idx_locked_in = 5;
-        const idx_mark_price = 8;
-        const idx_s3 = 9;
-        const idx_s2 = 10;
-        let S2Liq: number;
-        let S3Liq: number = ABK64x64ToFloat(traderState[idx_s3]);
-        let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(cleanSymbol);
-        if (perpInfo == undefined) {
-            throw new Error(`no info for perpetual ${cleanSymbol}`);
-        }
-        let tau = perpInfo.maintenanceMarginRate;
-        let lockedInValueQC = ABK64x64ToFloat(traderState[idx_locked_in]);
-        let position = ABK64x64ToFloat(traderState[idx_notional]);
-        let cashCC = ABK64x64ToFloat(traderState[idx_availableCashCC]);
-        let Sm = ABK64x64ToFloat(traderState[idx_mark_price]);
-        let unpaidFundingCC = ABK64x64ToFloat(traderState[idx_availableCashCC].sub(traderState[idx_cash]));
-        let unpaidFunding = unpaidFundingCC;
-
-        if (perpInfo.collateralCurrencyType == CollaterlCCY.BASE) {
-            S2Liq = calculateLiquidationPriceCollateralBase(lockedInValueQC, position, cashCC, tau);
-            S3Liq = S2Liq;
-            unpaidFunding = unpaidFunding / ABK64x64ToFloat(traderState[idx_s2]);
-        } else if (perpInfo.collateralCurrencyType == CollaterlCCY.QUANTO) {
-            let S3 = S3Liq;
-            S3Liq = S3;
-            S2Liq = calculateLiquidationPriceCollateralQuanto(lockedInValueQC, position, cashCC, tau, S3, Sm);
-            unpaidFunding = unpaidFunding / S3;
-        } else {
-            S2Liq = calculateLiquidationPriceCollateralQuote(lockedInValueQC, position, cashCC, tau);
-        }
-        let pnl = position * Sm - lockedInValueQC - unpaidFunding;
-        return [S2Liq, S3Liq, tau, pnl, unpaidFundingCC];
-    }
-
-    /**
-     * Finds the perpetual id for a symbol of the form
-     * <base>-<quote>-<collateral>. The function first converts the
-     * token names into bytes4 representation
-     * @param symbol                  symbol (e.g., BTC-USD-MATIC)
-     * @param symbolToPerpStaticInfo  map that contains the bytes4-symbol to PerpetualStaticInfo
-     * including id mapping
-     * @returns perpetual id or it fails
-     */
-    protected static symbolToPerpetualId(symbol: string, symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>): number {
-        let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-        let id = symbolToPerpStaticInfo.get(cleanSymbol)?.id;
-        if (id == undefined) {
-            throw Error(`No perpetual found for symbol ${symbol}`);
-        }
-        return id;
-    }
-
-    protected static symbolToBytes4Symbol(symbol: string): string {
-        //split by dashes BTC-USD-MATIC
-        let symbols: string[] = symbol.split("-");
-        if (symbols.length != 3) {
-            throw Error(`Symbol ${symbol} not valid. Expecting CCY-CCY-CCY format`);
-        }
-        //transform into bytes4 currencies (without the space): "BTC", "USD", "MATC"
-        symbols = symbols.map((x) => {
-            let v = to4Chars(x);
-            v = v.replace(/\0/g, "");
-            return v;
+      }
+      if (perpetualIDs.length == 0) {
+        continue;
+      }
+      if (poolCCY == undefined) {
+        throw Error("Pool only has quanto perps, unable to determine collateral currency");
+      }
+      currentSymbols = currentSymbols.map((x) => x + "-" + poolCCY);
+      // push into map
+      for (let k = 0; k < perpetualIDs.length; k++) {
+        this.symbolToPerpStaticInfo.set(currentSymbols[k], {
+          id: perpetualIDs[k],
+          limitOrderBookAddr: currentLimitOrderBookAddr[k],
+          maintenanceMarginRate: mgnRate[k],
+          collateralCurrencyType: ccy[k],
         });
-        // concatenate and find perpetual Id in map
-        return symbols[0] + "-" + symbols[1] + "-" + symbols[2];
+      }
+      // push margin token address into map
+      this.symbolToTokenAddrMap.set(poolCCY, poolMarginTokenAddr);
+    }
+  }
+
+  public static async getNestedPerpetualIds(_proxyContract: ethers.Contract): Promise<number[][]> {
+    let poolCount = await _proxyContract.getPoolCount();
+    let poolIds: number[][] = new Array(poolCount);
+    for (let i = 1; i < poolCount + 1; i++) {
+      let perpetualCount = await _proxyContract.getPerpetualCountInPool(i);
+      poolIds[i - 1] = new Array(perpetualCount);
+      for (let j = 0; j < perpetualCount; j++) {
+        let id = await _proxyContract.getPerpetualId(i, j);
+        poolIds[i - 1][j] = id;
+      }
+    }
+    return poolIds;
+  }
+
+  public static async getMarginAccount(
+    traderAddr: string,
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract
+  ): Promise<MarginAccount> {
+    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(cleanSymbol, symbolToPerpStaticInfo);
+    const idx_notional = 4;
+    const idx_locked_in = 5;
+    const idx_mark_price = 8;
+    const idx_lvg = 7;
+    const idx_s3 = 9;
+    let traderState = await _proxyContract.getTraderState(perpId, traderAddr);
+    let [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
+      cleanSymbol,
+      traderState,
+      symbolToPerpStaticInfo
+    );
+    let fLockedIn = traderState[idx_locked_in];
+    let side = traderState[idx_locked_in] > 0 ? BUY_SIDE : SELL_SIDE;
+    let entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
+    let mgn: MarginAccount = {
+      symbol: symbol,
+      positionNotionalBaseCCY: ABK64x64ToFloat(traderState[idx_notional]),
+      side: side,
+      entryPrice: entryPrice,
+      leverage: ABK64x64ToFloat(traderState[idx_lvg]),
+      markPrice: ABK64x64ToFloat(traderState[idx_mark_price].abs()),
+      unrealizedPnlQuoteCCY: pnl,
+      unrealizedFundingCollateralCCY: unpaidFundingCC,
+      liquidationLvg: 1 / tau,
+      liquidationPrice: [S2Liq, S3Liq],
+      collToQuoteConversion: ABK64x64ToFloat(traderState[idx_s3]),
+    };
+    return mgn;
+  }
+
+  /**
+   * Liquidation price
+   * @param cleanSymbol symbol after calling symbolToBytes4Symbol
+   * @param traderState BigInt array according to smart contract
+   * @param symbolToPerpStaticInfo mapping symbol->PerpStaticInfo
+   * @returns liquidation mark-price, corresponding collateral/quote conversion
+   */
+  protected static _calculateLiquidationPrice(
+    cleanSymbol: string,
+    traderState: BigNumber[],
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): [number, number, number, number, number] {
+    const idx_availableCashCC = 2;
+    const idx_cash = 3;
+    const idx_notional = 4;
+    const idx_locked_in = 5;
+    const idx_mark_price = 8;
+    const idx_s3 = 9;
+    const idx_s2 = 10;
+    let S2Liq: number;
+    let S3Liq: number = ABK64x64ToFloat(traderState[idx_s3]);
+    let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(cleanSymbol);
+    if (perpInfo == undefined) {
+      throw new Error(`no info for perpetual ${cleanSymbol}`);
+    }
+    let tau = perpInfo.maintenanceMarginRate;
+    let lockedInValueQC = ABK64x64ToFloat(traderState[idx_locked_in]);
+    let position = ABK64x64ToFloat(traderState[idx_notional]);
+    let cashCC = ABK64x64ToFloat(traderState[idx_availableCashCC]);
+    let Sm = ABK64x64ToFloat(traderState[idx_mark_price]);
+    let unpaidFundingCC = ABK64x64ToFloat(traderState[idx_availableCashCC].sub(traderState[idx_cash]));
+    let unpaidFunding = unpaidFundingCC;
+
+    if (perpInfo.collateralCurrencyType == CollaterlCCY.BASE) {
+      S2Liq = calculateLiquidationPriceCollateralBase(lockedInValueQC, position, cashCC, tau);
+      S3Liq = S2Liq;
+      unpaidFunding = unpaidFunding / ABK64x64ToFloat(traderState[idx_s2]);
+    } else if (perpInfo.collateralCurrencyType == CollaterlCCY.QUANTO) {
+      let S3 = S3Liq;
+      S3Liq = S3;
+      S2Liq = calculateLiquidationPriceCollateralQuanto(lockedInValueQC, position, cashCC, tau, S3, Sm);
+      unpaidFunding = unpaidFunding / S3;
+    } else {
+      S2Liq = calculateLiquidationPriceCollateralQuote(lockedInValueQC, position, cashCC, tau);
+    }
+    let pnl = position * Sm - lockedInValueQC - unpaidFunding;
+    return [S2Liq, S3Liq, tau, pnl, unpaidFundingCC];
+  }
+
+  /**
+   * Finds the perpetual id for a symbol of the form
+   * <base>-<quote>-<collateral>. The function first converts the
+   * token names into bytes4 representation
+   * @param symbol                  symbol (e.g., BTC-USD-MATIC)
+   * @param symbolToPerpStaticInfo  map that contains the bytes4-symbol to PerpetualStaticInfo
+   * including id mapping
+   * @returns perpetual id or it fails
+   */
+  protected static symbolToPerpetualId(
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): number {
+    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
+    let id = symbolToPerpStaticInfo.get(cleanSymbol)?.id;
+    if (id == undefined) {
+      throw Error(`No perpetual found for symbol ${symbol}`);
+    }
+    return id;
+  }
+
+  protected static symbolToBytes4Symbol(symbol: string): string {
+    //split by dashes BTC-USD-MATIC
+    let symbols: string[] = symbol.split("-");
+    if (symbols.length != 3) {
+      throw Error(`Symbol ${symbol} not valid. Expecting CCY-CCY-CCY format`);
+    }
+    //transform into bytes4 currencies (without the space): "BTC", "USD", "MATC"
+    symbols = symbols.map((x) => {
+      let v = to4Chars(x);
+      v = v.replace(/\0/g, "");
+      return v;
+    });
+    // concatenate and find perpetual Id in map
+    return symbols[0] + "-" + symbols[1] + "-" + symbols[2];
+  }
+
+  private static _getByValue(map, searchValue) {
+    for (let [key, value] of map.entries()) {
+      if (value === searchValue) {
+        return key;
+      }
+    }
+  }
+
+  protected static fromSmartContractOrder(
+    order: SmartContractOrder,
+    symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
+  ): Order {
+    // find symbol of perpetual id
+    let symbol = PerpetualDataHandler._getByValue(symbolToPerpInfoMap, order.iPerpetualId);
+    let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
+    let limitPrice, stopPrice;
+    let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
+    if (fLimitPrice.eq(0) || fLimitPrice.eq(MAX_64x64)) {
+      limitPrice = undefined;
+    } else {
+      limitPrice = ABK64x64ToFloat(fLimitPrice);
+    }
+    let fStopPrice: BigNumber | undefined = BigNumber.from(order.fTriggerPrice);
+    if (fStopPrice.eq(0) || fStopPrice.eq(MAX_64x64)) {
+      stopPrice = undefined;
+    } else {
+      stopPrice = ABK64x64ToFloat(fStopPrice);
+    }
+    let userOrder: Order = {
+      symbol: symbol,
+      side: side,
+      type: PerpetualDataHandler._flagToOrderType(order),
+      quantity: Math.abs(ABK64x64ToFloat(BigNumber.from(order.fAmount))),
+      reduceOnly: containsFlag(BigNumber.from(order.flags), MASK_CLOSE_ONLY),
+      limitPrice: limitPrice,
+      keepPositionLvg: containsFlag(BigNumber.from(order.flags), MASK_KEEP_POS_LEVERAGE),
+      brokerFeeTbps: Number(order.brokerFeeTbps),
+      brokerAddr: order.brokerAddr,
+      brokerSignature: order.brokerSignature,
+      stopPrice: stopPrice,
+      leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
+      deadline: Number(order.iDeadline),
+      timestamp: Number(order.createdTimestamp),
+    };
+    return userOrder;
+  }
+  /**
+   * Transform the convenient form of the order into a smart-contract accepted type of order
+   * @param order                 order type
+   * @param traderAddr            address of the trader
+   * @param symbolToPerpetualMap  mapping of symbol to perpetual Id
+   * @returns SmartContractOrder
+   */
+  protected static toSmartContractOrder(
+    order: Order,
+    traderAddr: string,
+    perpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): SmartContractOrder {
+    let flags = PerpetualDataHandler._orderTypeToFlag(order);
+
+    let brokerSig = order.brokerSignature == undefined ? [] : order.brokerSignature;
+    let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
+    let fAmount: BigNumber;
+    if (order.side == BUY_SIDE) {
+      fAmount = floatToABK64x64(Math.abs(order.quantity));
+    } else if (order.side == SELL_SIDE) {
+      fAmount = floatToABK64x64(-Math.abs(order.quantity));
+    } else {
+      throw Error(`invalid side in order spec, use ${BUY_SIDE} or ${SELL_SIDE}`);
+    }
+    let fLimitPrice: BigNumber;
+    if (order.limitPrice == undefined) {
+      // we need to set the limit price to infinity or zero for
+      // the trade to go through
+      // Also: stop orders always have limits set, so even  for this case
+      // we set the limit to 0 or infinity
+      fLimitPrice = order.side == BUY_SIDE ? MAX_64x64 : BigNumber.from(0);
+    } else {
+      fLimitPrice = floatToABK64x64(order.limitPrice);
     }
 
-    private static _getByValue(map, searchValue) {
-        for (let [key, value] of map.entries()) {
-            if (value === searchValue) {
-                return key;
-            }
-        }
+    let iDeadline = order.deadline == undefined ? Date.now() + ORDER_MAX_DURATION_SEC : order.deadline;
+    let fTriggerPrice = order.stopPrice == undefined ? BigNumber.from(0) : floatToABK64x64(order.stopPrice);
+    if (order.reduceOnly != undefined && order.reduceOnly == true) {
     }
+    let smOrder: SmartContractOrder = {
+      flags: flags,
+      iPerpetualId: BigNumber.from(perpetualId),
+      brokerFeeTbps: order.brokerFeeTbps == undefined ? BigNumber.from(0) : BigNumber.from(order.brokerFeeTbps),
+      traderAddr: traderAddr,
+      brokerAddr: order.brokerAddr == undefined ? ZERO_ADDRESS : order.brokerAddr,
+      referrerAddr: ZERO_ADDRESS,
+      brokerSignature: brokerSig,
+      fAmount: fAmount,
+      fLimitPrice: fLimitPrice,
+      fTriggerPrice: fTriggerPrice,
+      fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
+      iDeadline: BigNumber.from(iDeadline),
+      createdTimestamp: BigNumber.from(order.timestamp),
+    };
+    return smOrder;
+  }
 
-    protected static fromSmartContractOrder(order: SmartContractOrder, symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>): Order {
-        // find symbol of perpetual id
-        let symbol = PerpetualDataHandler._getByValue(symbolToPerpInfoMap, order.iPerpetualId);
-        let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
-        let limitPrice, stopPrice;
-        let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
-        if (fLimitPrice.eq(0) || fLimitPrice.eq(MAX_64x64)) {
-            limitPrice = undefined;
-        } else {
-            limitPrice = ABK64x64ToFloat(fLimitPrice);
-        }
-        let fStopPrice: BigNumber | undefined = BigNumber.from(order.fTriggerPrice);
-        if (fStopPrice.eq(0) || fStopPrice.eq(MAX_64x64)) {
-            stopPrice = undefined;
-        } else {
-            stopPrice = ABK64x64ToFloat(fStopPrice);
-        }
-        let userOrder: Order = {
-            symbol: symbol,
-            side: side,
-            type: PerpetualDataHandler._flagToOrderType(order),
-            quantity: Math.abs(ABK64x64ToFloat(BigNumber.from(order.fAmount))),
-            reduceOnly: containsFlag(BigNumber.from(order.flags), MASK_CLOSE_ONLY),
-            limitPrice: limitPrice,
-            keepPositionLvg: containsFlag(BigNumber.from(order.flags), MASK_KEEP_POS_LEVERAGE),
-            brokerFeeTbps: Number(order.brokerFeeTbps),
-            brokerAddr: order.brokerAddr,
-            brokerSignature: order.brokerSignature,
-            stopPrice: stopPrice,
-            leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
-            deadline: Number(order.iDeadline),
-            timestamp: Number(order.createdTimestamp),
-        };
-        return userOrder;
+  private static _flagToOrderType(order: SmartContractOrder): string {
+    let hasTrigger = BigNumber.from(order.fTriggerPrice).eq(0);
+    let hasLimit = !BigNumber.from(order.fTriggerPrice).eq(0) || !BigNumber.from(order.fTriggerPrice).eq(MAX_64x64);
+    if (hasTrigger && hasLimit) {
+      return ORDER_TYPE_STOP_LIMIT;
+    } else if (hasTrigger && !hasLimit) {
+      return ORDER_TYPE_STOP_MARKET;
+    } else if (hasLimit && containsFlag(BigNumber.from(order.flags), MASK_LIMIT_ORDER)) {
+      return ORDER_TYPE_LIMIT;
+    } else {
+      return ORDER_TYPE_MARKET;
     }
-    /**
-     * Transform the convenient form of the order into a smart-contract accepted type of order
-     * @param order                 order type
-     * @param traderAddr            address of the trader
-     * @param symbolToPerpetualMap  mapping of symbol to perpetual Id
-     * @returns SmartContractOrder
-     */
-    protected static toSmartContractOrder(order: Order, traderAddr: string, perpStaticInfo: Map<string, PerpetualStaticInfo>): SmartContractOrder {
-        let flags = PerpetualDataHandler._orderTypeToFlag(order);
+  }
 
-        let brokerSig = order.brokerSignature == undefined ? [] : order.brokerSignature;
-        let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
-        let fAmount: BigNumber;
-        if (order.side == BUY_SIDE) {
-            fAmount = floatToABK64x64(Math.abs(order.quantity));
-        } else if (order.side == SELL_SIDE) {
-            fAmount = floatToABK64x64(-Math.abs(order.quantity));
-        } else {
-            throw Error(`invalid side in order spec, use ${BUY_SIDE} or ${SELL_SIDE}`);
-        }
-        let fLimitPrice: BigNumber;
-        if (order.limitPrice == undefined) {
-            // we need to set the limit price to infinity or zero for
-            // the trade to go through
-            // Also: stop orders always have limits set, so even  for this case
-            // we set the limit to 0 or infinity
-            fLimitPrice = order.side == BUY_SIDE ? MAX_64x64 : BigNumber.from(0);
-        } else {
-            fLimitPrice = floatToABK64x64(order.limitPrice);
-        }
-
-        let iDeadline = order.deadline == undefined ? Date.now() + ORDER_MAX_DURATION_SEC : order.deadline;
-        let fTriggerPrice = order.stopPrice == undefined ? BigNumber.from(0) : floatToABK64x64(order.stopPrice);
-        if (order.reduceOnly != undefined && order.reduceOnly == true) {
-        }
-        let smOrder: SmartContractOrder = {
-            flags: flags,
-            iPerpetualId: BigNumber.from(perpetualId),
-            brokerFeeTbps: order.brokerFeeTbps == undefined ? BigNumber.from(0) : BigNumber.from(order.brokerFeeTbps),
-            traderAddr: traderAddr,
-            brokerAddr: order.brokerAddr == undefined ? ZERO_ADDRESS : order.brokerAddr,
-            referrerAddr: ZERO_ADDRESS,
-            brokerSignature: brokerSig,
-            fAmount: fAmount,
-            fLimitPrice: fLimitPrice,
-            fTriggerPrice: fTriggerPrice,
-            fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
-            iDeadline: BigNumber.from(iDeadline),
-            createdTimestamp: BigNumber.from(order.timestamp),
-        };
-        return smOrder;
+  /**
+   * Determine the correct order flags based on the order-properties.
+   * Checks for some misspecifications.
+   * @param order     order type
+   * @returns BigNumber flags
+   */
+  private static _orderTypeToFlag(order: Order): BigNumber {
+    let flag: BigNumber;
+    switch (order.type) {
+      case ORDER_TYPE_LIMIT:
+        flag = MASK_LIMIT_ORDER;
+        break;
+      case ORDER_TYPE_MARKET:
+        flag = MASK_MARKET_ORDER;
+        break;
+      case ORDER_TYPE_STOP_MARKET:
+        flag = MASK_STOP_ORDER;
+        break;
+      case ORDER_TYPE_STOP_LIMIT:
+        flag = MASK_STOP_ORDER;
+        break;
+      default: {
+        throw Error(`Order type ${order.type} not found.`);
+      }
     }
-
-    private static _flagToOrderType(order: SmartContractOrder): string {
-        let hasTrigger = BigNumber.from(order.fTriggerPrice).eq(0);
-        let hasLimit = !BigNumber.from(order.fTriggerPrice).eq(0) || !BigNumber.from(order.fTriggerPrice).eq(MAX_64x64);
-        if (hasTrigger && hasLimit) {
-            return ORDER_TYPE_STOP_LIMIT;
-        } else if (hasTrigger && !hasLimit) {
-            return ORDER_TYPE_STOP_MARKET;
-        } else if (hasLimit && containsFlag(BigNumber.from(order.flags), MASK_LIMIT_ORDER)) {
-            return ORDER_TYPE_LIMIT;
-        } else {
-            return ORDER_TYPE_MARKET;
-        }
+    if (order.keepPositionLvg != undefined && order.keepPositionLvg) {
+      flag = combineFlags(flag, MASK_KEEP_POS_LEVERAGE);
     }
-
-    /**
-     * Determine the correct order flags based on the order-properties.
-     * Checks for some misspecifications.
-     * @param order     order type
-     * @returns BigNumber flags
-     */
-    private static _orderTypeToFlag(order: Order): BigNumber {
-        let flag: BigNumber;
-        switch (order.type) {
-            case ORDER_TYPE_LIMIT:
-                flag = MASK_LIMIT_ORDER;
-                break;
-            case ORDER_TYPE_MARKET:
-                flag = MASK_MARKET_ORDER;
-                break;
-            case ORDER_TYPE_STOP_MARKET:
-                flag = MASK_STOP_ORDER;
-                break;
-            case ORDER_TYPE_STOP_LIMIT:
-                flag = MASK_STOP_ORDER;
-                break;
-            default: {
-                throw Error(`Order type ${order.type} not found.`);
-            }
-        }
-        if (order.keepPositionLvg != undefined && order.keepPositionLvg) {
-            flag = combineFlags(flag, MASK_KEEP_POS_LEVERAGE);
-        }
-        if (order.reduceOnly != undefined && order.reduceOnly) {
-            flag = combineFlags(flag, MASK_CLOSE_ONLY);
-        }
-        if ((order.type == ORDER_TYPE_LIMIT || order.type == ORDER_TYPE_STOP_LIMIT) && order.limitPrice == undefined) {
-            throw Error(`Order type ${order.type} requires limit price.`);
-        }
-        if ((order.type == ORDER_TYPE_STOP_MARKET || order.type == ORDER_TYPE_STOP_LIMIT) && order.stopPrice == undefined) {
-            throw Error(`Order type ${order.type} requires trigger price.`);
-        }
-        if ((order.type == ORDER_TYPE_MARKET || order.type == ORDER_TYPE_LIMIT) && order.stopPrice != undefined) {
-            throw Error(`Order type ${order.type} has no trigger price.`);
-        }
-        if (order.type != ORDER_TYPE_MARKET && order.stopPrice != undefined) {
-            throw Error(`Order type ${order.type} has no trigger price.`);
-        }
-        return flag;
+    if (order.reduceOnly != undefined && order.reduceOnly) {
+      flag = combineFlags(flag, MASK_CLOSE_ONLY);
     }
+    if ((order.type == ORDER_TYPE_LIMIT || order.type == ORDER_TYPE_STOP_LIMIT) && order.limitPrice == undefined) {
+      throw Error(`Order type ${order.type} requires limit price.`);
+    }
+    if ((order.type == ORDER_TYPE_STOP_MARKET || order.type == ORDER_TYPE_STOP_LIMIT) && order.stopPrice == undefined) {
+      throw Error(`Order type ${order.type} requires trigger price.`);
+    }
+    if ((order.type == ORDER_TYPE_MARKET || order.type == ORDER_TYPE_LIMIT) && order.stopPrice != undefined) {
+      throw Error(`Order type ${order.type} has no trigger price.`);
+    }
+    if (order.type != ORDER_TYPE_MARKET && order.stopPrice != undefined) {
+      throw Error(`Order type ${order.type} has no trigger price.`);
+    }
+    return flag;
+  }
+
+  public static readSDKConfig(fileLocation: string): NodeSDKConfig {
+    let configFile = require(fileLocation);
+    let config: NodeSDKConfig = <NodeSDKConfig>configFile;
+    return config;
+  }
 }
