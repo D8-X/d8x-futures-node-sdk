@@ -23,6 +23,7 @@ import {
   MASK_MARKET_ORDER,
   MASK_STOP_ORDER,
   MarginAccount,
+  PoolStaticInfo,
 } from "./nodeSDKTypes";
 import { fromBytes4HexString, to4Chars, combineFlags, containsFlag } from "./utils";
 import {
@@ -43,7 +44,7 @@ export default class PerpetualDataHandler {
   //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
   //this is initialized in the createProxyInstance function
   protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
-  protected symbolOfPoolId: Array<string>;
+  protected poolStaticInfos: Array<PoolStaticInfo>;
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
@@ -68,9 +69,9 @@ export default class PerpetualDataHandler {
 
   public constructor(config: NodeSDKConfig) {
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
+    this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
     this.nestedPerpetualIDs = new Array<Array<number>>();
-    this.symbolOfPoolId = new Array<string>();
     this.proxyAddr = config.proxyAddr;
     this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
     this.nodeURL = config.nodeURL;
@@ -151,7 +152,13 @@ export default class PerpetualDataHandler {
       if (poolCCY == undefined) {
         throw Error("Pool only has quanto perps, unable to determine collateral currency");
       }
-      this.symbolOfPoolId.push(poolCCY);
+      let info: PoolStaticInfo = {
+        poolId: j + 1,
+        poolMarginSymbol: poolCCY,
+        poolMarginTokenAddr: poolMarginTokenAddr,
+        shareTokenAddr: pool.shareTokenAddr,
+      };
+      this.poolStaticInfos.push(info);
       currentSymbols = currentSymbols.map((x) => x + "-" + poolCCY);
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
@@ -168,19 +175,19 @@ export default class PerpetualDataHandler {
   }
 
   public getSymbolFromPoolId(poolId: number): string {
-    return PerpetualDataHandler._getSymbolFromPoolId(poolId, this.symbolOfPoolId);
+    return PerpetualDataHandler._getSymbolFromPoolId(poolId, this.poolStaticInfos);
   }
 
   public getPoolIdFromSymbol(symbol: string): number {
-    return PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.symbolOfPoolId);
+    return PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
   }
 
-  protected static _getSymbolFromPoolId(poolId: number, symbolOfPoolId: string[]): string {
+  protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
     let idx = poolId - 1;
-    return symbolOfPoolId[idx];
+    return staticInfos[idx].poolMarginSymbol;
   }
 
-  protected static _getPoolIdFromSymbol(symbol: string, symbolOfPoolId: string[]): number {
+  protected static _getPoolIdFromSymbol(symbol: string, staticInfos: PoolStaticInfo[]): number {
     let symbols = symbol.split("-");
     //in case user provided ETH-USD-MATIC instead of MATIC; or similar
     if (symbols.length == 3) {
@@ -188,8 +195,11 @@ export default class PerpetualDataHandler {
     }
     let cleanSymbol = to4Chars(symbol);
     cleanSymbol = cleanSymbol.replace(/\0/g, "");
-    let j = symbolOfPoolId.indexOf(cleanSymbol);
-    if (j == -1) {
+    let j = 0;
+    while (j < staticInfos.length && staticInfos[j].poolMarginSymbol != cleanSymbol) {
+      j++;
+    }
+    if (j == staticInfos.length) {
       throw new Error(`no pool found for symbol ${symbol}`);
     }
     return j + 1;

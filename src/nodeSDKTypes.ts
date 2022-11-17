@@ -55,6 +55,14 @@ export enum CollaterlCCY {
   BASE,
   QUANTO,
 }
+
+export interface PoolStaticInfo {
+  poolId: number;
+  poolMarginSymbol: string;
+  poolMarginTokenAddr: string;
+  shareTokenAddr: string;
+}
+
 export interface PerpetualStaticInfo {
   id: number;
   limitOrderBookAddr: string;
