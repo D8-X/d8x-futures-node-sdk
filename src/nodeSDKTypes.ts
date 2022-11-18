@@ -61,6 +61,7 @@ export interface PoolStaticInfo {
   poolMarginSymbol: string;
   poolMarginTokenAddr: string;
   shareTokenAddr: string;
+  oracleFactoryAddr: string;
 }
 
 export interface PerpetualStaticInfo {
@@ -68,6 +69,8 @@ export interface PerpetualStaticInfo {
   limitOrderBookAddr: string;
   maintenanceMarginRate: number;
   collateralCurrencyType: CollaterlCCY;
+  S2Symbol: string;
+  S3Symbol: string;
 }
 
 export interface ExchangeInfo {
