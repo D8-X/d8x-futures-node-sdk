@@ -118,14 +118,19 @@ export default class PerpetualDataHandler {
       let perpetualIDs = this.nestedPerpetualIDs[j];
       let poolCCY: string | undefined = undefined;
       let currentSymbols: string[] = [];
+      let currentSymbolsS3: string[] = [];
       let currentLimitOrderBookAddr: string[] = [];
       let ccy: CollaterlCCY[] = [];
       let mgnRate: number[] = [];
+
       for (let k = 0; k < perpetualIDs.length; k++) {
         let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
         let base = fromBytes4HexString(perp.S2BaseCCY);
         let quote = fromBytes4HexString(perp.S2QuoteCCY);
+        let base3 = fromBytes4HexString(perp.S3BaseCCY);
+        let quote3 = fromBytes4HexString(perp.S3QuoteCCY);
         currentSymbols.push(base + "-" + quote);
+        currentSymbolsS3.push(base3 + "-" + quote3);
         mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
         // try to find a limit order book
         let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
@@ -134,16 +139,14 @@ export default class PerpetualDataHandler {
         // unless for quanto perpetuals, we know the pool currency
         // from the perpetual. This fails if we have a pool with only
         // quanto perpetuals
-        if (poolCCY == undefined) {
-          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-            poolCCY = base;
-            ccy.push(CollaterlCCY.BASE);
-          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
-            poolCCY = quote;
-            ccy.push(CollaterlCCY.QUOTE);
-          } else {
-            ccy.push(CollaterlCCY.QUANTO);
-          }
+        if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
+          poolCCY = base;
+          ccy.push(CollaterlCCY.BASE);
+        } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
+          poolCCY = quote;
+          ccy.push(CollaterlCCY.QUOTE);
+        } else {
+          ccy.push(CollaterlCCY.QUANTO);
         }
       }
       if (perpetualIDs.length == 0) {
@@ -152,21 +155,25 @@ export default class PerpetualDataHandler {
       if (poolCCY == undefined) {
         throw Error("Pool only has quanto perps, unable to determine collateral currency");
       }
+      let oracleFactoryAddr = await proxyContract.getOracleFactory();
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: poolCCY,
         poolMarginTokenAddr: poolMarginTokenAddr,
         shareTokenAddr: pool.shareTokenAddress,
+        oracleFactoryAddr: oracleFactoryAddr,
       };
       this.poolStaticInfos.push(info);
-      currentSymbols = currentSymbols.map((x) => x + "-" + poolCCY);
+      let currentSymbols3 = currentSymbols.map((x) => x + "-" + poolCCY);
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
-        this.symbolToPerpStaticInfo.set(currentSymbols[k], {
+        this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
           maintenanceMarginRate: mgnRate[k],
           collateralCurrencyType: ccy[k],
+          S2Symbol: currentSymbols[k],
+          S3Symbol: currentSymbolsS3[k],
         });
       }
       // push margin token address into map
