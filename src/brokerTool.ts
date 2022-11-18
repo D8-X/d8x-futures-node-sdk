@@ -29,50 +29,32 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
-    console.log("poolId:", poolId);
     let pool = await this.proxyContract.getLiquidityPool(poolId);
-    console.log("pool:", pool);
     let lot = pool?.fBrokerCollateralLotSize;
-    console.log("lot:", lot);
     if (lot != undefined) {
       lot = ABK64x64ToFloat(pool.fBrokerCollateralLotSize);
-      console.log("lot float:", lot);
     }
     return lot;
   }
 
-  public async brokerDepositToDefaultFund(symbol: string, numberOfLots: number): Promise<string | undefined> {
+  public async brokerDepositToDefaultFund(
+    symbol: string,
+    numberOfLots: number
+  ): Promise<ethers.providers.TransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
     let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, numberOfLots, { gasLimit: this.gasLimit });
-    return tx.hash;
+    return tx;
   }
 
-  public async getFeeForBrokerVolume(): Promise<number | undefined> {
-    // TODO
-    return 0;
-  }
-
-  /**
-   * @param order order for which to determine the trading fee
-   * @returns fee in decimals (1% is 0.01)
-   */
-  public async determineExchangeFee(order: Order): Promise<number | undefined> {
+  public async getFeeForBrokerVolume(symbol: string): Promise<number | undefined> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized.");
     }
-    // broker does not need to enter address in the order, he's signed in
-    if (order.brokerAddr == undefined && this.traderAddr != "") {
-      order.brokerAddr = this.traderAddr;
-    }
-    // should account for trader address? optional argument?
-    console.log("order:", order);
-    let scOrder = AccountTrade.toSmartContractOrder(order, ZERO_ADDRESS, this.symbolToPerpStaticInfo);
-    console.log("sc order:", scOrder);
-    let feeTbps = await this.proxyContract.determineExchangeFee(scOrder);
-    console.log("feeTbps:", feeTbps);
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let feeTbps = await this.proxyContract.getFeeForBrokerVolume(poolId, this.traderAddr);
     return feeTbps / 100_000;
   }
 
@@ -92,7 +74,7 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * @param symbol symbol of the form "ETH-USD-MATIC" or just "MATIC"
-   * @param lots number of lots for which to get the fee. Defaults to this broker's deposit if not specified
+   * @param lots number of lots for which to get the fee. Defaults to this broker's current deposit if not specified
    * @returns fee in decimals based on given number of lots
    */
   public async getFeeForBrokerDesignation(
@@ -105,9 +87,61 @@ export default class BrokerTool extends WriteAccessHandler {
     if (lots == undefined) {
       lots = await this.getBrokerDesignation(symbol);
     }
-    let fee = await this.proxyContract.getFeeForBrokerDesignation(lots);
-    return fee / 100_000;
+    let feeTbps = await this.proxyContract.getFeeForBrokerDesignation(lots);
+    return feeTbps / 100_000;
   }
+
+  /**
+   * @param order order for which to determine the trading fee
+   * @param traderAddr address of the trader for whom to determine the fee, defaults to lowest tier
+   * @returns fee in decimals (1% is 0.01)
+   */
+  public async determineExchangeFee(order: Order, traderAddr: string = ZERO_ADDRESS): Promise<number | undefined> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized.");
+    }
+    // broker does not need to enter address in the order if he's signed in
+    if (order.brokerAddr == undefined) {
+      if (this.signer == null) {
+        throw Error("no wallet initialized.");
+      }
+      order.brokerAddr = this.traderAddr;
+    }
+    let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
+    let feeTbps = await this.proxyContract.determineExchangeFee(scOrder);
+    return feeTbps / 100_000;
+  }
+
+  // public async sign(traderAddr: string, deadline: number, fee: number): Promise<string> {
+  //   /**
+  //    * structHash = keccak256(
+  //           abi.encode(
+  //               TRADE_BROKER_TYPEHASH,
+  //               _order.iPerpetualId,
+  //               _order.brokerFeeTbps,
+  //               _order.traderAddr,
+  //               _order.iDeadline
+  //           )
+  //       );
+  //       return structHash;
+  //    */
+  //   const NAME = "Perpetual Trade Manager";
+  //   const DOMAIN_TYPEHASH = ethers.utils.keccak256(
+  //     Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
+  //   );
+  //   let abiCoder = ethers.utils.defaultAbiCoder;
+  //   let domainSeparator = ethers.utils.keccak256(
+  //     abiCoder.encode(
+  //       ["bytes32", "bytes32", "uint256", "address"],
+  //       [DOMAIN_TYPEHASH, ethers.utils.keccak256(Buffer.from(NAME)), chainId, proxyAddress]
+  //     )
+  //   );
+  //   let digest = ethers.utils.keccak256(
+  //     abiCoder.encode(["bytes32", "bytes32", "bool"], [domainSeparator, structHash, isNewOrder])
+  //   );
+  //   let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+  //   return await signer.signMessage(digestBuffer);
+  // }
 
   /*
   TODO:
@@ -115,7 +149,7 @@ export default class BrokerTool extends WriteAccessHandler {
   - purchase n lots:
       brokerDepositToDefaultFund(symbol, amountLots) DONE
   - fees:
-      getFeeForBrokerVolume 
+      getFeeForBrokerVolume DONE
       determineExchangeFee(order) DONE
       getBrokerDesignation DONE
       getFeeForBrokerDesignation DONE
