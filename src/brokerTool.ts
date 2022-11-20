@@ -37,15 +37,12 @@ export default class BrokerTool extends WriteAccessHandler {
     return lot;
   }
 
-  public async brokerDepositToDefaultFund(
-    symbol: string,
-    numberOfLots: number
-  ): Promise<ethers.providers.TransactionResponse> {
+  public async brokerDepositToDefaultFund(symbol: string, lots: number): Promise<ethers.providers.TransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
-    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, numberOfLots, { gasLimit: this.gasLimit });
+    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, lots, { gasLimit: this.gasLimit });
     return tx;
   }
 
@@ -63,7 +60,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param symbol symbol of the form "ETH-USD-MATIC" or just "MATIC"
    * @returns number of lots deposited by broker
    */
-  public async getBrokerDesignation(symbol): Promise<number | undefined> {
+  public async getBrokerDesignation(symbol): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized.");
     }
@@ -77,16 +74,15 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param lots number of lots for which to get the fee. Defaults to this broker's current deposit if not specified
    * @returns fee in decimals based on given number of lots
    */
-  public async getFeeForBrokerDesignation(
-    symbol: string,
-    lots: number | undefined = undefined
-  ): Promise<number | undefined> {
+  public async getFeeForBrokerDesignation(symbol: string, newLots: number = 0): Promise<number | undefined> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized.");
     }
-    if (lots == undefined) {
-      lots = await this.getBrokerDesignation(symbol);
+    if (newLots < 0) {
+      throw Error("new lots must be a positive number.");
     }
+    let lots = await this.getBrokerDesignation(symbol);
+    lots += newLots;
     let feeTbps = await this.proxyContract.getFeeForBrokerDesignation(lots);
     return feeTbps / 100_000;
   }
