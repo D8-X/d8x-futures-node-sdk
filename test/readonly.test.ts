@@ -19,7 +19,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    config = PerpetualDataHandler.readSDKConfig("testnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }

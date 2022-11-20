@@ -1,4 +1,9 @@
 import { BytesLike, BigNumber, BigNumberish } from "ethers";
+export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
+export const DEFAULT_CONFIG_MAINNET = "notthereyet";
+export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
+export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
+
 export const ERC20_ABI = require("./ERC20.json");
 export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;

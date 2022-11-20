@@ -24,6 +24,10 @@ import {
   MASK_STOP_ORDER,
   MarginAccount,
   PoolStaticInfo,
+  DEFAULT_CONFIG_MAINNET_NAME,
+  DEFAULT_CONFIG_MAINNET,
+  DEFAULT_CONFIG_TESTNET_NAME,
+  DEFAULT_CONFIG_TESTNET,
 } from "./nodeSDKTypes";
 import { fromBytes4HexString, to4Chars, combineFlags, containsFlag } from "./utils";
 import {
@@ -526,6 +530,11 @@ export default class PerpetualDataHandler {
    * @returns NodeSDKConfig
    */
   public static readSDKConfig(fileLocation: string): NodeSDKConfig {
+    if (fileLocation == DEFAULT_CONFIG_MAINNET_NAME) {
+      fileLocation = DEFAULT_CONFIG_MAINNET;
+    } else if (fileLocation == DEFAULT_CONFIG_TESTNET_NAME) {
+      fileLocation = DEFAULT_CONFIG_TESTNET;
+    }
     let configFile = require(fileLocation);
     let config: NodeSDKConfig = <NodeSDKConfig>configFile;
     return config;
