@@ -1,4 +1,4 @@
-# d8x-futures-node-sdk
+# @d8x/perpetuals-sdk
 
 Node TypeScript SDK for D8X Perpetual Futures
 

@@ -6,7 +6,7 @@ import { text } from "stream/consumers";
 import { ethers } from "ethers";
 import AccountTrade from "./accountTrade";
 /**
- * BrokerTool
+ * BrokerTool.
  * Signature method for brokers
  */
 export default class BrokerTool extends WriteAccessHandler {

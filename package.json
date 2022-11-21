@@ -25,9 +25,9 @@
     "jsdoc-to-markdown": "^7.1.1",
     "json2md": "^2.0.0"
   },
-  "name": "@d8x/d8x-futures-node-sdk",
+  "name": "@d8x/perpetuals-sdk",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
-  "version": "0.0.14",
+  "version": "0.0.1",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "directories": {
