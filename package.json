@@ -11,14 +11,16 @@
     "typescript": "^4.9.3"
   },
   "scripts": {
+    "build": "tsc",
     "test": "jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
   "devDependencies": {},
   "name": "@d8x/d8x-futures-node-sdk",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
-  "version": "0.0.1",
-  "main": "babel.config.js",
+  "version": "0.0.7",
+  "main": "src/index.ts",
+  "types": "src/index.d.ts",
   "directories": {
     "test": "test"
   },
