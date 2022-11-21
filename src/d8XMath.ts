@@ -1,8 +1,7 @@
 import { BigNumber } from "ethers";
+import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
 const BN = BigNumber;
 
-export const ONE_64x64 = BN.from("0x10000000000000000");
-export const DECIMALS = BN.from(10).pow(BN.from(18));
 /**
  * Convert ABK64x64 bigint-format to float.
  * Result = x/2^64 if big number, x/2^29 if number
@@ -33,7 +32,6 @@ export function ABK64x64ToFloat(x: BigNumber | number): number {
  */
 export function dec18ToFloat(x: BigNumber): number {
   //x: BigNumber in Dec18 format to float
-  const DECIMALS = BN.from(10).pow(BN.from(18));
   let s = x.lt(0) ? -1 : 1;
   x = x.mul(s);
   let xInt = x.div(DECIMALS);
@@ -117,10 +115,10 @@ export function div64x64(x: BigNumber, y: BigNumber) {
  * @returns {number} Amount to be deposited to have the given leverage when trading into position pos
  */
 export function calculateLiquidationPriceCollateralBase(
-  LockedInValueQC,
-  position,
-  cash_cc,
-  maintenance_margin_rate
+  LockedInValueQC: number,
+  position: number,
+  cash_cc: number,
+  maintenance_margin_rate: number
 ): number {
   // correct only if markprice = spot price
   // m_r  <= (Sm * Pi - L + cash * S3) / (Sm * |Pi|)
@@ -139,12 +137,12 @@ export function calculateLiquidationPriceCollateralBase(
  * @returns {number} Amount to be deposited to have the given leverage when trading into position pos
  */
 export function calculateLiquidationPriceCollateralQuanto(
-  LockedInValueQC,
-  position,
-  cash_cc,
-  maintenance_margin_rate,
-  S3,
-  Sm
+  LockedInValueQC: number,
+  position: number,
+  cash_cc: number,
+  maintenance_margin_rate: number,
+  S3: number,
+  Sm: number
 ): number {
   // correct only if markprice = spot price and S3 co-moves with Sm
   // m_r  = (Sm * Pi - L + cash * S3) / (Sm * |Pi|)
@@ -165,10 +163,10 @@ export function calculateLiquidationPriceCollateralQuanto(
  * @returns {number} Amount to be deposited to have the given leverage when trading into position pos
  */
 export function calculateLiquidationPriceCollateralQuote(
-  LockedInValueQC,
-  position,
-  cash_cc,
-  maintenance_margin_rate
+  LockedInValueQC: number,
+  position: number,
+  cash_cc: number,
+  maintenance_margin_rate: number
 ): number {
   // m_r  = (Sm * Pi - L + cash ) / (Sm * |Pi|)
   // -> Sm * (m_r |Pi| - Pi) = - L + cash

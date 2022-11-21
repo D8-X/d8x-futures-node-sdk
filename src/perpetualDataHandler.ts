@@ -247,7 +247,14 @@ export default class PerpetualDataHandler {
     let traderState = await _proxyContract.getTraderState(perpId, traderAddr);
     let isEmpty = traderState[idx_notional] == 0;
     let cash = ABK64x64ToFloat(traderState[idx_cash]);
-    let S2Liq, S3Liq, tau, pnl, unpaidFundingCC, fLockedIn, side, entryPrice;
+    let S2Liq = 0,
+      S3Liq = 0,
+      tau = Infinity,
+      pnl = 0,
+      unpaidFundingCC = 0,
+      fLockedIn = BigNumber.from(0),
+      side = CLOSED_SIDE,
+      entryPrice = 0;
     if (!isEmpty) {
       [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
         cleanSymbol,
@@ -361,7 +368,7 @@ export default class PerpetualDataHandler {
     return symbols[0] + "-" + symbols[1] + "-" + symbols[2];
   }
 
-  private static _getByValue(map, searchValue) {
+  private static _getByValue(map: any, searchValue: any) {
     for (let [key, value] of map.entries()) {
       if (value === searchValue) {
         return key;

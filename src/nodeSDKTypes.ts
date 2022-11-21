@@ -14,6 +14,7 @@ export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const ONE_64x64 = BigNumber.from("0x010000000000000000");
 export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 export const MAX_UINT_256 = BigNumber.from(2).pow(256).sub(BigNumber.from(1));
+export const DECIMALS = BigNumber.from(10).pow(BigNumber.from(18));
 
 export const ORDER_MAX_DURATION_SEC = 60 * 60 * 24 * 30 * 4;
 

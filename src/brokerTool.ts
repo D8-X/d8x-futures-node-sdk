@@ -60,7 +60,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param symbol symbol of the form "ETH-USD-MATIC" or just "MATIC"
    * @returns number of lots deposited by broker
    */
-  public async getBrokerDesignation(symbol): Promise<number> {
+  public async getBrokerDesignation(symbol: string): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized.");
     }
