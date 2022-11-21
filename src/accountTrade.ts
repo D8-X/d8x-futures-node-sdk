@@ -29,20 +29,25 @@ import WriteAccessHandler from "./writeAccessHandler";
 //import { abi, rawEncode } from "ethereumjs-abi";
 
 /**
- * Account and Trade
+ * Account and Trade.
  * This class requires a private key and executes smart-contract interaction that
  * require gas-payments.
  */
 export default class AccountTrade extends WriteAccessHandler {
   /**
    * Constructor
-   * @param config configuration
-   * @param privateKey private key of account that trades
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
+   * @param {string} privateKey Private key of account that trades.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
     super(config, privateKey);
   }
 
+  /**
+   * Cancels an existing order on the exchange.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string} orderId ID of the order to be cancelled.
+   */
   public async cancelOrder(symbol: string, orderId: string): Promise<string | undefined> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -60,9 +65,9 @@ export default class AccountTrade extends WriteAccessHandler {
   */
 
   /**
-   * Order/Trade
-   * @param order order struct
-   * @returns transaction hash
+   * Submits an order to the exchange.
+   * @param {Order} order Order struct.
+   * @returns {string} Transaction hash.
    */
   public async order(order: Order): Promise<string | undefined> {
     if (this.proxyContract == null || this.signer == null) {
@@ -95,6 +100,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param signer instance of ethers wallet that can write
    * @param gasLimit gas limit to be used for the trade
    * @returns transaction hash
+   * @ignore
    */
   public async _order(
     order: Order,
@@ -145,6 +151,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param signer        ethereum-type wallet
    * @param proxyAddress  address of the contract
    * @returns signature as string
+   * @ignore
    */
   private async _createSignature(
     order: SmartContractOrder,
