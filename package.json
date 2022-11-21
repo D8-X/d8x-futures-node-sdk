@@ -18,12 +18,22 @@
   "devDependencies": {},
   "name": "@d8x/d8x-futures-node-sdk",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
-  "version": "0.0.7",
-  "main": "src/index.ts",
-  "types": "src/index.d.ts",
+  "version": "0.0.14",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "directories": {
     "test": "test"
   },
+  "files": [
+    "module.d.ts",
+    "src/*.ts",
+    "src/*.json",
+    "src/*.md",
+    "dist/*.ts",
+    "dist/*.js",
+    "abi/*.json",
+    "config/*.json"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/D8-X/d8x-futures-node-sdk.git"
@@ -36,7 +46,7 @@
     "api"
   ],
   "author": "d8x",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "bugs": {
     "url": "https://github.com/D8-X/d8x-futures-node-sdk/issues"
   },
