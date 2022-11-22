@@ -18,9 +18,10 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   }
 
   /**
-   * Returns the value of the share tokens for this liquidity provider
-   * in poolSymbol-currency (e.g. MATIC, USDC)
-   * @param poolSymbolName pool symbol name (e.g. MATIC)
+   * Value of the share tokens for this liquidity provider
+   * in poolSymbol-currency (e.g. MATIC, USDC).
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC).
+   * @return Value in poolSymbol-currency (e.g. MATIC, USDC), balabce of share tokens, and share token symbol.
    */
   public async getParticipationValue(
     poolSymbolName: string
@@ -55,9 +56,9 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
 
   /**
    *  Add liquidity to the PnL participant fund. The address gets pool shares in return.
-   * @param poolname  name of pool symbol (e.g. MATIC)
-   * @param amountCC  amount in pool-collateral currency
-   * @return transaction object
+   * @param {string} poolname  Name of pool symbol (e.g. MATIC)
+   * @param {number} amountCC  Amount in pool-collateral currency
+   * @return Transaction object
    */
   public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ethers.providers.TransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
@@ -71,10 +72,10 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   }
 
   /**
-   * Remove liquidity from the pool
-   * @param poolSymbolName name of pool symbol (e.g. MATIC)
-   * @param amountPoolShares amount in pool-tokens, removes everything if > available amount
-   * @return transaction object
+   * Remove liquidity from the pool.
+   * @param {string} poolSymbolName Name of pool symbol (e.g. MATIC).
+   * @param {string} amountPoolShares Amount in pool-tokens, removes everything if > available amount.
+   * @return Transaction object.
    */
   public async removeLiquidity(
     poolSymbolName: string,
