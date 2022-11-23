@@ -28,6 +28,7 @@ import {
   DEFAULT_CONFIG_MAINNET,
   DEFAULT_CONFIG_TESTNET_NAME,
   DEFAULT_CONFIG_TESTNET,
+  ONE_64x64,
 } from "./nodeSDKTypes";
 import { fromBytes4HexString, to4Chars, combineFlags, containsFlag } from "./utils";
 import {
@@ -280,6 +281,27 @@ export default class PerpetualDataHandler {
       collToQuoteConversion: ABK64x64ToFloat(traderState[idx_s3]),
     };
     return mgn;
+  }
+
+  protected static async _queryPerpetualPrice(
+    symbol: string,
+    tradeAmount: number,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract
+  ): Promise<number> {
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount));
+    return ABK64x64ToFloat(fPrice);
+  }
+
+  protected static async _queryPerpetualMarkPrice(
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract
+  ): Promise<number> {
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let ammState = await _proxyContract.getAMMState(perpId);
+    return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])));
   }
 
   /**
