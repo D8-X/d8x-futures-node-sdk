@@ -90,6 +90,26 @@ export default class AccountTrade extends WriteAccessHandler {
   }
 
   /**
+   * Fee charged by the exchange for trading any perpetual on a given pool.
+   * It accounts for the current trader's D8X balance and trading volume.
+   * If trading with a broker, this result does not include additional fees charged by them.
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @param {string=} brokerAddr Optional address of a broker this trader may use to trade under.
+   * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
+   */
+  public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string): Promise<number> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    if (typeof brokerAddr == "undefined") {
+      brokerAddr = ZERO_ADDRESS;
+    }
+    let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr);
+    return feeTbps / 100_000;
+  }
+
+  /**
    * Static order function
    * @param order order type (not SmartContractOrder but Order)
    * @param traderAddr trader address
@@ -159,7 +179,7 @@ export default class AccountTrade extends WriteAccessHandler {
     isNewOrder: boolean,
     signer: ethers.Wallet,
     proxyAddress: string
-  ): Promise<String> {
+  ): Promise<string> {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = ethers.utils.keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")

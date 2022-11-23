@@ -11,6 +11,7 @@ require gas-payments.</p>
     * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
     * [.order(order)](#AccountTrade+order) ⇒ <code>string</code>
+    * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
 
 <a name="new_AccountTrade_new"></a>
 
@@ -46,4 +47,19 @@ require gas-payments.</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | order | <code>Order</code> | <p>Order struct.</p> |
+
+<a name="AccountTrade+queryExchangeFee"></a>
+
+### accountTrade.queryExchangeFee(poolSymbolName, [brokerAddr]) ⇒
+<p>Fee charged by the exchange for trading any perpetual on a given pool.
+It accounts for the current trader's D8X balance and trading volume.
+If trading with a broker, this result does not include additional fees charged by them.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Returns**: <p>Exchange fee, in decimals (i.e. 0.1% is 0.001).</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
+| [brokerAddr] | <code>string</code> | <p>Optional address of a broker this trader may use to trade under.</p> |
 
