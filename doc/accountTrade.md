@@ -52,8 +52,9 @@ require gas-payments.</p>
 
 ### accountTrade.queryExchangeFee(poolSymbolName, [brokerAddr]) ⇒
 <p>Fee charged by the exchange for trading any perpetual on a given pool.
-It accounts for the current trader's D8X balance and trading volume.
-If trading with a broker, this result does not include additional fees charged by them.</p>
+It accounts for the current trader's fee tier (based on the trader's D8X balance and trading volume).
+If trading with a broker, it also accounts for the selected broker's fee tier.
+Note that this result only includes exchange fees, additional broker fees are not included.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Returns**: <p>Exchange fee, in decimals (i.e. 0.1% is 0.001).</p>  

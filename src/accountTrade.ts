@@ -91,8 +91,9 @@ export default class AccountTrade extends WriteAccessHandler {
 
   /**
    * Fee charged by the exchange for trading any perpetual on a given pool.
-   * It accounts for the current trader's D8X balance and trading volume.
-   * If trading with a broker, this result does not include additional fees charged by them.
+   * It accounts for the current trader's fee tier (based on the trader's D8X balance and trading volume).
+   * If trading with a broker, it also accounts for the selected broker's fee tier.
+   * Note that this result only includes exchange fees, additional broker fees are not included.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {string=} brokerAddr Optional address of a broker this trader may use to trade under.
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
