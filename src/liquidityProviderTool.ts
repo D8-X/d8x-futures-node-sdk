@@ -4,7 +4,6 @@ import { NodeSDKConfig, ERC20_ABI } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { floatToABK64x64, dec18ToFloat, ABK64x64ToFloat } from "./d8XMath";
 /**
- * LiquidityProviderTool
  * Methods to provide liquidity
  */
 export default class LiquidityProviderTool extends WriteAccessHandler {

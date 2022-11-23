@@ -1,8 +1,7 @@
 <a name="LiquidatorTool"></a>
 
 ## LiquidatorTool
-<p>LiquidatorTool.
-Methods to liquidate traders.</p>
+<p>Methods to liquidate traders.</p>
 
 **Kind**: global class  
 
@@ -18,7 +17,7 @@ Methods to liquidate traders.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
 
 <a name="LiquidatorTool+liquidateTrader"></a>

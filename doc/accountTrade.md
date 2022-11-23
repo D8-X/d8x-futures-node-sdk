@@ -1,7 +1,7 @@
 <a name="AccountTrade"></a>
 
 ## AccountTrade
-<p>Account and Trade.
+<p>Functions to create, submit and cancel orders on the exchange.
 This class requires a private key and executes smart-contract interaction that
 require gas-payments.</p>
 

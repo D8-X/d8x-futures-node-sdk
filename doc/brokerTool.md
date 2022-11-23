@@ -1,8 +1,7 @@
 <a name="BrokerTool"></a>
 
 ## BrokerTool
-<p>BrokerTool.
-Functions for brokers to determine fees, deposit lots, and sign-up traders.</p>
+<p>Functions for brokers to determine fees, deposit lots, and sign-up traders.</p>
 
 **Kind**: global class  
 
@@ -61,10 +60,10 @@ Functions for brokers to determine fees, deposit lots, and sign-up traders.</p>
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>number</code> - <p>Fee based solely on this broker's designation, in decimals (i.e. 0.1% is 0.001).</p>  
 
-| Param | Type | Default | Description |
-| --- | --- | --- | --- |
-| symbol | <code>string</code> |  | <p>Symbol of the form ETH-USD-MATIC or just MATIC</p> |
-| lots | <code>number</code> | <code>0</code> | <p>Optional, designation to use if different from this broker's.</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or just MATIC</p> |
+| lots | <code>number</code> | <p>Optional, designation to use if different from this broker's.</p> |
 
 <a name="BrokerTool+brokerDepositToDefaultFund"></a>
 

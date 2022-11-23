@@ -1,8 +1,7 @@
 <a name="LiquidityProviderTool"></a>
 
 ## LiquidityProviderTool
-<p>LiquidityProviderTool
-Methods to provide liquidity</p>
+<p>Methods to provide liquidity</p>
 
 **Kind**: global class  
 

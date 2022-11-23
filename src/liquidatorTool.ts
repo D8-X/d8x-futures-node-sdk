@@ -3,13 +3,12 @@ import { NodeSDKConfig } from "./nodeSDKTypes";
 import { ABK64x64ToFloat } from "./d8XMath";
 
 /**
- * LiquidatorTool.
  * Methods to liquidate traders.
  */
 export default class LiquidatorTool extends WriteAccessHandler {
   /**
    * Constructs a LiquidatorTool instance for a given configuration and private key.
-   * @param {NodeSDKConfig} config Configuration.
+   * @param {NodeSDKConfig} config Configuration object.
    * @param {string} privateKey Private key of account that liquidates.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {

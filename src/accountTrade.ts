@@ -29,7 +29,7 @@ import WriteAccessHandler from "./writeAccessHandler";
 //import { abi, rawEncode } from "ethereumjs-abi";
 
 /**
- * Account and Trade.
+ * Functions to create, submit and cancel orders on the exchange.
  * This class requires a private key and executes smart-contract interaction that
  * require gas-payments.
  */

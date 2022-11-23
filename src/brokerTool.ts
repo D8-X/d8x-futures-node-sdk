@@ -6,7 +6,6 @@ import { text } from "stream/consumers";
 import { BigNumber, ethers } from "ethers";
 import AccountTrade from "./accountTrade";
 /**
- * BrokerTool.
  * Functions for brokers to determine fees, deposit lots, and sign-up traders.
  */
 export default class BrokerTool extends WriteAccessHandler {
@@ -54,11 +53,17 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param {number} lots Optional, designation to use if different from this broker's.
    * @returns {number} Fee based solely on this broker's designation, in decimals (i.e. 0.1% is 0.001).
    */
-  public async getFeeForBrokerDesignation(symbol: string, lots: number = 0): Promise<number> {
+  public async getFeeForBrokerDesignation(symbol: string, lots?: number): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let brokerDesignation = lots == 0 ? await this.getBrokerDesignation(symbol) : lots;
+    // check if designation should be taken from the caller or as a parameter
+    let brokerDesignation: number;
+    if (typeof lots == "undefined") {
+      brokerDesignation = await this.getBrokerDesignation(symbol);
+    } else {
+      brokerDesignation = lots;
+    }
     let feeTbps = await this.proxyContract.getFeeForBrokerDesignation(brokerDesignation);
     return feeTbps / 100_000;
   }
