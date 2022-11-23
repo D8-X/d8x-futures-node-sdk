@@ -37,6 +37,20 @@ export default class LiquidatorTool extends WriteAccessHandler {
   }
 
   /**
+   * Check if a trader is maintenance margin safe - if not, it can be liquidated.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string} traderAddr Address of the trader whose position we want to assess.
+   * @returns {boolean} True if the trader is maintenance margin safe in the perpetual.
+   */
+  public async isMaintenanceMarginSafe(symbol: string, traderAddr: string): Promise<boolean> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    return await this.proxyContract.isMaintenanceMarginSafe(perpID, traderAddr);
+  }
+
+  /**
    *
    * @param perpetualId Perpetual id.
    * @param liquidatorAddr Address to be credited for the liquidation.
