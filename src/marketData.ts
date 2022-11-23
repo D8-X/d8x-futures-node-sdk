@@ -163,45 +163,4 @@ export default class MarketData extends PerpetualDataHandler {
     }
     return info;
   }
-
-  public async _calculatePerpetualPrice(
-    tradeAmount: number,
-    minimalSpread: number,
-    incentiveSpread: number,
-    fEMA: number,
-    perpM1: number,
-    perpM2: number,
-    perpM3: number,
-    perpK2: number,
-    perpL1: number,
-    S2: number,
-    perpSigma2: number,
-    S3?: number,
-    perpSigma3?: number,
-    perpRho23?: number
-  ): Promise<number> {
-    let ammVars = {
-      fLockedValue1: floatToABK64x64(perpL1),
-      fPoolM1: floatToABK64x64(perpM1),
-      fPoolM2: floatToABK64x64(perpM2),
-      fPoolM3: floatToABK64x64(perpM3),
-      fAMM_K2: perpK2,
-      fCurrentTraderExposureEMA: floatToABK64x64(fEMA),
-    };
-    let mktVars = {
-      fIndexPriceS2: floatToABK64x64(S2),
-      fIndexPriceS3: typeof S3 == "undefined" ? 0 : floatToABK64x64(S3),
-      fSigma2: floatToABK64x64(perpSigma2),
-      fSigma3: typeof perpSigma3 == "undefined" ? 0 : floatToABK64x64(perpSigma3),
-      fRho23: typeof perpRho23 == "undefined" ? 0 : floatToABK64x64(perpRho23),
-    };
-
-    return await this.proxyContract!.getAMMPerpLogic()._calculatePerpetualPrice(
-      ammVars,
-      mktVars,
-      floatToABK64x64(tradeAmount),
-      floatToABK64x64(minimalSpread),
-      floatToABK64x64(incentiveSpread)
-    );
-  }
 }
