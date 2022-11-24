@@ -17,6 +17,15 @@ export default class BrokerTool extends WriteAccessHandler {
     super(config, privateKey);
   }
 
+  public async getBrokerInducedFee(poolSymbolName: string) {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let feeTbps = await this.proxyContract.getBrokerInducedFee(poolId, this.traderAddr);
+    return feeTbps / 100_000;
+  }
+
   /**
    * Total amount of collateral currency a broker has to deposit into the default fund to purchase one lot.
    * This is equivalent to the price of a lot expressed in a given pool's currency (e.g. MATIC, USDC, etc).

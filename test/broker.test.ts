@@ -96,8 +96,17 @@ describe("write and spoil gas and tokens", () => {
 
   it("should query exchange fee based on broker and trader", async () => {
     const myAddress = new ethers.Wallet(pk).address;
-    let fee = await brokerTool.queryExchangeFee("MATIC", myAddress);
-    console.log(`exchange fee for my address and this broker is ${10_000 * fee} basis points`);
+    let accTrade = new AccountTrade(config, pk);
+    await accTrade.createProxyInstance();
+    // fee1 : no broker
+    let fee1 = await accTrade.queryExchangeFee("MATIC");
+    // fee2: using myself as broker
+    let fee2 = await accTrade.queryExchangeFee("MATIC", myAddress);
+    console.log(
+      `exchange fees for my address, with and without broker, are ${10_000 * fee1} and ${
+        10_000 * fee2
+      } basis points, respectively`
+    );
   });
 
   it("should determine total exchange fee, for a trader who signed up [1]", async () => {
@@ -138,7 +147,6 @@ describe("write and spoil gas and tokens", () => {
     //     console.log("trade transaction hash =", tx);
     //   }
     // }
-    //*/
   });
 
   it("should determine total exchange fee, for a trader who signed up [1]", async () => {
