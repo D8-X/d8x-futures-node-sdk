@@ -1,8 +1,7 @@
 import WriteAccessHandler from "./writeAccessHandler";
-import { NodeSDKConfig, Order, ORDER_MAX_DURATION_SEC, SmartContractOrder, ZERO_ADDRESS } from "./nodeSDKTypes";
+import { NodeSDKConfig, Order, PerpetualStaticInfo } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { ABK64x64ToFloat } from "./d8XMath";
-import { text } from "stream/consumers";
 import { BigNumber, ethers } from "ethers";
 import AccountTrade from "./accountTrade";
 /**
@@ -144,7 +143,7 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Adds this broker's signature to an order so it can be submitted by an approved trader.
+   * Adds this broker's signature to an order so that it can be submitted by an approved trader.
    * @param {Order} order Order to sign.
    * @param {string} traderAddr Address of trader submitting the order.
    * @param {number} feeDecimals Fee that this broker is approving for the trader.
@@ -152,20 +151,34 @@ export default class BrokerTool extends WriteAccessHandler {
    * @returns An order signed by this broker, which can be submitted directly with AccountTrade.order.
    */
   public async signOrder(order: Order, traderAddr: string, brokerFee: number, deadline: number): Promise<Order> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
     order.brokerAddr = this.traderAddr;
     order.brokerFeeTbps = brokerFee * 100_000;
     order.deadline = deadline;
-    order.brokerSignature = await this.createSignatureForTrader(traderAddr, order.symbol, brokerFee, deadline);
+    order.brokerSignature = await BrokerTool._signOrder(
+      order.symbol,
+      order.brokerFeeTbps,
+      traderAddr,
+      BigNumber.from(deadline),
+      this.signer,
+      this.chainId,
+      this.proxyAddr,
+      this.symbolToPerpStaticInfo
+    );
     return order;
   }
 
   /**
    * Creates a signature that a trader can use to place orders with this broker.
+   * This signature can be used to pass on to a trader who wishes to trade via this SDK or directly on the blockchain.
    * @param {string} traderAddr Address of the trader signing up with this broker.
    * @param {string} symbol Perpetual that this trader will be trading, of the form ETH-USD-MATIC.
    * @param {number} brokerFee Broker fee for this trader, in decimals (i.e. 0.1% is 0.001).
    * @param {number} deadline Deadline for the order to be executed.
    * @returns Broker signature approving this trader's fee, symbol, and deadline.
+   * @ignore
    */
   public async createSignatureForTrader(
     traderAddr: string,
@@ -176,28 +189,29 @@ export default class BrokerTool extends WriteAccessHandler {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let perpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     let iDeadline = BigNumber.from(deadline);
     let brokerFeeTbps = 100_000 * brokerFee;
-    return await this._signOrder(
-      perpetualId,
+    return await BrokerTool._signOrder(
+      symbol,
       brokerFeeTbps,
       traderAddr,
       iDeadline,
       this.signer,
       this.chainId,
-      this.proxyAddr
+      this.proxyAddr,
+      this.symbolToPerpStaticInfo
     );
   }
 
-  public async _signOrder(
-    iPerpetualId: number,
+  public static async _signOrder(
+    symbol: string,
     brokerFeeTbps: number,
     traderAddr: string,
     iDeadline: BigNumber,
     signer: ethers.Wallet,
     chainId: number,
-    proxyAddress: string
+    proxyAddress: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): Promise<string> {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = ethers.utils.keccak256(
@@ -214,6 +228,7 @@ export default class BrokerTool extends WriteAccessHandler {
     const TRADE_BROKER_TYPEHASH = ethers.utils.keccak256(
       Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint256 iDeadline)")
     );
+    let iPerpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let structHash = ethers.utils.keccak256(
       abiCoder.encode(
         ["bytes32", "uint24", "uint16", "address", "uint256"],
@@ -224,5 +239,14 @@ export default class BrokerTool extends WriteAccessHandler {
     let digest = ethers.utils.keccak256(abiCoder.encode(["bytes32", "bytes32"], [domainSeparator, structHash]));
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     return await signer.signMessage(digestBuffer);
+  }
+
+  /**
+   * Transfer ownership of a broker's status to a new wallet.
+   * @param newAddress The address this broker wants to use from now on.
+   */
+  public async transferOwnership(newAddress: string) {
+    // TODO
+    return true;
   }
 }

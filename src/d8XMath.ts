@@ -1,12 +1,15 @@
 import { BigNumber } from "ethers";
 import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
-const BN = BigNumber;
+
+/**
+ * @module d8xMath
+ */
 
 /**
  * Convert ABK64x64 bigint-format to float.
  * Result = x/2^64 if big number, x/2^29 if number
- * @param   x number in ABDK-format or 2^29
- * @returns x/2^64 in number-format (float)
+ * @param  {BigNumber|number} x number in ABDK-format or 2^29
+ * @returns {number} x/2^64 in number-format (float)
  */
 export function ABK64x64ToFloat(x: BigNumber | number): number {
   if (typeof x == "number") {
@@ -27,8 +30,8 @@ export function ABK64x64ToFloat(x: BigNumber | number): number {
 
 /**
  *
- * @param x BigNumber in Dec18 format
- * @returns x as a float (number)
+ * @param {BigNumber} x BigNumber in Dec18 format
+ * @returns {number} x as a float (number)
  */
 export function dec18ToFloat(x: BigNumber): number {
   //x: BigNumber in Dec18 format to float
@@ -44,8 +47,8 @@ export function dec18ToFloat(x: BigNumber): number {
 
 /**
  * Converts x into ABDK64x64 format
- * @param   x   number (float)
- * @returns x^64 in big number format
+ * @param {number} x   number (float)
+ * @returns {BigNumber} x^64 in big number format
  */
 export function floatToABK64x64(x: number): BigNumber {
   // convert float to ABK64x64 bigint-format
@@ -67,8 +70,8 @@ export function floatToABK64x64(x: number): BigNumber {
 
 /**
  *
- * @param x number (float)
- * @returns x as a BigNumber in Dec18 format
+ * @param {number} x number (float)
+ * @returns {BigNumber} x as a BigNumber in Dec18 format
  */
 export function floatToDec18(x: number): BigNumber {
   // float number to dec 18
@@ -87,9 +90,9 @@ export function floatToDec18(x: number): BigNumber {
 
 /**
  *
- * @param x
- * @param y
- * @returns x * y
+ * @param {BigNumber} x
+ * @param {BigNumber} y
+ * @returns {BigNumber} x * y
  */
 export function mul64x64(x: BigNumber, y: BigNumber) {
   return x.mul(y).div(ONE_64x64);
@@ -97,9 +100,9 @@ export function mul64x64(x: BigNumber, y: BigNumber) {
 
 /**
  *
- * @param x
- * @param y
- * @returns x / y
+ * @param {BigNumber} x
+ * @param {BigNumber} y
+ * @returns {BigNumber} x / y
  */
 export function div64x64(x: BigNumber, y: BigNumber) {
   return x.mul(ONE_64x64).div(y);

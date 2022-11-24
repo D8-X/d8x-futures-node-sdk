@@ -1,36 +1,17 @@
-import { BigNumber, BigNumberish, ethers, Wallet } from "ethers";
+import { ethers } from "ethers";
 import {
-  BUY_SIDE,
   NodeSDKConfig,
   Order,
   SmartContractOrder,
-  SELL_SIDE,
   ZERO_ADDRESS,
-  MAX_64x64,
-  MAX_UINT_256,
-  ORDER_MAX_DURATION_SEC,
-  ORDER_TYPE_LIMIT,
   ORDER_TYPE_MARKET,
-  ORDER_TYPE_STOP_MARKET,
-  ORDER_TYPE_STOP_LIMIT,
-  MASK_CLOSE_ONLY,
-  MASK_LIMIT_ORDER,
-  MASK_MARKET_ORDER,
-  MASK_STOP_ORDER,
-  MASK_KEEP_POS_LEVERAGE,
-  COLLATERAL_CURRENCY_BASE,
-  COLLATERAL_CURRENCY_QUOTE,
-  ERC20_ABI,
   PerpetualStaticInfo,
 } from "./nodeSDKTypes";
-import { floatToABK64x64, ABK64x64ToFloat, dec18ToFloat } from "./d8XMath";
-import { combineFlags, to4Chars } from "./utils";
 import WriteAccessHandler from "./writeAccessHandler";
-//import { abi, rawEncode } from "ethereumjs-abi";
 
 /**
  * Functions to create, submit and cancel orders on the exchange.
- * This class requires a private key and executes smart-contract interaction that
+ * This class requires a private key and executes smart-contract interactions that
  * require gas-payments.
  */
 export default class AccountTrade extends WriteAccessHandler {
