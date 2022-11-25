@@ -252,10 +252,19 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * Transfer ownership of a broker's status to a new wallet.
-   * @param newAddress The address this broker wants to use from now on.
+   * @param poolSymbolName     Symbol refers to the pool (e.g., MATIC for the MATIC-pool)
+   * @param newAddress         The address this broker wants to use from now on.
+   * @returns ethers transaction object
    */
-  public async transferOwnership(newAddress: string) {
-    // TODO
-    return true;
+  public async transferOwnership(
+    poolSymbolName: string,
+    newAddress: string
+  ): Promise<ethers.providers.TransactionResponse> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let tx = await this.proxyContract.transferOwnership(poolId, newAddress);
+    return tx;
   }
 }
