@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
@@ -7,6 +7,7 @@ import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/util
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
+import BrokerTool from "../src/brokerTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -17,6 +18,7 @@ let proxyContract: ethers.Contract;
 let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
+let brokerTool: BrokerTool;
 let refTool: OrderReferrerTool;
 let orderIds: string[];
 let wallet: ethers.Wallet;
@@ -144,6 +146,81 @@ describe("readOnly", () => {
     });
   });
 
+  describe("Broker", () => {
+    beforeAll(async function () {
+      config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+      if (RPC != undefined) {
+        config.nodeURL = RPC;
+      }
+      expect(pk == undefined).toBeFalsy();
+      brokerTool = new BrokerTool(config, pk);
+      await brokerTool.createProxyInstance();
+    });
+    it("should get lot size and fees for some numbers of lots", async () => {
+      let symbol = "MATIC";
+      let lotSizeSC = await brokerTool.getLotSize(symbol);
+      console.log(`lot size for ${symbol} pool is ${lotSizeSC} MATIC`);
+      let designations = [1, 2, 5, 10, 15]; //, 20, 25, 40, 60, 100, 400, 600];
+      console.log("Some broker designations and fees:");
+      for (var k = 0; k < designations.length; k++) {
+        let lots = designations[k];
+        let fee = await brokerTool.getFeeForBrokerDesignation(symbol, lots);
+        console.log(`Exchange fee for ${lots} lots is ${100 * fee} %`);
+      }
+    });
+
+    it("should get broker designation and fee", async () => {
+      let symbol = "MATIC";
+      let lots = await brokerTool.getBrokerDesignation(symbol);
+      let fee = await brokerTool.getFeeForBrokerDesignation(symbol);
+      console.log(`broker designation is ${lots} lots, with an induced fee of ${fee * 10_000} bps`);
+    });
+
+    it("should get broker volume and fee", async () => {
+      let symbol = "MATIC";
+      let volume = 0; //await brokerTool.getCurrentBrokerVolume(symbol); // uncomment when implemented
+      let fee = await brokerTool.getFeeForBrokerVolume(symbol);
+      console.log(`broker volume is ${volume}, with an induced fee of ${10_000 * fee!} bps`);
+    });
+
+    it("should get broker stake induced fee", async () => {
+      // this is based on stake only, independent of the pool
+      let fee = await brokerTool.getFeeForBrokerStake();
+      console.log(`broker fee induced by his stake is ${10_000 * fee!} bps`);
+    });
+
+    it("should determine the exchange fee for an order not signed by this broker", async () => {
+      let order: Order = {
+        symbol: "MATIC-USD-MATIC",
+        side: "BUY",
+        type: "MARKET",
+        quantity: 5,
+        leverage: 2,
+        timestamp: Date.now(),
+      };
+      const myAddress = new ethers.Wallet(pk).address;
+      let fee = await brokerTool.determineExchangeFee(order, myAddress);
+      console.log(`exchange fee for an order with my address and no broker signature is ${10_000 * fee} basis points`);
+    });
+
+    it("should determine the exchange fee for an order signed by this broker", async () => {
+      let order: Order = {
+        symbol: "ETH-USD-MATIC",
+        side: "BUY",
+        type: "MARKET",
+        quantity: 0.5,
+        leverage: 2,
+        timestamp: Date.now(),
+      };
+      const myAddress = new ethers.Wallet(pk).address;
+      let brokerFee = 0.05;
+      let deadline = Date.now() + 10000;
+      let signedOrder = await brokerTool.signOrder(order, myAddress, brokerFee, deadline);
+      let fee = await brokerTool.determineExchangeFee(signedOrder, myAddress);
+      console.log(`exchange fee for a broker-signed order with my address is ${10_000 * fee} basis points`);
+    });
+  });
+
   describe("Referrer", () => {
     beforeAll(async () => {
       if (pk == undefined) {
@@ -158,11 +235,11 @@ describe("readOnly", () => {
       let numOrders = await refTool.numberOfOpenOrders(symbol);
       console.log(`There are ${numOrders} currently open for symbol ${symbol}`);
     });
-  });
-  it("should get array of all open orders", async () => {
-    let symbol = "ETH-USD-MATIC";
-    let openOrders = await refTool.getAllOpenOrders(symbol);
-    console.log(`Open orders for symbol ${symbol}:`);
-    console.log(openOrders);
+    it("should get array of all open orders", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let openOrders = await refTool.getAllOpenOrders(symbol);
+      console.log(`Open orders for symbol ${symbol}:`);
+      console.log(openOrders);
+    });
   });
 });

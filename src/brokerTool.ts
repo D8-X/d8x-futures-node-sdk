@@ -64,7 +64,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @returns {number} Fee based solely on a broker's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
    */
-  public async getFeeForBrokerVolume(poolSymbolName: string): Promise<number | undefined> {
+  public async getFeeForBrokerVolume(poolSymbolName: string): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

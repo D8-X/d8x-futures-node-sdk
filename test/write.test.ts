@@ -37,10 +37,10 @@ describe("write and spoil gas and tokens", () => {
 
   it("trade", async () => {
     let order: Order = {
-      symbol: "ETH-USD-MATIC",
+      symbol: "BTC-USD-MATIC",
       side: "BUY",
       type: "MARKET",
-      quantity: 0.5,
+      quantity: -0.03,
       leverage: 2,
       timestamp: Date.now(),
     };
@@ -51,7 +51,7 @@ describe("write and spoil gas and tokens", () => {
   });
   it("post limit order", async () => {
     let order: Order = {
-      symbol: "ETH-USD-MATIC",
+      symbol: "MATIC-USD-MATIC",
       side: "BUY",
       type: "LIMIT",
       limitPrice: 4000,
@@ -63,5 +63,18 @@ describe("write and spoil gas and tokens", () => {
     let tx = await accTrade.order(order);
     console.log("limit order transaction hash =", tx);
     //*/
+  });
+
+  it("should query exchange fee based on broker and trader", async () => {
+    const myAddress = new ethers.Wallet(pk).address;
+    // fee1 : no broker
+    let fee1 = await accTrade.queryExchangeFee("MATIC");
+    // fee2: using myAddress as broker
+    let fee2 = await accTrade.queryExchangeFee("MATIC", myAddress);
+    console.log(
+      `exchange fees for my address, with and without broker, are ${10_000 * fee1} and ${
+        10_000 * fee2
+      } basis points, respectively`
+    );
   });
 });
