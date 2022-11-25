@@ -11,7 +11,7 @@ import {
 } from "./nodeSDKTypes";
 import { BigNumber, BytesLike, ethers } from "ethers";
 import { floatToABK64x64, ABK64x64ToFloat } from "./d8XMath";
-import { fromBytes4HexString } from "./utils";
+import { fromBytes4HexString, toBytes4 } from "./utils";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { SmartContractOrder, Order } from "./nodeSDKTypes";
 
@@ -73,6 +73,14 @@ export default class MarketData extends PerpetualDataHandler {
       this.proxyContract
     );
     return mgnAcct;
+  }
+
+  public async getOraclePrice(base: string, quote: string): Promise<number | undefined> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let px = await this.proxyContract.getOraclePrice([toBytes4(base), toBytes4(quote)]);
+    return px == undefined ? undefined : ABK64x64ToFloat(px);
   }
 
   /**
