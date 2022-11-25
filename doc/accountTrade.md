@@ -2,7 +2,7 @@
 
 ## AccountTrade
 <p>Functions to create, submit and cancel orders on the exchange.
-This class requires a private key and executes smart-contract interaction that
+This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p>
 
 **Kind**: global class  
@@ -12,6 +12,7 @@ require gas-payments.</p>
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
     * [.order(order)](#AccountTrade+order) ⇒ <code>string</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
+    * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
 
 <a name="new_AccountTrade_new"></a>
 
@@ -63,4 +64,17 @@ Note that this result only includes exchange fees, additional broker fees are no
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | [brokerAddr] | <code>string</code> | <p>Optional address of a broker this trader may use to trade under.</p> |
+
+<a name="AccountTrade+getCurrentTraderVolume"></a>
+
+### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
+<p>Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+The weights are chosen so that in average this coincides with the 30 day volume.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Returns**: <code>number</code> - <p>Current trading volume for this trader, in USD.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
