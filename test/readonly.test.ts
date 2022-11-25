@@ -29,23 +29,23 @@ describe("readOnly", () => {
     }
   });
 
-  describe("Oracle Routes", () => {
-    beforeAll(async () => {
-      const provider = new ethers.providers.JsonRpcProvider(RPC);
-      let abi = require("../abi/IPerpetualManager.json");
-      proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
-    });
-    it("routes", async () => {
-      let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
+  // describe("Oracle Routes", () => {
+  //   beforeAll(async () => {
+  //     const provider = new ethers.providers.JsonRpcProvider(RPC);
+  //     let abi = require("../abi/IPerpetualManager.json");
+  //     proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
+  //   });
+  //   it("routes", async () => {
+  //     let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
 
-      for (let k = 0; k < ccyList.length; k++) {
-        let basequote = ccyList[k].split("-");
-        console.log("base, quote =", basequote);
-        let px = await proxyContract.getOraclePrice([toBytes4(basequote[0]), toBytes4(basequote[1])]);
-        console.log(`${basequote[0]}-${basequote[1]} = ${ABK64x64ToFloat(px)}`);
-      }
-    });
-  });
+  //     for (let k = 0; k < ccyList.length; k++) {
+  //       let basequote = ccyList[k].split("-");
+  //       console.log("base, quote =", basequote);
+  //       let px = await proxyContract.getOraclePrice([toBytes4(basequote[0]), toBytes4(basequote[1])]);
+  //       console.log(`${basequote[0]}-${basequote[1]} = ${ABK64x64ToFloat(px)}`);
+  //     }
+  //   });
+  // });
 
   describe("MarketData", () => {
     beforeAll(async () => {
@@ -66,6 +66,15 @@ describe("readOnly", () => {
         console.log(pool.perpetuals);
       }
     });
+    it("oracle routes", async () => {
+      let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
+
+      for (let k = 0; k < ccyList.length; k++) {
+        let basequote = ccyList[k].split("-");
+        let px = await mktData.getOraclePrice(basequote[0], basequote[1]);
+        console.log(`${basequote[0]}-${basequote[1]} = ${px}`);
+      }
+    });
     it("openOrders", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "ETH-USD-MATIC");
       console.log("order ids=", ordersStruct.orderIds);
@@ -78,9 +87,10 @@ describe("readOnly", () => {
     });
 
     it("get pool id", async () => {
-      let id = mktData.getPoolIdFromSymbol("ETH-USD-MATIC");
-      console.log("pool id", id);
-      let sym = mktData.getSymbolFromPoolId(id);
+      let perpSymbol = "ETH-USD-MATIC";
+      let id = mktData.getPoolIdFromSymbol(perpSymbol);
+      let poolSymbol = mktData.getSymbolFromPoolId(id);
+      console.log(`Perp symbol ${perpSymbol} -> pool ID ${id} -> pool symbol ${poolSymbol}`);
     });
   });
 
@@ -125,6 +135,12 @@ describe("readOnly", () => {
       let allAccounts = await liqTool.getAllActiveAccounts(symbol);
       console.log(`all active accounts for ${symbol}:`);
       console.log(allAccounts);
+    });
+    it("should check if trader is liquidatable", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let traderAddr = (await liqTool.getActiveAccountsByChunks(symbol, 0, 1))[0];
+      let isLiquidatable = !(await liqTool.isMaintenanceMarginSafe(symbol, traderAddr));
+      console.log(`Trader with address ${traderAddr} is ${isLiquidatable ? "" : "NOT"} liquidatable`);
     });
   });
 
