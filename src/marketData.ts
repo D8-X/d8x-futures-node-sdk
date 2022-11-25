@@ -75,6 +75,12 @@ export default class MarketData extends PerpetualDataHandler {
     return mgnAcct;
   }
 
+  /**
+   * Uses the Oracle(s) in the exchange to get the latest price of a given index in a given currency, if a route exists.
+   * @param {string} base Index name, e.g. ETH.
+   * @param {string} quote Quote currency, e.g. USD.
+   * @returns {number} Price of index in given currency.
+   */
   public async getOraclePrice(base: string, quote: string): Promise<number | undefined> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");

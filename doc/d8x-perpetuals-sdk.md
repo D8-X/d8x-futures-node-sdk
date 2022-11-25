@@ -566,13 +566,13 @@ This is relevant to determine the broker's fee tier.</p>
 <p>Get addresses of active accounts by chunks.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
-**Returns**: <code>Array.&lt;string&gt;</code> - <p>Array of addresses.</p>  
+**Returns**: <code>Array.&lt;string&gt;</code> - <p>Array of addresses at locations 'from', 'from'+1 ,..., 'to'-1.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | from | <code>number</code> | <p>From which account we start counting (0-indexed).</p> |
-| to | <code>number</code> | <p>Until which account we count.</p> |
+| to | <code>number</code> | <p>Until which account we count, non inclusive.</p> |
 
 <a name="LiquidatorTool+getAllActiveAccounts"></a>
 
@@ -661,6 +661,7 @@ No gas required for the queries here.</p>
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
 
 <a name="MarketData+exchangeInfo"></a>
 
@@ -693,6 +694,19 @@ No gas required for the queries here.</p>
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+<a name="MarketData+getOraclePrice"></a>
+
+### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>
+<p>Uses the Oracle(s) in the exchange to get the latest price of a given index in a given currency, if a route exists.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>number</code> - <p>Price of index in given currency.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| base | <code>string</code> | <p>Index name, e.g. ETH.</p> |
+| quote | <code>string</code> | <p>Quote currency, e.g. USD.</p> |
 
 <a name="OrderReferrerTool"></a>
 
