@@ -82,8 +82,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * Get addresses of active accounts by chunks.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} from From which account we start counting (0-indexed).
-   * @param {number} to Until which account we count.
-   * @returns {string[]} Array of addresses.
+   * @param {number} to Until which account we count, non inclusive.
+   * @returns {string[]} Array of addresses at locations 'from', 'from'+1 ,..., 'to'-1.
    */
   public async getActiveAccountsByChunks(symbol: string, from: number, to: number): Promise<string[]> {
     if (this.proxyContract == null) {
@@ -101,7 +101,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
   public async getAllActiveAccounts(symbol: string): Promise<string[]> {
     // checks are done inside the intermediate functions
     let totalAccoutns = await this.countActivePerpAccounts(symbol);
-    return await this.getActiveAccountsByChunks(symbol, 0, totalAccoutns - 1);
+    return await this.getActiveAccountsByChunks(symbol, 0, totalAccoutns);
   }
 
   /*
