@@ -5,6 +5,7 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
+import OrderReferrerTool from "../src/orderReferrerTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -13,6 +14,7 @@ jest.setTimeout(150000);
 let config: NodeSDKConfig;
 let proxyContract: ethers.Contract;
 let mktData: MarketData;
+let orderRefTool: OrderReferrerTool;
 let liqProvTool: LiquidityProviderTool;
 let orderIds: string[];
 let wallet: ethers.Wallet;
@@ -82,6 +84,20 @@ describe("readOnly", () => {
     it("getParticipationValue", async () => {
       let val = await liqProvTool.getParticipationValue("MATIC");
       console.log("pool sharetoken value", val.value);
+    });
+  });
+  describe("Referrer", () => {
+    beforeAll(async () => {
+      if (pk == undefined) {
+        console.log(`Define private key: export PK="CA52A..."`);
+        expect(false);
+      }
+      orderRefTool = new OrderReferrerTool(config, pk);
+      await orderRefTool.createProxyInstance();
+    });
+    it("poll limit orders", async () => {
+      let val = await orderRefTool.pollLimitOrders("ETH-USD-MATIC", 15, undefined);
+      console.log("val=", val);
     });
   });
 });
