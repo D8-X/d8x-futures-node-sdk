@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { ABK64x64ToFloat } from "./d8XMath";
 import {
   NodeSDKConfig,
   Order,
@@ -89,6 +90,21 @@ export default class AccountTrade extends WriteAccessHandler {
     let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr);
     return feeTbps / 100_000;
+  }
+
+  /**
+   * Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+   * The weights are chosen so that in average this coincides with the 30 day volume.
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @returns {number} Current trading volume for this trader, in USD.
+   */
+  public async getCurrentTraderVolume(poolSymbolName: string): Promise<number> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr);
+    return ABK64x64ToFloat(volume);
   }
 
   /**

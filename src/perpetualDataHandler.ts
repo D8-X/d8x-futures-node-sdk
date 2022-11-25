@@ -390,12 +390,13 @@ export default class PerpetualDataHandler {
     return symbols[0] + "-" + symbols[1] + "-" + symbols[2];
   }
 
-  private static _getByValue(map: any, searchValue: any) {
+  private static _getByValue(map: any, searchValue: any, valueField: any) {
     for (let [key, value] of map.entries()) {
-      if (value === searchValue) {
+      if (value[valueField] === searchValue) {
         return key;
       }
     }
+    return undefined;
   }
 
   protected static fromSmartContractOrder(
@@ -403,7 +404,10 @@ export default class PerpetualDataHandler {
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): Order {
     // find symbol of perpetual id
-    let symbol = PerpetualDataHandler._getByValue(symbolToPerpInfoMap, order.iPerpetualId);
+    let symbol = PerpetualDataHandler._getByValue(symbolToPerpInfoMap, order.iPerpetualId, "id");
+    if (symbol == undefined) {
+      throw Error(`Perpetual id ${order.iPerpetualId} not found. Check with marketData.exchangeInfo().`);
+    }
     let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
     let limitPrice, stopPrice;
     let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
@@ -419,16 +423,16 @@ export default class PerpetualDataHandler {
       stopPrice = ABK64x64ToFloat(fStopPrice);
     }
     let userOrder: Order = {
-      symbol: symbol,
+      symbol: symbol!,
       side: side,
       type: PerpetualDataHandler._flagToOrderType(order),
       quantity: Math.abs(ABK64x64ToFloat(BigNumber.from(order.fAmount))),
       reduceOnly: containsFlag(BigNumber.from(order.flags), MASK_CLOSE_ONLY),
       limitPrice: limitPrice,
       keepPositionLvg: containsFlag(BigNumber.from(order.flags), MASK_KEEP_POS_LEVERAGE),
-      brokerFeeTbps: Number(order.brokerFeeTbps),
-      brokerAddr: order.brokerAddr,
-      brokerSignature: order.brokerSignature,
+      brokerFeeTbps: order.brokerFeeTbps == 0 ? undefined : Number(order.brokerFeeTbps),
+      brokerAddr: order.brokerAddr == ZERO_ADDRESS ? undefined : order.brokerAddr,
+      brokerSignature: order.brokerSignature == "0x" ? undefined : order.brokerSignature,
       stopPrice: stopPrice,
       leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
       deadline: Number(order.iDeadline),

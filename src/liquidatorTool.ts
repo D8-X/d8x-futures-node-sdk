@@ -47,7 +47,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this.proxyContract.isMaintenanceMarginSafe(perpID, traderAddr);
+    return await this.proxyContract.isTraderMaintenanceMarginSafe(perpID, traderAddr);
   }
 
   /**
@@ -65,7 +65,42 @@ export default class LiquidatorTool extends WriteAccessHandler {
     return ABK64x64ToFloat(fAmount);
   }
 
-  /*
-  TODO
-  */
+  /**
+   * Total number of active accounts for this symbol, i.e. accounts with positions that are currently open.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @returns {number} Number of active accounts.
+   */
+  public async countActivePerpAccounts(symbol: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    return await this.proxyContract.countActivePerpAccounts(perpID);
+  }
+
+  /**
+   * Get addresses of active accounts by chunks.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {number} from From which account we start counting (0-indexed).
+   * @param {number} to Until which account we count, non inclusive.
+   * @returns {string[]} Array of addresses at locations 'from', 'from'+1 ,..., 'to'-1.
+   */
+  public async getActiveAccountsByChunks(symbol: string, from: number, to: number): Promise<string[]> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    return await this.proxyContract.getActivePerpAccountsByChunks(perpID, from, to);
+  }
+
+  /**
+   * Addresses for all the active accounts in this perpetual symbol.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @returns {string[]} Array of addresses.
+   */
+  public async getAllActiveAccounts(symbol: string): Promise<string[]> {
+    // checks are done inside the intermediate functions
+    let totalAccounts = await this.countActivePerpAccounts(symbol);
+    return await this.getActiveAccountsByChunks(symbol, 0, totalAccounts);
+  }
 }

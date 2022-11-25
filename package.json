@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderReferrerTool.ts --configure ./jsdoc2md.json > ./doc/orderReferrerTool.md",
+    "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderReferrerTool.ts --configure ./jsdoc2md.json > ./doc/orderReferrerTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
     "test": "jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test"
   },
@@ -47,13 +47,7 @@
     "type": "git",
     "url": "git+https://github.com/D8-X/d8x-futures-node-sdk.git"
   },
-  "keywords": [
-    "d8x",
-    "perpetuals",
-    "node",
-    "sdk",
-    "api"
-  ],
+  "keywords": ["d8x", "perpetuals", "node", "sdk", "api"],
   "author": "d8x",
   "license": "UNLICENSED",
   "bugs": {
