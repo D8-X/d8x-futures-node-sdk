@@ -17,7 +17,15 @@ export default class BrokerTool extends WriteAccessHandler {
     super(config, privateKey);
   }
 
-  public async getBrokerInducedFee(poolSymbolName: string) {
+  // Fee getters
+
+  /**
+   * Determine the exchange fee based on lots, traded volume, and D8X balance of this broker.
+   * This is the final exchange fee paid by the broker.
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @returns {number} Exchange fee for this broker, in decimals (i.e. 0.1% is 0.001)
+   */
+  public async getBrokerInducedFee(poolSymbolName: string): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -27,61 +35,12 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Total amount of collateral currency a broker has to deposit into the default fund to purchase one lot.
-   * This is equivalent to the price of a lot expressed in a given pool's currency (e.g. MATIC, USDC, etc).
-   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @returns Broker lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.
-   */
-  public async getLotSize(poolSymbolName: string): Promise<number> {
-    if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
-    }
-    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let pool = await this.proxyContract.getLiquidityPool(poolId);
-    let lot = ABK64x64ToFloat(pool.fBrokerCollateralLotSize);
-    return lot;
-  }
-
-  /**
-   * Provides information on how many lots a broker purchased for a given pool.
-   * This is relevant to determine the broker's fee tier.
-   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @returns Number of lots purchased by this broker.
-   */
-  public async getBrokerDesignation(poolSymbolName: string): Promise<number> {
-    if (this.proxyContract == null || this.signer == null) {
-      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
-    }
-    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let designation = await this.proxyContract.getBrokerDesignation(poolId, this.traderAddr);
-    return designation;
-  }
-
-  /**
-   * Deposit lots to the default fund of a given pool.
-   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @param lots Number of lots to deposit into this pool.
-   * @returns Transaction object.
-   */
-  public async brokerDepositToDefaultFund(
-    poolSymbolName: string,
-    lots: number
-  ): Promise<ethers.providers.TransactionResponse> {
-    if (this.proxyContract == null || this.signer == null) {
-      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
-    }
-    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, lots, { gasLimit: this.gasLimit });
-    return tx;
-  }
-
-  /**
    * Determine the exchange fee based on lots purchased by this broker.
    * The final exchange fee paid by the broker is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @param {number} lots Optional, designation to use if different from this broker's.
-   * @returns Fee based solely on this broker's designation, in decimals (i.e. 0.1% is 0.001).
+   * @param {number=} lots Optional, designation to use if different from this broker's.
+   * @returns {number} Fee based solely on this broker's designation, in decimals (i.e. 0.1% is 0.001).
    */
   public async getFeeForBrokerDesignation(poolSymbolName: string, lots?: number): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -103,7 +62,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * The final exchange fee paid by the broker is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @returns Fee based solely on a broker's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
+   * @returns {number} Fee based solely on a broker's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
    */
   public async getFeeForBrokerVolume(poolSymbolName: string): Promise<number | undefined> {
     if (this.proxyContract == null || this.signer == null) {
@@ -119,7 +78,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * The final exchange fee paid by the broker is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeForBrokerVolume(symbol), brokerTool.getFeeForBrokerStake)
    * @param {string=} brokerAddr Address of the broker in question, if different from the one calling this function.
-   * @returns Fee based solely on a broker's D8X balance, in decimals (i.e. 0.1% is 0.001).
+   * @returns {number} Fee based solely on a broker's D8X balance, in decimals (i.e. 0.1% is 0.001).
    */
   public async getFeeForBrokerStake(brokerAddr?: string): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -138,9 +97,10 @@ export default class BrokerTool extends WriteAccessHandler {
    * and it takes into account whether the order given here has been signed by a broker or not.
    * Use this, for instance, to verify that the fee to be charged for a given order is as expected,
    * before and after signing it with brokerTool.signOrder.
+   * This fee is equal or lower than the broker induced fee, provided the order is properly signed.
    * @param {Order} order Order for which to determine the exchange fee. Not necessarily signed by this broker.
    * @param {string} traderAddr Address of the trader for whom to determine the fee.
-   * @returns Fee in decimals (i.e. 0.1% is 0.001).
+   * @returns {number} Fee in decimals (i.e. 0.1% is 0.001).
    */
   public async determineExchangeFee(order: Order, traderAddr: string): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -151,13 +111,83 @@ export default class BrokerTool extends WriteAccessHandler {
     return feeTbps / 100_000;
   }
 
+  // Volume
+
+  /**
+   * Exponentially weighted EMA of the total trading volume of all trades performed under this broker.
+   * The weights are chosen so that in average this coincides with the 30 day volume.
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @returns {number} Current trading volume for this broker, in USD.
+   */
+  public async getCurrentBrokerVolume(poolSymbolName: string): Promise<number> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let volume = await this.proxyContract.getCurrentBrokerVolume(poolId, this.traderAddr);
+    return ABK64x64ToFloat(volume);
+  }
+
+  // Lots
+
+  /**
+   * Total amount of collateral currency a broker has to deposit into the default fund to purchase one lot.
+   * This is equivalent to the price of a lot expressed in a given pool's currency (e.g. MATIC, USDC, etc).
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @returns {number} Broker lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.
+   */
+  public async getLotSize(poolSymbolName: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let pool = await this.proxyContract.getLiquidityPool(poolId);
+    let lot = ABK64x64ToFloat(pool.fBrokerCollateralLotSize);
+    return lot;
+  }
+
+  /**
+   * Provides information on how many lots a broker purchased for a given pool.
+   * This is relevant to determine the broker's fee tier.
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @returns {number} Number of lots purchased by this broker.
+   */
+  public async getBrokerDesignation(poolSymbolName: string): Promise<number> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let designation = await this.proxyContract.getBrokerDesignation(poolId, this.traderAddr);
+    return designation;
+  }
+
+  /**
+   * Deposit lots to the default fund of a given pool.
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @param {number} lots Number of lots to deposit into this pool.
+   * @returns {ethers.providers.TransactionResponse} Transaction object.
+   */
+  public async brokerDepositToDefaultFund(
+    poolSymbolName: string,
+    lots: number
+  ): Promise<ethers.providers.TransactionResponse> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, lots, { gasLimit: this.gasLimit });
+    return tx;
+  }
+
+  // Signatures
+
   /**
    * Adds this broker's signature to an order so that it can be submitted by an approved trader.
    * @param {Order} order Order to sign.
    * @param {string} traderAddr Address of trader submitting the order.
    * @param {number} feeDecimals Fee that this broker is approving for the trader.
    * @param {number} deadline Deadline for the order to be executed.
-   * @returns An order signed by this broker, which can be submitted directly with AccountTrade.order.
+   * @returns {Order} An order signed by this broker, which can be submitted directly with AccountTrade.order.
    */
   public async signOrder(order: Order, traderAddr: string, brokerFee: number, deadline: number): Promise<Order> {
     if (this.proxyContract == null || this.signer == null) {
@@ -186,7 +216,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param {string} symbol Perpetual that this trader will be trading, of the form ETH-USD-MATIC.
    * @param {number} brokerFee Broker fee for this trader, in decimals (i.e. 0.1% is 0.001).
    * @param {number} deadline Deadline for the order to be executed.
-   * @returns Broker signature approving this trader's fee, symbol, and deadline.
+   * @returns {string} Broker signature approving this trader's fee, symbol, and deadline.
    * @ignore
    */
   public async createSignatureForTrader(
@@ -250,11 +280,13 @@ export default class BrokerTool extends WriteAccessHandler {
     return await signer.signMessage(digestBuffer);
   }
 
+  // Transfer ownership
+
   /**
    * Transfer ownership of a broker's status to a new wallet.
-   * @param poolSymbolName     Symbol refers to the pool (e.g., MATIC for the MATIC-pool)
-   * @param newAddress         The address this broker wants to use from now on.
-   * @returns ethers transaction object
+   * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @param {string} newAddress The address this broker wants to use from now on.
+   * @returns {ethers.providers.TransactionResponse} ethers transaction object
    */
   public async transferOwnership(
     poolSymbolName: string,
