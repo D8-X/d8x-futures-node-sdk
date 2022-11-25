@@ -47,7 +47,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this.proxyContract.isMaintenanceMarginSafe(perpID, traderAddr);
+    return await this.proxyContract.isTraderMaintenanceMarginSafe(perpID, traderAddr);
   }
 
   /**
@@ -100,11 +100,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    */
   public async getAllActiveAccounts(symbol: string): Promise<string[]> {
     // checks are done inside the intermediate functions
-    let totalAccoutns = await this.countActivePerpAccounts(symbol);
-    return await this.getActiveAccountsByChunks(symbol, 0, totalAccoutns);
+    let totalAccounts = await this.countActivePerpAccounts(symbol);
+    return await this.getActiveAccountsByChunks(symbol, 0, totalAccounts);
   }
-
-  /*
-  TODO: tests
-  */
 }
