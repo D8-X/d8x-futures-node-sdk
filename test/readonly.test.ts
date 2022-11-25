@@ -5,6 +5,7 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
+import LiquidatorTool from "../src/liquidatorTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -14,6 +15,7 @@ let config: NodeSDKConfig;
 let proxyContract: ethers.Contract;
 let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
+let liqTool: LiquidatorTool;
 let orderIds: string[];
 let wallet: ethers.Wallet;
 
@@ -34,6 +36,7 @@ describe("readOnly", () => {
 
       for (let k = 0; k < ccyList.length; k++) {
         let basequote = ccyList[k].split("-");
+        console.log("base, quote =", basequote);
         let px = await proxyContract.getOraclePrice([toBytes4(basequote[0]), toBytes4(basequote[1])]);
         console.log(`${basequote[0]}-${basequote[1]} = ${ABK64x64ToFloat(px)}`);
       }
@@ -52,6 +55,11 @@ describe("readOnly", () => {
     it("exchange info", async () => {
       let info: ExchangeInfo = await mktData.exchangeInfo();
       console.log(info);
+      for (var k = 0; k < info.pools.length; k++) {
+        let pool = info.pools[k];
+        console.log(`Perpetuals in ${k}-th pool:`);
+        console.log(pool.perpetuals);
+      }
     });
     it("openOrders", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "ETH-USD-MATIC");
@@ -82,6 +90,34 @@ describe("readOnly", () => {
     it("getParticipationValue", async () => {
       let val = await liqProvTool.getParticipationValue("MATIC");
       console.log("pool sharetoken value", val.value);
+    });
+  });
+  describe("Liquidator", () => {
+    beforeAll(async () => {
+      if (pk == undefined) {
+        console.log(`Define private key: export PK="CA52A..."`);
+        expect(false);
+      }
+      liqTool = new LiquidatorTool(config, pk);
+      await liqTool.createProxyInstance();
+    });
+    it("should get number of active accounts", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let numAccounts = await liqTool.countActivePerpAccounts(symbol);
+      console.log(`number of active accounts for symbol ${symbol} = ${numAccounts}`);
+    });
+    it("should get first n active accounts", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let firstN = 2;
+      let firstNAccounts = await liqTool.getActiveAccountsByChunks(symbol, 0, firstN);
+      console.log(`first ${firstN} active accounts for ${symbol}:`);
+      console.log(firstNAccounts);
+    });
+    it("should get all active accounts", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let allAccounts = await liqTool.getAllActiveAccounts(symbol);
+      console.log(`all active accounts for ${symbol}:`);
+      console.log(allAccounts);
     });
   });
 });
