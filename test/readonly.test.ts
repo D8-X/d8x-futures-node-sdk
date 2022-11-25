@@ -6,6 +6,7 @@ import MarketData from "../src/marketData";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
+import OrderReferrerTool from "../src/orderReferrerTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -16,6 +17,7 @@ let proxyContract: ethers.Contract;
 let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
+let refTool: OrderReferrerTool;
 let orderIds: string[];
 let wallet: ethers.Wallet;
 
@@ -25,12 +27,14 @@ describe("readOnly", () => {
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
-    const provider = new ethers.providers.JsonRpcProvider(RPC);
-    let abi = require("../abi/IPerpetualManager.json");
-    proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
   });
 
   describe("Oracle Routes", () => {
+    beforeAll(async () => {
+      const provider = new ethers.providers.JsonRpcProvider(RPC);
+      let abi = require("../abi/IPerpetualManager.json");
+      proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
+    });
     it("routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
 
@@ -42,6 +46,7 @@ describe("readOnly", () => {
       }
     });
   });
+
   describe("MarketData", () => {
     beforeAll(async () => {
       if (pk == undefined) {
@@ -78,6 +83,7 @@ describe("readOnly", () => {
       let sym = mktData.getSymbolFromPoolId(id);
     });
   });
+
   describe("Liquidity Provider", () => {
     beforeAll(async () => {
       if (pk == undefined) {
@@ -92,6 +98,7 @@ describe("readOnly", () => {
       console.log("pool sharetoken value", val.value);
     });
   });
+
   describe("Liquidator", () => {
     beforeAll(async () => {
       if (pk == undefined) {
@@ -119,5 +126,27 @@ describe("readOnly", () => {
       console.log(`all active accounts for ${symbol}:`);
       console.log(allAccounts);
     });
+  });
+
+  describe("Referrer", () => {
+    beforeAll(async () => {
+      if (pk == undefined) {
+        console.log(`Define private key: export PK="CA52A..."`);
+        expect(false);
+      }
+      refTool = new OrderReferrerTool(config, pk);
+      await refTool.createProxyInstance();
+    });
+    it("should get number of open orders", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let numOrders = await refTool.numberOfOpenOrders(symbol);
+      console.log(`There are ${numOrders} currently open for symbol ${symbol}`);
+    });
+  });
+  it("should get array of all open orders", async () => {
+    let symbol = "ETH-USD-MATIC";
+    let openOrders = await refTool.getAllOpenOrders(symbol);
+    console.log(`Open orders for symbol ${symbol}:`);
+    console.log(openOrders);
   });
 });

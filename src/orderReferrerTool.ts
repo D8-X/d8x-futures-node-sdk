@@ -74,7 +74,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (typeof startAfter == "undefined") {
-      startAfter = ZERO_ADDRESS;
+      startAfter = ethers.constants.HashZero;
     }
     const orderBookSC = this.getOrderBookContract(symbol);
     let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, numElements);
