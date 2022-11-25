@@ -245,6 +245,7 @@ require gas-payments.</p>
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
     * [.order(order)](#AccountTrade+order) ⇒ <code>string</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
+    * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
 
 <a name="new_AccountTrade_new"></a>
 
@@ -296,6 +297,19 @@ Note that this result only includes exchange fees, additional broker fees are no
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | [brokerAddr] | <code>string</code> | <p>Optional address of a broker this trader may use to trade under.</p> |
+
+<a name="AccountTrade+getCurrentTraderVolume"></a>
+
+### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
+<p>Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+The weights are chosen so that in average this coincides with the 30 day volume.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Returns**: <code>number</code> - <p>Current trading volume for this trader, in USD.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
 <a name="BrokerTool"></a>
 
@@ -690,7 +704,9 @@ No gas required for the queries here.</p>
 * [OrderReferrerTool](#OrderReferrerTool)
     * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr])](#OrderReferrerTool+executeOrder) ⇒
-    * [.pollLimitOrders(symbol, numElements, startAfter)](#OrderReferrerTool+pollLimitOrders) ⇒
+    * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -717,9 +733,33 @@ No gas required for the queries here.</p>
 | orderId | <code>string</code> | <p>ID of the order to be executed.</p> |
 | [referrerAddr] | <code>string</code> | <p>Address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
 
+<a name="OrderReferrerTool+getAllOpenOrders"></a>
+
+### orderReferrerTool.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+<a name="OrderReferrerTool+numberOfOpenOrders"></a>
+
+### orderReferrerTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
 <a name="OrderReferrerTool+pollLimitOrders"></a>
 
-### orderReferrerTool.pollLimitOrders(symbol, numElements, startAfter) ⇒
+### orderReferrerTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
 <p>Get a list of active conditional orders in the order book.
 This a read-only action and does not incur in gas costs.</p>
 
@@ -730,7 +770,7 @@ This a read-only action and does not incur in gas costs.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
-| startAfter | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
 
 <a name="PerpetualDataHandler"></a>
 

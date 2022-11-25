@@ -39,11 +39,34 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   }
 
   /**
+   * All the orders in the order book for a given symbol that are currently open.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @returns Array with all open orders and their IDs.
+   */
+  public async getAllOpenOrders(symbol: string): Promise<[Order[], string[]]> {
+    let totalOrders = await this.numberOfOpenOrders(symbol);
+    return await this.pollLimitOrders(symbol, totalOrders);
+  }
+
+  /**
+   * Total number of limit orders for this symbol, excluding those that have been cancelled/removed.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @returns {number} Number of open orders.
+   */
+  public async numberOfOpenOrders(symbol: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    const orderBookSC = this.getOrderBookContract(symbol);
+    return await orderBookSC.numberOfOrderBookDigests();
+  }
+
+  /**
    * Get a list of active conditional orders in the order book.
    * This a read-only action and does not incur in gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} numElements Maximum number of orders to poll.
-   * @param {string} startAfter Optional order ID from where to start polling. Defaults to the first order.
+   * @param {string=} startAfter Optional order ID from where to start polling. Defaults to the first order.
    * @returns Array of orders and corresponding order IDs
    */
   public async pollLimitOrders(symbol: string, numElements: number, startAfter?: string): Promise<[Order[], string[]]> {
@@ -114,6 +137,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * - [x] executeLimitOrderByDigest
    * - [x] pollLimitOrders
    * - [x] isTradeable
+   * - [ ] get all limit orders
    * - [ ] tests
    */
 }
