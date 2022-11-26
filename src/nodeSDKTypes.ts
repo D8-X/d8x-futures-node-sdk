@@ -1,4 +1,4 @@
-import { BytesLike, BigNumber, BigNumberish } from "ethers";
+import { BytesLike, BigNumber, BigNumberish, constants } from "ethers";
 export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_MAINNET = "notthereyet";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
@@ -9,7 +9,8 @@ export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;
 export const COLLATERAL_CURRENCY_QUANTO = 2;
 export const PERP_STATE_STR = ["INVALID", "INITIALIZING", "NORMAL", "EMERGENCY", "CLEARED"];
-export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+export const ZERO_ADDRESS = constants.AddressZero;
+export const ZERO_ORDER_ID = constants.HashZero;
 
 export const ONE_64x64 = BigNumber.from("0x010000000000000000");
 export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");

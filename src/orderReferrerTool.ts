@@ -1,5 +1,5 @@
 import WriteAccessHandler from "./writeAccessHandler";
-import { BUY_SIDE, NodeSDKConfig, Order, SELL_SIDE, ZERO_ADDRESS } from "./nodeSDKTypes";
+import { BUY_SIDE, NodeSDKConfig, Order, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./nodeSDKTypes";
 import { ethers } from "ethers";
 
 /**
@@ -74,7 +74,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (typeof startAfter == "undefined") {
-      startAfter = ethers.constants.HashZero;
+      startAfter = ZERO_ORDER_ID;
     }
     const orderBookSC = this.getOrderBookContract(symbol);
     let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, numElements);
