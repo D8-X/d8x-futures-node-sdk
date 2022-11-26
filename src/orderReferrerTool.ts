@@ -87,7 +87,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     return [userFriendlyOrders, orderIds];
   }
 
-  public async isTradeable(order: Order) {
+  /**
+   * Check if a conditional order can be executed
+   * @param order order structure
+   * @param markPrice optional: supply markPrice to check stop-orders
+   * @returns true if order can be executed for the current state of the perpetuals
+   */
+  public async isTradeable(order: Order, markPrice: number | undefined = undefined) {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -117,11 +123,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       return true;
     }
     // we need the mark price to check
-    let markPrice = await WriteAccessHandler._queryPerpetualMarkPrice(
-      order.symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract
-    );
+    if (markPrice == undefined) {
+      markPrice = await WriteAccessHandler._queryPerpetualMarkPrice(
+        order.symbol,
+        this.symbolToPerpStaticInfo,
+        this.proxyContract
+      );
+    }
     if (
       (order.side == BUY_SIDE && markPrice < order.stopPrice) ||
       (order.side == SELL_SIDE && markPrice > order.stopPrice)
