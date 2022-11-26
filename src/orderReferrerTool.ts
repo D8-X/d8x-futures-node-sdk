@@ -95,7 +95,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("order does not have a limit price");
     }
     // check expiration date
-    if (order.deadline != undefined && order.deadline < Date.now()) {
+    if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
       return false;
     }
     // check limit price
