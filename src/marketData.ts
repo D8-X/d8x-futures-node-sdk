@@ -90,6 +90,36 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
+   * Get the current mark price
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @returns mark price
+   */
+  public async getMarkPrice(symbol: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    return await PerpetualDataHandler._queryPerpetualMarkPrice(symbol, this.symbolToPerpStaticInfo, this.proxyContract);
+  }
+
+  /**
+   * get the current price for a given quantity
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @param quantity quantity to be traded, negative if short
+   * @returns price (number)
+   */
+  public async getPerpetualPrice(symbol: string, quantity: number): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    return await PerpetualDataHandler._queryPerpetualPrice(
+      symbol,
+      quantity,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract
+    );
+  }
+
+  /**
    * Query smart contract to get user orders and convert to user friendly order format.
    * @param {string} traderAddr Address of trader.
    * @param {ethers.Contract} orderBookContract Instance of order book.

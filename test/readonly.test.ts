@@ -94,6 +94,20 @@ describe("readOnly", () => {
       let poolSymbol = mktData.getSymbolFromPoolId(id);
       console.log(`Perp symbol ${perpSymbol} -> pool ID ${id} -> pool symbol ${poolSymbol}`);
     });
+
+    it("get price", async () => {
+      /* not deployed yet...
+      let perpSymbol = "ETH-USD-MATIC";
+      let pxLong = await mktData.getPerpetualPrice(perpSymbol, 2);
+      let pxShort = await mktData.getPerpetualPrice(perpSymbol, -2);
+      console.log(`Perp price long ${pxLong} / short ${pxShort}`);
+      */
+    });
+    it("get mark price", async () => {
+      let perpSymbol = "ETH-USD-MATIC";
+      let pxMark = await mktData.getMarkPrice(perpSymbol);
+      console.log(`Perp mark price ${pxMark}`);
+    });
   });
 
   describe("Liquidity Provider", () => {
