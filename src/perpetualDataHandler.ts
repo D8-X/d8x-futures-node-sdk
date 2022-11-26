@@ -301,7 +301,7 @@ export default class PerpetualDataHandler {
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ammState = await _proxyContract.getAMMState(perpId);
-    return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])));
+    return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
   }
 
   /**
