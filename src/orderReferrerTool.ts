@@ -93,7 +93,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param markPrice optional: supply markPrice to check stop-orders
    * @returns true if order can be executed for the current state of the perpetuals
    */
-  public async isTradeable(order: Order, markPrice: number | undefined = undefined) {
+  public async isTradeable(order: Order, markPrice: number | undefined = undefined): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
