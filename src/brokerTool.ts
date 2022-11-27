@@ -12,7 +12,8 @@ import AccountTrade from "./accountTrade";
 export default class BrokerTool extends WriteAccessHandler {
   /**
    * Constructor
-   * @param {NodeSDKConfig} config Configuration object. Created for example by PerpetualDataHandler.readSDKConfig("testnet")
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
+   * readSDKConfig. For example: const config = PerpetualDataHandler.readSDKConfig("testnet")
    * @param {string} privateKey Private key of a broker.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
