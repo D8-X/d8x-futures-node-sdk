@@ -475,7 +475,7 @@ export default class PerpetualDataHandler {
       fLimitPrice = floatToABK64x64(order.limitPrice);
     }
 
-    let iDeadline = order.deadline == undefined ? Date.now() + ORDER_MAX_DURATION_SEC : order.deadline;
+    let iDeadline = order.deadline == undefined ? Date.now() / 1000 + ORDER_MAX_DURATION_SEC : order.deadline;
     let fTriggerPrice = order.stopPrice == undefined ? BigNumber.from(0) : floatToABK64x64(order.stopPrice);
     if (order.reduceOnly != undefined && order.reduceOnly == true) {
     }
@@ -491,8 +491,8 @@ export default class PerpetualDataHandler {
       fLimitPrice: fLimitPrice,
       fTriggerPrice: fTriggerPrice,
       fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
-      iDeadline: BigNumber.from(iDeadline),
-      createdTimestamp: BigNumber.from(order.timestamp),
+      iDeadline: BigNumber.from(Math.round(iDeadline)),
+      createdTimestamp: BigNumber.from(Math.round(order.timestamp)),
     };
     return smOrder;
   }

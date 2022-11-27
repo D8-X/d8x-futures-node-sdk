@@ -212,7 +212,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 5,
         leverage: 2,
-        timestamp: Date.now(),
+        timestamp: Date.now() / 1000,
       };
       const myAddress = new ethers.Wallet(pk).address;
       let fee = await brokerTool.determineExchangeFee(order, myAddress);
@@ -226,11 +226,11 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 0.5,
         leverage: 2,
-        timestamp: Date.now(),
+        timestamp: Date.now() / 1000,
       };
       const myAddress = new ethers.Wallet(pk).address;
       let brokerFee = 0.05;
-      let deadline = Date.now() + 10000;
+      let deadline = Math.round(Date.now() / 1000) + 10000;
       let signedOrder = await brokerTool.signOrder(order, myAddress, brokerFee, deadline);
       let fee = await brokerTool.determineExchangeFee(signedOrder, myAddress);
       console.log(`exchange fee for a broker-signed order with my address is ${10_000 * fee} basis points`);
