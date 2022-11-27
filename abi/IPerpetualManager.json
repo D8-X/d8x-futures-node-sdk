@@ -4,6 +4,68 @@
         "inputs": [
             {
                 "indexed": true,
+                "internalType": "uint8",
+                "name": "poolId",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "oldOwner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint32",
+                "name": "numLots",
+                "type": "uint32"
+            }
+        ],
+        "name": "BrokerLotsTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint8",
+                "name": "poolId",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "oldOwner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "newOwner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
+                "name": "fVolume",
+                "type": "int128"
+            }
+        ],
+        "name": "BrokerVolumeTransferred",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
                 "internalType": "uint24",
                 "name": "perpetualId",
                 "type": "uint24"
@@ -369,6 +431,63 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
+                "internalType": "uint32[]",
+                "name": "designations",
+                "type": "uint32[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint16[]",
+                "name": "fees",
+                "type": "uint16[]"
+            }
+        ],
+        "name": "SetBrokerDesignations",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "tiers",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint16[]",
+                "name": "feesTbps",
+                "type": "uint16[]"
+            }
+        ],
+        "name": "SetBrokerTiers",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "tiers",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint16[]",
+                "name": "feesTbps",
+                "type": "uint16[]"
+            }
+        ],
+        "name": "SetBrokerVolumeTiers",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": true,
                 "internalType": "uint24",
                 "name": "perpetualId",
@@ -602,6 +721,57 @@
             }
         ],
         "name": "SetTargetPoolSizeUpdateTime",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "tiers",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint16[]",
+                "name": "feesTbps",
+                "type": "uint16[]"
+            }
+        ],
+        "name": "SetTraderTiers",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256[]",
+                "name": "tiers",
+                "type": "uint256[]"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint16[]",
+                "name": "feesTbps",
+                "type": "uint16[]"
+            }
+        ],
+        "name": "SetTraderVolumeTiers",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "tokenAddr",
+                "type": "address"
+            }
+        ],
+        "name": "SetUtilityToken",
         "type": "event"
     },
     {
@@ -2337,6 +2507,54 @@
     {
         "inputs": [
             {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "_brokerAddr",
+                "type": "address"
+            }
+        ],
+        "name": "getCurrentBrokerVolume",
+        "outputs": [
+            {
+                "internalType": "int128",
+                "name": "",
+                "type": "int128"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "_traderAddr",
+                "type": "address"
+            }
+        ],
+        "name": "getCurrentTraderVolume",
+        "outputs": [
+            {
+                "internalType": "int128",
+                "name": "",
+                "type": "int128"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "int128",
                 "name": "_fPosition0",
                 "type": "int128"
@@ -3705,6 +3923,30 @@
                 "internalType": "uint24",
                 "name": "_iPerpetualId",
                 "type": "uint24"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fTradeAmountBC",
+                "type": "int128"
+            }
+        ],
+        "name": "queryPerpetualPrice",
+        "outputs": [
+            {
+                "internalType": "int128",
+                "name": "",
+                "type": "int128"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "_iPerpetualId",
+                "type": "uint24"
             }
         ],
         "name": "rebalance",
@@ -3927,6 +4169,29 @@
             }
         ],
         "name": "setFundTransferConvergenceHours",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "_brokerAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_feeTbps",
+                "type": "uint16"
+            }
+        ],
+        "name": "setInitialVolumeForFee",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -4446,6 +4711,47 @@
             }
         ],
         "name": "tradeBySig",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "_transferToAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_lots",
+                "type": "uint32"
+            }
+        ],
+        "name": "transferBrokerLots",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "_transferToAddr",
+                "type": "address"
+            }
+        ],
+        "name": "transferBrokerOwnership",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
