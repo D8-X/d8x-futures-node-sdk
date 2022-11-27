@@ -100,12 +100,10 @@ describe("readOnly", () => {
     });
 
     it("get price", async () => {
-      /* not deployed yet...
       let perpSymbol = "ETH-USD-MATIC";
       let pxLong = await mktData.getPerpetualPrice(perpSymbol, 2);
       let pxShort = await mktData.getPerpetualPrice(perpSymbol, -2);
       console.log(`Perp price long ${pxLong} / short ${pxShort}`);
-      */
     });
     it("get mark price", async () => {
       let perpSymbol = "ETH-USD-MATIC";
