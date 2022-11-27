@@ -18,7 +18,8 @@ import WriteAccessHandler from "./writeAccessHandler";
 export default class AccountTrade extends WriteAccessHandler {
   /**
    * Constructor
-   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
+   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
    * @param {string} privateKey Private key of account that trades.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
