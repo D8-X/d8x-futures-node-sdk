@@ -3,7 +3,8 @@ import { NodeSDKConfig } from "./nodeSDKTypes";
 import { ABK64x64ToFloat } from "./d8XMath";
 
 /**
- * Methods to liquidate traders.
+ * Functions to liquidate traders. This class requires a private key 
+ * and executes smart-contract interactions that require gas-payments.
  */
 export default class LiquidatorTool extends WriteAccessHandler {
   /**
