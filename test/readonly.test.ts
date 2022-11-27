@@ -95,6 +95,10 @@ describe("readOnly", () => {
       console.log(`Perp symbol ${perpSymbol} -> pool ID ${id} -> pool symbol ${poolSymbol}`);
     });
 
+    it("get readonly instance", async () => {
+      let proxy = await mktData.getReadOnlyProxyInstance();
+    });
+
     it("get price", async () => {
       /* not deployed yet...
       let perpSymbol = "ETH-USD-MATIC";

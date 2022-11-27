@@ -30,6 +30,17 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
+   * Get contract instance. Useful for event listening.
+   * @returns read-only proxy instance
+   */
+  public getReadOnlyProxyInstance(): ethers.Contract {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    return this.proxyContract;
+  }
+
+  /**
    * Information about the products traded in the exchange.
    * @returns {ExchangeInfo} Array of static data for all the pools and perpetuals in the system.
    */
