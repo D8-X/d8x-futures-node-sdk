@@ -165,12 +165,9 @@ export default class BrokerTool extends WriteAccessHandler {
    * Deposit lots to the default fund of a given pool.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {number} lots Number of lots to deposit into this pool.
-   * @returns {ethers.providers.TransactionResponse} Transaction object.
+   * @returns {ethers.ContractTransaction} ContractTransaction object.
    */
-  public async brokerDepositToDefaultFund(
-    poolSymbolName: string,
-    lots: number
-  ): Promise<ethers.providers.TransactionResponse> {
+  public async brokerDepositToDefaultFund(poolSymbolName: string, lots: number): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

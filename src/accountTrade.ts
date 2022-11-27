@@ -49,9 +49,9 @@ export default class AccountTrade extends WriteAccessHandler {
   /**
    * Submits an order to the exchange.
    * @param {Order} order Order struct.
-   * @returns {string} Transaction hash.
+   * @returns {ContractTransaction} Contract Transaction (containing events).
    */
-  public async order(order: Order): Promise<string | undefined> {
+  public async order(order: Order): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -129,11 +129,11 @@ export default class AccountTrade extends WriteAccessHandler {
     chainId: number,
     signer: ethers.Wallet,
     gasLimit: number
-  ): Promise<string | undefined> {
+  ): Promise<ethers.ContractTransaction> {
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap);
     // if we are here, we have a clean order
     // decide whether to send order to Limit Order Book or AMM based on order type
-    let tx: ethers.Transaction;
+    let tx: ethers.ContractTransaction;
     if (order.type == ORDER_TYPE_MARKET) {
       // send market order
       tx = await proxyContract.trade(scOrder, { gasLimit: gasLimit });
@@ -145,7 +145,7 @@ export default class AccountTrade extends WriteAccessHandler {
       let signature = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
       tx = await orderBookContract.createLimitOrder(scOrder, signature, { gasLimit: gasLimit });
     }
-    return tx.hash;
+    return tx;
   }
 
   protected async _cancelOrder(

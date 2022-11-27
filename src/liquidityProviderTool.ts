@@ -59,7 +59,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    * @param {number} amountCC  Amount in pool-collateral currency
    * @return Transaction object
    */
-  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ethers.providers.TransactionResponse> {
+  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

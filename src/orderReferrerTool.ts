@@ -27,7 +27,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     symbol: string,
     orderId: string,
     referrerAddr?: string
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

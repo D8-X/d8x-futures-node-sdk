@@ -47,9 +47,12 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * Set allowance for ar margin token (e.g., MATIC, ETH, USDC)
    * @param symbol token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)
    * @param amount optional, amount to approve if not 'infinity'
-   * @returns transaction hash
+   * @returns ContractTransaction
    */
-  public async setAllowance(symbol: string, amount: number | undefined = undefined): Promise<string> {
+  public async setAllowance(
+    symbol: string,
+    amount: number | undefined = undefined
+  ): Promise<ethers.ContractTransaction> {
     //extract margin-currency name
     let symbolarr = symbol.split("-");
     symbol = symbol.length == 3 ? symbolarr[2] : symbolarr[0];
@@ -74,10 +77,9 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     proxyAddr: string,
     signer: ethers.Wallet,
     amount: BigNumber
-  ): Promise<string> {
+  ): Promise<ethers.ContractTransaction> {
     const marginToken: ethers.Contract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
     let tx = await marginToken.approve(proxyAddr, amount);
-    await tx.wait();
-    return tx.hash;
+    return tx;
   }
 }
