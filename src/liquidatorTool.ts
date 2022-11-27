@@ -9,7 +9,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
   /**
    * Constructs a LiquidatorTool instance for a given configuration and private key.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: const config = PerpetualDataHandler.readSDKConfig("testnet")
+   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
    * @param {string} privateKey Private key of account that liquidates.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
