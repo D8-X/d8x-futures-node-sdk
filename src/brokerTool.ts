@@ -6,11 +6,13 @@ import { BigNumber, ethers } from "ethers";
 import AccountTrade from "./accountTrade";
 /**
  * Functions for brokers to determine fees, deposit lots, and sign-up traders.
+ * This class requires a private key and executes smart-contract interactions that
+ * require gas-payments.
  */
 export default class BrokerTool extends WriteAccessHandler {
   /**
    * Constructor
-   * @param {NodeSDKConfig} config Configuration object.
+   * @param {NodeSDKConfig} config Configuration object. Created for example by PerpetualDataHandler.readSDKConfig("testnet")
    * @param {string} privateKey Private key of a broker.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -21,7 +23,7 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * Determine the exchange fee based on lots, traded volume, and D8X balance of this broker.
-   * This is the final exchange fee paid by the broker.
+   * This is the final exchange fee that this broker can offer to traders that trade through him.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @returns {number} Exchange fee for this broker, in decimals (i.e. 0.1% is 0.001)
    */
@@ -36,7 +38,7 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * Determine the exchange fee based on lots purchased by this broker.
-   * The final exchange fee paid by the broker is equal to
+   * The final exchange fee that this broker can offer to traders that trade through him is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {number=} lots Optional, designation to use if different from this broker's.
@@ -59,7 +61,7 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * Determine the exchange fee based on volume traded under this broker.
-   * The final exchange fee paid by the broker is equal to
+   * The final exchange fee that this broker can offer to traders that trade through him is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @returns {number} Fee based solely on a broker's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
@@ -75,7 +77,7 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * Determine the exchange fee based on the current D8X balance in a broker's wallet.
-   * The final exchange fee paid by the broker is equal to
+   * The final exchange fee that this broker can offer to traders that trade through him is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeForBrokerVolume(symbol), brokerTool.getFeeForBrokerStake)
    * @param {string=} brokerAddr Address of the broker in question, if different from the one calling this function.
    * @returns {number} Fee based solely on a broker's D8X balance, in decimals (i.e. 0.1% is 0.001).
@@ -179,11 +181,13 @@ export default class BrokerTool extends WriteAccessHandler {
   // Signatures
 
   /**
-   * Adds this broker's signature to an order so that it can be submitted by an approved trader.
+   * Adds this broker's signature to an order. An order signed by a broker is considered 
+   * to be routed through this broker and benefits from the broker's fee conditions.
    * @param {Order} order Order to sign.
    * @param {string} traderAddr Address of trader submitting the order.
-   * @param {number} feeDecimals Fee that this broker is approving for the trader.
-   * @param {number} deadline Deadline for the order to be executed.
+   * @param {number} feeDecimals Fee that this broker imposes on this order. 
+   * The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.
+   * @param {number} deadline Deadline for the order to be executed. Specify deadline as a unix timestamp 
    * @returns {Order} An order signed by this broker, which can be submitted directly with AccountTrade.order.
    */
   public async signOrder(order: Order, traderAddr: string, brokerFee: number, deadline: number): Promise<Order> {
@@ -280,7 +284,9 @@ export default class BrokerTool extends WriteAccessHandler {
   // Transfer ownership
 
   /**
-   * Transfer ownership of a broker's status to a new wallet.
+   * Transfer ownership of a broker's status to a new wallet. This function transfers the values related to 
+   * (i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
+   * his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {string} newAddress The address this broker wants to use from now on.
    * @returns {ethers.providers.TransactionResponse} ethers transaction object
