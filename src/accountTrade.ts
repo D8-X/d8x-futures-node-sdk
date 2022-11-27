@@ -48,7 +48,14 @@ export default class AccountTrade extends WriteAccessHandler {
 
   /**
    * Submits an order to the exchange.
-   * @param {Order} order Order struct.
+   * @param {Order} order Order structure. As a minimum the structure needs to 
+   * specify symbol, side, type and quantity. For example: 
+   * let order: Order = {
+   *       symbol: "MATIC-USD-MATIC",
+   *       side: "BUY",
+   *       type: "MARKET",
+   *       quantity: 1,
+   * }
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
   public async order(order: Order): Promise<ethers.ContractTransaction> {
