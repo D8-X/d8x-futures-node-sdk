@@ -4,7 +4,8 @@ import { NodeSDKConfig, ERC20_ABI } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { floatToABK64x64, dec18ToFloat, ABK64x64ToFloat } from "./d8XMath";
 /**
- * Methods to provide liquidity
+ * Functions to provide liquidity. This class requires a private key and executes
+ * smart-contract interactions that require gas-payments.
  */
 export default class LiquidityProviderTool extends WriteAccessHandler {
   /**
