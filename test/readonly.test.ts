@@ -248,6 +248,10 @@ describe("readOnly", () => {
       refTool = new OrderReferrerTool(config, pk);
       await refTool.createProxyInstance();
     });
+    it("get order by id/digest", async () => {
+      let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
+      console.log(order);
+    });
     it("should get number of open orders", async () => {
       let symbol = "ETH-USD-MATIC";
       let numOrders = await refTool.numberOfOpenOrders(symbol);

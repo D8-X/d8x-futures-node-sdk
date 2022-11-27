@@ -62,6 +62,22 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   }
 
   /**
+   * Get order from the digest (=id)
+   * @param symbol symbol of order book, e.g. ETH-USD-MATIC
+   * @param digest digest of the order (=order ID)
+   * @returns order or undefined
+   */
+  public async getOrderById(symbol: string, id: string): Promise<Order | undefined> {
+    let ob = await this.getOrderBookContract(symbol);
+    let smartContractOrder = await ob.orderOfDigest(id);
+    if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
+      return undefined;
+    }
+    let order = OrderReferrerTool.fromSmartContractOrder(smartContractOrder, this.symbolToPerpStaticInfo);
+    return order;
+  }
+
+  /**
    * Get a list of active conditional orders in the order book.
    * This a read-only action and does not incur in gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
