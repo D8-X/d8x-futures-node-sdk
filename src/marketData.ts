@@ -20,6 +20,11 @@ import { SmartContractOrder, Order } from "./nodeSDKTypes";
  * No gas required for the queries here.
  */
 export default class MarketData extends PerpetualDataHandler {
+  /**
+   * Constructor
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
+   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   */
   public constructor(config: NodeSDKConfig) {
     super(config);
   }
@@ -68,7 +73,7 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Information about the position open by a given trader in a given perpetual contract.
+   * Information about the positions open by a given trader in a given perpetual contract.
    * @param {string} traderAddr Address of the trader for which we get the position risk.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @returns {MarginAccount}
