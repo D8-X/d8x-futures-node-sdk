@@ -16,6 +16,7 @@ import PerpetualDataHandler from "./perpetualDataHandler";
 import { SmartContractOrder, Order } from "./nodeSDKTypes";
 
 /**
+ * Functions to access market data (e.g., information on open orders, information on products that can be traded).
  * This class requires no private key and is blockchain read-only.
  * No gas required for the queries here.
  */
