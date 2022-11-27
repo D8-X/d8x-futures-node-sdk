@@ -100,7 +100,14 @@ export default class BrokerTool extends WriteAccessHandler {
    * Use this, for instance, to verify that the fee to be charged for a given order is as expected,
    * before and after signing it with brokerTool.signOrder.
    * This fee is equal or lower than the broker induced fee, provided the order is properly signed.
-   * @param {Order} order Order for which to determine the exchange fee. Not necessarily signed by this broker.
+   * @param {Order} order Order structure. As a minimum the structure needs to 
+   * specify symbol, side, type and quantity. For example: 
+   * let order: Order = {
+   *       symbol: "MATIC-USD-MATIC",
+   *       side: "BUY",
+   *       type: "MARKET",
+   *       quantity: 1,
+   * }
    * @param {string} traderAddr Address of the trader for whom to determine the fee.
    * @returns {number} Fee in decimals (i.e. 0.1% is 0.001).
    */
