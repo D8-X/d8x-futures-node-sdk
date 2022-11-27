@@ -9,7 +9,8 @@ import { floatToABK64x64, dec18ToFloat, ABK64x64ToFloat } from "./d8XMath";
 export default class LiquidityProviderTool extends WriteAccessHandler {
   /**
    * Constructor
-   * @param config configuration
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
+   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
    * @param privateKey private key of account that trades
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -17,10 +18,10 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   }
 
   /**
-   * Value of the share tokens for this liquidity provider
+   * Value of the pool share tokens for this liquidity provider
    * in poolSymbol-currency (e.g. MATIC, USDC).
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC).
-   * @return Value in poolSymbol-currency (e.g. MATIC, USDC), balabce of share tokens, and share token symbol.
+   * @return Value in poolSymbol-currency (e.g. MATIC, USDC), balance of pool share tokens, and share token symbol.
    */
   public async getParticipationValue(
     poolSymbolName: string
@@ -55,7 +56,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
 
   /**
    *  Add liquidity to the PnL participant fund. The address gets pool shares in return.
-   * @param {string} poolname  Name of pool symbol (e.g. MATIC)
+   * @param {string} poolSymbolName  Name of pool symbol (e.g. MATIC)
    * @param {number} amountCC  Amount in pool-collateral currency
    * @return Transaction object
    */
@@ -71,9 +72,9 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   }
 
   /**
-   * Remove liquidity from the pool.
+   * Remove liquidity from the pool. The address loses pool shares in return.
    * @param {string} poolSymbolName Name of pool symbol (e.g. MATIC).
-   * @param {string} amountPoolShares Amount in pool-tokens, removes everything if > available amount.
+   * @param {string} amountPoolShares Amount in pool-shares, removes everything if > available amount.
    * @return Transaction object.
    */
   public async removeLiquidity(
