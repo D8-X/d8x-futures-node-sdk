@@ -3,12 +3,15 @@ import { BUY_SIDE, NodeSDKConfig, Order, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID 
 import { ethers } from "ethers";
 
 /**
- * Methods to execute existing orders from the limit order book.
+ * Functions to execute existing conditional orders from the limit order book. This class
+ * requires a private key and executes smart-contract interactions that require
+ * gas-payments.
  */
 export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Constructor.
-   * @param {NodeSDKConfig} config Configuration object.
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig. 
+   * For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
    * @param {string} privateKey Private key of the wallet that executes the conditional orders.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -16,7 +19,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   }
 
   /**
-   * Executes an order by symbol and ID. This action interacts with the blockchain and incurs in gas costs.
+   * Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
    * @param {string=} referrerAddr Address of the wallet to be credited for executing the order,
