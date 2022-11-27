@@ -42,7 +42,7 @@ describe("write and spoil gas and tokens", () => {
       type: "MARKET",
       quantity: -0.03,
       leverage: 2,
-      timestamp: Date.now(),
+      timestamp: Date.now() / 1000,
     };
     //* UNCOMMENT TO ENABLE TRADING
     let tx = await accTrade.order(order);
@@ -57,7 +57,7 @@ describe("write and spoil gas and tokens", () => {
       limitPrice: 4000,
       quantity: 0.5,
       leverage: 2,
-      timestamp: Date.now(),
+      timestamp: Date.now() / 1000,
     };
     //* UNCOMMENT TO ENABLE TRADING
     let tx = await accTrade.order(order);
