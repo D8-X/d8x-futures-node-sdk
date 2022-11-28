@@ -27,7 +27,18 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // LiquidatorTool (authentication required, PK is an environment variable with a private key)
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  // Create a proxy instance to access the blockchain
+  await lqudtrTool.createProxyInstance();   
+}
+main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
@@ -41,6 +52,23 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | traderAddr | <code>string</code> | <p>Address of the trader to be liquidated.</p> |
 | [liquidatorAddr] | <code>string</code> | <p>Address to be credited if the liquidation succeeds. Defaults to the wallet used to execute the liquidation.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // liquidate trader
+  let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC", 
+      "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(liqAmount);     
+}
+main();
+```
 <a name="LiquidatorTool+isMaintenanceMarginSafe"></a>
 
 ### liquidatorTool.isMaintenanceMarginSafe(symbol, traderAddr) ⇒ <code>boolean</code>
@@ -56,6 +84,23 @@ False means that the trader's position can be liquidated.</p>
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | traderAddr | <code>string</code> | <p>Address of the trader whose position you want to assess.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // check if trader can be liquidated
+  let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC", 
+      "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(safe);     
+}
+main();
+```
 <a name="LiquidatorTool+countActivePerpAccounts"></a>
 
 ### liquidatorTool.countActivePerpAccounts(symbol) ⇒ <code>number</code>
@@ -68,6 +113,22 @@ False means that the trader's position can be liquidated.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // get number of active accounts
+  let accounts = await lqudtrTool.countActivePerpAccounts("ETH-USD-MATIC");
+  console.log(accounts);     
+}
+main();
+```
 <a name="LiquidatorTool+getActiveAccountsByChunks"></a>
 
 ### liquidatorTool.getActiveAccountsByChunks(symbol, from, to) ⇒ <code>Array.&lt;string&gt;</code>
@@ -82,6 +143,22 @@ False means that the trader's position can be liquidated.</p>
 | from | <code>number</code> | <p>From which account we start counting (0-indexed).</p> |
 | to | <code>number</code> | <p>Until which account we count, non inclusive.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // get all active accounts in chunks
+  let accounts = await lqudtrTool.getActiveAccountsByChunks("ETH-USD-MATIC", 0, 4);
+  console.log(accounts);     
+}
+main();
+```
 <a name="LiquidatorTool+getAllActiveAccounts"></a>
 
 ### liquidatorTool.getAllActiveAccounts(symbol) ⇒ <code>Array.&lt;string&gt;</code>
@@ -94,3 +171,19 @@ False means that the trader's position can be liquidated.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // get all active accounts
+  let accounts = await lqudtrTool.getAllActiveAccounts("ETH-USD-MATIC");
+  console.log(accounts);     
+}
+main();
+```

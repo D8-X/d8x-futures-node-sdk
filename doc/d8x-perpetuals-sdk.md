@@ -268,7 +268,18 @@ require gas-payments.</p>
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // AccountTrade (authentication required, PK is an environment variable with a private key)
+  const pk: string = <string>process.env.PK;    
+  let accTrade = new AccountTrade(config, pk);  
+  // Create a proxy instance to access the blockchain
+  await accTrade.createProxyInstance();   
+}
+main();
 ```
 <a name="AccountTrade+cancelOrder"></a>
 
@@ -319,6 +330,22 @@ Note that this result only includes exchange fees, additional broker fees are no
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | [brokerAddr] | <code>string</code> | <p>Optional address of a broker this trader may use to trade under.</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let accTrade = new AccountTrade(config, pk); 
+  await accTrade.createProxyInstance();
+  // query exchange fee
+  let fees = await accTrade.queryExchangeFee("MATIC");
+  console.log(fees);     
+}
+main();
+```
 <a name="AccountTrade+getCurrentTraderVolume"></a>
 
 ### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
@@ -332,6 +359,22 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let accTrade = new AccountTrade(config, pk); 
+  await accTrade.createProxyInstance();
+  // query 30 day volume
+  let vol = await accTrade.getCurrentTraderVolume("MATIC");
+  console.log(vol);     
+}
+main();
+```
 <a name="AccountTrade+getOrderIds"></a>
 
 ### accountTrade.getOrderIds(symbol) ⇒ <code>Array.&lt;string&gt;</code>
@@ -378,7 +421,18 @@ require gas-payments.</p>
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // BrokerTool (authentication required, PK is an environment variable with a private key)
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk); 
+  // Create a proxy instance to access the blockchain
+  await brokTool.createProxyInstance();   
+}
+main();
 ```
 <a name="BrokerTool+getBrokerInducedFee"></a>
 
@@ -393,6 +447,22 @@ This is the final exchange fee that this broker can offer to traders that trade 
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get broker induced fee
+  let brokFee = await brokTool.getBrokerInducedFee("MATIC");
+  console.log(brokFee);     
+}
+main();
+```
 <a name="BrokerTool+getFeeForBrokerDesignation"></a>
 
 ### brokerTool.getFeeForBrokerDesignation(poolSymbolName, [lots]) ⇒ <code>number</code>
@@ -408,6 +478,22 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | [lots] | <code>number</code> | <p>Optional, designation to use if different from this broker's.</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get broker fee induced by lots
+  let brokFeeLots = await brokTool.getFeeForBrokerDesignation("MATIC");
+  console.log(brokFeeLots);     
+}
+main();
+```
 <a name="BrokerTool+getFeeForBrokerVolume"></a>
 
 ### brokerTool.getFeeForBrokerVolume(poolSymbolName) ⇒ <code>number</code>
@@ -422,6 +508,22 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get broker fee induced by volume
+  let brokFeeVol = await brokTool.getFeeForBrokerVolume("MATIC");
+  console.log(brokFeeVol);     
+}
+main();
+```
 <a name="BrokerTool+getFeeForBrokerStake"></a>
 
 ### brokerTool.getFeeForBrokerStake([brokerAddr]) ⇒ <code>number</code>
@@ -436,6 +538,22 @@ maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeF
 | --- | --- | --- |
 | [brokerAddr] | <code>string</code> | <p>Address of the broker in question, if different from the one calling this function.</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get broker fee induced by staked d8x
+  let brokFeeStake = await brokTool.getFeeForBrokerStake("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(brokFeeStake);     
+}
+main();
+```
 <a name="BrokerTool+determineExchangeFee"></a>
 
 ### brokerTool.determineExchangeFee(order, traderAddr) ⇒ <code>number</code>
@@ -456,12 +574,26 @@ This fee is equal or lower than the broker induced fee, provided the order is pr
 
 **Example**  
 ```js
-let order: Order = {
-      symbol: "MATIC-USD-MATIC",
-      side: "BUY",
-      type: "MARKET",
-      quantity: 1,
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get exchange fee based on an order and trader
+  let order = {symbol: "ETH-USD-MATIC", 
+      side: "BUY", 
+      type: "MARKET", 
+      quantity: 1, 
+      timestamp: Date.now()
+   };   
+   let exchFee = await brokTool.determineExchangeFee(order,
+       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");   
+  console.log(exchFee);     
 }
+main();
 ```
 <a name="BrokerTool+getCurrentBrokerVolume"></a>
 
@@ -476,6 +608,22 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get 30 day volume for broker
+  let brokVolume = await brokTool.getCurrentBrokerVolume("MATIC");
+  console.log(brokVolume);     
+}
+main();
+```
 <a name="BrokerTool+getLotSize"></a>
 
 ### brokerTool.getLotSize(poolSymbolName) ⇒ <code>number</code>
@@ -489,6 +637,22 @@ This is equivalent to the price of a lot expressed in a given pool's currency (e
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get lot price
+  let brokLotSize = await brokTool.getLotSize("MATIC");
+  console.log(brokLotSize);     
+}
+main();
+```
 <a name="BrokerTool+getBrokerDesignation"></a>
 
 ### brokerTool.getBrokerDesignation(poolSymbolName) ⇒ <code>number</code>
@@ -502,6 +666,22 @@ This is relevant to determine the broker's fee tier.</p>
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // get broker designation
+  let brokDesignation = await brokTool.getBrokerDesignation("MATIC");
+  console.log(brokDesignation);     
+}
+main();
+```
 <a name="BrokerTool+brokerDepositToDefaultFund"></a>
 
 ### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.ContractTransaction</code>
@@ -515,6 +695,22 @@ This is relevant to determine the broker's fee tier.</p>
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | lots | <code>number</code> | <p>Number of lots to deposit into this pool.</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // deposit to default fund
+  let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
+  console.log(respDeposit);     
+}
+main();
+```
 <a name="BrokerTool+signOrder"></a>
 
 ### brokerTool.signOrder(order, traderAddr, feeDecimals, deadline) ⇒ <code>Order</code>
@@ -531,6 +727,29 @@ to be routed through this broker and benefits from the broker's fee conditions.<
 | feeDecimals | <code>number</code> | <p>Fee that this broker imposes on this order. The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.</p> |
 | deadline | <code>number</code> | <p>Deadline for the order to be executed. Specify deadline as a unix timestamp</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let brokTool = new BrokerTool(config, pk);  
+  await brokTool.createProxyInstance();
+  // sign order
+  let order = {symbol: "ETH-USD-MATIC", 
+      side: "BUY", 
+      type: "MARKET", 
+      quantity: 1, 
+      timestamp: Date.now()
+   };   
+   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+       0.0001, 1669723339);   
+  console.log(signedOrder);     
+}
+main();
+```
 <a name="BrokerTool+transferOwnership"></a>
 
 ### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ethers.providers.TransactionResponse</code>
@@ -575,7 +794,18 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // LiquidatorTool (authentication required, PK is an environment variable with a private key)
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  // Create a proxy instance to access the blockchain
+  await lqudtrTool.createProxyInstance();   
+}
+main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
@@ -589,6 +819,23 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | traderAddr | <code>string</code> | <p>Address of the trader to be liquidated.</p> |
 | [liquidatorAddr] | <code>string</code> | <p>Address to be credited if the liquidation succeeds. Defaults to the wallet used to execute the liquidation.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // liquidate trader
+  let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC", 
+      "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(liqAmount);     
+}
+main();
+```
 <a name="LiquidatorTool+isMaintenanceMarginSafe"></a>
 
 ### liquidatorTool.isMaintenanceMarginSafe(symbol, traderAddr) ⇒ <code>boolean</code>
@@ -604,6 +851,23 @@ False means that the trader's position can be liquidated.</p>
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | traderAddr | <code>string</code> | <p>Address of the trader whose position you want to assess.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // check if trader can be liquidated
+  let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC", 
+      "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(safe);     
+}
+main();
+```
 <a name="LiquidatorTool+countActivePerpAccounts"></a>
 
 ### liquidatorTool.countActivePerpAccounts(symbol) ⇒ <code>number</code>
@@ -616,6 +880,22 @@ False means that the trader's position can be liquidated.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // get number of active accounts
+  let accounts = await lqudtrTool.countActivePerpAccounts("ETH-USD-MATIC");
+  console.log(accounts);     
+}
+main();
+```
 <a name="LiquidatorTool+getActiveAccountsByChunks"></a>
 
 ### liquidatorTool.getActiveAccountsByChunks(symbol, from, to) ⇒ <code>Array.&lt;string&gt;</code>
@@ -630,6 +910,22 @@ False means that the trader's position can be liquidated.</p>
 | from | <code>number</code> | <p>From which account we start counting (0-indexed).</p> |
 | to | <code>number</code> | <p>Until which account we count, non inclusive.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // get all active accounts in chunks
+  let accounts = await lqudtrTool.getActiveAccountsByChunks("ETH-USD-MATIC", 0, 4);
+  console.log(accounts);     
+}
+main();
+```
 <a name="LiquidatorTool+getAllActiveAccounts"></a>
 
 ### liquidatorTool.getAllActiveAccounts(symbol) ⇒ <code>Array.&lt;string&gt;</code>
@@ -642,6 +938,22 @@ False means that the trader's position can be liquidated.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidatorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtrTool = new LiquidatorTool(config, pk);  
+  await lqudtrTool.createProxyInstance();
+  // get all active accounts
+  let accounts = await lqudtrTool.getAllActiveAccounts("ETH-USD-MATIC");
+  console.log(accounts);     
+}
+main();
+```
 <a name="LiquidityProviderTool"></a>
 
 ## LiquidityProviderTool
@@ -669,7 +981,18 @@ smart-contract interactions that require gas-payments.</p>
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
+  const pk: string = <string>process.env.PK;    
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);  
+  // Create a proxy instance to access the blockchain
+  await lqudtProviderTool.createProxyInstance();   
+}
+main();
 ```
 <a name="LiquidityProviderTool+getParticipationValue"></a>
 
@@ -684,6 +1007,22 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC).</p> |
 
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance(); 
+  // get value of pool share token
+  let shareToken = await lqudtProviderTool.getParticipationValue("MATIC");
+  console.log(shareToken);     
+}
+main();
+```
 <a name="LiquidityProviderTool+addLiquidity"></a>
 
 ### liquidityProviderTool.addLiquidity(poolSymbolName, amountCC) ⇒
@@ -697,6 +1036,22 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC)</p> |
 | amountCC | <code>number</code> | <p>Amount in pool-collateral currency</p> |
 
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance(); 
+  // add liquidity
+  let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
+  console.log(respAddLiquidity);     
+}
+main();
+```
 <a name="LiquidityProviderTool+removeLiquidity"></a>
 
 ### liquidityProviderTool.removeLiquidity(poolSymbolName, amountPoolShares) ⇒
@@ -710,6 +1065,22 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC).</p> |
 | amountPoolShares | <code>string</code> | <p>Amount in pool-shares, removes everything if &gt; available amount.</p> |
 
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance(); 
+  // remove liquidity
+  let respRemoveLiquidity = await lqudtProviderTool.removeLiquidity("MATIC", 0.1);
+  console.log(respRemoveLiquidity);  
+}
+main();
+```
 <a name="MarketData"></a>
 
 ## MarketData
@@ -737,11 +1108,21 @@ No gas required for the queries here.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // MarketData (read only, no authentication needed)
+  let mktData = new MarketData(config);  
+  // Create a proxy instance to access the blockchain
+  await mktData.createProxyInstance();    
+}
+main();
 ```
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
@@ -750,6 +1131,21 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>read-only proxy instance</p>  
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // Get contract instance
+  let proxy = await mktData.getReadOnlyProxyInstance();
+  console.log(proxy);
+}
+main();
+```
 <a name="MarketData+exchangeInfo"></a>
 
 ### marketData.exchangeInfo() ⇒ <code>ExchangeInfo</code>
@@ -757,6 +1153,21 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <code>ExchangeInfo</code> - <p>Array of static data for all the pools and perpetuals in the system.</p>  
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // Get exchange info
+  let info = await mktData.exchangeInfo();
+  console.log(info);
+}
+main();
+```
 <a name="MarketData+openOrders"></a>
 
 ### marketData.openOrders(traderAddr, symbol) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
@@ -770,6 +1181,32 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+// Setup
+const config = PerpetualDataHandler.readSDKConfig("testnet");
+let mktData = new MarketData(config);
+await mktData.createProxyInstance();
+// Get all open orders for a trader/symbol
+let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+    "ETH-USD-MATIC");
+```
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // Get all open orders for a trader/symbol
+  let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+      "ETH-USD-MATIC");   
+  console.log(opOrder);
+}
+main();
+```
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
@@ -782,6 +1219,32 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+// Setup
+const config = PerpetualDataHandler.readSDKConfig("testnet");
+let mktData = new MarketData(config);
+await mktData.createProxyInstance();
+// Get position risk info
+let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+    "ETH-USD-MATIC");
+```
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // Get position risk info
+  let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+      "ETH-USD-MATIC");
+  console.log(posRisk);
+}
+main();
+```
 <a name="MarketData+getOraclePrice"></a>
 
 ### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>
@@ -795,6 +1258,21 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | base | <code>string</code> | <p>Index name, e.g. ETH.</p> |
 | quote | <code>string</code> | <p>Quote currency, e.g. USD.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // get oracle price
+  let price = await mktData.getOraclePrice("ETH", "USD");
+  console.log(price);
+}
+main();
+```
 <a name="MarketData+getMarkPrice"></a>
 
 ### marketData.getMarkPrice(symbol) ⇒
@@ -807,6 +1285,21 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // get mark price
+  let price = await mktData.getMarkPrice("ETH-USD-MATIC");
+  console.log(price);
+}
+main();
+```
 <a name="MarketData+getPerpetualPrice"></a>
 
 ### marketData.getPerpetualPrice(symbol, quantity) ⇒
@@ -820,6 +1313,21 @@ const config = PerpetualDataHandler.readSDKConfig("testnet")
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 | quantity | <p>quantity to be traded, negative if short</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);   
+  await mktData.createProxyInstance();
+  // get perpetual price
+  let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
+  console.log(price);
+}
+main();
+```
 <a name="OrderReferrerTool"></a>
 
 ## OrderReferrerTool

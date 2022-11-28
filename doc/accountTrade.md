@@ -28,7 +28,18 @@ require gas-payments.</p>
 
 **Example**  
 ```js
-const config = PerpetualDataHandler.readSDKConfig("testnet")
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // load configuration for testnet
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // AccountTrade (authentication required, PK is an environment variable with a private key)
+  const pk: string = <string>process.env.PK;    
+  let accTrade = new AccountTrade(config, pk);  
+  // Create a proxy instance to access the blockchain
+  await accTrade.createProxyInstance();   
+}
+main();
 ```
 <a name="AccountTrade+cancelOrder"></a>
 
@@ -79,6 +90,22 @@ Note that this result only includes exchange fees, additional broker fees are no
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | [brokerAddr] | <code>string</code> | <p>Optional address of a broker this trader may use to trade under.</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let accTrade = new AccountTrade(config, pk); 
+  await accTrade.createProxyInstance();
+  // query exchange fee
+  let fees = await accTrade.queryExchangeFee("MATIC");
+  console.log(fees);     
+}
+main();
+```
 <a name="AccountTrade+getCurrentTraderVolume"></a>
 
 ### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
@@ -92,6 +119,22 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;    
+  let accTrade = new AccountTrade(config, pk); 
+  await accTrade.createProxyInstance();
+  // query 30 day volume
+  let vol = await accTrade.getCurrentTraderVolume("MATIC");
+  console.log(vol);     
+}
+main();
+```
 <a name="AccountTrade+getOrderIds"></a>
 
 ### accountTrade.getOrderIds(symbol) ⇒ <code>Array.&lt;string&gt;</code>
