@@ -18,10 +18,10 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   // load configuration for testnet
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
-   *   const pk: string = <string>process.env.PK;    
-   *   let lqudtrTool = new LiquidatorTool(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   // Create a proxy instance to access the blockchain
-   *   await lqudtrTool.createProxyInstance();   
+   *   await lqudtrTool.createProxyInstance();
    * }
    * main();
    *
@@ -43,13 +43,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let lqudtrTool = new LiquidatorTool(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // liquidate trader
-   *   let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC", 
+   *   let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC",
    *       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-   *   console.log(liqAmount);     
+   *   console.log(liqAmount);
    * }
    * main();
    *
@@ -79,13 +79,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let lqudtrTool = new LiquidatorTool(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // check if trader can be liquidated
-   *   let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC", 
+   *   let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC",
    *       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-   *   console.log(safe);     
+   *   console.log(safe);
    * }
    * main();
    *
@@ -112,6 +112,9 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let fAmount = await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
       gasLimit: gasLimit,
     });
+    if (fAmount == undefined) {
+      return fAmount;
+    }
     return ABK64x64ToFloat(fAmount);
   }
 
@@ -124,12 +127,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let lqudtrTool = new LiquidatorTool(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // get number of active accounts
    *   let accounts = await lqudtrTool.countActivePerpAccounts("ETH-USD-MATIC");
-   *   console.log(accounts);     
+   *   console.log(accounts);
    * }
    * main();
    *
@@ -140,7 +143,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this.proxyContract.countActivePerpAccounts(perpID);
+    let numAccounts = await this.proxyContract.countActivePerpAccounts(perpID);
+    return Number(numAccounts);
   }
 
   /**
@@ -154,12 +158,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let lqudtrTool = new LiquidatorTool(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // get all active accounts in chunks
    *   let accounts = await lqudtrTool.getActiveAccountsByChunks("ETH-USD-MATIC", 0, 4);
-   *   console.log(accounts);     
+   *   console.log(accounts);
    * }
    * main();
    *
@@ -182,12 +186,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let lqudtrTool = new LiquidatorTool(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // get all active accounts
    *   let accounts = await lqudtrTool.getAllActiveAccounts("ETH-USD-MATIC");
-   *   console.log(accounts);     
+   *   console.log(accounts);
    * }
    * main();
    *
