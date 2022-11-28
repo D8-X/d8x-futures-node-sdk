@@ -22,13 +22,18 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
    * readSDKConfig.
    * @example
-   * // load configuration for testnet
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * // AccountTrade (authentication required, PK is an environment variable with a private key)
-   * const pk: string = <string>process.env.PK;      
-   * let accTrade = new AccountTrade(config, pk);  
-   * // Create a proxy instance to access the blockchain
-   * await accTrade.createProxyInstance();
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // load configuration for testnet
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // AccountTrade (authentication required, PK is an environment variable with a private key)
+   *   const pk: string = <string>process.env.PK;    
+   *   let accTrade = new AccountTrade(config, pk);  
+   *   // Create a proxy instance to access the blockchain
+   *   await accTrade.createProxyInstance();   
+   * }
+   * main();
    *
    * @param {string} privateKey Private key of account that trades.
    */
@@ -99,13 +104,19 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {string=} brokerAddr Optional address of a broker this trader may use to trade under.
    * @example
-   * // Setup (authentication required, PK is an environment variable with a private key)
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * const pk: string = <string>process.env.PK;
-   * let accTrade = new AccountTrade(config, pk);
-   * await accTrade.createProxyInstance();
-   * // query exchange fee
-   * let fees = await accTrade.queryExchangeFee("MATIC");
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let accTrade = new AccountTrade(config, pk); 
+   *   await accTrade.createProxyInstance();
+   *   // query exchange fee
+   *   let fees = await accTrade.queryExchangeFee("MATIC");
+   *   console.log(fees);     
+   * }
+   * main();
    *
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
    */
@@ -126,13 +137,19 @@ export default class AccountTrade extends WriteAccessHandler {
    * The weights are chosen so that in average this coincides with the 30 day volume.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example
-   * // Setup (authentication required, PK is an environment variable with a private key)
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * const pk: string = <string>process.env.PK;
-   * let accTrade = new AccountTrade(config, pk);
-   * await accTrade.createProxyInstance();
-   * // query exchange fee
-   * let volFee = await accTrade.getCurrentTraderVolume("MATIC");
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let accTrade = new AccountTrade(config, pk); 
+   *   await accTrade.createProxyInstance();
+   *   // query 30 day volume
+   *   let vol = await accTrade.getCurrentTraderVolume("MATIC");
+   *   console.log(vol);     
+   * }
+   * main();
    *
    * @returns {number} Current trading volume for this trader, in USD.
    */
