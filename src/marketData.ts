@@ -23,15 +23,20 @@ import { SmartContractOrder, Order } from "./nodeSDKTypes";
 export default class MarketData extends PerpetualDataHandler {
   /**
    * Constructor
-   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig.
+   * @param {NodeSDKConfig} config Configuration object, see 
+   * PerpetualDataHandler.readSDKConfig.
    * @example
-   * // load configuration for testnet
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * // MarketData (read only, no authentication needed)
-   * let mktData = new MarketData(config);
-   * // Create a proxy instance to access the blockchain
-   * await mktData.createProxyInstance();
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // load configuration for testnet
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // MarketData (read only, no authentication needed)
+   *   let mktData = new MarketData(config);  
+   *   // Create a proxy instance to access the blockchain
+   *   await mktData.createProxyInstance();    
+   * }
+   * main();
    *
    */
   public constructor(config: NodeSDKConfig) {
@@ -46,12 +51,18 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Get contract instance. Useful for event listening.
    * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // Get contract instance
-   * let proxy = await mktData.getReadOnlyProxyInstance();
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // Get contract instance
+   *   let proxy = await mktData.getReadOnlyProxyInstance();
+   *   console.log(proxy);
+   * }
+   * main();
    *
    * @returns read-only proxy instance
    */
@@ -65,12 +76,18 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Information about the products traded in the exchange.
    * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // Get exchange info
-   * let info = await mktData.exchangeInfo();
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // Get exchange info
+   *   let info = await mktData.exchangeInfo();
+   *   console.log(info);
+   * }
+   * main();
    *
    * @returns {ExchangeInfo} Array of static data for all the pools and perpetuals in the system.
    */
@@ -93,6 +110,20 @@ export default class MarketData extends PerpetualDataHandler {
    * // Get all open orders for a trader/symbol
    * let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
    *     "ETH-USD-MATIC");
+   * @example
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // Get all open orders for a trader/symbol
+   *   let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+   *       "ETH-USD-MATIC");   
+   *   console.log(opOrder);
+   * }
+   * main();
    *
    * @returns {Array<Array<Order>, Array<string>>} Array of open orders and corresponding order-ids.
    */
@@ -118,6 +149,20 @@ export default class MarketData extends PerpetualDataHandler {
    * // Get position risk info
    * let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
    *     "ETH-USD-MATIC");
+   * @example
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // Get position risk info
+   *   let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+   *       "ETH-USD-MATIC");
+   *   console.log(posRisk);
+   * }
+   * main();
    *
    * @returns {MarginAccount}
    */
@@ -139,12 +184,18 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {string} base Index name, e.g. ETH.
    * @param {string} quote Quote currency, e.g. USD.
    * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // get oracle price
-   * let price = await mktData.getOraclePrice("ETH", "USD");
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // get oracle price
+   *   let price = await mktData.getOraclePrice("ETH", "USD");
+   *   console.log(price);
+   * }
+   * main();
    *
    * @returns {number} Price of index in given currency.
    */
@@ -160,12 +211,18 @@ export default class MarketData extends PerpetualDataHandler {
    * Get the current mark price
    * @param symbol symbol of the form ETH-USD-MATIC
    * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // get mark price
-   * let price = await mktData.getMarkPrice("ETH-USD-MATIC");
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // get mark price
+   *   let price = await mktData.getMarkPrice("ETH-USD-MATIC");
+   *   console.log(price);
+   * }
+   * main();
    *
    * @returns mark price
    */
@@ -181,12 +238,18 @@ export default class MarketData extends PerpetualDataHandler {
    * @param symbol symbol of the form ETH-USD-MATIC
    * @param quantity quantity to be traded, negative if short
    * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // get perpetual price
-   * let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);   
+   *   await mktData.createProxyInstance();
+   *   // get perpetual price
+   *   let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
+   *   console.log(price);
+   * }
+   * main();
    *
    * @returns price (number)
    */
