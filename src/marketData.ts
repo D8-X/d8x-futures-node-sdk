@@ -92,7 +92,7 @@ export default class MarketData extends PerpetualDataHandler {
    * await mktData.createProxyInstance();
    * // Get all open orders for a trader/symbol
    * let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
-   * "ETH-USD-MATIC");
+   *     "ETH-USD-MATIC");
    *
    * @returns {Array<Array<Order>, Array<string>>} Array of open orders and corresponding order-ids.
    */
@@ -117,7 +117,7 @@ export default class MarketData extends PerpetualDataHandler {
    * await mktData.createProxyInstance();
    * // Get position risk info
    * let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
-   * "ETH-USD-MATIC");
+   *     "ETH-USD-MATIC");
    *
    * @returns {MarginAccount}
    */
