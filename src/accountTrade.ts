@@ -67,12 +67,28 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param {Order} order Order structure. As a minimum the structure needs to
    * specify symbol, side, type and quantity.
    * @example
-   * let order: Order = {
-   *       symbol: "MATIC-USD-MATIC",
-   *       side: "BUY",
-   *       type: "MARKET",
-   *       quantity: 1,
-   * }
+   * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *    console.log(AccountTrade);
+   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *    const pk: string = <string>process.env.PK;    
+   *    let accTrade = new AccountTrade(config, pk); 
+   *    await accTrade.createProxyInstance();
+   *    // set allowance
+   *    await accTrade.setAllowance("MATIC");
+   *    // set an order
+   *    let order: Order = {
+   *        symbol: "MATIC-USD-MATIC",
+   *        side: "BUY",
+   *        type: "MARKET",
+   *        quantity: 100,
+   *        timestamp: Date.now()
+   *    };
+   *    let orderTransaction = await accTrade.order(order);
+   *    console.log(orderTransaction);    
+   *  }
+   *  main();
    *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
