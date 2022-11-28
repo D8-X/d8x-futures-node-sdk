@@ -3,14 +3,17 @@ import { NodeSDKConfig } from "./nodeSDKTypes";
 import { ABK64x64ToFloat } from "./d8XMath";
 
 /**
- * Functions to liquidate traders. This class requires a private key 
+ * Functions to liquidate traders. This class requires a private key
  * and executes smart-contract interactions that require gas-payments.
  */
 export default class LiquidatorTool extends WriteAccessHandler {
   /**
    * Constructs a LiquidatorTool instance for a given configuration and private key.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * const config = PerpetualDataHandler.readSDKConfig("testnet")
+   *
    * @param {string} privateKey Private key of account that liquidates.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -39,12 +42,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
   }
 
   /**
-   * Check if the collateral of a trader is above the maintenance margin ("maintenance margin safe"). 
+   * Check if the collateral of a trader is above the maintenance margin ("maintenance margin safe").
    * If not, the position can be liquidated.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader whose position you want to assess.
    * @returns {boolean} True if the trader is maintenance margin safe in the perpetual.
-   * False means that the trader's position can be liquidated. 
+   * False means that the trader's position can be liquidated.
    */
   public async isMaintenanceMarginSafe(symbol: string, traderAddr: string): Promise<boolean> {
     if (this.proxyContract == null) {

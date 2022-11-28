@@ -24,7 +24,10 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * const config = PerpetualDataHandler.readSDKConfig("testnet")
+   *
    */
   public constructor(config: NodeSDKConfig) {
     super(config);
@@ -68,7 +71,7 @@ export default class MarketData extends PerpetualDataHandler {
     let orderBookContract = this.getOrderBookContract(symbol);
     let [orders, digests] = await Promise.all([
       this.openOrdersOnOrderBook(traderAddr, orderBookContract),
-      this.orderIdsOfTrader(traderAddr, orderBookContract),
+      MarketData.orderIdsOfTrader(traderAddr, orderBookContract),
     ]);
     return { orders: orders, orderIds: digests };
   }
@@ -157,12 +160,12 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    *
-   * @param traderAddr address of the trader
-   * @param orderBookContract instance of order book contract
-   * @returns array of order-id's
+   * @param traderAddr Address of the trader
+   * @param orderBookContract Instance of order book contract
+   * @returns Array of order-id's
    * @ignore
    */
-  protected async orderIdsOfTrader(traderAddr: string, orderBookContract: ethers.Contract): Promise<string[]> {
+  public static async orderIdsOfTrader(traderAddr: string, orderBookContract: ethers.Contract): Promise<string[]> {
     let digestsRaw: string[] = await orderBookContract.limitDigestsOfTrader(traderAddr, 0, 15);
     let k: number = 0;
     let digests: string[] = [];

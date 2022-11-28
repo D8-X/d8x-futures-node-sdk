@@ -10,8 +10,10 @@ import { ethers } from "ethers";
 export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Constructor.
-   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig. 
-   * For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
+   * @example
+   * const config = PerpetualDataHandler.readSDKConfig("testnet")
+   *
    * @param {string} privateKey Private key of the wallet that executes the conditional orders.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {

@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { ABK64x64ToFloat } from "./d8XMath";
+import MarketData from "./marketData";
 import {
   NodeSDKConfig,
   Order,
@@ -19,7 +20,10 @@ export default class AccountTrade extends WriteAccessHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * const config = PerpetualDataHandler.readSDKConfig("testnet")
+   *
    * @param {string} privateKey Private key of account that trades.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -49,14 +53,16 @@ export default class AccountTrade extends WriteAccessHandler {
 
   /**
    * Submits an order to the exchange.
-   * @param {Order} order Order structure. As a minimum the structure needs to 
-   * specify symbol, side, type and quantity. For example: 
+   * @param {Order} order Order structure. As a minimum the structure needs to
+   * specify symbol, side, type and quantity.
+   * @example
    * let order: Order = {
    *       symbol: "MATIC-USD-MATIC",
    *       side: "BUY",
    *       type: "MARKET",
    *       quantity: 1,
    * }
+   *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
   public async order(order: Order): Promise<ethers.ContractTransaction> {
@@ -113,6 +119,19 @@ export default class AccountTrade extends WriteAccessHandler {
     let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr);
     return ABK64x64ToFloat(volume);
+  }
+
+  /**
+   *
+   * @param symbol Symbol of the form ETH-USD-MATIC.
+   * @returns {string[]} Array of Ids for all the orders currently open by this trader.
+   */
+  public async getOrderIds(symbol: string): Promise<string[]> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let orderBookContract = this.getOrderBookContract(symbol);
+    return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract);
   }
 
   /**

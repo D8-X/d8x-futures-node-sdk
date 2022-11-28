@@ -10,9 +10,10 @@ require gas-payments.</p>
 * [AccountTrade](#AccountTrade)
     * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
-    * [.order(order)](#AccountTrade+order) ⇒ <code>string</code>
+    * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
+    * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
 
 <a name="new_AccountTrade_new"></a>
 
@@ -22,9 +23,13 @@ require gas-payments.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that trades.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="AccountTrade+cancelOrder"></a>
 
 ### accountTrade.cancelOrder(symbol, orderId)
@@ -39,16 +44,25 @@ require gas-payments.</p>
 
 <a name="AccountTrade+order"></a>
 
-### accountTrade.order(order) ⇒ <code>string</code>
+### accountTrade.order(order) ⇒ <code>ContractTransaction</code>
 <p>Submits an order to the exchange.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
-**Returns**: <code>string</code> - <p>Transaction hash.</p>  
+**Returns**: <code>ContractTransaction</code> - <p>Contract Transaction (containing events).</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order struct.</p> |
+| order | <code>Order</code> | <p>Order structure. As a minimum the structure needs to specify symbol, side, type and quantity.</p> |
 
+**Example**  
+```js
+let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
+}
+```
 <a name="AccountTrade+queryExchangeFee"></a>
 
 ### accountTrade.queryExchangeFee(poolSymbolName, [brokerAddr]) ⇒
@@ -77,4 +91,14 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 | Param | Type | Description |
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
+
+<a name="AccountTrade+getOrderIds"></a>
+
+### accountTrade.getOrderIds(symbol) ⇒ <code>Array.&lt;string&gt;</code>
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Returns**: <code>Array.&lt;string&gt;</code> - <p>Array of Ids for all the orders currently open by this trader.</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 

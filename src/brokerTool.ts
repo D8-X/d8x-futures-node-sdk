@@ -13,7 +13,10 @@ export default class BrokerTool extends WriteAccessHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * const config = PerpetualDataHandler.readSDKConfig("testnet")
+   *
    * @param {string} privateKey Private key of a broker.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -101,14 +104,16 @@ export default class BrokerTool extends WriteAccessHandler {
    * Use this, for instance, to verify that the fee to be charged for a given order is as expected,
    * before and after signing it with brokerTool.signOrder.
    * This fee is equal or lower than the broker induced fee, provided the order is properly signed.
-   * @param {Order} order Order structure. As a minimum the structure needs to 
-   * specify symbol, side, type and quantity. For example: 
+   * @param {Order} order Order structure. As a minimum the structure needs to
+   * specify symbol, side, type and quantity.
+   * @example
    * let order: Order = {
    *       symbol: "MATIC-USD-MATIC",
    *       side: "BUY",
    *       type: "MARKET",
    *       quantity: 1,
    * }
+   *
    * @param {string} traderAddr Address of the trader for whom to determine the fee.
    * @returns {number} Fee in decimals (i.e. 0.1% is 0.001).
    */
@@ -189,13 +194,13 @@ export default class BrokerTool extends WriteAccessHandler {
   // Signatures
 
   /**
-   * Adds this broker's signature to an order. An order signed by a broker is considered 
+   * Adds this broker's signature to an order. An order signed by a broker is considered
    * to be routed through this broker and benefits from the broker's fee conditions.
    * @param {Order} order Order to sign.
    * @param {string} traderAddr Address of trader submitting the order.
-   * @param {number} feeDecimals Fee that this broker imposes on this order. 
+   * @param {number} feeDecimals Fee that this broker imposes on this order.
    * The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.
-   * @param {number} deadline Deadline for the order to be executed. Specify deadline as a unix timestamp 
+   * @param {number} deadline Deadline for the order to be executed. Specify deadline as a unix timestamp
    * @returns {Order} An order signed by this broker, which can be submitted directly with AccountTrade.order.
    */
   public async signOrder(order: Order, traderAddr: string, brokerFee: number, deadline: number): Promise<Order> {
@@ -292,7 +297,7 @@ export default class BrokerTool extends WriteAccessHandler {
   // Transfer ownership
 
   /**
-   * Transfer ownership of a broker's status to a new wallet. This function transfers the values related to 
+   * Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
    * (i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
    * his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).

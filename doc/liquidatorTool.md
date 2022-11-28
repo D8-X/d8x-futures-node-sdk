@@ -1,7 +1,8 @@
 <a name="LiquidatorTool"></a>
 
 ## LiquidatorTool
-<p>Methods to liquidate traders.</p>
+<p>Functions to liquidate traders. This class requires a private key
+and executes smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
 
@@ -21,9 +22,13 @@
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
 ### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒ <code>number</code>
@@ -39,15 +44,17 @@
 <a name="LiquidatorTool+isMaintenanceMarginSafe"></a>
 
 ### liquidatorTool.isMaintenanceMarginSafe(symbol, traderAddr) ⇒ <code>boolean</code>
-<p>Check if a trader is maintenance margin safe - if not, it can be liquidated.</p>
+<p>Check if the collateral of a trader is above the maintenance margin (&quot;maintenance margin safe&quot;).
+If not, the position can be liquidated.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
-**Returns**: <code>boolean</code> - <p>True if the trader is maintenance margin safe in the perpetual.</p>  
+**Returns**: <code>boolean</code> - <p>True if the trader is maintenance margin safe in the perpetual.
+False means that the trader's position can be liquidated.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
-| traderAddr | <code>string</code> | <p>Address of the trader whose position we want to assess.</p> |
+| traderAddr | <code>string</code> | <p>Address of the trader whose position you want to assess.</p> |
 
 <a name="LiquidatorTool+countActivePerpAccounts"></a>
 

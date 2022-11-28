@@ -1,7 +1,9 @@
 <a name="BrokerTool"></a>
 
 ## BrokerTool
-<p>Functions for brokers to determine fees, deposit lots, and sign-up traders.</p>
+<p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
+This class requires a private key and executes smart-contract interactions that
+require gas-payments.</p>
 
 **Kind**: global class  
 
@@ -15,7 +17,7 @@
     * [.getCurrentBrokerVolume(poolSymbolName)](#BrokerTool+getCurrentBrokerVolume) ⇒ <code>number</code>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
-    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.providers.TransactionResponse</code>
+    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
     * [.signOrder(order, traderAddr, feeDecimals, deadline)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
 
@@ -27,14 +29,18 @@
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of a broker.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="BrokerTool+getBrokerInducedFee"></a>
 
 ### brokerTool.getBrokerInducedFee(poolSymbolName) ⇒ <code>number</code>
 <p>Determine the exchange fee based on lots, traded volume, and D8X balance of this broker.
-This is the final exchange fee paid by the broker.</p>
+This is the final exchange fee that this broker can offer to traders that trade through him.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>number</code> - <p>Exchange fee for this broker, in decimals (i.e. 0.1% is 0.001)</p>  
@@ -47,7 +53,7 @@ This is the final exchange fee paid by the broker.</p>
 
 ### brokerTool.getFeeForBrokerDesignation(poolSymbolName, [lots]) ⇒ <code>number</code>
 <p>Determine the exchange fee based on lots purchased by this broker.
-The final exchange fee paid by the broker is equal to
+The final exchange fee that this broker can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -62,7 +68,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 
 ### brokerTool.getFeeForBrokerVolume(poolSymbolName) ⇒ <code>number</code>
 <p>Determine the exchange fee based on volume traded under this broker.
-The final exchange fee paid by the broker is equal to
+The final exchange fee that this broker can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -76,7 +82,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 
 ### brokerTool.getFeeForBrokerStake([brokerAddr]) ⇒ <code>number</code>
 <p>Determine the exchange fee based on the current D8X balance in a broker's wallet.
-The final exchange fee paid by the broker is equal to
+The final exchange fee that this broker can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeForBrokerVolume(symbol), brokerTool.getFeeForBrokerStake)</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -101,9 +107,18 @@ This fee is equal or lower than the broker induced fee, provided the order is pr
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order for which to determine the exchange fee. Not necessarily signed by this broker.</p> |
+| order | <code>Order</code> | <p>Order structure. As a minimum the structure needs to specify symbol, side, type and quantity.</p> |
 | traderAddr | <code>string</code> | <p>Address of the trader for whom to determine the fee.</p> |
 
+**Example**  
+```js
+let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
+}
+```
 <a name="BrokerTool+getCurrentBrokerVolume"></a>
 
 ### brokerTool.getCurrentBrokerVolume(poolSymbolName) ⇒ <code>number</code>
@@ -145,11 +160,11 @@ This is relevant to determine the broker's fee tier.</p>
 
 <a name="BrokerTool+brokerDepositToDefaultFund"></a>
 
-### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.providers.TransactionResponse</code>
+### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.ContractTransaction</code>
 <p>Deposit lots to the default fund of a given pool.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ethers.providers.TransactionResponse</code> - <p>Transaction object.</p>  
+**Returns**: <code>ethers.ContractTransaction</code> - <p>ContractTransaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -159,7 +174,8 @@ This is relevant to determine the broker's fee tier.</p>
 <a name="BrokerTool+signOrder"></a>
 
 ### brokerTool.signOrder(order, traderAddr, feeDecimals, deadline) ⇒ <code>Order</code>
-<p>Adds this broker's signature to an order so that it can be submitted by an approved trader.</p>
+<p>Adds this broker's signature to an order. An order signed by a broker is considered
+to be routed through this broker and benefits from the broker's fee conditions.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>Order</code> - <p>An order signed by this broker, which can be submitted directly with AccountTrade.order.</p>  
@@ -168,13 +184,15 @@ This is relevant to determine the broker's fee tier.</p>
 | --- | --- | --- |
 | order | <code>Order</code> | <p>Order to sign.</p> |
 | traderAddr | <code>string</code> | <p>Address of trader submitting the order.</p> |
-| feeDecimals | <code>number</code> | <p>Fee that this broker is approving for the trader.</p> |
-| deadline | <code>number</code> | <p>Deadline for the order to be executed.</p> |
+| feeDecimals | <code>number</code> | <p>Fee that this broker imposes on this order. The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.</p> |
+| deadline | <code>number</code> | <p>Deadline for the order to be executed. Specify deadline as a unix timestamp</p> |
 
 <a name="BrokerTool+transferOwnership"></a>
 
 ### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ethers.providers.TransactionResponse</code>
-<p>Transfer ownership of a broker's status to a new wallet.</p>
+<p>Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
+(i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
+his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>ethers.providers.TransactionResponse</code> - <p>ethers transaction object</p>  

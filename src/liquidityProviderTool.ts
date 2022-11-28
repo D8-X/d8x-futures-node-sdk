@@ -11,7 +11,10 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * const config = PerpetualDataHandler.readSDKConfig("testnet")
+   *
    * @param privateKey private key of account that trades
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {

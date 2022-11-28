@@ -15,16 +15,23 @@
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p></dd>
 <dt><a href="#BrokerTool">BrokerTool</a></dt>
-<dd><p>Functions for brokers to determine fees, deposit lots, and sign-up traders.</p></dd>
+<dd><p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
+This class requires a private key and executes smart-contract interactions that
+require gas-payments.</p></dd>
 <dt><a href="#LiquidatorTool">LiquidatorTool</a></dt>
-<dd><p>Methods to liquidate traders.</p></dd>
+<dd><p>Functions to liquidate traders. This class requires a private key
+and executes smart-contract interactions that require gas-payments.</p></dd>
 <dt><a href="#LiquidityProviderTool">LiquidityProviderTool</a></dt>
-<dd><p>Methods to provide liquidity</p></dd>
+<dd><p>Functions to provide liquidity. This class requires a private key and executes
+smart-contract interactions that require gas-payments.</p></dd>
 <dt><a href="#MarketData">MarketData</a></dt>
-<dd><p>This class requires no private key and is blockchain read-only.
+<dd><p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
+This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p></dd>
 <dt><a href="#OrderReferrerTool">OrderReferrerTool</a></dt>
-<dd><p>Methods to execute existing orders from the limit order book.</p></dd>
+<dd><p>Functions to execute existing conditional orders from the limit order book. This class
+requires a private key and executes smart-contract interactions that require
+gas-payments.</p></dd>
 <dt><a href="#PerpetualDataHandler">PerpetualDataHandler</a></dt>
 <dd><p>Parent class for AccountTrade and MarketData that handles
 common data and chain operations</p></dd>
@@ -243,9 +250,10 @@ require gas-payments.</p>
 * [AccountTrade](#AccountTrade)
     * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
-    * [.order(order)](#AccountTrade+order) ⇒ <code>string</code>
+    * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
+    * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
 
 <a name="new_AccountTrade_new"></a>
 
@@ -255,9 +263,13 @@ require gas-payments.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that trades.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="AccountTrade+cancelOrder"></a>
 
 ### accountTrade.cancelOrder(symbol, orderId)
@@ -272,16 +284,25 @@ require gas-payments.</p>
 
 <a name="AccountTrade+order"></a>
 
-### accountTrade.order(order) ⇒ <code>string</code>
+### accountTrade.order(order) ⇒ <code>ContractTransaction</code>
 <p>Submits an order to the exchange.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
-**Returns**: <code>string</code> - <p>Transaction hash.</p>  
+**Returns**: <code>ContractTransaction</code> - <p>Contract Transaction (containing events).</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order struct.</p> |
+| order | <code>Order</code> | <p>Order structure. As a minimum the structure needs to specify symbol, side, type and quantity.</p> |
 
+**Example**  
+```js
+let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
+}
+```
 <a name="AccountTrade+queryExchangeFee"></a>
 
 ### accountTrade.queryExchangeFee(poolSymbolName, [brokerAddr]) ⇒
@@ -311,10 +332,22 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 
+<a name="AccountTrade+getOrderIds"></a>
+
+### accountTrade.getOrderIds(symbol) ⇒ <code>Array.&lt;string&gt;</code>
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Returns**: <code>Array.&lt;string&gt;</code> - <p>Array of Ids for all the orders currently open by this trader.</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
 <a name="BrokerTool"></a>
 
 ## BrokerTool
-<p>Functions for brokers to determine fees, deposit lots, and sign-up traders.</p>
+<p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
+This class requires a private key and executes smart-contract interactions that
+require gas-payments.</p>
 
 **Kind**: global class  
 
@@ -328,7 +361,7 @@ The weights are chosen so that in average this coincides with the 30 day volume.
     * [.getCurrentBrokerVolume(poolSymbolName)](#BrokerTool+getCurrentBrokerVolume) ⇒ <code>number</code>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
-    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.providers.TransactionResponse</code>
+    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
     * [.signOrder(order, traderAddr, feeDecimals, deadline)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
 
@@ -340,14 +373,18 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of a broker.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="BrokerTool+getBrokerInducedFee"></a>
 
 ### brokerTool.getBrokerInducedFee(poolSymbolName) ⇒ <code>number</code>
 <p>Determine the exchange fee based on lots, traded volume, and D8X balance of this broker.
-This is the final exchange fee paid by the broker.</p>
+This is the final exchange fee that this broker can offer to traders that trade through him.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>number</code> - <p>Exchange fee for this broker, in decimals (i.e. 0.1% is 0.001)</p>  
@@ -360,7 +397,7 @@ This is the final exchange fee paid by the broker.</p>
 
 ### brokerTool.getFeeForBrokerDesignation(poolSymbolName, [lots]) ⇒ <code>number</code>
 <p>Determine the exchange fee based on lots purchased by this broker.
-The final exchange fee paid by the broker is equal to
+The final exchange fee that this broker can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -375,7 +412,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 
 ### brokerTool.getFeeForBrokerVolume(poolSymbolName) ⇒ <code>number</code>
 <p>Determine the exchange fee based on volume traded under this broker.
-The final exchange fee paid by the broker is equal to
+The final exchange fee that this broker can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -389,7 +426,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 
 ### brokerTool.getFeeForBrokerStake([brokerAddr]) ⇒ <code>number</code>
 <p>Determine the exchange fee based on the current D8X balance in a broker's wallet.
-The final exchange fee paid by the broker is equal to
+The final exchange fee that this broker can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeForBrokerVolume(symbol), brokerTool.getFeeForBrokerStake)</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -414,9 +451,18 @@ This fee is equal or lower than the broker induced fee, provided the order is pr
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order for which to determine the exchange fee. Not necessarily signed by this broker.</p> |
+| order | <code>Order</code> | <p>Order structure. As a minimum the structure needs to specify symbol, side, type and quantity.</p> |
 | traderAddr | <code>string</code> | <p>Address of the trader for whom to determine the fee.</p> |
 
+**Example**  
+```js
+let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
+}
+```
 <a name="BrokerTool+getCurrentBrokerVolume"></a>
 
 ### brokerTool.getCurrentBrokerVolume(poolSymbolName) ⇒ <code>number</code>
@@ -458,11 +504,11 @@ This is relevant to determine the broker's fee tier.</p>
 
 <a name="BrokerTool+brokerDepositToDefaultFund"></a>
 
-### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.providers.TransactionResponse</code>
+### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.ContractTransaction</code>
 <p>Deposit lots to the default fund of a given pool.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ethers.providers.TransactionResponse</code> - <p>Transaction object.</p>  
+**Returns**: <code>ethers.ContractTransaction</code> - <p>ContractTransaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -472,7 +518,8 @@ This is relevant to determine the broker's fee tier.</p>
 <a name="BrokerTool+signOrder"></a>
 
 ### brokerTool.signOrder(order, traderAddr, feeDecimals, deadline) ⇒ <code>Order</code>
-<p>Adds this broker's signature to an order so that it can be submitted by an approved trader.</p>
+<p>Adds this broker's signature to an order. An order signed by a broker is considered
+to be routed through this broker and benefits from the broker's fee conditions.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>Order</code> - <p>An order signed by this broker, which can be submitted directly with AccountTrade.order.</p>  
@@ -481,13 +528,15 @@ This is relevant to determine the broker's fee tier.</p>
 | --- | --- | --- |
 | order | <code>Order</code> | <p>Order to sign.</p> |
 | traderAddr | <code>string</code> | <p>Address of trader submitting the order.</p> |
-| feeDecimals | <code>number</code> | <p>Fee that this broker is approving for the trader.</p> |
-| deadline | <code>number</code> | <p>Deadline for the order to be executed.</p> |
+| feeDecimals | <code>number</code> | <p>Fee that this broker imposes on this order. The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.</p> |
+| deadline | <code>number</code> | <p>Deadline for the order to be executed. Specify deadline as a unix timestamp</p> |
 
 <a name="BrokerTool+transferOwnership"></a>
 
 ### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ethers.providers.TransactionResponse</code>
-<p>Transfer ownership of a broker's status to a new wallet.</p>
+<p>Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
+(i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
+his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>ethers.providers.TransactionResponse</code> - <p>ethers transaction object</p>  
@@ -500,7 +549,8 @@ This is relevant to determine the broker's fee tier.</p>
 <a name="LiquidatorTool"></a>
 
 ## LiquidatorTool
-<p>Methods to liquidate traders.</p>
+<p>Functions to liquidate traders. This class requires a private key
+and executes smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
 
@@ -520,9 +570,13 @@ This is relevant to determine the broker's fee tier.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
 ### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒ <code>number</code>
@@ -538,15 +592,17 @@ This is relevant to determine the broker's fee tier.</p>
 <a name="LiquidatorTool+isMaintenanceMarginSafe"></a>
 
 ### liquidatorTool.isMaintenanceMarginSafe(symbol, traderAddr) ⇒ <code>boolean</code>
-<p>Check if a trader is maintenance margin safe - if not, it can be liquidated.</p>
+<p>Check if the collateral of a trader is above the maintenance margin (&quot;maintenance margin safe&quot;).
+If not, the position can be liquidated.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
-**Returns**: <code>boolean</code> - <p>True if the trader is maintenance margin safe in the perpetual.</p>  
+**Returns**: <code>boolean</code> - <p>True if the trader is maintenance margin safe in the perpetual.
+False means that the trader's position can be liquidated.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
-| traderAddr | <code>string</code> | <p>Address of the trader whose position we want to assess.</p> |
+| traderAddr | <code>string</code> | <p>Address of the trader whose position you want to assess.</p> |
 
 <a name="LiquidatorTool+countActivePerpAccounts"></a>
 
@@ -589,14 +645,15 @@ This is relevant to determine the broker's fee tier.</p>
 <a name="LiquidityProviderTool"></a>
 
 ## LiquidityProviderTool
-<p>Methods to provide liquidity</p>
+<p>Functions to provide liquidity. This class requires a private key and executes
+smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
 
 * [LiquidityProviderTool](#LiquidityProviderTool)
     * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
     * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
-    * [.addLiquidity(poolname, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
+    * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.removeLiquidity(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+removeLiquidity) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
@@ -605,19 +662,23 @@ This is relevant to determine the broker's fee tier.</p>
 <p>Constructor</p>
 
 
-| Param | Description |
-| --- | --- |
-| config | <p>configuration</p> |
-| privateKey | <p>private key of account that trades</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
+| privateKey |  | <p>private key of account that trades</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="LiquidityProviderTool+getParticipationValue"></a>
 
 ### liquidityProviderTool.getParticipationValue(poolSymbolName) ⇒
-<p>Value of the share tokens for this liquidity provider
+<p>Value of the pool share tokens for this liquidity provider
 in poolSymbol-currency (e.g. MATIC, USDC).</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
-**Returns**: <p>Value in poolSymbol-currency (e.g. MATIC, USDC), balabce of share tokens, and share token symbol.</p>  
+**Returns**: <p>Value in poolSymbol-currency (e.g. MATIC, USDC), balance of pool share tokens, and share token symbol.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -625,7 +686,7 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 
 <a name="LiquidityProviderTool+addLiquidity"></a>
 
-### liquidityProviderTool.addLiquidity(poolname, amountCC) ⇒
+### liquidityProviderTool.addLiquidity(poolSymbolName, amountCC) ⇒
 <p>Add liquidity to the PnL participant fund. The address gets pool shares in return.</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
@@ -633,13 +694,13 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| poolname | <code>string</code> | <p>Name of pool symbol (e.g. MATIC)</p> |
+| poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC)</p> |
 | amountCC | <code>number</code> | <p>Amount in pool-collateral currency</p> |
 
 <a name="LiquidityProviderTool+removeLiquidity"></a>
 
 ### liquidityProviderTool.removeLiquidity(poolSymbolName, amountPoolShares) ⇒
-<p>Remove liquidity from the pool.</p>
+<p>Remove liquidity from the pool. The address loses pool shares in return.</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Returns**: <p>Transaction object.</p>  
@@ -647,22 +708,48 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC).</p> |
-| amountPoolShares | <code>string</code> | <p>Amount in pool-tokens, removes everything if &gt; available amount.</p> |
+| amountPoolShares | <code>string</code> | <p>Amount in pool-shares, removes everything if &gt; available amount.</p> |
 
 <a name="MarketData"></a>
 
 ## MarketData
-<p>This class requires no private key and is blockchain read-only.
+<p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
+This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p>
 
 **Kind**: global class  
 
 * [MarketData](#MarketData)
+    * [new MarketData(config)](#new_MarketData_new)
+    * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+    * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
+    * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
 
+<a name="new_MarketData_new"></a>
+
+### new MarketData(config)
+<p>Constructor</p>
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
+
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
+<a name="MarketData+getReadOnlyProxyInstance"></a>
+
+### marketData.getReadOnlyProxyInstance() ⇒
+<p>Get contract instance. Useful for event listening.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>read-only proxy instance</p>  
 <a name="MarketData+exchangeInfo"></a>
 
 ### marketData.exchangeInfo() ⇒ <code>ExchangeInfo</code>
@@ -686,7 +773,7 @@ No gas required for the queries here.</p>
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
+<p>Information about the positions open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 
@@ -708,10 +795,37 @@ No gas required for the queries here.</p>
 | base | <code>string</code> | <p>Index name, e.g. ETH.</p> |
 | quote | <code>string</code> | <p>Quote currency, e.g. USD.</p> |
 
+<a name="MarketData+getMarkPrice"></a>
+
+### marketData.getMarkPrice(symbol) ⇒
+<p>Get the current mark price</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>mark price</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualPrice"></a>
+
+### marketData.getPerpetualPrice(symbol, quantity) ⇒
+<p>get the current price for a given quantity</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>price (number)</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| quantity | <p>quantity to be traded, negative if short</p> |
+
 <a name="OrderReferrerTool"></a>
 
 ## OrderReferrerTool
-<p>Methods to execute existing orders from the limit order book.</p>
+<p>Functions to execute existing conditional orders from the limit order book. This class
+requires a private key and executes smart-contract interactions that require
+gas-payments.</p>
 
 **Kind**: global class  
 
@@ -720,7 +834,9 @@ No gas required for the queries here.</p>
     * [.executeOrder(symbol, orderId, [referrerAddr])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.getOrderById(symbol, digest)](#OrderReferrerTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
+    * [.isTradeable(order)](#OrderReferrerTool+isTradeable) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -730,13 +846,17 @@ No gas required for the queries here.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>Configuration object.</p> |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of the wallet that executes the conditional orders.</p> |
 
+**Example**  
+```js
+const config = PerpetualDataHandler.readSDKConfig("testnet")
+```
 <a name="OrderReferrerTool+executeOrder"></a>
 
 ### orderReferrerTool.executeOrder(symbol, orderId, [referrerAddr]) ⇒
-<p>Executes an order by symbol and ID. This action interacts with the blockchain and incurs in gas costs.</p>
+<p>Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
 **Returns**: <p>Transaction object.</p>  
@@ -771,6 +891,19 @@ No gas required for the queries here.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+<a name="OrderReferrerTool+getOrderById"></a>
+
+### orderReferrerTool.getOrderById(symbol, digest) ⇒
+<p>Get order from the digest (=id)</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>order or undefined</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of order book, e.g. ETH-USD-MATIC</p> |
+| digest | <p>digest of the order (=order ID)</p> |
+
 <a name="OrderReferrerTool+pollLimitOrders"></a>
 
 ### orderReferrerTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
@@ -785,6 +918,18 @@ This a read-only action and does not incur in gas costs.</p>
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
 | [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+<a name="OrderReferrerTool+isTradeable"></a>
+
+### orderReferrerTool.isTradeable(order) ⇒
+<p>Check if a conditional order can be executed</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>true if order can be executed for the current state of the perpetuals</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>order structure</p> |
 
 <a name="PerpetualDataHandler"></a>
 
@@ -932,7 +1077,7 @@ about perpetual currencies</p>
 <p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
-**Returns**: <p>transaction hash</p>  
+**Returns**: <p>ContractTransaction</p>  
 
 | Param | Description |
 | --- | --- |
