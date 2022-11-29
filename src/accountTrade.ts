@@ -47,7 +47,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be cancelled.
    */
-  public async cancelOrder(symbol: string, orderId: string): Promise<string | undefined> {
+  public async cancelOrder(symbol: string, orderId: string): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -265,7 +265,7 @@ export default class AccountTrade extends WriteAccessHandler {
     symbol: string,
     orderId: string,
     orderBookContract: ethers.Contract | null
-  ): Promise<string | undefined> {
+  ): Promise<ethers.ContractTransaction> {
     if (orderBookContract == null || this.signer == null) {
       throw Error(`Order Book contract for symbol ${symbol} or signer not defined`);
     }
