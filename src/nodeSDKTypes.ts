@@ -78,6 +78,7 @@ export interface PerpetualStaticInfo {
   collateralCurrencyType: CollaterlCCY;
   S2Symbol: string;
   S3Symbol: string;
+  lotSizeBC: number;
 }
 
 /**

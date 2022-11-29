@@ -485,7 +485,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.transferBrokerOwnership(poolId, newAddress);
+    let tx = await this.proxyContract.transferBrokerOwnership(poolId, newAddress, { gasLimit: this.gasLimit });
     return tx;
   }
 }

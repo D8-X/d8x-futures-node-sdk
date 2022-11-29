@@ -212,7 +212,7 @@ describe("readOnly", () => {
 
     it("should get broker volume and fee", async () => {
       let symbol = "MATIC";
-      let volume = 0; //await brokerTool.getCurrentBrokerVolume(symbol); // uncomment when implemented
+      let volume = await brokerTool.getCurrentBrokerVolume(symbol); // uncomment when implemented
       let fee = await brokerTool.getFeeForBrokerVolume(symbol);
       console.log(`broker volume is ${volume}, with an induced fee of ${10_000 * fee!} bps`);
     });
@@ -263,6 +263,7 @@ describe("readOnly", () => {
       }
       refTool = new OrderReferrerTool(config, pk);
       await refTool.createProxyInstance();
+      let numOrders;
     });
     it("get order by id/digest", async () => {
       let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
@@ -276,8 +277,8 @@ describe("readOnly", () => {
     it("should get array of all open orders", async () => {
       let symbol = "ETH-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      console.log(`Open orders for symbol ${symbol}:`);
-      console.log(openOrders);
+      console.log(`Open orders for symbol ${symbol}:\n${openOrders}`);
+      // console.log(openOrders);
     });
     it("poll limit orders", async () => {
       let val = await refTool.pollLimitOrders("ETH-USD-MATIC", 15, undefined);

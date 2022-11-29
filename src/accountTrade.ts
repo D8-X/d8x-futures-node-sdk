@@ -9,6 +9,7 @@ import {
   ORDER_TYPE_MARKET,
   PerpetualStaticInfo,
 } from "./nodeSDKTypes";
+import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 
 /**
@@ -56,7 +57,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *    let accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
    *    // cancel order
-   *    let cancelTransaction = accTrade.cancelOrder("MATIC-USD-MATIC", 
+   *    let cancelTransaction = accTrade.cancelOrder("MATIC-USD-MATIC",
    *        "0x4639061a58dcf34f4c9c703f49f1cb00d6a4fba490d62c0eb4a4fb06e1c76c19")
    *    console.log(cancelTransaction);
    *  }
@@ -141,10 +142,15 @@ export default class AccountTrade extends WriteAccessHandler {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
+    let minSize = PerpetualDataHandler._getMinimalPositionSize(order.symbol, this.symbolToPerpStaticInfo);
+    if (Math.abs(order.quantity) < minSize) {
+      throw Error("order size too small");
+    }
     let orderBookContract: ethers.Contract | null = null;
     if (order.type != ORDER_TYPE_MARKET) {
       orderBookContract = this.getOrderBookContract(order.symbol);
     }
+
     return await this._order(
       order,
       this.traderAddr,

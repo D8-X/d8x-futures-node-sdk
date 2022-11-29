@@ -58,14 +58,37 @@ describe("write and spoil gas and tokens", () => {
       symbol: "MATIC-USD-MATIC",
       side: "BUY",
       type: "LIMIT",
-      limitPrice: 4000,
-      quantity: 5,
+      limitPrice: 4,
+      quantity: 10,
       leverage: 2,
       timestamp: Date.now() / 1000,
     };
     //* UNCOMMENT TO ENABLE TRADING
     let tx = await accTrade.order(order);
     console.log("limit order transaction hash =", tx.hash);
+    //*/
+  });
+
+  it("failt to post limit order with small trade size", async () => {
+    let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "LIMIT",
+      limitPrice: 4,
+      quantity: 9,
+      leverage: 2,
+      timestamp: Date.now() / 1000,
+    };
+    //* UNCOMMENT TO ENABLE TRADING
+    let orderPosted = false;
+    try {
+      let tx = await accTrade.order(order);
+      orderPosted = true;
+    } catch (e) {
+      console.log(e);
+    }
+    expect(orderPosted).toBeFalsy;
+
     //*/
   });
 

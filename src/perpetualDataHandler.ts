@@ -127,6 +127,7 @@ export default class PerpetualDataHandler {
       let currentLimitOrderBookAddr: string[] = [];
       let ccy: CollaterlCCY[] = [];
       let mgnRate: number[] = [];
+      let lotSizes: number[] = [];
 
       for (let k = 0; k < perpetualIDs.length; k++) {
         let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
@@ -137,6 +138,7 @@ export default class PerpetualDataHandler {
         currentSymbols.push(base + "-" + quote);
         currentSymbolsS3.push(base3 + "-" + quote3);
         mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
+        lotSizes.push(ABK64x64ToFloat(perp.fLotSizeBC));
         // try to find a limit order book
         let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
         currentLimitOrderBookAddr.push(lobAddr);
@@ -179,6 +181,7 @@ export default class PerpetualDataHandler {
           collateralCurrencyType: ccy[k],
           S2Symbol: currentSymbols[k],
           S3Symbol: currentSymbolsS3[k],
+          lotSizeBC: lotSizes[k],
         });
       }
       // push margin token address into map
@@ -555,6 +558,18 @@ export default class PerpetualDataHandler {
       throw Error(`Order type ${order.type} has no trigger price.`);
     }
     return flag;
+  }
+
+  protected static _getMinimalPositionSize(
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): number {
+    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
+    let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(cleanSymbol);
+    if (perpInfo == undefined) {
+      throw new Error(`no info for perpetual ${symbol}`);
+    }
+    return 10 * perpInfo.lotSizeBC;
   }
 
   /**
