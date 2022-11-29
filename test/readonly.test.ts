@@ -8,6 +8,7 @@ import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
+import AccountTrade from "../src/accountTrade";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -20,6 +21,7 @@ let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
 let brokerTool: BrokerTool;
 let refTool: OrderReferrerTool;
+let accTrade: AccountTrade;
 let orderIds: string[];
 let wallet: ethers.Wallet;
 
@@ -109,6 +111,22 @@ describe("readOnly", () => {
       let perpSymbol = "ETH-USD-MATIC";
       let pxMark = await mktData.getMarkPrice(perpSymbol);
       console.log(`Perp mark price ${pxMark}`);
+    });
+  });
+
+  describe("Account and Trade", () => {
+    beforeAll(async () => {
+      if (pk == undefined) {
+        console.log(`Define private key: export PK="CA52A..."`);
+        expect(false);
+      }
+      accTrade = new AccountTrade(config, pk);
+      await accTrade.createProxyInstance();
+    });
+    it("getOrderIds", async () => {
+      let ids = await accTrade.getOrderIds("ETH-USD-MATIC");
+      console.log("Order Ids for trader:");
+      console.log(ids);
     });
   });
 

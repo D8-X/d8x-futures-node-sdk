@@ -10,8 +10,21 @@ import { ethers } from "ethers";
 export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Constructor.
-   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig. 
-   * For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
+   * @example
+   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderReferrerTool);
+   *   // load configuration for testnet
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // OrderReferrerTool (authentication required, PK is an environment variable with a private key)
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   // Create a proxy instance to access the blockchain
+   *   await orderTool.createProxyInstance();
+   * }
+   * main();
+   *
    * @param {string} privateKey Private key of the wallet that executes the conditional orders.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -44,6 +57,21 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * All the orders in the order book for a given symbol that are currently open.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @example
+   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderReferrerTool);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // get all open orders
+   *   let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+   *   console.log(openOrders);
+   * }
+   * main();
+   *
    * @returns Array with all open orders and their IDs.
    */
   public async getAllOpenOrders(symbol: string): Promise<[Order[], string[]]> {
@@ -54,6 +82,21 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Total number of limit orders for this symbol, excluding those that have been cancelled/removed.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @example
+   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderReferrerTool);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // get all open orders
+   *   let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+   *   console.log(numberOfOrders);
+   * }
+   * main();
+   *
    * @returns {number} Number of open orders.
    */
   public async numberOfOpenOrders(symbol: string): Promise<number> {
@@ -61,7 +104,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    return await orderBookSC.numberOfOrderBookDigests();
+    let numOrders = await orderBookSC.numberOfOrderBookDigests();
+    return Number(numOrders);
   }
 
   /**
@@ -86,6 +130,21 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} numElements Maximum number of orders to poll.
    * @param {string=} startAfter Optional order ID from where to start polling. Defaults to the first order.
+   * @example
+   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderReferrerTool);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // get all open orders
+   *   let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+   *   console.log(activeOrders);
+   * }
+   * main();
+   *
    * @returns Array of orders and corresponding order IDs
    */
   public async pollLimitOrders(symbol: string, numElements: number, startAfter?: string): Promise<[Order[], string[]]> {

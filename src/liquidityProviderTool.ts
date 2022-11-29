@@ -11,7 +11,21 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // load configuration for testnet
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
+   *   const pk: string = <string>process.env.PK;    
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);  
+   *   // Create a proxy instance to access the blockchain
+   *   await lqudtProviderTool.createProxyInstance();   
+   * }
+   * main();
+   *
    * @param privateKey private key of account that trades
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -22,6 +36,21 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    * Value of the pool share tokens for this liquidity provider
    * in poolSymbol-currency (e.g. MATIC, USDC).
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC).
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance(); 
+   *   // get value of pool share token
+   *   let shareToken = await lqudtProviderTool.getParticipationValue("MATIC");
+   *   console.log(shareToken);     
+   * }
+   * main();
+   *
    * @return Value in poolSymbol-currency (e.g. MATIC, USDC), balance of pool share tokens, and share token symbol.
    */
   public async getParticipationValue(
@@ -59,6 +88,21 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *  Add liquidity to the PnL participant fund. The address gets pool shares in return.
    * @param {string} poolSymbolName  Name of pool symbol (e.g. MATIC)
    * @param {number} amountCC  Amount in pool-collateral currency
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance(); 
+   *   // add liquidity
+   *   let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
+   *   console.log(respAddLiquidity);     
+   * }
+   * main();
+   *
    * @return Transaction object
    */
   public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ethers.ContractTransaction> {
@@ -76,6 +120,21 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    * Remove liquidity from the pool. The address loses pool shares in return.
    * @param {string} poolSymbolName Name of pool symbol (e.g. MATIC).
    * @param {string} amountPoolShares Amount in pool-shares, removes everything if > available amount.
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance(); 
+   *   // remove liquidity
+   *   let respRemoveLiquidity = await lqudtProviderTool.removeLiquidity("MATIC", 0.1);
+   *   console.log(respRemoveLiquidity);  
+   * }
+   * main();
+   *
    * @return Transaction object.
    */
   public async removeLiquidity(

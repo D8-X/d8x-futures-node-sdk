@@ -1,5 +1,6 @@
 import { ethers } from "ethers";
 import { ABK64x64ToFloat } from "./d8XMath";
+import MarketData from "./marketData";
 import {
   NodeSDKConfig,
   Order,
@@ -19,7 +20,21 @@ export default class AccountTrade extends WriteAccessHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
-   * readSDKConfig. For example: `const config = PerpetualDataHandler.readSDKConfig("testnet")`
+   * readSDKConfig.
+   * @example
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // load configuration for testnet
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // AccountTrade (authentication required, PK is an environment variable with a private key)
+   *   const pk: string = <string>process.env.PK;    
+   *   let accTrade = new AccountTrade(config, pk);  
+   *   // Create a proxy instance to access the blockchain
+   *   await accTrade.createProxyInstance();   
+   * }
+   * main();
+   *
    * @param {string} privateKey Private key of account that trades.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
@@ -49,14 +64,32 @@ export default class AccountTrade extends WriteAccessHandler {
 
   /**
    * Submits an order to the exchange.
-   * @param {Order} order Order structure. As a minimum the structure needs to 
-   * specify symbol, side, type and quantity. For example: 
-   * let order: Order = {
-   *       symbol: "MATIC-USD-MATIC",
-   *       side: "BUY",
-   *       type: "MARKET",
-   *       quantity: 1,
-   * }
+   * @param {Order} order Order structure. As a minimum the structure needs to
+   * specify symbol, side, type and quantity.
+   * @example
+   * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *    console.log(AccountTrade);
+   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *    const pk: string = <string>process.env.PK;    
+   *    let accTrade = new AccountTrade(config, pk); 
+   *    await accTrade.createProxyInstance();
+   *    // set allowance
+   *    await accTrade.setAllowance("MATIC");
+   *    // set an order
+   *    let order: Order = {
+   *        symbol: "MATIC-USD-MATIC",
+   *        side: "BUY",
+   *        type: "MARKET",
+   *        quantity: 100,
+   *        timestamp: Date.now()
+   *    };
+   *    let orderTransaction = await accTrade.order(order);
+   *    console.log(orderTransaction);    
+   *  }
+   *  main();
+   *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
   public async order(order: Order): Promise<ethers.ContractTransaction> {
@@ -86,6 +119,21 @@ export default class AccountTrade extends WriteAccessHandler {
    * Note that this result only includes exchange fees, additional broker fees are not included.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {string=} brokerAddr Optional address of a broker this trader may use to trade under.
+   * @example
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let accTrade = new AccountTrade(config, pk); 
+   *   await accTrade.createProxyInstance();
+   *   // query exchange fee
+   *   let fees = await accTrade.queryExchangeFee("MATIC");
+   *   console.log(fees);     
+   * }
+   * main();
+   *
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
    */
   public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string): Promise<number> {
@@ -104,6 +152,21 @@ export default class AccountTrade extends WriteAccessHandler {
    * Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
    * The weights are chosen so that in average this coincides with the 30 day volume.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
+   * @example
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;    
+   *   let accTrade = new AccountTrade(config, pk); 
+   *   await accTrade.createProxyInstance();
+   *   // query 30 day volume
+   *   let vol = await accTrade.getCurrentTraderVolume("MATIC");
+   *   console.log(vol);     
+   * }
+   * main();
+   *
    * @returns {number} Current trading volume for this trader, in USD.
    */
   public async getCurrentTraderVolume(poolSymbolName: string): Promise<number> {
@@ -113,6 +176,19 @@ export default class AccountTrade extends WriteAccessHandler {
     let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr);
     return ABK64x64ToFloat(volume);
+  }
+
+  /**
+   *
+   * @param symbol Symbol of the form ETH-USD-MATIC.
+   * @returns {string[]} Array of Ids for all the orders currently open by this trader.
+   */
+  public async getOrderIds(symbol: string): Promise<string[]> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let orderBookContract = this.getOrderBookContract(symbol);
+    return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract);
   }
 
   /**
