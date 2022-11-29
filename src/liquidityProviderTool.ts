@@ -98,6 +98,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
    *   await lqudtProviderTool.createProxyInstance(); 
    *   // add liquidity
+   *   await lqudtProviderTool.setAllowance("MATIC");
    *   let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
    *   console.log(respAddLiquidity);     
    * }
