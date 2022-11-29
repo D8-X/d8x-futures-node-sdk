@@ -32,7 +32,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
   }
 
   /**
-   * Liquidate a trader. 
+   * Liquidate a trader.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader to be liquidated.
    * @param {string=} liquidatorAddr Address to be credited if the liquidation succeeds.
@@ -109,13 +109,10 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @ignore
    */
   public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, gasLimit: number) {
-    let fAmount = await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
+    let tx = await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
       gasLimit: gasLimit,
     });
-    if (fAmount == undefined) {
-      return fAmount;
-    }
-    return ABK64x64ToFloat(fAmount);
+    return ABK64x64ToFloat(tx.value ?? 0);
   }
 
   /**

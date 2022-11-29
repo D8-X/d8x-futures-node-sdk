@@ -5,6 +5,7 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import MarketData from "../src/marketData";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
+import LiquidatorTool from "../src/liquidatorTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -16,6 +17,7 @@ let mktData: MarketData;
 let orderIds: string[];
 let wallet: ethers.Wallet;
 let accTrade: AccountTrade;
+let liqTool: LiquidatorTool;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
@@ -26,6 +28,8 @@ describe("write and spoil gas and tokens", () => {
     expect(pk == undefined).toBeFalsy();
     accTrade = new AccountTrade(config, pk);
     await accTrade.createProxyInstance();
+    liqTool = new LiquidatorTool(config, pk);
+    await liqTool.createProxyInstance();
   });
 
   it("set allowance", async () => {
@@ -76,5 +80,11 @@ describe("write and spoil gas and tokens", () => {
         10_000 * fee2
       } basis points, respectively`
     );
+  });
+
+  it("should liquidate trader", async () => {
+    const myAddress = new ethers.Wallet(pk).address;
+    let liqAmount = await liqTool.liquidateTrader("BTC-USD-MATIC", myAddress);
+    console.log(liqAmount);
   });
 });
