@@ -92,6 +92,33 @@ export default class AccountTrade extends WriteAccessHandler {
    *  }
    *  main();
    *
+   * @example
+   * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *    console.log(AccountTrade);
+   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *    const pk: string = <string>process.env.PK;
+   *    let accTrade = new AccountTrade(config, pk);
+   *    await accTrade.createProxyInstance();
+   *    // set allowance
+   *    await accTrade.setAllowance("MATIC");
+   *    // set an order
+   *   let order: Order = {
+   *       symbol: "MATIC-USD-MATIC",
+   *       side: "BUY",
+   *       type: "LIMIT",
+   *       limitPrice: 4000,
+   *       quantity: 5,
+   *       leverage: 2,
+   *       timestamp: Date.now() / 1000,
+   *       deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
+   *    };
+   *    let orderTransaction = await accTrade.order(order);
+   *    console.log(orderTransaction);
+   *  }
+   *  main();
+   *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
   public async order(order: Order): Promise<ethers.ContractTransaction> {
