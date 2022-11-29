@@ -82,6 +82,7 @@ export interface PerpetualStaticInfo {
 
 export interface ExchangeInfo {
   pools: PoolState[];
+  oracleFactoryAddr: string;
 }
 export interface PoolState {
   isRunning: boolean;

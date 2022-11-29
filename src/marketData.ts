@@ -175,7 +175,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   public static async _exchangeInfo(_proxyContract: ethers.Contract): Promise<ExchangeInfo> {
     let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
-    let info: ExchangeInfo = { pools: [] };
+    let factory = await _proxyContract.getOracleFactory();
+    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory };
     const numPools = nestedPerpetualIDs.length;
     for (var j = 0; j < numPools; j++) {
       let perpetualIDs = nestedPerpetualIDs[j];
