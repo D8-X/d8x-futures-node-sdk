@@ -10,7 +10,7 @@ require gas-payments.</p>
 
 * [AccountTrade](#AccountTrade) ⇐ <code>WriteAccessHandler</code>
     * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
-    * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
+    * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder) ⇒ <code>ContractTransaction</code>
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
@@ -44,16 +44,34 @@ main();
 ```
 <a name="AccountTrade+cancelOrder"></a>
 
-### accountTrade.cancelOrder(symbol, orderId)
+### accountTrade.cancelOrder(symbol, orderId) ⇒ <code>ContractTransaction</code>
 <p>Cancels an existing order on the exchange.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Returns**: <code>ContractTransaction</code> - <p>Contract Transaction (containing events).</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | orderId | <code>string</code> | <p>ID of the order to be cancelled.</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+async function main() {
+   console.log(AccountTrade);
+   // Setup (authentication required, PK is an environment variable with a private key)
+   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   const pk: string = <string>process.env.PK;
+   let accTrade = new AccountTrade(config, pk);
+   await accTrade.createProxyInstance();
+   // cancel order
+   let cancelTransaction = accTrade.cancelOrder("MATIC-USD-MATIC",
+       "0x4639061a58dcf34f4c9c703f49f1cb00d6a4fba490d62c0eb4a4fb06e1c76c19")
+   console.log(cancelTransaction);
+ }
+ main();
+```
 <a name="AccountTrade+order"></a>
 
 ### accountTrade.order(order) ⇒ <code>ContractTransaction</code>
@@ -84,7 +102,36 @@ async function main() {
        side: "BUY",
        type: "MARKET",
        quantity: 100,
-       timestamp: Date.now()
+       leverage: 2,
+       timestamp: Date.now()/1000,
+   };
+   let orderTransaction = await accTrade.order(order);
+   console.log(orderTransaction);
+ }
+ main();
+```
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+async function main() {
+   console.log(AccountTrade);
+   // Setup (authentication required, PK is an environment variable with a private key)
+   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   const pk: string = <string>process.env.PK;
+   let accTrade = new AccountTrade(config, pk);
+   await accTrade.createProxyInstance();
+   // set allowance
+   await accTrade.setAllowance("MATIC");
+   // set an order
+  let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "LIMIT",
+      limitPrice: 1,
+      quantity: 5,
+      leverage: 2,
+      timestamp: Date.now() / 1000,
+      deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
    };
    let orderTransaction = await accTrade.order(order);
    console.log(orderTransaction);
