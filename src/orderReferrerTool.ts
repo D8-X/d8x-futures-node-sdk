@@ -6,6 +6,7 @@ import { ethers } from "ethers";
  * Functions to execute existing conditional orders from the limit order book. This class
  * requires a private key and executes smart-contract interactions that require
  * gas-payments.
+ * @extends WriteAccessHandler
  */
 export default class OrderReferrerTool extends WriteAccessHandler {
   /**

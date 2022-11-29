@@ -8,12 +8,14 @@ import AccountTrade from "./accountTrade";
  * Functions for brokers to determine fees, deposit lots, and sign-up traders.
  * This class requires a private key and executes smart-contract interactions that
  * require gas-payments.
+ * @extends WriteAccessHandler
  */
 export default class BrokerTool extends WriteAccessHandler {
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
    * readSDKConfig.
+   * @param {string} privateKey Private key of a broker.
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -28,7 +30,6 @@ export default class BrokerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @param {string} privateKey Private key of a broker.
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
     super(config, privateKey);
@@ -181,6 +182,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * This fee is equal or lower than the broker induced fee, provided the order is properly signed.
    * @param {Order} order Order structure. As a minimum the structure needs to
    * specify symbol, side, type and quantity.
+   * @param {string} traderAddr Address of the trader for whom to determine the fee.
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -203,7 +205,6 @@ export default class BrokerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @param {string} traderAddr Address of the trader for whom to determine the fee.
    * @returns {number} Fee in decimals (i.e. 0.1% is 0.001).
    */
   public async determineExchangeFee(order: Order, traderAddr: string): Promise<number> {
@@ -484,7 +485,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.transferOwnership(poolId, newAddress);
+    let tx = await this.proxyContract.transferBrokerOwnership(poolId, newAddress);
     return tx;
   }
 }

@@ -1,12 +1,13 @@
 <a name="LiquidatorTool"></a>
 
-## LiquidatorTool
+## LiquidatorTool ⇐ <code>WriteAccessHandler</code>
 <p>Functions to liquidate traders. This class requires a private key
 and executes smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: <code>WriteAccessHandler</code>  
 
-* [LiquidatorTool](#LiquidatorTool)
+* [LiquidatorTool](#LiquidatorTool) ⇐ <code>WriteAccessHandler</code>
     * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒ <code>number</code>
     * [.isMaintenanceMarginSafe(symbol, traderAddr)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
@@ -33,16 +34,18 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await lqudtrTool.createProxyInstance();   
+  await lqudtrTool.createProxyInstance();
 }
 main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
 ### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒ <code>number</code>
+<p>Liquidate a trader.</p>
+
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Returns**: <code>number</code> - <p>Liquidated amount.</p>  
 
@@ -59,13 +62,13 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // liquidate trader
-  let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC", 
+  let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC",
       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-  console.log(liqAmount);     
+  console.log(liqAmount);
 }
 main();
 ```
@@ -91,13 +94,13 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // check if trader can be liquidated
-  let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC", 
+  let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC",
       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-  console.log(safe);     
+  console.log(safe);
 }
 main();
 ```
@@ -120,12 +123,12 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // get number of active accounts
   let accounts = await lqudtrTool.countActivePerpAccounts("ETH-USD-MATIC");
-  console.log(accounts);     
+  console.log(accounts);
 }
 main();
 ```
@@ -150,12 +153,12 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // get all active accounts in chunks
   let accounts = await lqudtrTool.getActiveAccountsByChunks("ETH-USD-MATIC", 0, 4);
-  console.log(accounts);     
+  console.log(accounts);
 }
 main();
 ```
@@ -178,12 +181,12 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // get all active accounts
   let accounts = await lqudtrTool.getAllActiveAccounts("ETH-USD-MATIC");
-  console.log(accounts);     
+  console.log(accounts);
 }
 main();
 ```

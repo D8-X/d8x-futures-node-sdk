@@ -80,10 +80,32 @@ export interface PerpetualStaticInfo {
   S3Symbol: string;
 }
 
+/**
+ * @global
+ * @typedef {Object} ExchangeInfo
+ * @property {PoolState[]} pools Array of state objects for all pools in the exchange.
+ * @property {string} oracleFactoryAddr Address of the oracle factory used by the pools in the exchange.
+ */
 export interface ExchangeInfo {
   pools: PoolState[];
   oracleFactoryAddr: string;
 }
+
+/**
+ * @global
+ * @typedef {Object} PoolState
+ * @property {boolean} isRunning True if the pool is running.
+ * @property {string} marginTokenAddr Address of the token used by the pool.
+ * This is the token used for margin deposits, liquidity provision, and trading fees.
+ * @property {string} poolShareTokenAddr Address of the pool share token.
+ * This is the token issued to external liquidity providers.
+ * @property {number} defaultFundCashCC Amount of cash in the default fund of this pool, denominated in margin tokens.
+ * @property {number} pnlParticipantCashCC Amount of cash in the PnL participation pool, i.e. cash deposited by external liquidity providers.
+ * @property {number} totalAMMFundCashCC Amount of cash aggregated across all perpetual AMM funds in this pool.
+ * @property {number} totalTargetAMMFundSizeCC Target AMM funds aggregated across all perpetuals in this pool.
+ * @property {number} brokerCollateralLotSize Price of one lot for brokers who wish to participate in this pool. Denominated in margin tokens.
+ * @property {PerpetualState[]} perpetuals Array of all perpetuals in this pool.
+ */
 export interface PoolState {
   isRunning: boolean;
   marginTokenAddr: string;

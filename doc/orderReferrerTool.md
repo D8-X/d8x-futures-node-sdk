@@ -1,13 +1,14 @@
 <a name="OrderReferrerTool"></a>
 
-## OrderReferrerTool
+## OrderReferrerTool ⇐ <code>WriteAccessHandler</code>
 <p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
 gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: <code>WriteAccessHandler</code>  
 
-* [OrderReferrerTool](#OrderReferrerTool)
+* [OrderReferrerTool](#OrderReferrerTool) ⇐ <code>WriteAccessHandler</code>
     * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
@@ -35,10 +36,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // OrderReferrerTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let orderTool = new OrderReferrerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderReferrerTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await orderTool.createProxyInstance();   
+  await orderTool.createProxyInstance();
 }
 main();
 ```
@@ -75,12 +76,12 @@ async function main() {
   console.log(OrderReferrerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
-  console.log(openOrders);     
+  console.log(openOrders);
 }
 main();
 ```
@@ -103,12 +104,12 @@ async function main() {
   console.log(OrderReferrerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
-  console.log(numberOfOrders);     
+  console.log(numberOfOrders);
 }
 main();
 ```
@@ -147,12 +148,12 @@ async function main() {
   console.log(OrderReferrerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
-  console.log(activeOrders);     
+  console.log(activeOrders);
 }
 main();
 ```

@@ -59,7 +59,7 @@ describe("write and spoil gas and tokens", () => {
       side: "BUY",
       type: "LIMIT",
       limitPrice: 4000,
-      quantity: 0.5,
+      quantity: 5,
       leverage: 2,
       timestamp: Date.now() / 1000,
     };

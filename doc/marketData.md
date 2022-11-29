@@ -1,13 +1,14 @@
 <a name="MarketData"></a>
 
-## MarketData
+## MarketData ⇐ <code>PerpetualDataHandler</code>
 <p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
 This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p>
 
 **Kind**: global class  
+**Extends**: <code>PerpetualDataHandler</code>  
 
-* [MarketData](#MarketData)
+* [MarketData](#MarketData) ⇐ <code>PerpetualDataHandler</code>
     * [new MarketData(config)](#new_MarketData_new)
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
@@ -35,9 +36,9 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // MarketData (read only, no authentication needed)
-  let mktData = new MarketData(config);  
+  let mktData = new MarketData(config);
   // Create a proxy instance to access the blockchain
-  await mktData.createProxyInstance();    
+  await mktData.createProxyInstance();
 }
 main();
 ```
@@ -55,7 +56,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
   let proxy = await mktData.getReadOnlyProxyInstance();
@@ -77,7 +78,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
   let info = await mktData.exchangeInfo();
@@ -105,7 +106,7 @@ const config = PerpetualDataHandler.readSDKConfig("testnet");
 let mktData = new MarketData(config);
 await mktData.createProxyInstance();
 // Get all open orders for a trader/symbol
-let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
     "ETH-USD-MATIC");
 ```
 **Example**  
@@ -115,11 +116,11 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
-  let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
-      "ETH-USD-MATIC");   
+  let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+      "ETH-USD-MATIC");
   console.log(opOrder);
 }
 main();
@@ -143,7 +144,7 @@ const config = PerpetualDataHandler.readSDKConfig("testnet");
 let mktData = new MarketData(config);
 await mktData.createProxyInstance();
 // Get position risk info
-let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
     "ETH-USD-MATIC");
 ```
 **Example**  
@@ -153,10 +154,10 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
-  let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+  let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
       "ETH-USD-MATIC");
   console.log(posRisk);
 }
@@ -182,7 +183,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
   let price = await mktData.getOraclePrice("ETH", "USD");
@@ -209,7 +210,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
   let price = await mktData.getMarkPrice("ETH-USD-MATIC");
@@ -237,7 +238,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
   let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);

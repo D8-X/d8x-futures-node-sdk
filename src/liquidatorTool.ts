@@ -5,6 +5,7 @@ import { ABK64x64ToFloat } from "./d8XMath";
 /**
  * Functions to liquidate traders. This class requires a private key
  * and executes smart-contract interactions that require gas-payments.
+ * @extends WriteAccessHandler
  */
 export default class LiquidatorTool extends WriteAccessHandler {
   /**

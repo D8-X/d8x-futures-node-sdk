@@ -1,13 +1,14 @@
 <a name="BrokerTool"></a>
 
-## BrokerTool
+## BrokerTool ⇐ <code>WriteAccessHandler</code>
 <p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: <code>WriteAccessHandler</code>  
 
-* [BrokerTool](#BrokerTool)
+* [BrokerTool](#BrokerTool) ⇐ <code>WriteAccessHandler</code>
     * [new BrokerTool(config, privateKey)](#new_BrokerTool_new)
     * [.getBrokerInducedFee(poolSymbolName)](#BrokerTool+getBrokerInducedFee) ⇒ <code>number</code>
     * [.getFeeForBrokerDesignation(poolSymbolName, [lots])](#BrokerTool+getFeeForBrokerDesignation) ⇒ <code>number</code>
@@ -40,10 +41,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // BrokerTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk); 
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await brokTool.createProxyInstance();   
+  await brokTool.createProxyInstance();
 }
 main();
 ```
@@ -67,12 +68,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker induced fee
   let brokFee = await brokTool.getBrokerInducedFee("MATIC");
-  console.log(brokFee);     
+  console.log(brokFee);
 }
 main();
 ```
@@ -98,12 +99,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker fee induced by lots
   let brokFeeLots = await brokTool.getFeeForBrokerDesignation("MATIC");
-  console.log(brokFeeLots);     
+  console.log(brokFeeLots);
 }
 main();
 ```
@@ -128,12 +129,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker fee induced by volume
   let brokFeeVol = await brokTool.getFeeForBrokerVolume("MATIC");
-  console.log(brokFeeVol);     
+  console.log(brokFeeVol);
 }
 main();
 ```
@@ -158,12 +159,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker fee induced by staked d8x
   let brokFeeStake = await brokTool.getFeeForBrokerStake("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-  console.log(brokFeeStake);     
+  console.log(brokFeeStake);
 }
 main();
 ```
@@ -192,19 +193,19 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get exchange fee based on an order and trader
-  let order = {symbol: "ETH-USD-MATIC", 
-      side: "BUY", 
-      type: "MARKET", 
-      quantity: 1, 
+  let order = {symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
       timestamp: Date.now()
-   };   
+   };
    let exchFee = await brokTool.determineExchangeFee(order,
-       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");   
-  console.log(exchFee);     
+       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(exchFee);
 }
 main();
 ```
@@ -228,12 +229,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get 30 day volume for broker
   let brokVolume = await brokTool.getCurrentBrokerVolume("MATIC");
-  console.log(brokVolume);     
+  console.log(brokVolume);
 }
 main();
 ```
@@ -257,12 +258,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get lot price
   let brokLotSize = await brokTool.getLotSize("MATIC");
-  console.log(brokLotSize);     
+  console.log(brokLotSize);
 }
 main();
 ```
@@ -286,12 +287,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker designation
   let brokDesignation = await brokTool.getBrokerDesignation("MATIC");
-  console.log(brokDesignation);     
+  console.log(brokDesignation);
 }
 main();
 ```
@@ -315,12 +316,13 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // deposit to default fund
+  await brokTool.setAllowance("MATIC");
   let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
-  console.log(respDeposit);     
+  console.log(respDeposit);
 }
 main();
 ```
@@ -347,19 +349,19 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // sign order
-  let order = {symbol: "ETH-USD-MATIC", 
-      side: "BUY", 
-      type: "MARKET", 
-      quantity: 1, 
+  let order = {symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
       timestamp: Date.now()
-   };   
-   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
-       0.0001, 1669723339);   
-  console.log(signedOrder);     
+   };
+   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+       0.0001, 1669723339);
+  console.log(signedOrder);
 }
 main();
 ```

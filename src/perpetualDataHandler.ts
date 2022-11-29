@@ -42,8 +42,8 @@ import {
 import { Config } from "jest";
 
 /**
- * Parent class for AccountTrade and MarketData that handles
- * common data and chain operations
+ * Parent class for MarketData and WriteAccessHandler that handles
+ * common data and chain operations.
  */
 export default class PerpetualDataHandler {
   //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info

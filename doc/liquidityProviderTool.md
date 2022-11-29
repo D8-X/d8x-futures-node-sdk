@@ -1,12 +1,13 @@
 <a name="LiquidityProviderTool"></a>
 
-## LiquidityProviderTool
+## LiquidityProviderTool ⇐ <code>WriteAccessHandler</code>
 <p>Functions to provide liquidity. This class requires a private key and executes
 smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: <code>WriteAccessHandler</code>  
 
-* [LiquidityProviderTool](#LiquidityProviderTool)
+* [LiquidityProviderTool](#LiquidityProviderTool) ⇐ <code>WriteAccessHandler</code>
     * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
     * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
@@ -31,10 +32,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await lqudtProviderTool.createProxyInstance();   
+  await lqudtProviderTool.createProxyInstance();
 }
 main();
 ```
@@ -58,12 +59,12 @@ async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance(); 
+  await lqudtProviderTool.createProxyInstance();
   // get value of pool share token
   let shareToken = await lqudtProviderTool.getParticipationValue("MATIC");
-  console.log(shareToken);     
+  console.log(shareToken);
 }
 main();
 ```
@@ -87,12 +88,13 @@ async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance(); 
+  await lqudtProviderTool.createProxyInstance();
   // add liquidity
+  await lqudtProviderTool.setAllowance("MATIC");
   let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
-  console.log(respAddLiquidity);     
+  console.log(respAddLiquidity);
 }
 main();
 ```
@@ -116,12 +118,12 @@ async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance(); 
+  await lqudtProviderTool.createProxyInstance();
   // remove liquidity
   let respRemoveLiquidity = await lqudtProviderTool.removeLiquidity("MATIC", 0.1);
-  console.log(respRemoveLiquidity);  
+  console.log(respRemoveLiquidity);
 }
 main();
 ```

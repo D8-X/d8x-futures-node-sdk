@@ -15,6 +15,7 @@ import WriteAccessHandler from "./writeAccessHandler";
  * Functions to create, submit and cancel orders on the exchange.
  * This class requires a private key and executes smart-contract interactions that
  * require gas-payments.
+ * @extends WriteAccessHandler
  */
 export default class AccountTrade extends WriteAccessHandler {
   /**
@@ -28,10 +29,10 @@ export default class AccountTrade extends WriteAccessHandler {
    *   // load configuration for testnet
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   // AccountTrade (authentication required, PK is an environment variable with a private key)
-   *   const pk: string = <string>process.env.PK;    
-   *   let accTrade = new AccountTrade(config, pk);  
+   *   const pk: string = <string>process.env.PK;
+   *   let accTrade = new AccountTrade(config, pk);
    *   // Create a proxy instance to access the blockchain
-   *   await accTrade.createProxyInstance();   
+   *   await accTrade.createProxyInstance();
    * }
    * main();
    *
@@ -72,8 +73,8 @@ export default class AccountTrade extends WriteAccessHandler {
    *    console.log(AccountTrade);
    *    // Setup (authentication required, PK is an environment variable with a private key)
    *    const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *    const pk: string = <string>process.env.PK;    
-   *    let accTrade = new AccountTrade(config, pk); 
+   *    const pk: string = <string>process.env.PK;
+   *    let accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
    *    // set allowance
    *    await accTrade.setAllowance("MATIC");
@@ -86,7 +87,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *        timestamp: Date.now()
    *    };
    *    let orderTransaction = await accTrade.order(order);
-   *    console.log(orderTransaction);    
+   *    console.log(orderTransaction);
    *  }
    *  main();
    *
@@ -125,12 +126,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *   console.log(AccountTrade);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let accTrade = new AccountTrade(config, pk); 
+   *   const pk: string = <string>process.env.PK;
+   *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // query exchange fee
    *   let fees = await accTrade.queryExchangeFee("MATIC");
-   *   console.log(fees);     
+   *   console.log(fees);
    * }
    * main();
    *
@@ -158,12 +159,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *   console.log(AccountTrade);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;    
-   *   let accTrade = new AccountTrade(config, pk); 
+   *   const pk: string = <string>process.env.PK;
+   *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // query 30 day volume
    *   let vol = await accTrade.getCurrentTraderVolume("MATIC");
-   *   console.log(vol);     
+   *   console.log(vol);
    * }
    * main();
    *

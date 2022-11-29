@@ -10,32 +10,32 @@
 ## Classes
 
 <dl>
-<dt><a href="#AccountTrade">AccountTrade</a></dt>
+<dt><a href="#AccountTrade">AccountTrade</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to create, submit and cancel orders on the exchange.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p></dd>
-<dt><a href="#BrokerTool">BrokerTool</a></dt>
+<dt><a href="#BrokerTool">BrokerTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p></dd>
-<dt><a href="#LiquidatorTool">LiquidatorTool</a></dt>
+<dt><a href="#LiquidatorTool">LiquidatorTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to liquidate traders. This class requires a private key
 and executes smart-contract interactions that require gas-payments.</p></dd>
-<dt><a href="#LiquidityProviderTool">LiquidityProviderTool</a></dt>
+<dt><a href="#LiquidityProviderTool">LiquidityProviderTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to provide liquidity. This class requires a private key and executes
 smart-contract interactions that require gas-payments.</p></dd>
-<dt><a href="#MarketData">MarketData</a></dt>
+<dt><a href="#MarketData">MarketData</a> ⇐ <code><a href="#PerpetualDataHandler">PerpetualDataHandler</a></code></dt>
 <dd><p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
 This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p></dd>
-<dt><a href="#OrderReferrerTool">OrderReferrerTool</a></dt>
+<dt><a href="#OrderReferrerTool">OrderReferrerTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
 gas-payments.</p></dd>
 <dt><a href="#PerpetualDataHandler">PerpetualDataHandler</a></dt>
-<dd><p>Parent class for AccountTrade and MarketData that handles
-common data and chain operations</p></dd>
-<dt><a href="#WriteAccessHandler">WriteAccessHandler</a></dt>
+<dd><p>Parent class for MarketData and WriteAccessHandler that handles
+common data and chain operations.</p></dd>
+<dt><a href="#WriteAccessHandler">WriteAccessHandler</a> ⇐ <code><a href="#PerpetualDataHandler">PerpetualDataHandler</a></code></dt>
 <dd><p>This is a parent class for the classes that require
 write access to the contracts.
 This class requires a private key and executes smart-contract interaction that
@@ -240,20 +240,25 @@ returned by the smart contract as bytes4</p>
 
 <a name="AccountTrade"></a>
 
-## AccountTrade
+## AccountTrade ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
 <p>Functions to create, submit and cancel orders on the exchange.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
-* [AccountTrade](#AccountTrade)
+* [AccountTrade](#AccountTrade) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_AccountTrade_new"></a>
 
@@ -274,10 +279,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // AccountTrade (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let accTrade = new AccountTrade(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
   // Create a proxy instance to access the blockchain
-  await accTrade.createProxyInstance();   
+  await accTrade.createProxyInstance();
 }
 main();
 ```
@@ -307,12 +312,28 @@ main();
 
 **Example**  
 ```js
-let order: Order = {
-      symbol: "MATIC-USD-MATIC",
-      side: "BUY",
-      type: "MARKET",
-      quantity: 1,
-}
+import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+async function main() {
+   console.log(AccountTrade);
+   // Setup (authentication required, PK is an environment variable with a private key)
+   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   const pk: string = <string>process.env.PK;
+   let accTrade = new AccountTrade(config, pk);
+   await accTrade.createProxyInstance();
+   // set allowance
+   await accTrade.setAllowance("MATIC");
+   // set an order
+   let order: Order = {
+       symbol: "MATIC-USD-MATIC",
+       side: "BUY",
+       type: "MARKET",
+       quantity: 100,
+       timestamp: Date.now()
+   };
+   let orderTransaction = await accTrade.order(order);
+   console.log(orderTransaction);
+ }
+ main();
 ```
 <a name="AccountTrade+queryExchangeFee"></a>
 
@@ -337,12 +358,12 @@ async function main() {
   console.log(AccountTrade);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let accTrade = new AccountTrade(config, pk); 
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
   // query exchange fee
   let fees = await accTrade.queryExchangeFee("MATIC");
-  console.log(fees);     
+  console.log(fees);
 }
 main();
 ```
@@ -366,12 +387,12 @@ async function main() {
   console.log(AccountTrade);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let accTrade = new AccountTrade(config, pk); 
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
   // query 30 day volume
   let vol = await accTrade.getCurrentTraderVolume("MATIC");
-  console.log(vol);     
+  console.log(vol);
 }
 main();
 ```
@@ -385,16 +406,61 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+<a name="WriteAccessHandler+createProxyInstance"></a>
+
+### accountTrade.createProxyInstance()
+<p>Initialize the AccountTrade-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+<a name="WriteAccessHandler+setAllowance"></a>
+
+### accountTrade.setAllowance(symbol, amount) ⇒
+<p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>setAllowance</code>](#WriteAccessHandler+setAllowance)  
+**Returns**: <p>ContractTransaction</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
+| amount | <p>optional, amount to approve if not 'infinity'</p> |
+
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### accountTrade.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### accountTrade.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="BrokerTool"></a>
 
-## BrokerTool
+## BrokerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
 <p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
-* [BrokerTool](#BrokerTool)
+* [BrokerTool](#BrokerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new BrokerTool(config, privateKey)](#new_BrokerTool_new)
     * [.getBrokerInducedFee(poolSymbolName)](#BrokerTool+getBrokerInducedFee) ⇒ <code>number</code>
     * [.getFeeForBrokerDesignation(poolSymbolName, [lots])](#BrokerTool+getFeeForBrokerDesignation) ⇒ <code>number</code>
@@ -407,6 +473,10 @@ require gas-payments.</p>
     * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
     * [.signOrder(order, traderAddr, feeDecimals, deadline)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
+    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_BrokerTool_new"></a>
 
@@ -427,10 +497,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // BrokerTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk); 
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await brokTool.createProxyInstance();   
+  await brokTool.createProxyInstance();
 }
 main();
 ```
@@ -454,12 +524,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker induced fee
   let brokFee = await brokTool.getBrokerInducedFee("MATIC");
-  console.log(brokFee);     
+  console.log(brokFee);
 }
 main();
 ```
@@ -485,12 +555,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker fee induced by lots
   let brokFeeLots = await brokTool.getFeeForBrokerDesignation("MATIC");
-  console.log(brokFeeLots);     
+  console.log(brokFeeLots);
 }
 main();
 ```
@@ -515,12 +585,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker fee induced by volume
   let brokFeeVol = await brokTool.getFeeForBrokerVolume("MATIC");
-  console.log(brokFeeVol);     
+  console.log(brokFeeVol);
 }
 main();
 ```
@@ -545,12 +615,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker fee induced by staked d8x
   let brokFeeStake = await brokTool.getFeeForBrokerStake("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-  console.log(brokFeeStake);     
+  console.log(brokFeeStake);
 }
 main();
 ```
@@ -579,19 +649,19 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get exchange fee based on an order and trader
-  let order = {symbol: "ETH-USD-MATIC", 
-      side: "BUY", 
-      type: "MARKET", 
-      quantity: 1, 
+  let order = {symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
       timestamp: Date.now()
-   };   
+   };
    let exchFee = await brokTool.determineExchangeFee(order,
-       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");   
-  console.log(exchFee);     
+       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(exchFee);
 }
 main();
 ```
@@ -615,12 +685,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get 30 day volume for broker
   let brokVolume = await brokTool.getCurrentBrokerVolume("MATIC");
-  console.log(brokVolume);     
+  console.log(brokVolume);
 }
 main();
 ```
@@ -644,12 +714,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get lot price
   let brokLotSize = await brokTool.getLotSize("MATIC");
-  console.log(brokLotSize);     
+  console.log(brokLotSize);
 }
 main();
 ```
@@ -673,12 +743,12 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get broker designation
   let brokDesignation = await brokTool.getBrokerDesignation("MATIC");
-  console.log(brokDesignation);     
+  console.log(brokDesignation);
 }
 main();
 ```
@@ -702,12 +772,13 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // deposit to default fund
+  await brokTool.setAllowance("MATIC");
   let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
-  console.log(respDeposit);     
+  console.log(respDeposit);
 }
 main();
 ```
@@ -734,19 +805,19 @@ async function main() {
   console.log(BrokerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let brokTool = new BrokerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // sign order
-  let order = {symbol: "ETH-USD-MATIC", 
-      side: "BUY", 
-      type: "MARKET", 
-      quantity: 1, 
+  let order = {symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
       timestamp: Date.now()
-   };   
-   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
-       0.0001, 1669723339);   
-  console.log(signedOrder);     
+   };
+   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+       0.0001, 1669723339);
+  console.log(signedOrder);
 }
 main();
 ```
@@ -765,21 +836,70 @@ his D8X holdings to newAddress. Until this transfer is completed, the broker wil
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | newAddress | <code>string</code> | <p>The address this broker wants to use from now on.</p> |
 
+<a name="WriteAccessHandler+createProxyInstance"></a>
+
+### brokerTool.createProxyInstance()
+<p>Initialize the AccountTrade-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+<a name="WriteAccessHandler+setAllowance"></a>
+
+### brokerTool.setAllowance(symbol, amount) ⇒
+<p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>setAllowance</code>](#WriteAccessHandler+setAllowance)  
+**Returns**: <p>ContractTransaction</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
+| amount | <p>optional, amount to approve if not 'infinity'</p> |
+
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### brokerTool.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### brokerTool.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="LiquidatorTool"></a>
 
-## LiquidatorTool
+## LiquidatorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
 <p>Functions to liquidate traders. This class requires a private key
 and executes smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
-* [LiquidatorTool](#LiquidatorTool)
+* [LiquidatorTool](#LiquidatorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒ <code>number</code>
     * [.isMaintenanceMarginSafe(symbol, traderAddr)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
     * [.getAllActiveAccounts(symbol)](#LiquidatorTool+getAllActiveAccounts) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_LiquidatorTool_new"></a>
 
@@ -800,16 +920,18 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await lqudtrTool.createProxyInstance();   
+  await lqudtrTool.createProxyInstance();
 }
 main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
 ### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒ <code>number</code>
+<p>Liquidate a trader.</p>
+
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Returns**: <code>number</code> - <p>Liquidated amount.</p>  
 
@@ -826,13 +948,13 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // liquidate trader
-  let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC", 
+  let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC",
       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-  console.log(liqAmount);     
+  console.log(liqAmount);
 }
 main();
 ```
@@ -858,13 +980,13 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // check if trader can be liquidated
-  let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC", 
+  let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC",
       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
-  console.log(safe);     
+  console.log(safe);
 }
 main();
 ```
@@ -887,12 +1009,12 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // get number of active accounts
   let accounts = await lqudtrTool.countActivePerpAccounts("ETH-USD-MATIC");
-  console.log(accounts);     
+  console.log(accounts);
 }
 main();
 ```
@@ -917,12 +1039,12 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // get all active accounts in chunks
   let accounts = await lqudtrTool.getActiveAccountsByChunks("ETH-USD-MATIC", 0, 4);
-  console.log(accounts);     
+  console.log(accounts);
 }
 main();
 ```
@@ -945,28 +1067,77 @@ async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let lqudtrTool = new LiquidatorTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
   // get all active accounts
   let accounts = await lqudtrTool.getAllActiveAccounts("ETH-USD-MATIC");
-  console.log(accounts);     
+  console.log(accounts);
 }
 main();
 ```
+<a name="WriteAccessHandler+createProxyInstance"></a>
+
+### liquidatorTool.createProxyInstance()
+<p>Initialize the AccountTrade-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+<a name="WriteAccessHandler+setAllowance"></a>
+
+### liquidatorTool.setAllowance(symbol, amount) ⇒
+<p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>setAllowance</code>](#WriteAccessHandler+setAllowance)  
+**Returns**: <p>ContractTransaction</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
+| amount | <p>optional, amount to approve if not 'infinity'</p> |
+
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### liquidatorTool.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### liquidatorTool.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="LiquidityProviderTool"></a>
 
-## LiquidityProviderTool
+## LiquidityProviderTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
 <p>Functions to provide liquidity. This class requires a private key and executes
 smart-contract interactions that require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
-* [LiquidityProviderTool](#LiquidityProviderTool)
+* [LiquidityProviderTool](#LiquidityProviderTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
     * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.removeLiquidity(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+removeLiquidity) ⇒
+    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_LiquidityProviderTool_new"></a>
 
@@ -987,10 +1158,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await lqudtProviderTool.createProxyInstance();   
+  await lqudtProviderTool.createProxyInstance();
 }
 main();
 ```
@@ -1014,12 +1185,12 @@ async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance(); 
+  await lqudtProviderTool.createProxyInstance();
   // get value of pool share token
   let shareToken = await lqudtProviderTool.getParticipationValue("MATIC");
-  console.log(shareToken);     
+  console.log(shareToken);
 }
 main();
 ```
@@ -1043,12 +1214,13 @@ async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance(); 
+  await lqudtProviderTool.createProxyInstance();
   // add liquidity
+  await lqudtProviderTool.setAllowance("MATIC");
   let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
-  console.log(respAddLiquidity);     
+  console.log(respAddLiquidity);
 }
 main();
 ```
@@ -1072,25 +1244,70 @@ async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance(); 
+  await lqudtProviderTool.createProxyInstance();
   // remove liquidity
   let respRemoveLiquidity = await lqudtProviderTool.removeLiquidity("MATIC", 0.1);
-  console.log(respRemoveLiquidity);  
+  console.log(respRemoveLiquidity);
 }
 main();
 ```
+<a name="WriteAccessHandler+createProxyInstance"></a>
+
+### liquidityProviderTool.createProxyInstance()
+<p>Initialize the AccountTrade-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+<a name="WriteAccessHandler+setAllowance"></a>
+
+### liquidityProviderTool.setAllowance(symbol, amount) ⇒
+<p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>setAllowance</code>](#WriteAccessHandler+setAllowance)  
+**Returns**: <p>ContractTransaction</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
+| amount | <p>optional, amount to approve if not 'infinity'</p> |
+
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### liquidityProviderTool.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### liquidityProviderTool.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="MarketData"></a>
 
-## MarketData
+## MarketData ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
 <p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
 This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p>
 
 **Kind**: global class  
+**Extends**: [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 
-* [MarketData](#MarketData)
+* [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
@@ -1099,6 +1316,8 @@ No gas required for the queries here.</p>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_MarketData_new"></a>
 
@@ -1118,9 +1337,9 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // MarketData (read only, no authentication needed)
-  let mktData = new MarketData(config);  
+  let mktData = new MarketData(config);
   // Create a proxy instance to access the blockchain
-  await mktData.createProxyInstance();    
+  await mktData.createProxyInstance();
 }
 main();
 ```
@@ -1138,7 +1357,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
   let proxy = await mktData.getReadOnlyProxyInstance();
@@ -1160,7 +1379,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
   let info = await mktData.exchangeInfo();
@@ -1188,7 +1407,7 @@ const config = PerpetualDataHandler.readSDKConfig("testnet");
 let mktData = new MarketData(config);
 await mktData.createProxyInstance();
 // Get all open orders for a trader/symbol
-let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
     "ETH-USD-MATIC");
 ```
 **Example**  
@@ -1198,11 +1417,11 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
-  let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
-      "ETH-USD-MATIC");   
+  let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+      "ETH-USD-MATIC");
   console.log(opOrder);
 }
 main();
@@ -1226,7 +1445,7 @@ const config = PerpetualDataHandler.readSDKConfig("testnet");
 let mktData = new MarketData(config);
 await mktData.createProxyInstance();
 // Get position risk info
-let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
     "ETH-USD-MATIC");
 ```
 **Example**  
@@ -1236,10 +1455,10 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
-  let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", 
+  let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
       "ETH-USD-MATIC");
   console.log(posRisk);
 }
@@ -1265,7 +1484,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
   let price = await mktData.getOraclePrice("ETH", "USD");
@@ -1292,7 +1511,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
   let price = await mktData.getMarkPrice("ETH-USD-MATIC");
@@ -1320,7 +1539,7 @@ async function main() {
   console.log(MarketData);
   // setup
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  let mktData = new MarketData(config);   
+  let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
   let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
@@ -1328,16 +1547,38 @@ async function main() {
 }
 main();
 ```
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### marketData.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### marketData.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="OrderReferrerTool"></a>
 
-## OrderReferrerTool
+## OrderReferrerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
 <p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
 gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
-* [OrderReferrerTool](#OrderReferrerTool)
+* [OrderReferrerTool](#OrderReferrerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
@@ -1345,6 +1586,10 @@ gas-payments.</p>
     * [.getOrderById(symbol, digest)](#OrderReferrerTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order)](#OrderReferrerTool+isTradeable) ⇒
+    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -1365,10 +1610,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // OrderReferrerTool (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let orderTool = new OrderReferrerTool(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderReferrerTool(config, pk);
   // Create a proxy instance to access the blockchain
-  await orderTool.createProxyInstance();   
+  await orderTool.createProxyInstance();
 }
 main();
 ```
@@ -1405,12 +1650,12 @@ async function main() {
   console.log(OrderReferrerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
-  console.log(openOrders);     
+  console.log(openOrders);
 }
 main();
 ```
@@ -1433,12 +1678,12 @@ async function main() {
   console.log(OrderReferrerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
-  console.log(numberOfOrders);     
+  console.log(numberOfOrders);
 }
 main();
 ```
@@ -1477,12 +1722,12 @@ async function main() {
   console.log(OrderReferrerTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
+  const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
-  console.log(activeOrders);     
+  console.log(activeOrders);
 }
 main();
 ```
@@ -1498,11 +1743,55 @@ main();
 | --- | --- |
 | order | <p>order structure</p> |
 
+<a name="WriteAccessHandler+createProxyInstance"></a>
+
+### orderReferrerTool.createProxyInstance()
+<p>Initialize the AccountTrade-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+<a name="WriteAccessHandler+setAllowance"></a>
+
+### orderReferrerTool.setAllowance(symbol, amount) ⇒
+<p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>setAllowance</code>](#WriteAccessHandler+setAllowance)  
+**Returns**: <p>ContractTransaction</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
+| amount | <p>optional, amount to approve if not 'infinity'</p> |
+
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### orderReferrerTool.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### orderReferrerTool.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="PerpetualDataHandler"></a>
 
 ## PerpetualDataHandler
-<p>Parent class for AccountTrade and MarketData that handles
-common data and chain operations</p>
+<p>Parent class for MarketData and WriteAccessHandler that handles
+common data and chain operations.</p>
 
 **Kind**: global class  
 
@@ -1606,18 +1895,21 @@ Checks for some misspecifications.</p>
 
 <a name="WriteAccessHandler"></a>
 
-## WriteAccessHandler
+## WriteAccessHandler ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
 <p>This is a parent class for the classes that require
 write access to the contracts.
 This class requires a private key and executes smart-contract interaction that
 require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 
-* [WriteAccessHandler](#WriteAccessHandler)
+* [WriteAccessHandler](#WriteAccessHandler) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new WriteAccessHandler(config, privateKey)](#new_WriteAccessHandler_new)
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
 
 <a name="new_WriteAccessHandler_new"></a>
 
@@ -1625,10 +1917,10 @@ require gas-payments.</p>
 <p>Constructor</p>
 
 
-| Param | Description |
-| --- | --- |
-| config | <p>configuration</p> |
-| privateKey | <p>private key of account that trades</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>NodeSDKConfig</code> | <p>configuration</p> |
+| privateKey | <code>string</code> | <p>private key of account that trades</p> |
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
@@ -1651,3 +1943,24 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### writeAccessHandler.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### writeAccessHandler.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  

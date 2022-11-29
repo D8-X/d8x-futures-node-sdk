@@ -9,6 +9,7 @@ import { floatToDec18 } from "./d8XMath";
  * write access to the contracts.
  * This class requires a private key and executes smart-contract interaction that
  * require gas-payments.
+ * @extends PerpetualDataHandler
  */
 export default class WriteAccessHandler extends PerpetualDataHandler {
   protected privateKey: string;
@@ -18,8 +19,8 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
   protected chainId: number = 0;
   /**
    * Constructor
-   * @param config configuration
-   * @param privateKey private key of account that trades
+   * @param {NodeSDKConfig} config configuration
+   * @param {string} privateKey private key of account that trades
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
     super(config);

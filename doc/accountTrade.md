@@ -1,13 +1,14 @@
 <a name="AccountTrade"></a>
 
-## AccountTrade
+## AccountTrade ⇐ <code>WriteAccessHandler</code>
 <p>Functions to create, submit and cancel orders on the exchange.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p>
 
 **Kind**: global class  
+**Extends**: <code>WriteAccessHandler</code>  
 
-* [AccountTrade](#AccountTrade)
+* [AccountTrade](#AccountTrade) ⇐ <code>WriteAccessHandler</code>
     * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder)
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
@@ -34,10 +35,10 @@ async function main() {
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   // AccountTrade (authentication required, PK is an environment variable with a private key)
-  const pk: string = <string>process.env.PK;    
-  let accTrade = new AccountTrade(config, pk);  
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
   // Create a proxy instance to access the blockchain
-  await accTrade.createProxyInstance();   
+  await accTrade.createProxyInstance();
 }
 main();
 ```
@@ -67,12 +68,28 @@ main();
 
 **Example**  
 ```js
-let order: Order = {
-      symbol: "MATIC-USD-MATIC",
-      side: "BUY",
-      type: "MARKET",
-      quantity: 1,
-}
+import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+async function main() {
+   console.log(AccountTrade);
+   // Setup (authentication required, PK is an environment variable with a private key)
+   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   const pk: string = <string>process.env.PK;
+   let accTrade = new AccountTrade(config, pk);
+   await accTrade.createProxyInstance();
+   // set allowance
+   await accTrade.setAllowance("MATIC");
+   // set an order
+   let order: Order = {
+       symbol: "MATIC-USD-MATIC",
+       side: "BUY",
+       type: "MARKET",
+       quantity: 100,
+       timestamp: Date.now()
+   };
+   let orderTransaction = await accTrade.order(order);
+   console.log(orderTransaction);
+ }
+ main();
 ```
 <a name="AccountTrade+queryExchangeFee"></a>
 
@@ -97,12 +114,12 @@ async function main() {
   console.log(AccountTrade);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let accTrade = new AccountTrade(config, pk); 
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
   // query exchange fee
   let fees = await accTrade.queryExchangeFee("MATIC");
-  console.log(fees);     
+  console.log(fees);
 }
 main();
 ```
@@ -126,12 +143,12 @@ async function main() {
   console.log(AccountTrade);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;    
-  let accTrade = new AccountTrade(config, pk); 
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
   // query 30 day volume
   let vol = await accTrade.getCurrentTraderVolume("MATIC");
-  console.log(vol);     
+  console.log(vol);
 }
 main();
 ```
