@@ -32,7 +32,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
   }
 
   /**
-   *
+   * Liquidate a trader. 
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader to be liquidated.
    * @param {string=} liquidatorAddr Address to be credited if the liquidation succeeds.
