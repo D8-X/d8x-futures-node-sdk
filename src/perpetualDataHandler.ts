@@ -126,6 +126,7 @@ export default class PerpetualDataHandler {
       let currentSymbolsS3: string[] = [];
       let currentLimitOrderBookAddr: string[] = [];
       let ccy: CollaterlCCY[] = [];
+      let initRate: number[] = [];
       let mgnRate: number[] = [];
       let lotSizes: number[] = [];
 
@@ -137,6 +138,7 @@ export default class PerpetualDataHandler {
         let quote3 = fromBytes4HexString(perp.S3QuoteCCY);
         currentSymbols.push(base + "-" + quote);
         currentSymbolsS3.push(base3 + "-" + quote3);
+        initRate.push(ABK64x64ToFloat(perp.fInitialMarginRate));
         mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
         lotSizes.push(ABK64x64ToFloat(perp.fLotSizeBC));
         // try to find a limit order book
@@ -177,6 +179,7 @@ export default class PerpetualDataHandler {
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
+          initialMarginRate: initRate[k],
           maintenanceMarginRate: mgnRate[k],
           collateralCurrencyType: ccy[k],
           S2Symbol: currentSymbols[k],

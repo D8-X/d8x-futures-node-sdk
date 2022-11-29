@@ -74,6 +74,7 @@ export interface PoolStaticInfo {
 export interface PerpetualStaticInfo {
   id: number;
   limitOrderBookAddr: string;
+  initialMarginRate: number;
   maintenanceMarginRate: number;
   collateralCurrencyType: CollaterlCCY;
   S2Symbol: string;
@@ -128,8 +129,6 @@ export interface PerpetualState {
   collToQuoteIndexPrice: number;
   markPrice: number;
   currentFundingRateBps: number;
-  initialMarginRate: number;
-  maintenanceMarginRate: number;
   openInterestBC: number;
   maxPositionBC: number;
 }

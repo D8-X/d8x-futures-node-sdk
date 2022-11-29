@@ -272,7 +272,7 @@ describe("readOnly", () => {
     it("should get number of open orders", async () => {
       let symbol = "ETH-USD-MATIC";
       let numOrders = await refTool.numberOfOpenOrders(symbol);
-      console.log(`There are ${numOrders} currently open for symbol ${symbol}`);
+      console.log(`There are ${numOrders} orders currently open for symbol ${symbol}`);
     });
     it("should get array of all open orders", async () => {
       let symbol = "ETH-USD-MATIC";

@@ -1,6 +1,6 @@
 import WriteAccessHandler from "./writeAccessHandler";
 import { BUY_SIDE, NodeSDKConfig, Order, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./nodeSDKTypes";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 
 /**
  * Functions to execute existing conditional orders from the limit order book. This class
@@ -152,18 +152,29 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    const orderBookSC = this.getOrderBookContract(symbol);
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
+      let idx = await orderBookSC.lastOrderHash();
+      let idxPrev = await orderBookSC.prevOrderHash(idx);
+      let isFirst = idxPrev == ZERO_ORDER_ID;
+      while (!isFirst) {
+        idx = idxPrev;
+        idxPrev = await orderBookSC.prevOrderHash(idxPrev);
+        isFirst = idxPrev == ZERO_ORDER_ID;
+      }
+      startAfter = idx;
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
-    let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, numElements);
+    let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
     let userFriendlyOrders: Order[] = new Array<Order>();
+    let orderIdsOut = [];
     let k = 0;
     while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
       userFriendlyOrders.push(WriteAccessHandler.fromSmartContractOrder(orders[k], this.symbolToPerpStaticInfo));
+      orderIdsOut.push(orderIds[k]);
       k++;
     }
-    return [userFriendlyOrders, orderIds];
+    return [userFriendlyOrders, orderIdsOut];
   }
 
   /**

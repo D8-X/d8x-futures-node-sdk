@@ -345,8 +345,6 @@ export default class MarketData extends PerpetualDataHandler {
           collToQuoteIndexPrice: indexS3,
           markPrice: indexS2 * (1 + markPremiumRate),
           currentFundingRateBps: currentFundingRateBps,
-          initialMarginRate: ABK64x64ToFloat(perp.fInitialMarginRate),
-          maintenanceMarginRate: ABK64x64ToFloat(perp.fMaintenanceMarginRate),
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
           maxPositionBC: ABK64x64ToFloat(perp.fMaxPositionBC),
         };
