@@ -46,6 +46,22 @@ export default class AccountTrade extends WriteAccessHandler {
    * Cancels an existing order on the exchange.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be cancelled.
+   * @example
+   * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *    console.log(AccountTrade);
+   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *    const pk: string = <string>process.env.PK;
+   *    let accTrade = new AccountTrade(config, pk);
+   *    await accTrade.createProxyInstance();
+   *    // cancel order
+   *    let cancelTransaction = accTrade.cancelOrder("MATIC-USD-MATIC", 
+   *        "0x4639061a58dcf34f4c9c703f49f1cb00d6a4fba490d62c0eb4a4fb06e1c76c19")
+   *    console.log(cancelTransaction);
+   *  }
+   *  main();
+   * @returns {ContractTransaction} Contract Transaction (containing events).
    */
   public async cancelOrder(symbol: string, orderId: string): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
@@ -108,7 +124,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *       symbol: "MATIC-USD-MATIC",
    *       side: "BUY",
    *       type: "LIMIT",
-   *       limitPrice: 4000,
+   *       limitPrice: 1,
    *       quantity: 5,
    *       leverage: 2,
    *       timestamp: Date.now() / 1000,
