@@ -78,13 +78,13 @@ describe("readOnly", () => {
       }
     });
     it("openOrders", async () => {
-      let ordersStruct = await mktData.openOrders(wallet.address, "ETH-USD-MATIC");
+      let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
       console.log("order ids=", ordersStruct.orderIds);
       console.log("orders   =", ordersStruct.orders);
       orderIds = ordersStruct.orderIds;
     });
     it("get margin info", async () => {
-      let mgn = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
+      let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
       console.log("mgn=", mgn);
     });
 
@@ -155,7 +155,7 @@ describe("readOnly", () => {
       console.log(allAccounts);
     });
     it("should check if trader is liquidatable", async () => {
-      let symbol = "ETH-USD-MATIC";
+      let symbol = "BTC-USD-MATIC";
       let traderAddr = (await liqTool.getActiveAccountsByChunks(symbol, 0, 1))[0];
       let isLiquidatable = !(await liqTool.isMaintenanceMarginSafe(symbol, traderAddr));
       console.log(`Trader with address ${traderAddr} is ${isLiquidatable ? "" : "NOT"} liquidatable`);
