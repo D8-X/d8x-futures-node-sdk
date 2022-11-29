@@ -30,8 +30,8 @@ describe("write and spoil gas and tokens", () => {
 
   it("set allowance", async () => {
     //*uncomment
-    let txHash = await accTrade.setAllowance("MATIC");
-    console.log(`set allowance tx hash = ${txHash}`);
+    let tx = await accTrade.setAllowance("MATIC");
+    console.log(`set allowance tx hash = ${tx.hash}`);
     //*/
   });
 
@@ -46,7 +46,7 @@ describe("write and spoil gas and tokens", () => {
     };
     //* UNCOMMENT TO ENABLE TRADING
     let tx = await accTrade.order(order);
-    console.log("trade transaction hash =", tx);
+    console.log("trade transaction hash =", tx.hash);
     //*/
   });
   it("post limit order", async () => {
@@ -61,7 +61,7 @@ describe("write and spoil gas and tokens", () => {
     };
     //* UNCOMMENT TO ENABLE TRADING
     let tx = await accTrade.order(order);
-    console.log("limit order transaction hash =", tx);
+    console.log("limit order transaction hash =", tx.hash);
     //*/
   });
 
