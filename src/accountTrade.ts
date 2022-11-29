@@ -84,7 +84,8 @@ export default class AccountTrade extends WriteAccessHandler {
    *        side: "BUY",
    *        type: "MARKET",
    *        quantity: 100,
-   *        timestamp: Date.now()
+   *        leverage: 2,
+   *        timestamp: Date.now()/1000,
    *    };
    *    let orderTransaction = await accTrade.order(order);
    *    console.log(orderTransaction);
