@@ -324,6 +324,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // deposit to default fund
+   *   await brokTool.setAllowance("MATIC");
    *   let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
    *   console.log(respDeposit);
    * }
