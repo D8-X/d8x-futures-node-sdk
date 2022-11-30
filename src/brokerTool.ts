@@ -102,6 +102,7 @@ export default class BrokerTool extends WriteAccessHandler {
     let brokerDesignation: number;
     if (typeof lots == "undefined") {
       brokerDesignation = await this.getBrokerDesignation(poolSymbolName);
+      brokerDesignation = brokerDesignation > 0 ? brokerDesignation : 0;
     } else {
       brokerDesignation = lots;
     }
