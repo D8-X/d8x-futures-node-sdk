@@ -45,7 +45,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -81,7 +81,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -118,7 +118,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -149,7 +149,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -187,7 +187,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -227,7 +227,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -259,7 +259,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -290,7 +290,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -320,7 +320,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -357,7 +357,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -476,6 +476,21 @@ export default class BrokerTool extends WriteAccessHandler {
    * his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @param {string} newAddress The address this broker wants to use from now on.
+   * @example
+   * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(BrokerTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let brokTool = new BrokerTool(config, pk);
+   *   await brokTool.createProxyInstance();
+   *   // transfer ownership
+   *   let respTransferOwnership = await brokTool.transferOwnership("MATIC", "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+   *   console.log(respTransferOwnership);
+   * }
+   * main();
+   *
    * @returns {ethers.providers.TransactionResponse} ethers transaction object
    */
   public async transferOwnership(
