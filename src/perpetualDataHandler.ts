@@ -192,12 +192,31 @@ export default class PerpetualDataHandler {
     }
   }
 
+  /**
+   * Get pool symbol given a pool Id.
+   * @param {number} poolId Pool Id.
+   * @returns {symbol} Pool symbol, e.g. "USDC".
+   */
   public getSymbolFromPoolId(poolId: number): string {
     return PerpetualDataHandler._getSymbolFromPoolId(poolId, this.poolStaticInfos);
   }
 
+  /**
+   * Get pool Id given a pool symbol.
+   * @param {string} symbol Pool symbol.
+   * @returns {number} Pool Id.
+   */
   public getPoolIdFromSymbol(symbol: string): number {
     return PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+  }
+
+  /**
+   * Get perpetual Id given a perpetual symbol.
+   * @param {string} symbol Perpetual symbol, e.g. "BTC-USD-MATIC".
+   * @returns {number} Perpetual Id.
+   */
+  public getPerpIdFromSymbol(symbol: string): number {
+    return PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
   }
 
   protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
