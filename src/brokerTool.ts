@@ -184,7 +184,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * specify symbol, side, type and quantity.
    * @param {string} traderAddr Address of the trader for whom to determine the fee.
    * @example
-   * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
@@ -193,12 +193,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get exchange fee based on an order and trader
-   *   let order = {symbol: "ETH-USD-MATIC",
+   *   let order: Order = {
+   *       symbol: "MATIC-USD-MATIC",
    *       side: "BUY",
    *       type: "MARKET",
-   *       quantity: 1,
+   *       quantity: 100,
    *       timestamp: Date.now()
-   *    };
+   *   };
    *    let exchFee = await brokTool.determineExchangeFee(order,
    *        "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(exchFee);
