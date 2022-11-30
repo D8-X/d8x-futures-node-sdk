@@ -180,6 +180,21 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Check if a conditional order can be executed
    * @param order order structure
+   * @example
+   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderReferrerTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // check if tradeable
+   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");    
+   *   let check = await orderTool.isTradeable(openOrders[0][0]);
+   *   console.log(check);
+   * }
+   * main();
    * @returns true if order can be executed for the current state of the perpetuals
    */
   public async isTradeable(order: Order): Promise<boolean> {
