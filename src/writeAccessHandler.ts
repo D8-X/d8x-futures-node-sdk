@@ -83,4 +83,12 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     let tx = await marginToken.approve(proxyAddr, amount);
     return tx;
   }
+
+  /**
+   * Address corresponding to the private key used to instantiate this class.
+   * @returns {string} Address of this wallet.
+   */
+  public getAddress(): string {
+    return this.traderAddr;
+  }
 }

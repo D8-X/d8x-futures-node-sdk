@@ -563,16 +563,20 @@ export default class PerpetualDataHandler {
     return flag;
   }
 
-  protected static _getMinimalPositionSize(
-    symbol: string,
-    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
-  ): number {
+  protected static _getLotSize(symbol: string, symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>): number {
     let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
     let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(cleanSymbol);
     if (perpInfo == undefined) {
       throw new Error(`no info for perpetual ${symbol}`);
     }
-    return 10 * perpInfo.lotSizeBC;
+    return perpInfo.lotSizeBC;
+  }
+
+  protected static _getMinimalPositionSize(
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): number {
+    return 10 * PerpetualDataHandler._getLotSize(symbol, symbolToPerpStaticInfo);
   }
 
   /**

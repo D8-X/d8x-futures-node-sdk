@@ -1,6 +1,7 @@
 import WriteAccessHandler from "./writeAccessHandler";
 import { BUY_SIDE, NodeSDKConfig, Order, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./nodeSDKTypes";
 import { BigNumber, ethers } from "ethers";
+import PerpetualDataHandler from "./perpetualDataHandler";
 
 /**
  * Functions to execute existing conditional orders from the limit order book. This class
@@ -123,7 +124,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    *   let orderTool = new OrderReferrerTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get order by ID
-   *   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC", 
+   *   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
    *       "0x0091a1d878491479afd09448966c1403e9d8753122e25260d3b2b9688d946eae");
    *   console.log(myorder);
    * }
@@ -206,7 +207,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    *   let orderTool = new OrderReferrerTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // check if tradeable
-   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");    
+   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
    *   let check = await orderTool.isTradeable(openOrders[0][0]);
    *   console.log(check);
    * }
@@ -224,8 +225,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
       return false;
     }
+    // check order size
+    if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, this.symbolToPerpStaticInfo)) {
+      return false;
+    }
     // check limit price
-    let orderPrice = await WriteAccessHandler._queryPerpetualPrice(
+    let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
       order.symbol,
       order.quantity,
       this.symbolToPerpStaticInfo,
@@ -243,7 +248,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       return true;
     }
     // we need the mark price to check
-    let markPrice = await WriteAccessHandler._queryPerpetualMarkPrice(
+    let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
       order.symbol,
       this.symbolToPerpStaticInfo,
       this.proxyContract
