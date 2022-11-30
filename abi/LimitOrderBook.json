@@ -1,5 +1,21 @@
 [
     {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_perpetualManagerAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
         "anonymous": false,
         "inputs": [
             {
@@ -484,24 +500,6 @@
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_perpetualManagerAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            }
-        ],
-        "name": "initialize",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
