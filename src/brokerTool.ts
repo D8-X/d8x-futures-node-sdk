@@ -383,12 +383,12 @@ export default class BrokerTool extends WriteAccessHandler {
     }
     order.brokerAddr = this.traderAddr;
     order.brokerFeeTbps = brokerFee * 100_000;
-    order.deadline = deadline;
+    order.deadline = Math.round(deadline);
     order.brokerSignature = await BrokerTool._signOrder(
       order.symbol,
       order.brokerFeeTbps,
       traderAddr,
-      BigNumber.from(deadline),
+      BigNumber.from(Math.round(deadline)),
       this.signer,
       this.chainId,
       this.proxyAddr,
@@ -430,7 +430,7 @@ export default class BrokerTool extends WriteAccessHandler {
     );
   }
 
-  public static async _signOrder(
+  private static async _signOrder(
     symbol: string,
     brokerFeeTbps: number,
     traderAddr: string,
