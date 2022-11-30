@@ -62,7 +62,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(OrderReferrerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderReferrerTool(config, pk);
@@ -87,7 +87,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(OrderReferrerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderReferrerTool(config, pk);
@@ -113,6 +113,22 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * Get order from the digest (=id)
    * @param symbol symbol of order book, e.g. ETH-USD-MATIC
    * @param digest digest of the order (=order ID)
+   * @example
+   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderReferrerTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // get order by ID
+   *   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC", 
+   *       "0x0091a1d878491479afd09448966c1403e9d8753122e25260d3b2b9688d946eae");
+   *   console.log(myorder);
+   * }
+   * main();
+   *
    * @returns order or undefined
    */
   public async getOrderById(symbol: string, id: string): Promise<Order | undefined> {
@@ -135,7 +151,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(OrderReferrerTool);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderReferrerTool(config, pk);
