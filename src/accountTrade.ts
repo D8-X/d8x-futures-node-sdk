@@ -51,7 +51,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
    * async function main() {
    *    console.log(AccountTrade);
-   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    // setup (authentication required, PK is an environment variable with a private key)
    *    const config = PerpetualDataHandler.readSDKConfig("testnet");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
@@ -88,7 +88,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
    * async function main() {
    *    console.log(AccountTrade);
-   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    // setup (authentication required, PK is an environment variable with a private key)
    *    const config = PerpetualDataHandler.readSDKConfig("testnet");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
@@ -113,7 +113,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
    * async function main() {
    *    console.log(AccountTrade);
-   *    // Setup (authentication required, PK is an environment variable with a private key)
+   *    // setup (authentication required, PK is an environment variable with a private key)
    *    const config = PerpetualDataHandler.readSDKConfig("testnet");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
@@ -174,7 +174,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(AccountTrade);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
@@ -207,7 +207,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(AccountTrade);
-   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
@@ -232,6 +232,21 @@ export default class AccountTrade extends WriteAccessHandler {
   /**
    *
    * @param symbol Symbol of the form ETH-USD-MATIC.
+   * @example
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(AccountTrade);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let accTrade = new AccountTrade(config, pk);
+   *   await accTrade.createProxyInstance();
+   *   // get order IDs
+   *   let orderIds = await accTrade.getOrderIds("MATIC-USD-MATIC");
+   *   console.log(orderIds);
+   * }
+   * main();
+   *   
    * @returns {string[]} Array of Ids for all the orders currently open by this trader.
    */
   public async getOrderIds(symbol: string): Promise<string[]> {
