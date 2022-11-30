@@ -373,6 +373,9 @@ export default class BrokerTool extends WriteAccessHandler {
    *    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
    *        0.0001, 1669723339);
    *   console.log(signedOrder);
+   *   // execute order 
+   *   let orderTransaction = await accTrade.order(signedOrder); 
+   *   console.log(orderTransaction.hash);
    * }
    * main();
    *
