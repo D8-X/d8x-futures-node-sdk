@@ -74,7 +74,7 @@ main();
 import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderReferrerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
@@ -102,7 +102,7 @@ main();
 import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderReferrerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
@@ -126,6 +126,23 @@ main();
 | symbol | <p>symbol of order book, e.g. ETH-USD-MATIC</p> |
 | digest | <p>digest of the order (=order ID)</p> |
 
+**Example**  
+```js
+import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderReferrerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderReferrerTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get order by ID
+  let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
+      "0x0091a1d878491479afd09448966c1403e9d8753122e25260d3b2b9688d946eae");
+  console.log(myorder);
+}
+main();
+```
 <a name="OrderReferrerTool+pollLimitOrders"></a>
 
 ### orderReferrerTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
@@ -146,7 +163,7 @@ This a read-only action and does not incur in gas costs.</p>
 import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderReferrerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
@@ -169,3 +186,20 @@ main();
 | --- | --- |
 | order | <p>order structure</p> |
 
+**Example**  
+```js
+import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderReferrerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderReferrerTool(config, pk);
+  await orderTool.createProxyInstance();
+  // check if tradeable
+  let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
+  let check = await orderTool.isTradeable(openOrders[0][0]);
+  console.log(check);
+}
+main();
+```

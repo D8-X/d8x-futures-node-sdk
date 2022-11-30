@@ -257,8 +257,12 @@ require gas-payments.</p>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_AccountTrade_new"></a>
 
@@ -304,7 +308,7 @@ main();
 import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
-   // Setup (authentication required, PK is an environment variable with a private key)
+   // setup (authentication required, PK is an environment variable with a private key)
    const config = PerpetualDataHandler.readSDKConfig("testnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
@@ -333,7 +337,7 @@ async function main() {
 import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
-   // Setup (authentication required, PK is an environment variable with a private key)
+   // setup (authentication required, PK is an environment variable with a private key)
    const config = PerpetualDataHandler.readSDKConfig("testnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
@@ -359,7 +363,7 @@ async function main() {
 import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
-   // Setup (authentication required, PK is an environment variable with a private key)
+   // setup (authentication required, PK is an environment variable with a private key)
    const config = PerpetualDataHandler.readSDKConfig("testnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
@@ -403,7 +407,7 @@ Note that this result only includes exchange fees, additional broker fees are no
 import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
@@ -432,7 +436,7 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
@@ -453,6 +457,23 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
+  await accTrade.createProxyInstance();
+  // get order IDs
+  let orderIds = await accTrade.getOrderIds("MATIC-USD-MATIC");
+  console.log(orderIds);
+}
+main();
+  
+```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
 ### accountTrade.createProxyInstance()
@@ -476,6 +497,14 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="WriteAccessHandler+getAddress"></a>
+
+### accountTrade.getAddress() ⇒ <code>string</code>
+<p>Address corresponding to the private key used to instantiate this class.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getAddress</code>](#WriteAccessHandler+getAddress)  
+**Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### accountTrade.getOrderBookContract(symbol) ⇒
@@ -497,6 +526,45 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### accountTrade.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### accountTrade.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### accountTrade.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="BrokerTool"></a>
 
 ## BrokerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -522,8 +590,12 @@ require gas-payments.</p>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_BrokerTool_new"></a>
 
@@ -569,7 +641,7 @@ This is the final exchange fee that this broker can offer to traders that trade 
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -600,7 +672,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -630,7 +702,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -660,7 +732,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeF
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -691,21 +763,22 @@ This fee is equal or lower than the broker induced fee, provided the order is pr
 
 **Example**  
 ```js
-import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get exchange fee based on an order and trader
-  let order = {symbol: "ETH-USD-MATIC",
+  let order: Order = {
+      symbol: "MATIC-USD-MATIC",
       side: "BUY",
       type: "MARKET",
-      quantity: 1,
+      quantity: 100,
       timestamp: Date.now()
-   };
+  };
    let exchFee = await brokTool.determineExchangeFee(order,
        "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
   console.log(exchFee);
@@ -730,7 +803,7 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -759,7 +832,7 @@ This is equivalent to the price of a lot expressed in a given pool's currency (e
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -788,7 +861,7 @@ This is relevant to determine the broker's fee tier.</p>
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -817,7 +890,7 @@ main();
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -850,7 +923,7 @@ to be routed through this broker and benefits from the broker's fee conditions.<
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -865,6 +938,9 @@ async function main() {
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
   console.log(signedOrder);
+  // execute order 
+  let orderTransaction = await accTrade.order(signedOrder); 
+  console.log(orderTransaction.hash);
 }
 main();
 ```
@@ -883,6 +959,22 @@ his D8X holdings to newAddress. Until this transfer is completed, the broker wil
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | newAddress | <code>string</code> | <p>The address this broker wants to use from now on.</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
+  await brokTool.createProxyInstance();
+  // transfer ownership
+  let respTransferOwnership = await brokTool.transferOwnership("MATIC", "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(respTransferOwnership);
+}
+main();
+```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
 ### brokerTool.createProxyInstance()
@@ -906,6 +998,14 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="WriteAccessHandler+getAddress"></a>
+
+### brokerTool.getAddress() ⇒ <code>string</code>
+<p>Address corresponding to the private key used to instantiate this class.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getAddress</code>](#WriteAccessHandler+getAddress)  
+**Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### brokerTool.getOrderBookContract(symbol) ⇒
@@ -927,6 +1027,45 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### brokerTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### brokerTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### brokerTool.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="LiquidatorTool"></a>
 
 ## LiquidatorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -945,8 +1084,12 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getAllActiveAccounts(symbol)](#LiquidatorTool+getAllActiveAccounts) ⇒ <code>Array.&lt;string&gt;</code>
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_LiquidatorTool_new"></a>
 
@@ -1146,6 +1289,14 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="WriteAccessHandler+getAddress"></a>
+
+### liquidatorTool.getAddress() ⇒ <code>string</code>
+<p>Address corresponding to the private key used to instantiate this class.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getAddress</code>](#WriteAccessHandler+getAddress)  
+**Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### liquidatorTool.getOrderBookContract(symbol) ⇒
@@ -1167,6 +1318,45 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### liquidatorTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### liquidatorTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### liquidatorTool.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="LiquidityProviderTool"></a>
 
 ## LiquidityProviderTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1183,8 +1373,12 @@ smart-contract interactions that require gas-payments.</p>
     * [.removeLiquidity(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+removeLiquidity) ⇒
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_LiquidityProviderTool_new"></a>
 
@@ -1323,6 +1517,14 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="WriteAccessHandler+getAddress"></a>
+
+### liquidityProviderTool.getAddress() ⇒ <code>string</code>
+<p>Address corresponding to the private key used to instantiate this class.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getAddress</code>](#WriteAccessHandler+getAddress)  
+**Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### liquidityProviderTool.getOrderBookContract(symbol) ⇒
@@ -1344,6 +1546,45 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### liquidityProviderTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### liquidityProviderTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### liquidityProviderTool.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="MarketData"></a>
 
 ## MarketData ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
@@ -1365,6 +1606,9 @@ No gas required for the queries here.</p>
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_MarketData_new"></a>
 
@@ -1615,6 +1859,45 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### marketData.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### marketData.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### marketData.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="OrderReferrerTool"></a>
 
 ## OrderReferrerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1635,8 +1918,12 @@ gas-payments.</p>
     * [.isTradeable(order)](#OrderReferrerTool+isTradeable) ⇒
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -1695,7 +1982,7 @@ main();
 import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderReferrerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
@@ -1723,7 +2010,7 @@ main();
 import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderReferrerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
@@ -1747,6 +2034,23 @@ main();
 | symbol | <p>symbol of order book, e.g. ETH-USD-MATIC</p> |
 | digest | <p>digest of the order (=order ID)</p> |
 
+**Example**  
+```js
+import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderReferrerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderReferrerTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get order by ID
+  let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
+      "0x0091a1d878491479afd09448966c1403e9d8753122e25260d3b2b9688d946eae");
+  console.log(myorder);
+}
+main();
+```
 <a name="OrderReferrerTool+pollLimitOrders"></a>
 
 ### orderReferrerTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
@@ -1767,7 +2071,7 @@ This a read-only action and does not incur in gas costs.</p>
 import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderReferrerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderReferrerTool(config, pk);
@@ -1790,6 +2094,23 @@ main();
 | --- | --- |
 | order | <p>order structure</p> |
 
+**Example**  
+```js
+import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderReferrerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderReferrerTool(config, pk);
+  await orderTool.createProxyInstance();
+  // check if tradeable
+  let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
+  let check = await orderTool.isTradeable(openOrders[0][0]);
+  console.log(check);
+}
+main();
+```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
 ### orderReferrerTool.createProxyInstance()
@@ -1813,6 +2134,14 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="WriteAccessHandler+getAddress"></a>
+
+### orderReferrerTool.getAddress() ⇒ <code>string</code>
+<p>Address corresponding to the private key used to instantiate this class.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getAddress</code>](#WriteAccessHandler+getAddress)  
+**Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### orderReferrerTool.getOrderBookContract(symbol) ⇒
@@ -1834,6 +2163,45 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### orderReferrerTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### orderReferrerTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### orderReferrerTool.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="PerpetualDataHandler"></a>
 
 ## PerpetualDataHandler
@@ -1846,6 +2214,9 @@ common data and chain operations.</p>
     * _instance_
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+        * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+        * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+        * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
     * _static_
         * [._calculateLiquidationPrice(cleanSymbol, traderState, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
         * [.symbolToPerpetualId(symbol, symbolToPerpStaticInfo)](#PerpetualDataHandler.symbolToPerpetualId) ⇒
@@ -1872,6 +2243,42 @@ common data and chain operations.</p>
 and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### perpetualDataHandler.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### perpetualDataHandler.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### perpetualDataHandler.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
 <a name="PerpetualDataHandler._calculateLiquidationPrice"></a>
 
 ### PerpetualDataHandler.\_calculateLiquidationPrice(cleanSymbol, traderState, symbolToPerpStaticInfo) ⇒
@@ -1955,8 +2362,12 @@ require gas-payments.</p>
     * [new WriteAccessHandler(config, privateKey)](#new_WriteAccessHandler_new)
     * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
+    * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
 
 <a name="new_WriteAccessHandler_new"></a>
 
@@ -1990,6 +2401,13 @@ about perpetual currencies</p>
 | symbol | <p>token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)</p> |
 | amount | <p>optional, amount to approve if not 'infinity'</p> |
 
+<a name="WriteAccessHandler+getAddress"></a>
+
+### writeAccessHandler.getAddress() ⇒ <code>string</code>
+<p>Address corresponding to the private key used to instantiate this class.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### writeAccessHandler.getOrderBookContract(symbol) ⇒
@@ -2011,3 +2429,42 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### writeAccessHandler.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### writeAccessHandler.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### writeAccessHandler.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+

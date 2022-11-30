@@ -66,7 +66,7 @@ This is the final exchange fee that this broker can offer to traders that trade 
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -97,7 +97,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -127,7 +127,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFe
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -157,7 +157,7 @@ maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeF
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -188,21 +188,22 @@ This fee is equal or lower than the broker induced fee, provided the order is pr
 
 **Example**  
 ```js
-import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
   // get exchange fee based on an order and trader
-  let order = {symbol: "ETH-USD-MATIC",
+  let order: Order = {
+      symbol: "MATIC-USD-MATIC",
       side: "BUY",
       type: "MARKET",
-      quantity: 1,
+      quantity: 100,
       timestamp: Date.now()
-   };
+  };
    let exchFee = await brokTool.determineExchangeFee(order,
        "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
   console.log(exchFee);
@@ -227,7 +228,7 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -256,7 +257,7 @@ This is equivalent to the price of a lot expressed in a given pool's currency (e
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -285,7 +286,7 @@ This is relevant to determine the broker's fee tier.</p>
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -314,7 +315,7 @@ main();
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -347,7 +348,7 @@ to be routed through this broker and benefits from the broker's fee conditions.<
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -362,6 +363,9 @@ async function main() {
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
   console.log(signedOrder);
+  // execute order 
+  let orderTransaction = await accTrade.order(signedOrder); 
+  console.log(orderTransaction.hash);
 }
 main();
 ```
@@ -380,3 +384,19 @@ his D8X holdings to newAddress. Until this transfer is completed, the broker wil
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
 | newAddress | <code>string</code> | <p>The address this broker wants to use from now on.</p> |
 
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let brokTool = new BrokerTool(config, pk);
+  await brokTool.createProxyInstance();
+  // transfer ownership
+  let respTransferOwnership = await brokTool.transferOwnership("MATIC", "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+  console.log(respTransferOwnership);
+}
+main();
+```

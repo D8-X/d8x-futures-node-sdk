@@ -60,7 +60,7 @@ main();
 import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
-   // Setup (authentication required, PK is an environment variable with a private key)
+   // setup (authentication required, PK is an environment variable with a private key)
    const config = PerpetualDataHandler.readSDKConfig("testnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
@@ -89,7 +89,7 @@ async function main() {
 import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
-   // Setup (authentication required, PK is an environment variable with a private key)
+   // setup (authentication required, PK is an environment variable with a private key)
    const config = PerpetualDataHandler.readSDKConfig("testnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
@@ -115,7 +115,7 @@ async function main() {
 import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
-   // Setup (authentication required, PK is an environment variable with a private key)
+   // setup (authentication required, PK is an environment variable with a private key)
    const config = PerpetualDataHandler.readSDKConfig("testnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
@@ -159,7 +159,7 @@ Note that this result only includes exchange fees, additional broker fees are no
 import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
@@ -188,7 +188,7 @@ The weights are chosen so that in average this coincides with the 30 day volume.
 import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
-  // Setup (authentication required, PK is an environment variable with a private key)
+  // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
@@ -209,3 +209,20 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(AccountTrade);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
+  await accTrade.createProxyInstance();
+  // get order IDs
+  let orderIds = await accTrade.getOrderIds("MATIC-USD-MATIC");
+  console.log(orderIds);
+}
+main();
+  
+```
