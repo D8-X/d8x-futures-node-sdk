@@ -281,7 +281,7 @@ describe("readOnly", () => {
       // console.log(openOrders);
     });
     it("poll limit orders", async () => {
-      let val = await refTool.pollLimitOrders("ETH-USD-MATIC", 15, undefined);
+      let val = await refTool.pollLimitOrders("MATIC-USD-MATIC", 15, undefined);
       console.log("val=", val);
     });
   });
