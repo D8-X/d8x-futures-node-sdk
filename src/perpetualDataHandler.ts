@@ -502,8 +502,7 @@ export default class PerpetualDataHandler {
 
     let iDeadline = order.deadline == undefined ? Date.now() / 1000 + ORDER_MAX_DURATION_SEC : order.deadline;
     let fTriggerPrice = order.stopPrice == undefined ? BigNumber.from(0) : floatToABK64x64(order.stopPrice);
-    if (order.reduceOnly != undefined && order.reduceOnly == true) {
-    }
+
     let smOrder: SmartContractOrder = {
       flags: flags,
       iPerpetualId: BigNumber.from(perpetualId),
@@ -547,6 +546,7 @@ export default class PerpetualDataHandler {
    */
   private static _orderTypeToFlag(order: Order): BigNumber {
     let flag: BigNumber;
+    order.type = order.type.toUpperCase();
     switch (order.type) {
       case ORDER_TYPE_LIMIT:
         flag = MASK_LIMIT_ORDER;
@@ -579,7 +579,7 @@ export default class PerpetualDataHandler {
     if ((order.type == ORDER_TYPE_MARKET || order.type == ORDER_TYPE_LIMIT) && order.stopPrice != undefined) {
       throw Error(`Order type ${order.type} has no trigger price.`);
     }
-    if (order.type != ORDER_TYPE_MARKET && order.stopPrice != undefined) {
+    if (order.type != ORDER_TYPE_STOP_LIMIT && order.type != ORDER_TYPE_STOP_MARKET && order.stopPrice != undefined) {
       throw Error(`Order type ${order.type} has no trigger price.`);
     }
     return flag;
