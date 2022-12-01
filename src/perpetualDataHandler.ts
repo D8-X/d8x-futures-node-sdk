@@ -523,13 +523,16 @@ export default class PerpetualDataHandler {
   }
 
   private static _flagToOrderType(order: SmartContractOrder): string {
-    let hasTrigger = BigNumber.from(order.fTriggerPrice).eq(0);
-    let hasLimit = !BigNumber.from(order.fTriggerPrice).eq(0) || !BigNumber.from(order.fTriggerPrice).eq(MAX_64x64);
-    if (hasTrigger && hasLimit) {
+    let flag = BigNumber.from(order.flags);
+    let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
+    let hasLimit = !BigNumber.from(order.fLimitPrice).eq(0) || !BigNumber.from(order.fLimitPrice).eq(MAX_64x64);
+    let isStop = containsFlag(flag, MASK_STOP_ORDER);
+
+    if (isStop && hasLimit) {
       return ORDER_TYPE_STOP_LIMIT;
-    } else if (hasTrigger && !hasLimit) {
+    } else if (isStop && !hasLimit) {
       return ORDER_TYPE_STOP_MARKET;
-    } else if (hasLimit && containsFlag(BigNumber.from(order.flags), MASK_LIMIT_ORDER)) {
+    } else if (isLimit && !isStop) {
       return ORDER_TYPE_LIMIT;
     } else {
       return ORDER_TYPE_MARKET;
