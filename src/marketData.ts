@@ -105,14 +105,6 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {string} traderAddr Address of the trader for which we get the open orders.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // Get all open orders for a trader/symbol
-   * let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-   *     "ETH-USD-MATIC");
-   * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(MarketData);
@@ -143,14 +135,6 @@ export default class MarketData extends PerpetualDataHandler {
    * Information about the positions open by a given trader in a given perpetual contract.
    * @param {string} traderAddr Address of the trader for which we get the position risk.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
-   * @example
-   * // Setup
-   * const config = PerpetualDataHandler.readSDKConfig("testnet");
-   * let mktData = new MarketData(config);
-   * await mktData.createProxyInstance();
-   * // Get position risk info
-   * let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-   *     "ETH-USD-MATIC");
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
