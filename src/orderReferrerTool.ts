@@ -197,15 +197,6 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     const orderBookSC = this.getOrderBookContract(symbol);
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
-      let idx = await orderBookSC.lastOrderHash();
-      let idxPrev = await orderBookSC.prevOrderHash(idx);
-      let isFirst = idxPrev == ZERO_ORDER_ID;
-      while (!isFirst) {
-        idx = idxPrev;
-        idxPrev = await orderBookSC.prevOrderHash(idxPrev);
-        isFirst = idxPrev == ZERO_ORDER_ID;
-      }
-      startAfter = idx;
     }
     let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
     let userFriendlyOrders: Order[] = new Array<Order>();
