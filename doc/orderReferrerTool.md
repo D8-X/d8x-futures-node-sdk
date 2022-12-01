@@ -57,6 +57,33 @@ main();
 | orderId | <code>string</code> | <p>ID of the order to be executed.</p> |
 | [referrerAddr] | <code>string</code> | <p>Address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
 
+**Example**  
+```js
+import { OrderReferrerTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+async function main() {
+  console.log(OrderReferrerTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  const symbol = "ETH-USD-MATIC";
+  let orderTool = new OrderReferrerTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get some open orders
+  const maxOrdersToGet = 5;
+  let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+  console.log(`Got ${ids.length} orders`);
+  for (let k = 0; k < ids.length; k++) {
+    // check whether order meets conditions
+    let doExecute = await orderTool.isTradeable(orders[k]);
+    if (doExecute) {
+      // execute
+      let tx = await orderTool.executeOrder(symbol, ids[k]);
+      console.log(`Sent order id ${ids[k]} for execution, tx hash = ${tx.hash}`);
+    }
+  }
+}
+main();
+```
 <a name="OrderReferrerTool+getAllOpenOrders"></a>
 
 ### orderReferrerTool.getAllOpenOrders(symbol) ⇒
