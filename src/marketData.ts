@@ -45,8 +45,18 @@ export default class MarketData extends PerpetualDataHandler {
     super(config);
   }
 
-  public async createProxyInstance() {
-    this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
+  /**
+   * Initialize the marketData-Class with this function
+   * to create instance of D8X perpetual contract and gather information
+   * about perpetual currencies
+   * @param provider optional provider
+   */
+  public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
+    if (provider == undefined) {
+      this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
+    } else {
+      this.provider = provider;
+    }
     await this.initContractsAndData(this.provider);
   }
 

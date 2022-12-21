@@ -31,12 +31,17 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
   }
 
   /**
-   * Initialize the AccountTrade-Class with this function
+   * Initialize the writeAccessHandler-Class with this function
    * to create instance of D8X perpetual contract and gather information
    * about perpetual currencies
+   * @param provider optional provider
    */
-  public async createProxyInstance() {
-    this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
+  public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
+    if (provider == undefined) {
+      this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
+    } else {
+      this.provider = provider;
+    }
     const wallet = new ethers.Wallet(this.privateKey);
     this.signer = wallet.connect(this.provider);
     await this.initContractsAndData(this.signer);
