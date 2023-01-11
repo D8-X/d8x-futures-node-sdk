@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
-import WriteAccessHandler from "./writeAccessHandler";
-import { NodeSDKConfig, ERC20_ABI } from "./nodeSDKTypes";
+import { dec18ToFloat, floatToDec18 } from "./d8XMath";
+import { ERC20_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import { floatToABK64x64, dec18ToFloat, ABK64x64ToFloat } from "./d8XMath";
+import WriteAccessHandler from "./writeAccessHandler";
 /**
  * Functions to provide liquidity. This class requires a private key and executes
  * smart-contract interactions that require gas-payments.
@@ -70,19 +70,16 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     let shareTokenAddr = this.poolStaticInfos[poolId - 1].shareTokenAddr;
     let shareToken = new ethers.Contract(shareTokenAddr, ERC20_ABI, this.signer);
     let dShareTokenBalanceOfAddr = await shareToken.balanceOf(this.traderAddr);
+
+    let valueCCDec18 = await this.proxyContract.getTokenAmountToReturn(poolId, dShareTokenBalanceOfAddr);
+
     let shareTokenBalanceOfAddr = dec18ToFloat(dShareTokenBalanceOfAddr);
-    if (shareTokenBalanceOfAddr == 0) {
-      return { value: 0, shareTokenBalance: 0, poolShareToken: shareTokenAddr };
-    }
-    let pool = await this.proxyContract.getLiquidityPool(poolId);
-    let fPnLParticipantFundCash = pool.fPnLparticipantsCashCC;
-    let pnlParticipantFundCash = ABK64x64ToFloat(fPnLParticipantFundCash);
 
-    let dTotalSupply = await shareToken.totalSupply();
-
-    let totalSupply = dec18ToFloat(dTotalSupply);
-    let valueCC = (shareTokenBalanceOfAddr / totalSupply) * pnlParticipantFundCash;
-    return { value: valueCC, shareTokenBalance: shareTokenBalanceOfAddr, poolShareToken: shareTokenAddr };
+    return {
+      value: dec18ToFloat(valueCCDec18),
+      shareTokenBalance: shareTokenBalanceOfAddr,
+      poolShareToken: shareTokenAddr,
+    };
   }
 
   /**
@@ -112,7 +109,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.addLiquidity(poolId, floatToABK64x64(amountCC), {
+    let tx = await this.proxyContract.addLiquidity(poolId, floatToDec18(amountCC), {
       gasLimit: this.gasLimit,
     });
     return tx;
@@ -147,7 +144,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.addLiquidity(poolId, floatToABK64x64(amountPoolShares), {
+    let tx = await this.proxyContract.removeLiquidity(poolId, floatToDec18(amountPoolShares), {
       gasLimit: this.gasLimit,
     });
     return tx;

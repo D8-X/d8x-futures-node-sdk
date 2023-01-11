@@ -1,10 +1,9 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
-import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
-import MarketData from "../src/marketData";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
-import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
+import MarketData from "../src/marketData";
+import { NodeSDKConfig } from "../src/nodeSDKTypes";
+import PerpetualDataHandler from "../src/perpetualDataHandler";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
