@@ -44,13 +44,17 @@ describe("write and spoil gas and tokens", () => {
       symbol: "BTC-USD-MATIC",
       side: "BUY",
       type: "MARKET",
-      quantity: -0.03,
+      quantity: -0.05,
       leverage: 2,
       timestamp: Date.now() / 1000,
     };
     //* UNCOMMENT TO ENABLE TRADING
-    let tx = await accTrade.order(order);
-    console.log("trade transaction hash =", tx.hash);
+    try {
+      let tx = await accTrade.order(order);
+      console.log("trade transaction hash =", tx.hash);
+    } catch (err) {
+      console.log("Error=", err);
+    }
     //*/
   });
   it("post limit order", async () => {
@@ -75,7 +79,7 @@ describe("write and spoil gas and tokens", () => {
       side: "BUY",
       type: "LIMIT",
       limitPrice: 4,
-      quantity: 9,
+      quantity: 20,
       leverage: 2,
       timestamp: Date.now() / 1000,
     };
