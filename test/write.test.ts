@@ -1,11 +1,12 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order, OrderResponse } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import MarketData from "../src/marketData";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidatorTool from "../src/liquidatorTool";
+import OrderReferrerTool from "../src/orderReferrerTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -18,6 +19,7 @@ let orderIds: string[];
 let wallet: ethers.Wallet;
 let accTrade: AccountTrade;
 let liqTool: LiquidatorTool;
+let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
@@ -49,12 +51,17 @@ describe("write and spoil gas and tokens", () => {
       timestamp: Date.now() / 1000,
     };
     //* UNCOMMENT TO ENABLE TRADING
+    let resp: OrderResponse;
     try {
-      let tx = await accTrade.order(order);
-      console.log("trade transaction hash =", tx.hash);
+      resp = await accTrade.order(order);
+      console.log("trade transaction hash =", resp.tx.hash);
+      console.log("orderId =", resp.orderId);
+      // execute trade
+      orderId = resp.orderId;
     } catch (err) {
       console.log("Error=", err);
     }
+
     //*/
   });
   it("post limit order", async () => {
@@ -69,7 +76,7 @@ describe("write and spoil gas and tokens", () => {
     };
     //* UNCOMMENT TO ENABLE TRADING
     let tx = await accTrade.order(order);
-    console.log("limit order transaction hash =", tx.hash);
+    console.log("limit order transaction hash =", tx);
     //*/
   });
 
@@ -113,5 +120,17 @@ describe("write and spoil gas and tokens", () => {
     const myAddress = new ethers.Wallet(pk).address;
     let liqAmount = await liqTool.liquidateTrader("BTC-USD-MATIC", myAddress);
     console.log(liqAmount);
+  });
+  it("execute market order posted above", async () => {
+    let refTool = new OrderReferrerTool(config, pk);
+    await refTool.createProxyInstance();
+
+    mktData = new MarketData(config);
+    await mktData.createProxyInstance();
+    wallet = new ethers.Wallet(pk);
+    let res = await mktData.openOrders(wallet.address, "BTC-USD-MATIC");
+
+    let tx = await refTool.executeOrder("BTC-USD-MATIC", orderId);
+    console.log("tx hash = ", tx.hash);
   });
 });
