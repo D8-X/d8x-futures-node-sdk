@@ -153,6 +153,7 @@ export interface Order {
   leverage?: number | undefined;
   deadline?: number | undefined;
   timestamp: number;
+  submittedBlock?: number;
 }
 
 export interface SmartContractOrder {

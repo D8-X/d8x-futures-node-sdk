@@ -462,6 +462,7 @@ export default class PerpetualDataHandler {
       leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
       deadline: Number(order.iDeadline),
       timestamp: Number(order.createdTimestamp),
+      submittedBlock: Number(order.submittedBlock),
     };
     return userOrder;
   }
