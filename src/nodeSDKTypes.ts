@@ -1,4 +1,4 @@
-import { BytesLike, BigNumber, BigNumberish, constants } from "ethers";
+import { BytesLike, BigNumber, BigNumberish, constants, ContractTransaction } from "ethers";
 export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_MAINNET = "notthereyet";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
@@ -131,6 +131,11 @@ export interface PerpetualState {
   currentFundingRateBps: number;
   openInterestBC: number;
   maxPositionBC: number;
+}
+
+export interface OrderResponse {
+  tx: ContractTransaction;
+  orderId: string;
 }
 
 export interface Order {
