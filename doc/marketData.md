@@ -10,6 +10,7 @@ No gas required for the queries here.</p>
 
 * [MarketData](#MarketData) ⇐ <code>PerpetualDataHandler</code>
     * [new MarketData(config)](#new_MarketData_new)
+    * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
@@ -42,6 +43,19 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+createProxyInstance"></a>
+
+### marketData.createProxyInstance(provider)
+<p>Initialize the marketData-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
 ### marketData.getReadOnlyProxyInstance() ⇒
@@ -101,16 +115,6 @@ main();
 
 **Example**  
 ```js
-// Setup
-const config = PerpetualDataHandler.readSDKConfig("testnet");
-let mktData = new MarketData(config);
-await mktData.createProxyInstance();
-// Get all open orders for a trader/symbol
-let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-    "ETH-USD-MATIC");
-```
-**Example**  
-```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
@@ -137,16 +141,6 @@ main();
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
-**Example**  
-```js
-// Setup
-const config = PerpetualDataHandler.readSDKConfig("testnet");
-let mktData = new MarketData(config);
-await mktData.createProxyInstance();
-// Get position risk info
-let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-    "ETH-USD-MATIC");
-```
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';

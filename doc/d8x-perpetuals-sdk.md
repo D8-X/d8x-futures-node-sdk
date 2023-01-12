@@ -255,7 +255,7 @@ require gas-payments.</p>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -472,17 +472,21 @@ async function main() {
   console.log(orderIds);
 }
 main();
-  
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### accountTrade.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### accountTrade.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### accountTrade.setAllowance(symbol, amount) ⇒
@@ -588,7 +592,7 @@ require gas-payments.</p>
     * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
     * [.signOrder(order, traderAddr, feeDecimals, deadline)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -938,8 +942,8 @@ async function main() {
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
   console.log(signedOrder);
-  // execute order 
-  let orderTransaction = await accTrade.order(signedOrder); 
+  // execute order
+  let orderTransaction = await accTrade.order(signedOrder);
   console.log(orderTransaction.hash);
 }
 main();
@@ -977,13 +981,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### brokerTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### brokerTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### brokerTool.setAllowance(symbol, amount) ⇒
@@ -1082,7 +1091,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
     * [.getAllActiveAccounts(symbol)](#LiquidatorTool+getAllActiveAccounts) ⇒ <code>Array.&lt;string&gt;</code>
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -1268,13 +1277,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### liquidatorTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### liquidatorTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### liquidatorTool.setAllowance(symbol, amount) ⇒
@@ -1371,7 +1385,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.removeLiquidity(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+removeLiquidity) ⇒
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -1496,13 +1510,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### liquidityProviderTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### liquidityProviderTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### liquidityProviderTool.setAllowance(symbol, amount) ⇒
@@ -1597,6 +1616,7 @@ No gas required for the queries here.</p>
 
 * [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
+    * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
@@ -1634,6 +1654,19 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+createProxyInstance"></a>
+
+### marketData.createProxyInstance(provider)
+<p>Initialize the marketData-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
 ### marketData.getReadOnlyProxyInstance() ⇒
@@ -1693,16 +1726,6 @@ main();
 
 **Example**  
 ```js
-// Setup
-const config = PerpetualDataHandler.readSDKConfig("testnet");
-let mktData = new MarketData(config);
-await mktData.createProxyInstance();
-// Get all open orders for a trader/symbol
-let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-    "ETH-USD-MATIC");
-```
-**Example**  
-```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
@@ -1729,16 +1752,6 @@ main();
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
-**Example**  
-```js
-// Setup
-const config = PerpetualDataHandler.readSDKConfig("testnet");
-let mktData = new MarketData(config);
-await mktData.createProxyInstance();
-// Get position risk info
-let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-    "ETH-USD-MATIC");
-```
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -1916,7 +1929,7 @@ gas-payments.</p>
     * [.getOrderById(symbol, digest)](#OrderReferrerTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order)](#OrderReferrerTool+isTradeable) ⇒
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -2140,13 +2153,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### orderReferrerTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### orderReferrerTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### orderReferrerTool.setAllowance(symbol, amount) ⇒
@@ -2387,7 +2405,7 @@ require gas-payments.</p>
 
 * [WriteAccessHandler](#WriteAccessHandler) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new WriteAccessHandler(config, privateKey)](#new_WriteAccessHandler_new)
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -2409,12 +2427,17 @@ require gas-payments.</p>
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### writeAccessHandler.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### writeAccessHandler.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### writeAccessHandler.setAllowance(symbol, amount) ⇒
