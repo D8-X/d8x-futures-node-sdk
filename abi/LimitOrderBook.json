@@ -10,10 +10,51 @@
                 "internalType": "uint24",
                 "name": "_perpetualId",
                 "type": "uint24"
+            },
+            {
+                "internalType": "uint8",
+                "name": "_iCancelBlockDelay",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_postingFeeTbps",
+                "type": "uint16"
             }
         ],
         "stateMutability": "nonpayable",
         "type": "constructor"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint24",
+                "name": "perpetualId",
+                "type": "uint24"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "trader",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "bytes32",
+                "name": "digest",
+                "type": "bytes32"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "reason",
+                "type": "string"
+            }
+        ],
+        "name": "ExecutionFailed",
+        "type": "event"
     },
     {
         "anonymous": false,
@@ -68,9 +109,9 @@
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint64",
                 "name": "deadline",
-                "type": "uint256"
+                "type": "uint64"
             },
             {
                 "indexed": false,
@@ -86,9 +127,9 @@
             },
             {
                 "indexed": false,
-                "internalType": "uint256",
+                "internalType": "uint64",
                 "name": "createdTimestamp",
-                "type": "uint256"
+                "type": "uint64"
             },
             {
                 "indexed": false,
@@ -156,92 +197,7 @@
                 "type": "bytes"
             }
         ],
-        "name": "cancelLimitOrder",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "brokerFeeTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "traderAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "brokerAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "referrerAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fAmount",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fLimitPrice",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fTriggerPrice",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "iDeadline",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "createdTimestamp",
-                        "type": "uint256"
-                    }
-                ],
-                "internalType": "struct IPerpetualOrder.Order",
-                "name": "_order",
-                "type": "tuple"
-            },
-            {
-                "internalType": "bytes",
-                "name": "signature",
-                "type": "bytes"
-            }
-        ],
-        "name": "createLimitOrder",
+        "name": "cancelOrder",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -273,86 +229,6 @@
     {
         "inputs": [
             {
-                "components": [
-                    {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "brokerFeeTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "traderAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "brokerAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "referrerAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fAmount",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fLimitPrice",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fTriggerPrice",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "iDeadline",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "createdTimestamp",
-                        "type": "uint256"
-                    }
-                ],
-                "internalType": "struct IPerpetualOrder.Order",
-                "name": "_order",
-                "type": "tuple"
-            }
-        ],
-        "name": "executeLimitOrder",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "bytes32",
                 "name": "_digest",
                 "type": "bytes32"
@@ -363,9 +239,28 @@
                 "type": "address"
             }
         ],
-        "name": "executeLimitOrderByDigest",
+        "name": "executeOrder",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "_digest",
+                "type": "bytes32"
+            }
+        ],
+        "name": "getOrderStatus",
+        "outputs": [
+            {
+                "internalType": "enum LimitOrderBook.OrderStatus",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
         "type": "function"
     },
     {
@@ -446,14 +341,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order[]",
@@ -687,14 +587,19 @@
                 "type": "int128"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint64",
                 "name": "iDeadline",
-                "type": "uint256"
+                "type": "uint64"
             },
             {
-                "internalType": "uint256",
+                "internalType": "uint64",
                 "name": "createdTimestamp",
-                "type": "uint256"
+                "type": "uint64"
+            },
+            {
+                "internalType": "uint64",
+                "name": "submittedBlock",
+                "type": "uint64"
             }
         ],
         "stateMutability": "view",
@@ -818,14 +723,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order[]",
@@ -839,6 +749,96 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "brokerFeeTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "traderAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "brokerAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "referrerAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fAmount",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLimitPrice",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTriggerPrice",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLeverage",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iDeadline",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "createdTimestamp",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
+                    }
+                ],
+                "internalType": "struct IPerpetualOrder.Order",
+                "name": "_order",
+                "type": "tuple"
+            },
+            {
+                "internalType": "bytes",
+                "name": "signature",
+                "type": "bytes"
+            }
+        ],
+        "name": "postOrder",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
