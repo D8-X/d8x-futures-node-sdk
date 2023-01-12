@@ -33,18 +33,20 @@ describe("LP: write and spoil gas and tokens", () => {
   });
   describe("Liquidity Provider", () => {
     it("deposit", async () => {
-      let tx = await liqProvTool.addLiquidity("MATIC", 250);
+      let tx0 = await liqProvTool.setAllowance("MATIC", 10);
+      console.log("allowance tx hash=", tx0.hash);
+      let tx = await liqProvTool.addLiquidity("MATIC", 10);
       await tx.wait();
-      console.log("tx hash=", tx.hash);
+      console.log("deposit tx hash=", tx.hash);
     });
     it("getParticipationValue", async () => {
       let val = await liqProvTool.getParticipationValue("MATIC");
       console.log("pool sharetoken value", val);
     });
     it("remove", async () => {
-      let tx = await liqProvTool.removeLiquidity("MATIC", 25);
+      let tx = await liqProvTool.removeLiquidity("MATIC", 10);
       await tx.wait();
-      console.log("tx hash=", tx.hash);
+      console.log("withdraw tx hash=", tx.hash);
     });
     it("getParticipationValue", async () => {
       let val = await liqProvTool.getParticipationValue("MATIC");
