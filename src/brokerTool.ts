@@ -373,8 +373,8 @@ export default class BrokerTool extends WriteAccessHandler {
    *    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
    *        0.0001, 1669723339);
    *   console.log(signedOrder);
-   *   // execute order 
-   *   let orderTransaction = await accTrade.order(signedOrder); 
+   *   // execute order
+   *   let orderTransaction = await accTrade.order(signedOrder);
    *   console.log(orderTransaction.hash);
    * }
    * main();
@@ -457,12 +457,12 @@ export default class BrokerTool extends WriteAccessHandler {
     );
     //
     const TRADE_BROKER_TYPEHASH = ethers.utils.keccak256(
-      Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint256 iDeadline)")
+      Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint64 iDeadline)")
     );
     let iPerpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let structHash = ethers.utils.keccak256(
       abiCoder.encode(
-        ["bytes32", "uint24", "uint16", "address", "uint256"],
+        ["bytes32", "uint24", "uint16", "address", "uint64"],
         [TRADE_BROKER_TYPEHASH, iPerpetualId, brokerFeeTbps, traderAddr, iDeadline]
       )
     );
