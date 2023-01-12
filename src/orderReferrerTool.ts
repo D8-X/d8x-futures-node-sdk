@@ -78,7 +78,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof referrerAddr == "undefined") {
       referrerAddr = this.traderAddr;
     }
-    return await orderBookSC.executeLimitOrderByDigest(orderId, referrerAddr, { gasLimit: this.gasLimit });
+    return await orderBookSC.executeOrder(orderId, referrerAddr, { gasLimit: this.gasLimit });
   }
 
   /**
