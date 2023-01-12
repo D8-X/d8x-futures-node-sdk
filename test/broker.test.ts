@@ -77,8 +77,8 @@ describe("broker tools that spend gas and tokens", () => {
           timestamp: Math.round(Date.now() / 1000),
         };
         let signedOrder = await brokerTool.signOrder(order, myAddress, brokerFee, deadline);
-        let tx = await accTrade.order(signedOrder);
-        console.log("trade transaction hash =", tx.hash);
+        let resp = await accTrade.order(signedOrder);
+        console.log("trade transaction hash =", resp.tx.hash);
         let fee1 = await brokerTool.getFeeForBrokerVolume("MATIC");
         let fee2 = await accTrade.queryExchangeFee("MATIC");
         console.log(`fee based on broker volume is ${10_000 * fee1!} bps`);
