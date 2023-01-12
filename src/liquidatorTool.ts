@@ -97,7 +97,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    const idx_notional = 4;
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr);
+    if (traderState[idx_notional] == 0) {
+      // trader does not have open position
+      return false;
+    }
     return await this.proxyContract.isTraderMaintenanceMarginSafe(perpID, traderAddr);
   }
 
