@@ -517,6 +517,7 @@ export default class PerpetualDataHandler {
       fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
       iDeadline: BigNumber.from(Math.round(iDeadline)),
       createdTimestamp: BigNumber.from(Math.round(order.timestamp)),
+      submittedBlock: 0,
     };
     return smOrder;
   }

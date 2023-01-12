@@ -146,10 +146,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (Math.abs(order.quantity) < minSize) {
       throw Error("order size too small");
     }
-    let orderBookContract: ethers.Contract | null = null;
-    if (order.type != ORDER_TYPE_MARKET) {
-      orderBookContract = this.getOrderBookContract(order.symbol);
-    }
+    let orderBookContract: ethers.Contract = this.getOrderBookContract(order.symbol);
 
     return await this._order(
       order,
@@ -246,7 +243,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *   console.log(orderIds);
    * }
    * main();
-   *   
+   *
    * @returns {string[]} Array of Ids for all the orders currently open by this trader.
    */
   public async getOrderIds(symbol: string): Promise<string[]> {
@@ -275,7 +272,7 @@ export default class AccountTrade extends WriteAccessHandler {
     traderAddr: string,
     symbolToPerpetualMap: Map<string, PerpetualStaticInfo>,
     proxyContract: ethers.Contract,
-    orderBookContract: ethers.Contract | null,
+    orderBookContract: ethers.Contract,
     chainId: number,
     signer: ethers.Wallet,
     gasLimit: number
@@ -284,17 +281,9 @@ export default class AccountTrade extends WriteAccessHandler {
     // if we are here, we have a clean order
     // decide whether to send order to Limit Order Book or AMM based on order type
     let tx: ethers.ContractTransaction;
-    if (order.type == ORDER_TYPE_MARKET) {
-      // send market order
-      tx = await proxyContract.trade(scOrder, { gasLimit: gasLimit });
-    } else {
-      // conditional order so the order is sent to the order-book
-      if (orderBookContract == null) {
-        throw Error("Order book contract not provided.");
-      }
-      let signature = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-      tx = await orderBookContract.createLimitOrder(scOrder, signature, { gasLimit: gasLimit });
-    }
+    // all orders are sent to the order-book
+    let signature = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
+    tx = await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
     return tx;
   }
 
@@ -341,7 +330,7 @@ export default class AccountTrade extends WriteAccessHandler {
     );
     const TRADE_ORDER_TYPEHASH = ethers.utils.keccak256(
       Buffer.from(
-        "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint256 iDeadline,uint32 flags,int128 fLeverage,uint256 createdTimestamp)"
+        "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint64 iDeadline,uint32 flags,int128 fLeverage,uint64 createdTimestamp)"
       )
     );
     let structHash = ethers.utils.keccak256(
@@ -355,10 +344,10 @@ export default class AccountTrade extends WriteAccessHandler {
           "int128",
           "int128",
           "int128",
-          "uint256",
+          "uint64",
           "uint32",
           "int128",
-          "uint256",
+          "uint64",
         ],
         [
           TRADE_ORDER_TYPEHASH,

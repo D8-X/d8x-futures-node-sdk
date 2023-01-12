@@ -164,6 +164,7 @@ export interface SmartContractOrder {
   fLeverage: BigNumberish;
   iDeadline: BigNumberish;
   createdTimestamp: BigNumberish;
+  submittedBlock: 0;
 }
 /*
         t32 flags;
