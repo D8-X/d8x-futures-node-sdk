@@ -303,7 +303,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
     let [signature, digest] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
-    return await orderBookContract.cancelLimitOrder(orderId, signature);
+    return await orderBookContract.cancelOrder(orderId, signature);
   }
 
   /**
