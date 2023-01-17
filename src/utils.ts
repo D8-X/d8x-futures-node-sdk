@@ -72,6 +72,7 @@ export function fromBytes4HexString(s: string): string {
     res = res + String.fromCharCode(parseInt(s.substring(k, k + 2), 16));
   }
   res = res.replace(/\0/g, "");
+  // TODO: read symbol list and find un-clean version
   return res;
 }
 

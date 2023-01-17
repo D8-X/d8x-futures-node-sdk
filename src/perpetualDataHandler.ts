@@ -155,6 +155,7 @@ export default class PerpetualDataHandler {
           poolCCY = quote;
           ccy.push(CollaterlCCY.QUOTE);
         } else {
+          // poolCCY = base3;
           ccy.push(CollaterlCCY.QUANTO);
         }
       }

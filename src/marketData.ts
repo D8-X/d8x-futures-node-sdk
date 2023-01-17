@@ -308,6 +308,7 @@ export default class MarketData extends PerpetualDataHandler {
       let pool = await _proxyContract.getLiquidityPool(j + 1);
       let PoolState: PoolState = {
         isRunning: pool.isRunning,
+        poolSymbol: "",
         marginTokenAddr: pool.marginTokenAddress,
         poolShareTokenAddr: pool.shareTokenAddress,
         defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC),
@@ -342,6 +343,15 @@ export default class MarketData extends PerpetualDataHandler {
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
           maxPositionBC: ABK64x64ToFloat(perp.fMaxPositionBC),
         };
+        if (PoolState.poolSymbol == "") {
+          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
+            PoolState.poolSymbol = PerpetualState.baseCurrency;
+          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUANTO) {
+            PoolState.poolSymbol = fromBytes4HexString(perp.S3BaseCCY);
+          } else {
+            PoolState.poolSymbol = PerpetualState.quoteCurrency;
+          }
+        }
         PoolState.perpetuals.push(PerpetualState);
       }
       info.pools.push(PoolState);

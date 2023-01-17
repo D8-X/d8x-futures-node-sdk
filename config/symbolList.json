@@ -1,0 +1,9 @@
+[
+  { "symbol": "USD", "cleanSymbol": "USDC" },
+  { "symbol": "BTC", "cleanSymbol": "BTC" },
+  { "symbol": "ETH", "cleanSymbol": "ETH" },
+  { "symbol": "MATIC", "cleanSymbol": "MATC" },
+  { "symbol": "CHF", "cleanSymbol": "CHF" },
+  { "symbol": "GBP", "cleanSymbol": "GBP" },
+  { "symbol": "XAU", "cleanSymbol": "XAU" }
+]
