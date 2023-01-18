@@ -155,20 +155,17 @@ export default class PerpetualDataHandler {
           poolCCY = quote;
           ccy.push(CollaterlCCY.QUOTE);
         } else {
-          // poolCCY = base3;
+          poolCCY = base3;
           ccy.push(CollaterlCCY.QUANTO);
         }
       }
       if (perpetualIDs.length == 0) {
         continue;
       }
-      if (poolCCY == undefined) {
-        throw Error("Pool only has quanto perps, unable to determine collateral currency");
-      }
       let oracleFactoryAddr = await proxyContract.getOracleFactory();
       let info: PoolStaticInfo = {
         poolId: j + 1,
-        poolMarginSymbol: poolCCY,
+        poolMarginSymbol: poolCCY!,
         poolMarginTokenAddr: poolMarginTokenAddr,
         shareTokenAddr: pool.shareTokenAddress,
         oracleFactoryAddr: oracleFactoryAddr,
