@@ -5,5 +5,6 @@
   "proxyABILocation": "../abi/IPerpetualManager.json",
   "limitOrderBookFactoryAddr": "0x40aA68C1C33626ecD048a8A38aBF3947813cAF92",
   "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
-  "limitOrderBookABILocation": "../abi/LimitOrderBook.json"
+  "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
+  "symbolListLocation": "../config/symbolList.json"
 }

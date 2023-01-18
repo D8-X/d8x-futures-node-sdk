@@ -39,6 +39,7 @@ export interface NodeSDKConfig {
   limitOrderBookFactoryAddr: string;
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
+  symbolListLocation: string;
   gasLimit?: number | undefined;
 }
 
@@ -110,6 +111,7 @@ export interface ExchangeInfo {
  */
 export interface PoolState {
   isRunning: boolean;
+  poolSymbol: string;
   marginTokenAddr: string;
   poolShareTokenAddr: string;
   defaultFundCashCC: number;

@@ -259,6 +259,32 @@ export default class AccountTrade extends WriteAccessHandler {
     return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract);
   }
 
+  public async getMaxOrderSize(symbol: string, side: string, traderAddr: string): Promise<number> {
+    // 1) get current position size
+    // 2) get max trade size in perp for this position and side
+    // 3) get position after trade of size x that attains max leverage:
+    //    a) leverage depends on collateral after trade and position
+    //    b) collateral after trade depends on trade size
+    //    c) --> need to solve a non-linear equation (not too hard...)
+    // 4) return min between (2) and (3)
+    return 0;
+  }
+
+  public async getApproximateLiquidationPrice(order: Order): Promise<number> {
+    // 1) get trader address from order, and then his positionRisk
+    // 2) get perp from order
+    // 3) delegate to perp data handler depending on the collateral type
+    return 0;
+  }
+
+  public async getRequiredMarginCollateral(order: Order): Promise<number> {
+    return 0;
+  }
+
+  public async getResultingPositionLeverage(order: Order): Promise<number> {
+    return 0;
+  }
+
   /**
    * Static order function
    * @param order order type (not SmartContractOrder but Order)
