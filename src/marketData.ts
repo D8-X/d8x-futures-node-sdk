@@ -8,6 +8,7 @@ import {
   COLLATERAL_CURRENCY_QUANTO,
   PERP_STATE_STR,
   ZERO_ADDRESS,
+  PoolStaticInfo,
 } from "./nodeSDKTypes";
 import { BigNumber, BytesLike, ethers } from "ethers";
 import { floatToABK64x64, ABK64x64ToFloat } from "./d8XMath";
@@ -107,7 +108,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    return await MarketData._exchangeInfo(this.proxyContract);
+    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos);
   }
 
   /**
@@ -298,7 +299,10 @@ export default class MarketData extends PerpetualDataHandler {
     return digests;
   }
 
-  public static async _exchangeInfo(_proxyContract: ethers.Contract): Promise<ExchangeInfo> {
+  public static async _exchangeInfo(
+    _proxyContract: ethers.Contract,
+    _poolStaticInfos: Array<PoolStaticInfo>
+  ): Promise<ExchangeInfo> {
     let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
     let factory = await _proxyContract.getOracleFactory();
     let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory };
@@ -308,7 +312,7 @@ export default class MarketData extends PerpetualDataHandler {
       let pool = await _proxyContract.getLiquidityPool(j + 1);
       let PoolState: PoolState = {
         isRunning: pool.isRunning,
-        poolSymbol: "",
+        poolSymbol: _poolStaticInfos[j].poolMarginSymbol,
         marginTokenAddr: pool.marginTokenAddress,
         poolShareTokenAddr: pool.shareTokenAddress,
         defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC),
@@ -343,15 +347,6 @@ export default class MarketData extends PerpetualDataHandler {
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
           maxPositionBC: ABK64x64ToFloat(perp.fMaxPositionBC),
         };
-        if (PoolState.poolSymbol == "") {
-          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-            PoolState.poolSymbol = PerpetualState.baseCurrency;
-          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUANTO) {
-            PoolState.poolSymbol = fromBytes4HexString(perp.S3BaseCCY);
-          } else {
-            PoolState.poolSymbol = PerpetualState.quoteCurrency;
-          }
-        }
         PoolState.perpetuals.push(PerpetualState);
       }
       info.pools.push(PoolState);

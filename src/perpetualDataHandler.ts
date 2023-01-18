@@ -186,7 +186,7 @@ export default class PerpetualDataHandler {
         });
       }
       // push margin token address into map
-      this.symbolToTokenAddrMap.set(poolCCY, poolMarginTokenAddr);
+      this.symbolToTokenAddrMap.set(poolCCY!, poolMarginTokenAddr);
     }
   }
 
