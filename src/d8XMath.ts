@@ -177,3 +177,52 @@ export function calculateLiquidationPriceCollateralQuote(
   let denominator = maintenance_margin_rate * Math.abs(position) - position;
   return numerator / denominator;
 }
+
+export function getRequiredMarginCollateral(
+  targetLeverage: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  tradeAmount: number,
+  markPrice: number,
+  indexPriceS2: number,
+  indexPriceS3: number,
+  entryPrice: number,
+  feeRate: number
+): number {
+  // we solve for margin in:
+  // |new position| * Sm / leverage + fee rate * |trade amount| * S2 = margin * S3 + current position * Sm - L + trade amount * (Sm - entry price)
+  // new position := current position + trade amount
+  let isClosing =
+    currentPosition != 0 && currentPosition * tradeAmount < 0 && currentPosition * (currentPosition + tradeAmount) >= 0;
+  let feesCC = (feeRate * Math.abs(tradeAmount) * indexPriceS2) / indexPriceS3;
+  let collRequired = feesCC;
+
+  if (!isClosing) {
+    let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - entryPrice);
+    collRequired +=
+      Math.max(0, (Math.abs(currentPosition + tradeAmount) * markPrice) / targetLeverage - pnlQC) / indexPriceS3;
+  }
+  return collRequired;
+}
+
+export function getMaxSignedPositionSize(
+  marginCollateral: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  direction: number,
+  limitPrice: number,
+  initialMarginRate: number,
+  feeRate: number,
+  markPrice: number,
+  indexPriceS2: number,
+  indexPriceS3: number
+): number {
+  // we solve for new position in:
+  // |new position| * Sm / leverage + fee rate * |trade amount| * S2 = margin * S3 + current position * Sm - L + trade amount * (Sm - entry price)
+  // |trade amount| = (new position - current position) * direction
+  let availableCash = marginCollateral * indexPriceS3 + currentPosition * markPrice - currentLockedInValue;
+  let effectiveMarginRate =
+    markPrice * initialMarginRate + feeRate * indexPriceS2 + direction * (limitPrice - markPrice);
+
+  return availableCash / effectiveMarginRate;
+}
