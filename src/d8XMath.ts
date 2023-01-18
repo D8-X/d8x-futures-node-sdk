@@ -1,3 +1,4 @@
+import { assert } from "console";
 import { BigNumber } from "ethers";
 import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
 
@@ -179,7 +180,7 @@ export function calculateLiquidationPriceCollateralQuote(
 }
 
 export function getRequiredMarginCollateral(
-  targetLeverage: number,
+  targetLeverage: number | undefined,
   currentPosition: number,
   currentLockedInValue: number,
   tradeAmount: number,
@@ -198,6 +199,9 @@ export function getRequiredMarginCollateral(
   let collRequired = feesCC;
 
   if (!isClosing) {
+    if (targetLeverage == undefined || targetLeverage <= 0) {
+      throw Error("opening trade must have positive leverage");
+    }
     let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - entryPrice);
     collRequired +=
       Math.max(0, (Math.abs(currentPosition + tradeAmount) * markPrice) / targetLeverage - pnlQC) / indexPriceS3;
@@ -225,4 +229,22 @@ export function getMaxSignedPositionSize(
     markPrice * initialMarginRate + feeRate * indexPriceS2 + direction * (limitPrice - markPrice);
 
   return availableCash / effectiveMarginRate;
+}
+
+export function getNewPositionLeverage(
+  tradeAmount: number,
+  marginCollateral: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  indexPriceS2: number,
+  indexPriceS3: number,
+  markPrice: number,
+  limitPrice: number,
+  feeRate: number
+): number {
+  let newPosition = tradeAmount + currentPosition;
+  let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - limitPrice);
+  return (
+    (Math.abs(newPosition) * indexPriceS2) / (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount))
+  );
 }

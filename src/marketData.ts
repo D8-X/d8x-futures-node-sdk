@@ -9,9 +9,12 @@ import {
   PERP_STATE_STR,
   ZERO_ADDRESS,
   PoolStaticInfo,
+  BUY_SIDE,
+  CLOSED_SIDE,
+  SELL_SIDE,
 } from "./nodeSDKTypes";
 import { BigNumber, BytesLike, ethers } from "ethers";
-import { floatToABK64x64, ABK64x64ToFloat } from "./d8XMath";
+import { floatToABK64x64, ABK64x64ToFloat, getNewPositionLeverage, getRequiredMarginCollateral } from "./d8XMath";
 import { contractSymbolToSymbol, fromBytes4HexString, toBytes4 } from "./utils";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { SmartContractOrder, Order } from "./nodeSDKTypes";
@@ -174,6 +177,72 @@ export default class MarketData extends PerpetualDataHandler {
       this.proxyContract
     );
     return mgnAcct;
+  }
+
+  public async positionRiskOnTrade(
+    currentPositionRisk: MarginAccount,
+    order: Order,
+    perpetualState: PerpetualState
+  ): Promise<MarginAccount> {
+    // TODO 1: review if inputs make sense
+    // TODO 2: liquidation prices
+    // TODO 3: all cases, flips, close, open, market/limit, etc....
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let tradeAmount = order.quantity * (order.side == BUY_SIDE ? 1 : -1);
+    let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
+    let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
+    let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
+    let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
+    let feeRate = 0;
+
+    let tradePrice = await this.getPerpetualPrice(order.symbol, tradeAmount);
+
+    let [markPrice, indexPriceS2, indexPriceS3] = [
+      perpetualState.markPrice,
+      perpetualState.indexPrice,
+      perpetualState.collToQuoteIndexPrice,
+    ];
+
+    let tradeCollateral = getRequiredMarginCollateral(
+      order.leverage!,
+      currentPosition,
+      lockedInValue,
+      tradeAmount,
+      markPrice,
+      indexPriceS2,
+      indexPriceS3,
+      tradePrice,
+      feeRate
+    );
+
+    let newLeverage = getNewPositionLeverage(
+      tradeAmount,
+      currentPositionRisk.collateralCC + tradeCollateral,
+      currentPosition,
+      lockedInValue,
+      indexPriceS2,
+      indexPriceS3,
+      markPrice,
+      tradePrice,
+      feeRate
+    );
+
+    // currentPositionRisk.symbol : no change
+    currentPositionRisk.positionNotionalBaseCCY = newPosition;
+    currentPositionRisk.side = side;
+    currentPositionRisk.entryPrice = Math.abs((lockedInValue + tradeAmount * tradePrice) / newPosition);
+    currentPositionRisk.leverage = newLeverage;
+    currentPositionRisk.markPrice = markPrice;
+    currentPositionRisk.unrealizedPnlQuoteCCY = tradeAmount * (markPrice - tradePrice);
+    // currentPositionRisk.unrealizedFundingCollateralCCY : no change
+    currentPositionRisk.collateralCC += tradeCollateral;
+    // TODO:
+    // liquidationPrice: [number, number | undefined];
+    // liquidationLvg: number;
+    currentPositionRisk.collToQuoteConversion = indexPriceS3;
+    return currentPositionRisk;
   }
 
   /**
