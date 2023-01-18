@@ -72,8 +72,22 @@ export function fromBytes4HexString(s: string): string {
     res = res + String.fromCharCode(parseInt(s.substring(k, k + 2), 16));
   }
   res = res.replace(/\0/g, "");
-  // TODO: read symbol list and find un-clean version
   return res;
+}
+
+/**
+ *
+ * @param {string} s string representing a hex-number ("0x...")
+ * @param {Object} mapping list of symbol and clean symbol pairs, e.g. [{symbol: "MATIC", cleanSymbol: "MATC"}, ...]
+ * @returns {string} user friendly currency symbol, e.g. "MATIC"
+ */
+export function contractSymbolToSymbol(s: string, mapping: Array<{ [key: string]: string }>): string | undefined {
+  s = fromBytes4HexString(s);
+  for (let pair of mapping) {
+    if (pair.cleanSymbol == s) {
+      return pair.symbol;
+    }
+  }
 }
 
 export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {

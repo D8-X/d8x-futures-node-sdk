@@ -12,7 +12,7 @@ import {
 } from "./nodeSDKTypes";
 import { BigNumber, BytesLike, ethers } from "ethers";
 import { floatToABK64x64, ABK64x64ToFloat } from "./d8XMath";
-import { fromBytes4HexString, toBytes4 } from "./utils";
+import { contractSymbolToSymbol, fromBytes4HexString, toBytes4 } from "./utils";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { SmartContractOrder, Order } from "./nodeSDKTypes";
 import "./nodeSDKTypes";
@@ -108,7 +108,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos);
+    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos, this.symbolList);
   }
 
   /**
@@ -301,7 +301,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
-    _poolStaticInfos: Array<PoolStaticInfo>
+    _poolStaticInfos: Array<PoolStaticInfo>,
+    _symbolList: Array<{ [key: string]: string }>
   ): Promise<ExchangeInfo> {
     let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
     let factory = await _proxyContract.getOracleFactory();
@@ -338,8 +339,8 @@ export default class MarketData extends PerpetualDataHandler {
         let PerpetualState: PerpetualState = {
           id: perp.id,
           state: state,
-          baseCurrency: fromBytes4HexString(perp.S2BaseCCY),
-          quoteCurrency: fromBytes4HexString(perp.S2QuoteCCY),
+          baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY, _symbolList)!,
+          quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY, _symbolList)!,
           indexPrice: indexS2,
           collToQuoteIndexPrice: indexS3,
           markPrice: indexS2 * (1 + markPremiumRate),
