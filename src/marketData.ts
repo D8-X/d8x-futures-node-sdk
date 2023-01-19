@@ -518,6 +518,7 @@ export default class MarketData extends PerpetualDataHandler {
       for (var k = 0; k < perpetualIDs.length; k++) {
         let perp = await _proxyContract.getPerpetual(perpetualIDs[k]);
         let fIndexS2 = await _proxyContract.getOraclePrice([perp.S2BaseCCY, perp.S2QuoteCCY]);
+        let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0));
         let indexS2 = ABK64x64ToFloat(fIndexS2);
         let indexS3 = 1;
         if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
@@ -536,7 +537,7 @@ export default class MarketData extends PerpetualDataHandler {
           indexPrice: indexS2,
           collToQuoteIndexPrice: indexS3,
           markPrice: indexS2 * (1 + markPremiumRate),
-          midPrice: 0,
+          midPrice: ABK64x64ToFloat(fMidPrice),
           currentFundingRateBps: currentFundingRateBps,
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
           maxPositionBC: ABK64x64ToFloat(perp.fMaxPositionBC),
