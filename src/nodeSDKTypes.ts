@@ -140,6 +140,11 @@ export interface OrderResponse {
   orderId: string;
 }
 
+export interface OrderStruct {
+  orders: Order[];
+  orderIds: string[];
+}
+
 export interface Order {
   symbol: string;
   side: string;
@@ -156,6 +161,14 @@ export interface Order {
   deadline?: number | undefined;
   timestamp: number;
   submittedBlock?: number;
+}
+
+export interface TradeEvent {
+  perpetualId: number;
+  positionId: string;
+  orderId: string;
+  newPositionSizeBC: number;
+  executionPrice: number;
 }
 
 export interface SmartContractOrder {
