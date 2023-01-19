@@ -159,26 +159,25 @@ export default class PerpetualEventHandler {
    */
   public async updatePrices(perpetualIdOrSymbol: string) {
     let perpId = Number(perpetualIdOrSymbol);
+    let symbol = perpetualIdOrSymbol;
     if (!isNaN(perpId)) {
       let sym = this.mktData.getSymbolFromPerpId(perpId);
       if (sym == undefined) {
         throw new Error(`Symbol not found for perpetual ${perpId}`);
       }
-      perpetualIdOrSymbol = sym;
+      symbol = sym;
     }
-    let pMid = this.mktData.getPerpetualMidPrice(perpetualIdOrSymbol);
-    let pMark = this.mktData.getMarkPrice(perpetualIdOrSymbol);
-    // TODO: fix this:
-    let pIdx = this.mktData.getMarkPrice(perpetualIdOrSymbol); //getIndexPrice
-    let pColl = this.mktData.getMarkPrice(perpetualIdOrSymbol); //getCollToQuoteIndexPrice
-    let [mid, mark, idx, coll] = await Promise.all([pMid, pMark, pIdx, pColl]);
+    let pMid = this.mktData.getPerpetualMidPrice(symbol);
+    let pMark = this.mktData.getMarkPrice(symbol);
+    let pIndices = this.mktData.getPerpetualSpotIndexPrices(symbol);
+    let [mid, mark, indices] = await Promise.all([pMid, pMark, pIndices]);
     // update internal data
-    let perp = this.getPerpetualData(perpetualIdOrSymbol);
+    let perp = this.getPerpetualData(symbol);
     if (perp == undefined) {
-      throw new Error(`Perpetual not found: ${perpetualIdOrSymbol}`);
+      throw new Error(`Perpetual not found: ${symbol}`);
     }
-    perp.indexPrice = idx;
-    perp.collToQuoteIndexPrice = coll;
+    perp.indexPrice = indices.indexPrice;
+    perp.collToQuoteIndexPrice = indices.collToQuoteIndexPrice;
     perp.markPrice = mark;
     perp.midPrice = mid;
   }
