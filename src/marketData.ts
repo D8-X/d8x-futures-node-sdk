@@ -370,31 +370,6 @@ export default class MarketData extends PerpetualDataHandler {
     let px = await this.proxyContract.getOraclePrice([toBytes4(base), toBytes4(quote)]);
     return px == undefined ? undefined : ABK64x64ToFloat(px);
   }
-  /**
-   * Get the current mark price
-   * @param symbol symbol of the form ETH-USD-MATIC
-   * @example
-   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(MarketData);
-   *   // setup
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   let mktData = new MarketData(config);
-   *   await mktData.createProxyInstance();
-   *   // get mark price
-   *   let price = await mktData.getMarkPrice("ETH-USD-MATIC");
-   *   console.log(price);
-   * }
-   * main();
-   *
-   * @returns mark price
-   */
-  public async getMarkPrice(symbol: string): Promise<number> {
-    if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
-    }
-    return await PerpetualDataHandler._queryPerpetualMarkPrice(symbol, this.symbolToPerpStaticInfo, this.proxyContract);
-  }
 
   /**
    * Get the current mark price
