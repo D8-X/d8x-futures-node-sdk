@@ -451,21 +451,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let [pxBuy, pxSell] = await Promise.all([
-      PerpetualDataHandler._queryPerpetualPrice(
-        symbol,
-        this.symbolToPerpStaticInfo.get(symbol)!.lotSizeBC,
-        this.symbolToPerpStaticInfo,
-        this.proxyContract
-      ),
-      PerpetualDataHandler._queryPerpetualPrice(
-        symbol,
-        -this.symbolToPerpStaticInfo.get(symbol)!.lotSizeBC,
-        this.symbolToPerpStaticInfo,
-        this.proxyContract
-      ),
-    ]);
-    return 0.5 * (pxBuy + pxSell);
+    return await this.getPerpetualPrice(symbol, 0);
   }
 
   /**
