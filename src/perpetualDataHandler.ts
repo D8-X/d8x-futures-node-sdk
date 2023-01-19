@@ -30,7 +30,14 @@ import {
   DEFAULT_CONFIG_TESTNET,
   ONE_64x64,
 } from "./nodeSDKTypes";
-import { fromBytes4HexString, to4Chars, combineFlags, containsFlag, contractSymbolToSymbol } from "./utils";
+import {
+  fromBytes4HexString,
+  to4Chars,
+  combineFlags,
+  containsFlag,
+  contractSymbolToSymbol,
+  symbol4BToLongSymbol,
+} from "./utils";
 import {
   ABK64x64ToFloat,
   floatToABK64x64,
@@ -219,6 +226,21 @@ export default class PerpetualDataHandler {
     return PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
   }
 
+  /**
+   * Get the symbol in long format of the perpetual id
+   * @param perpId perpetual id
+   */
+  public getSymbolFromPerpId(perpId: number): string | undefined {
+    let symbol4Bytes = PerpetualDataHandler.perpetualIdToSymbol(perpId, this.symbolToPerpStaticInfo);
+    if (symbol4Bytes == undefined) {
+      return undefined;
+    }
+  }
+
+  public symbol4BToLongSymbol(sym: string): string {
+    return symbol4BToLongSymbol(sym, this.symbolList);
+  }
+
   protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
     let idx = poolId - 1;
     return staticInfos[idx].poolMarginSymbol;
@@ -382,7 +404,7 @@ export default class PerpetualDataHandler {
    * Finds the perpetual id for a symbol of the form
    * <base>-<quote>-<collateral>. The function first converts the
    * token names into bytes4 representation
-   * @param symbol                  symbol (e.g., BTC-USD-MATIC)
+   * @param symbol                  symbol (e.g., BTC-USD-MATC)
    * @param symbolToPerpStaticInfo  map that contains the bytes4-symbol to PerpetualStaticInfo
    * including id mapping
    * @returns perpetual id or it fails
@@ -396,6 +418,25 @@ export default class PerpetualDataHandler {
       throw Error(`No perpetual found for symbol ${symbol}`);
     }
     return id;
+  }
+
+  /**
+   * Find the symbol ("ETH-USD-MATC") of the given perpetual id
+   * @param id perpetual id
+   * @param symbolToPerpStaticInfo map that contains the bytes4-symbol to PerpetualStaticInfo
+   * @returns symbol string or undefined
+   */
+  protected static perpetualIdToSymbol(
+    id: number,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): string | undefined {
+    let symbol;
+    for (symbol of symbolToPerpStaticInfo.keys()) {
+      if (symbolToPerpStaticInfo.get(symbol)?.id == id) {
+        return symbol;
+      }
+    }
+    return undefined;
   }
 
   protected static symbolToBytes4Symbol(symbol: string): string {
