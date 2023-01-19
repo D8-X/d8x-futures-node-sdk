@@ -43,7 +43,7 @@ describe("Front-end-like functionality", () => {
     // TODO: add LOBs
   });
 
-  it("reacts on order places", async () => {
+  it("reacts on trade", async () => {
     expect.assertions(2);
 
     proxyContract.on(
