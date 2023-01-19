@@ -430,25 +430,6 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * get the current index price and collateral index price
-   * @param symbol symbol of the form ETH-USD-MATIC
-   * @param quantity quantity to be traded, negative if short
-   * @returns index price, collateral index price (numbers)
-   */
-  public async getPerpetualSpotIndexPrices(
-    symbol: string
-  ): Promise<{ indexPrice: number; collToQuoteIndexPrice: number }> {
-    if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
-    }
-    return await PerpetualDataHandler._queryPerpetualSpotIndexPrices(
-      symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract
-    );
-  }
-
-  /**
    * get the current mid-price for a perpetual
    * @param symbol symbol of the form ETH-USD-MATIC
    * @example

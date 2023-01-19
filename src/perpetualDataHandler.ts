@@ -341,16 +341,6 @@ export default class PerpetualDataHandler {
     return ABK64x64ToFloat(fPrice);
   }
 
-  protected static async _queryPerpetualSpotIndexPrices(
-    symbol: string,
-    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
-  ): Promise<{ indexPrice: number; collToQuoteIndexPrice: number }> {
-    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let fPrices = await _proxyContract.getPerpetualIndexPrices(perpId);
-    return { indexPrice: ABK64x64ToFloat(fPrices[0]), collToQuoteIndexPrice: ABK64x64ToFloat(fPrices[1]) };
-  }
-
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
