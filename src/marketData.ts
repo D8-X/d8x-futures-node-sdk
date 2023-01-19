@@ -12,9 +12,19 @@ import {
   BUY_SIDE,
   CLOSED_SIDE,
   SELL_SIDE,
+  CollaterlCCY,
 } from "./nodeSDKTypes";
 import { BigNumber, BytesLike, ethers } from "ethers";
-import { floatToABK64x64, ABK64x64ToFloat, getNewPositionLeverage, getRequiredMarginCollateral } from "./d8XMath";
+import {
+  floatToABK64x64,
+  ABK64x64ToFloat,
+  getNewPositionLeverage,
+  getMarginRequiredForLeveragedTrade,
+  calculateLiquidationPriceCollateralBase,
+  calculateLiquidationPriceCollateralQuanto,
+  calculateLiquidationPriceCollateralQuote,
+  getMaxSignedPositionSize,
+} from "./d8XMath";
 import { contractSymbolToSymbol, fromBytes4HexString, toBytes4 } from "./utils";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { SmartContractOrder, Order } from "./nodeSDKTypes";
@@ -180,69 +190,147 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   public async positionRiskOnTrade(
-    currentPositionRisk: MarginAccount,
+    traderAddr: string,
     order: Order,
-    perpetualState: PerpetualState
+    perpetualState: PerpetualState,
+    currentPositionRisk?: MarginAccount
   ): Promise<MarginAccount> {
-    // TODO 1: review if inputs make sense
-    // TODO 2: liquidation prices
-    // TODO 3: all cases, flips, close, open, market/limit, etc....
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    if (currentPositionRisk == undefined) {
+      currentPositionRisk = await this.positionRisk(traderAddr, order.symbol);
     }
     let tradeAmount = order.quantity * (order.side == BUY_SIDE ? 1 : -1);
     let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
     let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
     let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
     let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
-    let feeRate = 0;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
 
-    let tradePrice = await this.getPerpetualPrice(order.symbol, tradeAmount);
+    // total fee rate = exchange fee + broker fee
+    let feeRate =
+      (await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
+      (order.brokerFeeTbps ?? 0) / 100_000;
 
+    // price for this order = limit price (conservative) if given, else the current perp price
+    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
+
+    // need these for leverage/margin calculations
     let [markPrice, indexPriceS2, indexPriceS3] = [
       perpetualState.markPrice,
       perpetualState.indexPrice,
       perpetualState.collToQuoteIndexPrice,
     ];
-
-    let tradeCollateral = getRequiredMarginCollateral(
-      order.leverage!,
-      currentPosition,
-      lockedInValue,
-      tradeAmount,
-      markPrice,
-      indexPriceS2,
-      indexPriceS3,
-      tradePrice,
-      feeRate
-    );
-
-    let newLeverage = getNewPositionLeverage(
-      tradeAmount,
-      currentPositionRisk.collateralCC + tradeCollateral,
-      currentPosition,
-      lockedInValue,
-      indexPriceS2,
-      indexPriceS3,
-      markPrice,
-      tradePrice,
-      feeRate
-    );
+    let newCollateral: number;
+    let newLeverage: number;
+    if (order.keepPositionLvg) {
+      // we have a target leverage for the resulting position
+      // this gives us the total margin needed in the account so that it satisfies the leverage condition
+      newCollateral = getMarginRequiredForLeveragedTrade(
+        currentPositionRisk.leverage,
+        currentPosition,
+        lockedInValue,
+        tradeAmount,
+        markPrice,
+        indexPriceS2,
+        indexPriceS3,
+        tradePrice,
+        feeRate
+      );
+      // the new leverage follows from the updated margin and position
+      newLeverage = getNewPositionLeverage(
+        tradeAmount,
+        newCollateral,
+        currentPosition,
+        lockedInValue,
+        indexPriceS2,
+        indexPriceS3,
+        markPrice,
+        tradePrice,
+        feeRate
+      );
+    } else {
+      // the order has its own leverage and margin requirements
+      let tradeCollateral = getMarginRequiredForLeveragedTrade(
+        order.leverage,
+        0,
+        0,
+        tradeAmount,
+        markPrice,
+        indexPriceS2,
+        indexPriceS3,
+        tradePrice,
+        feeRate
+      );
+      newCollateral = currentPositionRisk.collateralCC + tradeCollateral;
+      // the new leverage corresponds to increasing the position and collateral according to the order
+      newLeverage = getNewPositionLeverage(
+        tradeAmount,
+        newCollateral,
+        currentPosition,
+        lockedInValue,
+        indexPriceS2,
+        indexPriceS3,
+        markPrice,
+        tradePrice,
+        feeRate
+      );
+    }
+    let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
 
     // currentPositionRisk.symbol : no change
     currentPositionRisk.positionNotionalBaseCCY = newPosition;
     currentPositionRisk.side = side;
-    currentPositionRisk.entryPrice = Math.abs((lockedInValue + tradeAmount * tradePrice) / newPosition);
+    currentPositionRisk.entryPrice = Math.abs(newLockedInValue / newPosition);
     currentPositionRisk.leverage = newLeverage;
     currentPositionRisk.markPrice = markPrice;
     currentPositionRisk.unrealizedPnlQuoteCCY = tradeAmount * (markPrice - tradePrice);
     // currentPositionRisk.unrealizedFundingCollateralCCY : no change
-    currentPositionRisk.collateralCC += tradeCollateral;
-    // TODO:
-    // liquidationPrice: [number, number | undefined];
-    // liquidationLvg: number;
+    currentPositionRisk.collateralCC = newCollateral;
+
+    // liquidation vars
+    let S2Liq: number, S3Liq: number | undefined;
+    let tau = this.symbolToPerpStaticInfo.get(order.symbol)!.maintenanceMarginRate;
     currentPositionRisk.collToQuoteConversion = indexPriceS3;
+    let ccyType = this.symbolToPerpStaticInfo.get(order.symbol)!.collateralCurrencyType;
+    if (ccyType == CollaterlCCY.BASE) {
+      S2Liq = calculateLiquidationPriceCollateralBase(newLockedInValue, newPosition, newCollateral, tau);
+      S3Liq = S2Liq;
+    } else if (ccyType == CollaterlCCY.QUANTO) {
+      S3Liq = indexPriceS3;
+      S2Liq = calculateLiquidationPriceCollateralQuanto(
+        newLockedInValue,
+        newPosition,
+        newCollateral,
+        tau,
+        indexPriceS3,
+        markPrice
+      );
+    } else {
+      S2Liq = calculateLiquidationPriceCollateralQuote(newLockedInValue, newPosition, newCollateral, tau);
+    }
+    currentPositionRisk.liquidationPrice = [S2Liq, S3Liq];
+    currentPositionRisk.liquidationLvg = 1 / tau;
     return currentPositionRisk;
+  }
+
+  public maxOrderSizeForTrader(side: string, positionRisk: MarginAccount, perpetualState: PerpetualState): number {
+    let initialMarginRate = this.symbolToPerpStaticInfo.get(positionRisk.symbol)!.initialMarginRate;
+    // fees not considered here
+    let maxPosition = getMaxSignedPositionSize(
+      positionRisk.collateralCC,
+      positionRisk.positionNotionalBaseCCY,
+      positionRisk.entryPrice * positionRisk.positionNotionalBaseCCY,
+      side == BUY_SIDE ? 1 : -1,
+      perpetualState.markPrice,
+      initialMarginRate,
+      0,
+      perpetualState.markPrice,
+      perpetualState.indexPrice,
+      perpetualState.collToQuoteIndexPrice
+    );
+    return maxPosition - positionRisk.positionNotionalBaseCCY;
   }
 
   /**
@@ -329,6 +417,46 @@ export default class MarketData extends PerpetualDataHandler {
       this.symbolToPerpStaticInfo,
       this.proxyContract
     );
+  }
+
+  /**
+   * get the current mid-price for a perpetual
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @example
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let mktData = new MarketData(config);
+   *   await mktData.createProxyInstance();
+   *   // get perpetual mid price
+   *   let midPrice = await mktData.getPerpetualMidPrice("ETH-USD-MATIC");
+   *   console.log(midPrice);
+   * }
+   * main();
+   *
+   * @returns {number} price
+   */
+  public async getPerpetualMidPrice(symbol: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let [pxBuy, pxSell] = await Promise.all([
+      PerpetualDataHandler._queryPerpetualPrice(
+        symbol,
+        this.symbolToPerpStaticInfo.get(symbol)!.lotSizeBC,
+        this.symbolToPerpStaticInfo,
+        this.proxyContract
+      ),
+      PerpetualDataHandler._queryPerpetualPrice(
+        symbol,
+        -this.symbolToPerpStaticInfo.get(symbol)!.lotSizeBC,
+        this.symbolToPerpStaticInfo,
+        this.proxyContract
+      ),
+    ]);
+    return 0.5 * (pxBuy + pxSell);
   }
 
   /**

@@ -190,13 +190,13 @@ export default class AccountTrade extends WriteAccessHandler {
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
    */
   public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string): Promise<number> {
-    if (this.proxyContract == null || this.signer == null) {
+    if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     if (typeof brokerAddr == "undefined") {
       brokerAddr = ZERO_ADDRESS;
     }
-    let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr);
     return feeTbps / 100_000;
   }
@@ -257,32 +257,6 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let orderBookContract = this.getOrderBookContract(symbol);
     return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract);
-  }
-
-  public async getMaxOrderSize(symbol: string, side: string, traderAddr: string): Promise<number> {
-    // 1) get current position size
-    // 2) get max trade size in perp for this position and side
-    // 3) get position after trade of size x that attains max leverage:
-    //    a) leverage depends on collateral after trade and position
-    //    b) collateral after trade depends on trade size
-    //    c) --> need to solve a non-linear equation (not too hard...)
-    // 4) return min between (2) and (3)
-    return 0;
-  }
-
-  public async getApproximateLiquidationPrice(order: Order): Promise<number> {
-    // 1) get trader address from order, and then his positionRisk
-    // 2) get perp from order
-    // 3) delegate to perp data handler depending on the collateral type
-    return 0;
-  }
-
-  public async getRequiredMarginCollateral(order: Order): Promise<number> {
-    return 0;
-  }
-
-  public async getResultingPositionLeverage(order: Order): Promise<number> {
-    return 0;
   }
 
   /**
