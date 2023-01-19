@@ -288,20 +288,9 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
 
-    // currentPositionRisk.symbol : no change
-    currentPositionRisk.positionNotionalBaseCCY = newPosition;
-    currentPositionRisk.side = side;
-    currentPositionRisk.entryPrice = Math.abs(newLockedInValue / newPosition);
-    currentPositionRisk.leverage = newLeverage;
-    currentPositionRisk.markPrice = markPrice;
-    currentPositionRisk.unrealizedPnlQuoteCCY = tradeAmount * (markPrice - tradePrice);
-    // currentPositionRisk.unrealizedFundingCollateralCCY : no change
-    currentPositionRisk.collateralCC = newCollateral;
-
     // liquidation vars
     let S2Liq: number, S3Liq: number | undefined;
     let tau = this.symbolToPerpStaticInfo.get(order.symbol)!.maintenanceMarginRate;
-    currentPositionRisk.collToQuoteConversion = indexPriceS3;
     let ccyType = this.symbolToPerpStaticInfo.get(order.symbol)!.collateralCurrencyType;
     if (ccyType == CollaterlCCY.BASE) {
       S2Liq = calculateLiquidationPriceCollateralBase(newLockedInValue, newPosition, newCollateral, tau);
@@ -319,9 +308,21 @@ export default class MarketData extends PerpetualDataHandler {
     } else {
       S2Liq = calculateLiquidationPriceCollateralQuote(newLockedInValue, newPosition, newCollateral, tau);
     }
-    currentPositionRisk.liquidationPrice = [S2Liq, S3Liq];
-    currentPositionRisk.liquidationLvg = 1 / tau;
-    return currentPositionRisk;
+    let newPositionRisk: MarginAccount = {
+      symbol: currentPositionRisk.symbol,
+      positionNotionalBaseCCY: newPosition,
+      side: side,
+      entryPrice: Math.abs(newLockedInValue / newPosition),
+      leverage: newLeverage,
+      markPrice: markPrice,
+      unrealizedPnlQuoteCCY: tradeAmount * (markPrice - tradePrice),
+      unrealizedFundingCollateralCCY: currentPositionRisk.unrealizedFundingCollateralCCY,
+      collateralCC: newCollateral,
+      collToQuoteConversion: indexPriceS3,
+      liquidationPrice: [S2Liq, S3Liq],
+      liquidationLvg: 1 / tau,
+    };
+    return newPositionRisk;
   }
 
   public maxOrderSizeForTrader(side: string, positionRisk: MarginAccount, perpetualState: PerpetualState): number {
