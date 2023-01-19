@@ -21,6 +21,10 @@ import MarketData from "./marketData";
  *  ordersInPerpetual: Map<number, OrderStruct> all open orders for the given trader
  *  positionInPerpetual: Map<number, MarginAccount> all open positions for the given trader
  *
+ *  TODO:
+ *    - update functions for midprice & index & collateral prices without event
+ *    - testing
+ *
  * Construct with a trader address and a marketData object
  * Initialize to gather all the relevant data.
  * Send event variables to event handler "on<EventName>" - this updates members
