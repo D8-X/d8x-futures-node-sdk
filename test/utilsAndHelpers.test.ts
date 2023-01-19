@@ -15,7 +15,15 @@ import {
 } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
-import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString, containsFlag, combineFlags } from "../src/utils";
+import {
+  to4Chars,
+  symbol4BToLongSymbol,
+  toBytes4,
+  fromBytes4,
+  fromBytes4HexString,
+  containsFlag,
+  combineFlags,
+} from "../src/utils";
 import { BigNumber, ethers } from "ethers";
 
 let pk: string = <string>process.env.PK;
@@ -110,6 +118,17 @@ describe("utils", () => {
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeFalsy;
   });
 
+  it("symbol long format mappings", async () => {
+    let symbolList = require(config.symbolListLocation);
+    let v = symbol4BToLongSymbol("MATC", symbolList);
+    expect(v == "MATIC").toBeTruthy();
+    v = symbol4BToLongSymbol("MATC-ETH", symbolList);
+    expect(v == "MATIC-ETH").toBeTruthy();
+    v = symbol4BToLongSymbol("XXX-ETH", symbolList);
+    expect(v == "ETH").toBeTruthy();
+    v = symbol4BToLongSymbol("MATC-ETH-XAU", symbolList);
+    expect(v == "MATIC-ETH-XAU").toBeTruthy();
+  });
   function flagToOrderTypeCOPY(order: SmartContractOrder): string {
     let flag = BigNumber.from(order.flags);
     let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);

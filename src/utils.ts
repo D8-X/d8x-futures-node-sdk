@@ -90,6 +90,27 @@ export function contractSymbolToSymbol(s: string, mapping: Array<{ [key: string]
   }
 }
 
+/**
+ * Converts symbol or symbol combination into long format
+ * @param {string} s symbol, e.g., USDC-MATC-USDC, MATC, USDC, ...
+ * @param {Object} mapping list of symbol and clean symbol pairs, e.g. [{symbol: "MATIC", cleanSymbol: "MATC"}, ...]
+ * @returns {string} long format e.g. MATIC. if not found the element is ""
+ */
+export function symbol4BToLongSymbol(s: string, mapping: Array<{ [key: string]: string }>): string {
+  let ccy = s.split("-");
+  let longCCY = "";
+  for (let k = 0; k < ccy.length; k++) {
+    let sym = ccy[k];
+    for (let pair of mapping) {
+      if (pair.cleanSymbol == sym) {
+        longCCY = longCCY + "-" + pair.symbol;
+        break;
+      }
+    }
+  }
+  return longCCY.substring(1);
+}
+
 export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {
   return BigNumber.from(parseInt(f1.toString()) | parseInt(f2.toString()));
 }
