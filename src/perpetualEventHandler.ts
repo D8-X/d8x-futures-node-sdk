@@ -25,6 +25,13 @@ import MarketData from "./marketData";
  *    - update functions for midprice & index & collateral prices without event
  *    - testing
  *
+ * Get data:
+ *  - getPerpetualData(perp id (string) or symbol) : PerpetualState. This is a reference!
+ *  - getExchangeInfo() : ExchangeInfo. This is a reference!
+ *  - getCurrentPositionRisk(perp id (string) or symbol) : MarginAccount. This is a reference!
+ *  - getOrdersInPerpetualMap : Map<number, OrderStruct>. This is a reference!
+ *  - getpositionInPerpetualMap : Map<number, MarginAccount>. This is a reference!
+ *
  * Construct with a trader address and a marketData object
  * Initialize to gather all the relevant data.
  * Send event variables to event handler "on<EventName>" - this updates members
@@ -89,13 +96,33 @@ export default class PerpetualEventHandler {
   }
 
   /**
+   * getOrdersInPerpetualMap
+   * @returns this.ordersInPerpetual
+   */
+  public getOrdersInPerpetualMap(): Map<number, OrderStruct> {
+    return this.ordersInPerpetual;
+  }
+
+  /**
+   * getpositionInPerpetualMap
+   * @returns this.positionInPerpetual
+   */
+  public getpositionInPerpetualMap(): Map<number, MarginAccount> {
+    return this.positionInPerpetual;
+  }
+
+  /**
    * Get the data for a perpetual with a given index
-   * @param perpetualId perpetual idx for which we want the data
+   * @param perpetualIdOrSymbol perpetual idx as string or symbol for which we want the data
    * @returns perpetual data for this idx
    */
-  public findPerpetualData(perpetualId: number): PerpetualState | undefined {
+  public getPerpetualData(perpetualIdOrSymbol: string): PerpetualState | undefined {
+    let perpId = Number(perpetualIdOrSymbol);
+    if (isNaN(perpId)) {
+      perpId = this.mktData.getPerpIdFromSymbol(perpetualIdOrSymbol);
+    }
     //uint24 perpetualId = uint24(_iPoolId) * 100_000 + iPerpetualIndex;
-    let poolIdx = Math.floor(perpetualId / 100_000);
+    let poolIdx = Math.floor(perpId / 100_000);
     let perpetuals = this.exchangeInfo?.pools[poolIdx].perpetuals;
     if (perpetuals == undefined) {
       emitWarning(`exchangeInfo not found, initialize perpetualEventHandler`);
@@ -103,12 +130,25 @@ export default class PerpetualEventHandler {
     }
     // find perpetual
     let k;
-    for (k = 0; k < perpetuals?.length && perpetuals[k].id != perpetualId; k++);
-    if (perpetuals[k].id != perpetualId) {
-      emitWarning(`findPerpetualData: perpetual id ${perpetualId} not found`);
+    for (k = 0; k < perpetuals?.length && perpetuals[k].id != perpId; k++);
+    if (perpetuals[k].id != perpId) {
+      emitWarning(`getPerpetualData: perpetual id ${perpId} not found`);
       return undefined;
     }
     return perpetuals[k];
+  }
+
+  /**
+   * Get the trader's current position risk (margin account data)
+   * @param perpetualIdOrSymbol perpetual id as string ('100003') or symbol ('BTC-USD-MATIC')
+   * @returns undefined if no position or margin account (='position risk')
+   */
+  public getCurrentPositionRisk(perpetualIdOrSymbol: string): MarginAccount | undefined {
+    let perpId = Number(perpetualIdOrSymbol);
+    if (isNaN(perpId)) {
+      perpId = this.mktData.getPerpIdFromSymbol(perpetualIdOrSymbol);
+    }
+    return this.positionInPerpetual.get(perpId);
   }
 
   /**
@@ -124,7 +164,7 @@ export default class PerpetualEventHandler {
       fMarkPricePremium,
       fSpotIndexPrice
     );
-    let perpetual = this.findPerpetualData(perpetualId);
+    let perpetual = this.getPerpetualData(perpetualId.toString());
     if (perpetual == undefined) {
       return;
     }
@@ -140,7 +180,7 @@ export default class PerpetualEventHandler {
    */
   public onUpdateUpdateFundingRate(perpetualId: number, fFundingRate: BigNumber): void {
     let newRate = ABK64x64ToFloat(fFundingRate);
-    let perpetual = this.findPerpetualData(perpetualId);
+    let perpetual = this.getPerpetualData(perpetualId.toString());
     if (perpetual == undefined) {
       return;
     }
@@ -258,7 +298,7 @@ export default class PerpetualEventHandler {
     fFundingPaymentCC: BigNumber,
     fOpenInterestBC: BigNumber
   ): Promise<void> {
-    let perpetual = this.findPerpetualData(perpetualId);
+    let perpetual = this.getPerpetualData(perpetualId.toString());
     if (perpetual == undefined) {
       emitWarning(`onUpdateMarginAccount: perpetual ${perpetualId} not found`);
       return;
