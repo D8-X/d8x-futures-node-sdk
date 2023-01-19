@@ -430,6 +430,23 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
+   * Query recent perpetual state from blockchain
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @returns PerpetualState reference
+   */
+  public async getPerpetualState(symbol: string): Promise<PerpetualState> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let state: PerpetualState = await PerpetualDataHandler._queryPerpetualState(
+      symbol,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract
+    );
+    return state;
+  }
+
+  /**
    * get the current mid-price for a perpetual
    * @param symbol symbol of the form ETH-USD-MATIC
    * @example

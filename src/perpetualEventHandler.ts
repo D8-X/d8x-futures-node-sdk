@@ -167,19 +167,21 @@ export default class PerpetualEventHandler {
       }
       symbol = sym;
     }
-    let pMid = this.mktData.getPerpetualMidPrice(symbol);
-    let pMark = this.mktData.getMarkPrice(symbol);
-    let pIndices = this.mktData.getPerpetualSpotIndexPrices(symbol);
-    let [mid, mark, indices] = await Promise.all([pMid, pMark, pIndices]);
-    // update internal data
+    let perpState: PerpetualState = await this.mktData.getPerpetualState(symbol);
     let perp = this.getPerpetualData(symbol);
     if (perp == undefined) {
       throw new Error(`Perpetual not found: ${symbol}`);
     }
-    perp.indexPrice = indices.indexPrice;
-    perp.collToQuoteIndexPrice = indices.collToQuoteIndexPrice;
-    perp.markPrice = mark;
-    perp.midPrice = mid;
+    perp.state = perpState.state;
+    perp.indexPrice = perpState.indexPrice;
+    perp.collToQuoteIndexPrice = perpState.collToQuoteIndexPrice;
+    perp.markPrice = perpState.markPrice;
+    perp.midPrice = perpState.midPrice;
+    perp.currentFundingRateBps = perpState.currentFundingRateBps;
+    perp.openInterestBC = perpState.openInterestBC;
+    perp.maxPositionBC = perpState.maxPositionBC;
+    perp.indexPrice = perpState.indexPrice;
+    perp.collToQuoteIndexPrice = perpState.collToQuoteIndexPrice;
   }
 
   /**

@@ -29,6 +29,8 @@ import {
   DEFAULT_CONFIG_TESTNET_NAME,
   DEFAULT_CONFIG_TESTNET,
   ONE_64x64,
+  PERP_STATE_STR,
+  PerpetualState,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -349,6 +351,31 @@ export default class PerpetualDataHandler {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ammState = await _proxyContract.getAMMState(perpId);
     return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
+  }
+
+  protected static async _queryPerpetualState(
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract
+  ): Promise<PerpetualState> {
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let ccy = symbol.split("-");
+    let ammState = await _proxyContract.getAMMState(perpId);
+    let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
+    let state = {
+      id: perpId,
+      state: PERP_STATE_STR[ammState[13]],
+      baseCurrency: ccy[0],
+      quoteCurrency: ccy[1],
+      indexPrice: ABK64x64ToFloat(ammState[6]),
+      collToQuoteIndexPrice: ABK64x64ToFloat(ammState[7]),
+      markPrice: markPrice,
+      midPrice: ABK64x64ToFloat(ammState[10]),
+      currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
+      openInterestBC: ABK64x64ToFloat(ammState[11]),
+      maxPositionBC: ABK64x64ToFloat(ammState[12]),
+    };
+    return state;
   }
 
   /**
