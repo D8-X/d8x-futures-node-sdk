@@ -1,5 +1,4 @@
 import { BigNumber, utils } from "ethers";
-import { hasOnlyExpressionInitializer } from "typescript";
 import { ABK64x64ToFloat, mul64x64, div64x64 } from "./d8XMath";
 import {
   PerpetualState,
@@ -149,6 +148,39 @@ export default class PerpetualEventHandler {
       perpId = this.mktData.getPerpIdFromSymbol(perpetualIdOrSymbol);
     }
     return this.positionInPerpetual.get(perpId);
+  }
+
+  /**
+   * Update the following prices:
+   *  - index price
+   *  - collateral price
+   *  - mid-price
+   * @param perpetualIdOrSymbol perpetual id as string ('100003') or symbol ('BTC-USD-MATIC')
+   */
+  public async updatePrices(perpetualIdOrSymbol: string) {
+    let perpId = Number(perpetualIdOrSymbol);
+    if (!isNaN(perpId)) {
+      let sym = this.mktData.getSymbolFromPerpId(perpId);
+      if (sym == undefined) {
+        throw new Error(`Symbol not found for perpetual ${perpId}`);
+      }
+      perpetualIdOrSymbol = sym;
+    }
+    let pMid = this.mktData.getPerpetualMidPrice(perpetualIdOrSymbol);
+    let pMark = this.mktData.getMarkPrice(perpetualIdOrSymbol);
+    // TODO: fix this:
+    let pIdx = this.mktData.getMarkPrice(perpetualIdOrSymbol); //getIndexPrice
+    let pColl = this.mktData.getMarkPrice(perpetualIdOrSymbol); //getCollToQuoteIndexPrice
+    let [mid, mark, idx, coll] = await Promise.all([pMid, pMark, pIdx, pColl]);
+    // update internal data
+    let perp = this.getPerpetualData(perpetualIdOrSymbol);
+    if (perp == undefined) {
+      throw new Error(`Perpetual not found: ${perpetualIdOrSymbol}`);
+    }
+    perp.indexPrice = idx;
+    perp.collToQuoteIndexPrice = coll;
+    perp.markPrice = mark;
+    perp.midPrice = mid;
   }
 
   /**
