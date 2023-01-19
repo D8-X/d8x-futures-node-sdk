@@ -62,6 +62,15 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
+   * Convert the smart contract output of an order into a convenient format of type "Order"
+   * @param smOrder SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event
+   * @returns more convenient format of order, type "Order"
+   */
+  public smartContractOrderToOrder(smOrder: SmartContractOrder): Order {
+    return PerpetualDataHandler.fromSmartContractOrder(smOrder, this.symbolToPerpStaticInfo);
+  }
+
+  /**
    * Get contract instance. Useful for event listening.
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -145,7 +154,7 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Information about the positions open by a given trader in a given perpetual contract.
    * @param {string} traderAddr Address of the trader for which we get the position risk.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
