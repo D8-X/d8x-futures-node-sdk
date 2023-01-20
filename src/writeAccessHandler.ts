@@ -62,9 +62,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     //extract margin-currency name
     let symbolarr = symbol.split("-");
     symbol = symbol.length == 3 ? symbolarr[2] : symbolarr[0];
-    //transform into bytes4 currencies (without the space): "BTC", "USD", "MATC"
-    symbol = to4Chars(symbol);
-    symbol = symbol.replace(/\0/g, "");
+    //note: symbol is in long format
     let marginTokenAddr = this.symbolToTokenAddrMap.get(symbol);
     if (marginTokenAddr == undefined || this.signer == null) {
       throw Error("No margin token or signer defined, call createProxyInstance");
