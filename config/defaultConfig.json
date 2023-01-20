@@ -1,9 +1,9 @@
 {
-  "name": "v1.4",
-  "proxyAddr": "0x7fe419fDE6c47F57B49Ef4D5D1ACD332307a734d",
+  "name": "v1.5",
+  "proxyAddr": "0xaB6AD25eE5CA28E7d7b16A33A33897aE34BF9e67",
   "nodeURL": "https://rpc-mumbai.maticvigil.com/",
   "proxyABILocation": "../abi/IPerpetualManager.json",
-  "limitOrderBookFactoryAddr": "0x40aA68C1C33626ecD048a8A38aBF3947813cAF92",
+  "limitOrderBookFactoryAddr": "0xe95422bf27C62F3b9ae19d6032aC58c1bd13C71E",
   "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
   "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
   "symbolListLocation": "../config/symbolList.json"

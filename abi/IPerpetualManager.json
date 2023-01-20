@@ -1261,6 +1261,12 @@
             {
                 "indexed": false,
                 "internalType": "int128",
+                "name": "fMidPricePremium",
+                "type": "int128"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
                 "name": "fMarkPricePremium",
                 "type": "int128"
             },
@@ -2394,9 +2400,9 @@
         "name": "getAMMState",
         "outputs": [
             {
-                "internalType": "int128[13]",
+                "internalType": "int128[15]",
                 "name": "",
-                "type": "int128[13]"
+                "type": "int128[15]"
             }
         ],
         "stateMutability": "view",
@@ -3697,6 +3703,30 @@
     {
         "inputs": [
             {
+                "internalType": "bytes4",
+                "name": "_baseCurrency",
+                "type": "bytes4"
+            },
+            {
+                "internalType": "bytes4",
+                "name": "_quoteCurrency",
+                "type": "bytes4"
+            }
+        ],
+        "name": "isMarketClosed",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "bytes32",
                 "name": "digest",
                 "type": "bytes32"
@@ -3726,6 +3756,25 @@
             {
                 "internalType": "bool",
                 "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            }
+        ],
+        "name": "isPerpMarketClosed",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "isClosed",
                 "type": "bool"
             }
         ],
