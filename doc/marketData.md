@@ -11,6 +11,7 @@ No gas required for the queries here.</p>
 * [MarketData](#MarketData) ⇐ <code>PerpetualDataHandler</code>
     * [new MarketData(config)](#new_MarketData_new)
     * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
@@ -18,6 +19,8 @@ No gas required for the queries here.</p>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
+    * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒
+    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
 
 <a name="new_MarketData_new"></a>
 
@@ -55,6 +58,18 @@ about perpetual currencies</p>
 | Param | Description |
 | --- | --- |
 | provider | <p>optional provider</p> |
+
+<a name="MarketData+smartContractOrderToOrder"></a>
+
+### marketData.smartContractOrderToOrder(smOrder) ⇒
+<p>Convert the smart contract output of an order into a convenient format of type &quot;Order&quot;</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>more convenient format of order, type &quot;Order&quot;</p>  
+
+| Param | Description |
+| --- | --- |
+| smOrder | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
 
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
@@ -132,14 +147,14 @@ main();
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
-<p>Information about the positions open by a given trader in a given perpetual contract.</p>
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string</p> |
 
 **Example**  
 ```js
@@ -237,6 +252,45 @@ async function main() {
   // get perpetual price
   let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
   console.log(price);
+}
+main();
+```
+<a name="MarketData+getPerpetualState"></a>
+
+### marketData.getPerpetualState(symbol) ⇒
+<p>Query recent perpetual state from blockchain</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>PerpetualState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualMidPrice"></a>
+
+### marketData.getPerpetualMidPrice(symbol) ⇒ <code>number</code>
+<p>get the current mid-price for a perpetual</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>number</code> - <p>price</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get perpetual mid price
+  let midPrice = await mktData.getPerpetualMidPrice("ETH-USD-MATIC");
+  console.log(midPrice);
 }
 main();
 ```

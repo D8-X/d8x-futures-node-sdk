@@ -190,7 +190,7 @@ export function calculateLiquidationPriceCollateralQuote(
  * @param indexPriceS3 Collateral index price, positive.
  * @param tradePrice Expected price to trade tradeAmount.
  * @param feeRate
- * @returns
+ * @returns Total collateral amount needed for the new position to have he desired leverage.
  */
 export function getMarginRequiredForLeveragedTrade(
   targetLeverage: number | undefined,
