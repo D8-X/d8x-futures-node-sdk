@@ -88,6 +88,7 @@ export function contractSymbolToSymbol(s: string, mapping: Array<{ [key: string]
       return pair.symbol;
     }
   }
+  return s;
 }
 
 /**

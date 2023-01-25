@@ -371,6 +371,16 @@ export default class MarketData extends PerpetualDataHandler {
     return px == undefined ? undefined : ABK64x64ToFloat(px);
   }
 
+  public async getOrderStatus(symbol: string, orderId: string): Promise<string> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let orderBookContract: ethers.Contract | null = null;
+    orderBookContract = this.getOrderBookContract(symbol);
+    let status = await orderBookContract.getOrderStatus(orderId);
+    return status;
+  }
+
   /**
    * Get the current mark price
    * @param symbol symbol of the form ETH-USD-MATIC
