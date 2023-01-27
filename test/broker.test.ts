@@ -61,8 +61,7 @@ describe("broker tools that spend gas and tokens", () => {
     let tx = await accTrade.setAllowance("MATIC");
     await tx.wait();
     let numOpenClose = 10;
-    let brokerFee = 0.05;
-    let deadline = Math.round(Date.now() / 1000) + 10000;
+    let brokerFeeTbps = 10; // 0.01%
     for (var k = 0; k < numOpenClose; k++) {
       for (var j = 0; j < 2; j++) {
         let amount = 1_000;
@@ -75,8 +74,10 @@ describe("broker tools that spend gas and tokens", () => {
           quantity: amount,
           leverage: 10,
           timestamp: Math.round(Date.now() / 1000),
+          brokerFeeTbps: brokerFeeTbps,
+          deadline: Math.round(Date.now() / 1000) + 10000,
         };
-        let signedOrder = await brokerTool.signOrder(order, myAddress, brokerFee, deadline);
+        let signedOrder = await brokerTool.signOrder(order, myAddress);
         let resp = await accTrade.order(signedOrder);
         console.log("trade transaction hash =", resp.tx.hash);
         let fee1 = await brokerTool.getFeeForBrokerVolume("MATIC");

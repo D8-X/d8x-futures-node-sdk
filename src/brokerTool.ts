@@ -349,11 +349,8 @@ export default class BrokerTool extends WriteAccessHandler {
   /**
    * Adds this broker's signature to an order. An order signed by a broker is considered
    * to be routed through this broker and benefits from the broker's fee conditions.
-   * @param {Order} order Order to sign.
+   * @param {Order} order Order to sign. It must contain valid broker fee, broker address, and order deadline.
    * @param {string} traderAddr Address of trader submitting the order.
-   * @param {number} feeDecimals Fee that this broker imposes on this order.
-   * The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.
-   * @param {number} deadline Deadline for the order to be executed. Specify deadline as a unix timestamp
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -381,18 +378,15 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {Order} An order signed by this broker, which can be submitted directly with AccountTrade.order.
    */
-  public async signOrder(order: Order, traderAddr: string, brokerFee: number, deadline: number): Promise<Order> {
+  public async signOrder(order: Order, traderAddr: string): Promise<Order> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    order.brokerAddr = this.traderAddr;
-    order.brokerFeeTbps = brokerFee * 100_000;
-    order.deadline = Math.round(deadline);
     order.brokerSignature = await BrokerTool._signOrder(
       order.symbol,
-      order.brokerFeeTbps,
+      order.brokerFeeTbps!,
       traderAddr,
-      BigNumber.from(Math.round(deadline)),
+      BigNumber.from(order.deadline),
       this.signer,
       this.chainId,
       this.proxyAddr,
