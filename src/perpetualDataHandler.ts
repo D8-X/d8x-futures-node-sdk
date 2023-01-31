@@ -59,7 +59,7 @@ export default class PerpetualDataHandler {
   //this is initialized in the createProxyInstance function
   protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
   protected poolStaticInfos: Array<PoolStaticInfo>;
-  protected symbolList: Array<{ [key: string]: string }>;
+  protected symbolList: Map<string, string>;
 
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
@@ -94,7 +94,7 @@ export default class PerpetualDataHandler {
     this.proxyABI = require(config.proxyABILocation);
     this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
     this.lobABI = require(config.limitOrderBookABILocation);
-    this.symbolList = require(config.symbolListLocation);
+    this.symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
   }
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
@@ -155,19 +155,21 @@ export default class PerpetualDataHandler {
         // try to find a limit order book
         let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
         currentLimitOrderBookAddr.push(lobAddr);
-        // we find out the pool currency by looking at all perpetuals
-        // unless for quanto perpetuals, we know the pool currency
-        // from the perpetual. This fails if we have a pool with only
-        // quanto perpetuals
-        if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-          poolCCY = base;
-          ccy.push(CollaterlCCY.BASE);
-        } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
-          poolCCY = quote;
-          ccy.push(CollaterlCCY.QUOTE);
-        } else {
-          poolCCY = base3;
-          ccy.push(CollaterlCCY.QUANTO);
+        if (poolCCY == undefined) {
+          // we find out the pool currency by looking at all perpetuals
+          // unless for quanto perpetuals, we know the pool currency
+          // from the perpetual. This fails if we have a pool with only
+          // quanto perpetuals
+          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
+            poolCCY = base;
+            ccy.push(CollaterlCCY.BASE);
+          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
+            poolCCY = quote;
+            ccy.push(CollaterlCCY.QUOTE);
+          } else {
+            poolCCY = base3;
+            ccy.push(CollaterlCCY.QUANTO);
+          }
         }
       }
       if (perpetualIDs.length == 0) {

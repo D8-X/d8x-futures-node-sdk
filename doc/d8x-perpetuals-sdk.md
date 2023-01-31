@@ -233,6 +233,7 @@ Result = x/2^64 if big number, x/2^29 if number</p>
     * [~fromBytes4(b)](#module_utils..fromBytes4) ⇒ <code>string</code>
     * [~fromBytes4HexString(s)](#module_utils..fromBytes4HexString) ⇒ <code>string</code>
     * [~contractSymbolToSymbol(s, mapping)](#module_utils..contractSymbolToSymbol) ⇒ <code>string</code>
+    * [~symbolToContractSymbol(s, mapping)](#module_utils..symbolToContractSymbol) ⇒ <code>Buffer</code>
     * [~symbol4BToLongSymbol(s, mapping)](#module_utils..symbol4BToLongSymbol) ⇒ <code>string</code>
 
 <a name="module_utils..to4Chars"></a>
@@ -294,12 +295,23 @@ returned by the smart contract as bytes4</p>
 
 ### utils~contractSymbolToSymbol(s, mapping) ⇒ <code>string</code>
 **Kind**: inner method of [<code>utils</code>](#module_utils)  
-**Returns**: <code>string</code> - <p>user friendly currency symbol, e.g. &quot;MATIC&quot;</p>  
+**Returns**: <code>string</code> - <p>User friendly currency symbol, e.g. &quot;MATIC&quot;</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| s | <code>string</code> | <p>string representing a hex-number (&quot;0x...&quot;)</p> |
-| mapping | <code>Object</code> | <p>list of symbol and clean symbol pairs, e.g. [{symbol: &quot;MATIC&quot;, cleanSymbol: &quot;MATC&quot;}, ...]</p> |
+| s | <code>string</code> | <p>String representing a hex-number (&quot;0x...&quot;)</p> |
+| mapping | <code>Object</code> | <p>List of symbol and clean symbol pairs, e.g. [{symbol: &quot;MATIC&quot;, cleanSymbol: &quot;MATC&quot;}, ...]</p> |
+
+<a name="module_utils..symbolToContractSymbol"></a>
+
+### utils~symbolToContractSymbol(s, mapping) ⇒ <code>Buffer</code>
+**Kind**: inner method of [<code>utils</code>](#module_utils)  
+**Returns**: <code>Buffer</code> - <p>Buffer that can be used with smart contract to identify tokens</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| s | <code>string</code> | <p>User friendly currency symbol, e.g. &quot;MATIC&quot;</p> |
+| mapping | <code>Object</code> | <p>List of symbol and clean symbol pairs, e.g. [{symbol: &quot;MATIC&quot;, cleanSymbol: &quot;MATC&quot;}, ...]</p> |
 
 <a name="module_utils..symbol4BToLongSymbol"></a>
 

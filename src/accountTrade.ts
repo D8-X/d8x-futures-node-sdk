@@ -150,8 +150,6 @@ export default class AccountTrade extends WriteAccessHandler {
       throw Error("order size too small");
     }
     let orderBookContract: ethers.Contract = this.getOrderBookContract(order.symbol);
-    let tx: ethers.ContractTransaction;
-    let orderId: string;
     let res: OrderResponse = await this._order(
       order,
       this.traderAddr,
