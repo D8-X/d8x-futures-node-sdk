@@ -52,6 +52,9 @@ export default class PerpetualEventHandler {
   private ordersInPerpetual: Map<number, OrderStruct>;
   private positionInPerpetual: Map<number, MarginAccount>;
 
+  // perpetual id to pool index in exchange info
+  private poolIndexForPerpetual: Map<number, number>;
+
   // keep current state of the system in exchangeInfo
   // data is updated when calling "onEvent"-functions
   private exchangeInfo: ExchangeInfo | undefined;
@@ -61,6 +64,7 @@ export default class PerpetualEventHandler {
     this.traderAddr = traderAddr;
     this.ordersInPerpetual = new Map<number, OrderStruct>();
     this.positionInPerpetual = new Map<number, MarginAccount>();
+    this.poolIndexForPerpetual = new Map<number, number>();
   }
 
   /**
@@ -82,6 +86,7 @@ export default class PerpetualEventHandler {
         this.ordersInPerpetual.set(perpId, orders);
         let position = await this.mktData.positionRisk(this.traderAddr, perpSymbol);
         this.positionInPerpetual.set(perpId, position);
+        this.poolIndexForPerpetual.set(perpId, k);
       }
     }
   }
@@ -121,7 +126,7 @@ export default class PerpetualEventHandler {
       perpId = this.mktData.getPerpIdFromSymbol(perpetualIdOrSymbol);
     }
     //uint24 perpetualId = uint24(_iPoolId) * 100_000 + iPerpetualIndex;
-    let poolIdx = Math.floor(perpId / 100_000);
+    let poolIdx = this.poolIndexForPerpetual.get(perpId)!; //Math.floor(perpId / 100_000);
     let perpetuals = this.exchangeInfo?.pools[poolIdx].perpetuals;
     if (perpetuals == undefined) {
       emitWarning(`exchangeInfo not found, initialize perpetualEventHandler`);
@@ -192,8 +197,14 @@ export default class PerpetualEventHandler {
    * @param fSpotIndexPrice spot index price in ABDK format
    * @returns void
    */
-  public onUpdateMarkPrice(perpetualId: number, fMarkPricePremium: BigNumber, fSpotIndexPrice: BigNumber): void {
-    let [newMarkPrice, newIndexPrice] = PerpetualEventHandler.ConvertUpdateMarkPrice(
+  public onUpdateMarkPrice(
+    perpetualId: number,
+    fMidPricePremium: BigNumber,
+    fMarkPricePremium: BigNumber,
+    fSpotIndexPrice: BigNumber
+  ): void {
+    let [newMidPrice, newMarkPrice, newIndexPrice] = PerpetualEventHandler.ConvertUpdateMarkPrice(
+      fMidPricePremium,
       fMarkPricePremium,
       fSpotIndexPrice
     );
@@ -201,6 +212,7 @@ export default class PerpetualEventHandler {
     if (perpetual == undefined) {
       return;
     }
+    perpetual.midPrice = newMidPrice;
     perpetual.markPrice = newMarkPrice;
     perpetual.indexPrice = newIndexPrice;
   }
@@ -432,10 +444,16 @@ export default class PerpetualEventHandler {
    * @param fSpotIndexPrice spot index price in ABDK format
    * @returns mark price and spot index in float
    */
-  private static ConvertUpdateMarkPrice(fMarkPricePremium: BigNumber, fSpotIndexPrice: BigNumber): [number, number] {
+  private static ConvertUpdateMarkPrice(
+    fMidPricePremium: BigNumber,
+    fMarkPricePremium: BigNumber,
+    fSpotIndexPrice: BigNumber
+  ): [number, number, number] {
     let fMarkPrice = mul64x64(fSpotIndexPrice, ONE_64x64.add(fMarkPricePremium));
+    let fMidPrice = mul64x64(fSpotIndexPrice, ONE_64x64.add(fMidPricePremium));
+    let midPrice = ABK64x64ToFloat(fMidPrice);
     let markPrice = ABK64x64ToFloat(fMarkPrice);
     let indexPrice = ABK64x64ToFloat(fSpotIndexPrice);
-    return [markPrice, indexPrice];
+    return [midPrice, markPrice, indexPrice];
   }
 }
