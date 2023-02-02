@@ -1,3 +1,4 @@
+import { assert } from "console";
 import { BigNumber } from "ethers";
 import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
 
@@ -176,4 +177,88 @@ export function calculateLiquidationPriceCollateralQuote(
   let numerator = -LockedInValueQC + cash_cc;
   let denominator = maintenance_margin_rate * Math.abs(position) - position;
   return numerator / denominator;
+}
+
+/**
+ *
+ * @param targetLeverage Leverage of the resulting position. It must be positive unless the resulting position is closed.
+ * @param currentPosition Current position size, in base currency, signed.
+ * @param currentLockedInValue Current locked in value, average entry price times position size, in quote currency.
+ * @param tradeAmount Trade amount, in base currency, signed.
+ * @param markPrice Mark price, positive.
+ * @param indexPriceS2 Index price, positive.
+ * @param indexPriceS3 Collateral index price, positive.
+ * @param tradePrice Expected price to trade tradeAmount.
+ * @param feeRate
+ * @returns Total collateral amount needed for the new position to have he desired leverage.
+ */
+export function getMarginRequiredForLeveragedTrade(
+  targetLeverage: number | undefined,
+  currentPosition: number,
+  currentLockedInValue: number,
+  tradeAmount: number,
+  markPrice: number,
+  indexPriceS2: number,
+  indexPriceS3: number,
+  tradePrice: number,
+  feeRate: number
+): number {
+  // we solve for margin in:
+  // |new position| * Sm / leverage + fee rate * |trade amount| * S2 = margin * S3 + current position * Sm - L + trade amount * (Sm - trade price)
+  // --> M S3 = |P'|Sm/L + FeeQC - PnL + (P'-P)(Price - Sm) = pos value / leverage + fees + price impact - pnl
+  let isClosing =
+    currentPosition != 0 && currentPosition * tradeAmount < 0 && currentPosition * (currentPosition + tradeAmount) >= 0;
+  let feesCC = (feeRate * Math.abs(tradeAmount) * indexPriceS2) / indexPriceS3;
+  let collRequired = feesCC;
+
+  if (!isClosing) {
+    if (targetLeverage == undefined || targetLeverage <= 0) {
+      throw Error("opening trades must have positive leverage");
+    }
+    // unrealized pnl (could be + or -)  - price impact premium (+)
+    let pnlQC = currentPosition * markPrice - currentLockedInValue - tradeAmount * (tradePrice - markPrice);
+    collRequired +=
+      Math.max(0, (Math.abs(currentPosition + tradeAmount) * markPrice) / targetLeverage - pnlQC) / indexPriceS3;
+  }
+  return collRequired;
+}
+
+export function getMaxSignedPositionSize(
+  marginCollateral: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  direction: number,
+  limitPrice: number,
+  initialMarginRate: number,
+  feeRate: number,
+  markPrice: number,
+  indexPriceS2: number,
+  indexPriceS3: number
+): number {
+  // we solve for new position in:
+  // |new position| * Sm / leverage + fee rate * |trade amount| * S2 = margin * S3 + current position * Sm - L + trade amount * (Sm - entry price)
+  // |trade amount| = (new position - current position) * direction
+  let availableCash = marginCollateral * indexPriceS3 + currentPosition * markPrice - currentLockedInValue;
+  let effectiveMarginRate =
+    markPrice * initialMarginRate + feeRate * indexPriceS2 + direction * (limitPrice - markPrice);
+
+  return availableCash / effectiveMarginRate;
+}
+
+export function getNewPositionLeverage(
+  tradeAmount: number,
+  marginCollateral: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  indexPriceS2: number,
+  indexPriceS3: number,
+  markPrice: number,
+  limitPrice: number,
+  feeRate: number
+): number {
+  let newPosition = tradeAmount + currentPosition;
+  let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - limitPrice);
+  return (
+    (Math.abs(newPosition) * indexPriceS2) / (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount))
+  );
 }

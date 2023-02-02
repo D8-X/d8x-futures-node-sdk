@@ -1,4 +1,4 @@
-import { BytesLike, BigNumber, BigNumberish, constants } from "ethers";
+import { BytesLike, BigNumber, BigNumberish, constants, ContractTransaction } from "ethers";
 export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_MAINNET = "notthereyet";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
@@ -39,6 +39,7 @@ export interface NodeSDKConfig {
   limitOrderBookFactoryAddr: string;
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
+  symbolListLocation: string;
   gasLimit?: number | undefined;
 }
 
@@ -110,6 +111,7 @@ export interface ExchangeInfo {
  */
 export interface PoolState {
   isRunning: boolean;
+  poolSymbol: string;
   marginTokenAddr: string;
   poolShareTokenAddr: string;
   defaultFundCashCC: number;
@@ -128,9 +130,20 @@ export interface PerpetualState {
   indexPrice: number;
   collToQuoteIndexPrice: number;
   markPrice: number;
+  midPrice: number;
   currentFundingRateBps: number;
   openInterestBC: number;
   maxPositionBC: number;
+}
+
+export interface OrderResponse {
+  tx: ContractTransaction;
+  orderId: string;
+}
+
+export interface OrderStruct {
+  orders: Order[];
+  orderIds: string[];
 }
 
 export interface Order {
@@ -148,6 +161,15 @@ export interface Order {
   leverage?: number | undefined;
   deadline?: number | undefined;
   timestamp: number;
+  submittedBlock?: number;
+}
+
+export interface TradeEvent {
+  perpetualId: number;
+  positionId: string;
+  orderId: string;
+  newPositionSizeBC: number;
+  executionPrice: number;
 }
 
 export interface SmartContractOrder {
@@ -164,6 +186,7 @@ export interface SmartContractOrder {
   fLeverage: BigNumberish;
   iDeadline: BigNumberish;
   createdTimestamp: BigNumberish;
+  submittedBlock: BigNumberish;
 }
 /*
         t32 flags;

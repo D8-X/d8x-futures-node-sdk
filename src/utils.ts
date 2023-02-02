@@ -75,6 +75,54 @@ export function fromBytes4HexString(s: string): string {
   return res;
 }
 
+/**
+ *
+ * @param {string} s String representing a hex-number ("0x...")
+ * @param {Object} mapping List of symbol and clean symbol pairs, e.g. [{symbol: "MATIC", cleanSymbol: "MATC"}, ...]
+ * @returns {string} User friendly currency symbol, e.g. "MATIC"
+ */
+export function contractSymbolToSymbol(s: string, mapping: Map<string, string>): string {
+  let shortCCY = fromBytes4HexString(s);
+  // assume CCY is already short if not in the mapping file
+  let longCCY = mapping.get(shortCCY) ?? shortCCY;
+  return longCCY;
+}
+
+/**
+ *
+ * @param {string} s User friendly currency symbol, e.g. "MATIC"
+ * @param {Object} mapping List of symbol and clean symbol pairs, e.g. [{symbol: "MATIC", cleanSymbol: "MATC"}, ...]
+ * @returns {Buffer} Buffer that can be used with smart contract to identify tokens
+ */
+export function symbolToContractSymbol(s: string, mapping: Map<string, string>): Buffer {
+  let shortCCY: string | undefined = undefined;
+  for (let [k, v] of mapping) {
+    if (v == s) {
+      shortCCY = k;
+    }
+  }
+  // if not in the mapping file, assume ccy is already valid
+  shortCCY = shortCCY ?? s;
+  return toBytes4(shortCCY);
+}
+
+/**
+ * Converts symbol or symbol combination into long format
+ * @param {string} s symbol, e.g., USDC-MATC-USDC, MATC, USDC, ...
+ * @param {Object} mapping list of symbol and clean symbol pairs, e.g. [{symbol: "MATIC", cleanSymbol: "MATC"}, ...]
+ * @returns {string} long format e.g. MATIC. if not found the element is ""
+ */
+export function symbol4BToLongSymbol(s: string, mapping: Map<string, string>): string {
+  let ccy = s.split("-");
+  let longCCY = "";
+  for (let k = 0; k < ccy.length; k++) {
+    let sym = mapping.get(ccy[k]) ?? to4Chars(ccy[k]);
+    sym = sym.replace(/\0/g, "");
+    longCCY = longCCY + "-" + sym;
+  }
+  return longCCY.substring(1);
+}
+
 export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {
   return BigNumber.from(parseInt(f1.toString()) | parseInt(f2.toString()));
 }

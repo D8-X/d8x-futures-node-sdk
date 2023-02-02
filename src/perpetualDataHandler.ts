@@ -29,8 +29,17 @@ import {
   DEFAULT_CONFIG_TESTNET_NAME,
   DEFAULT_CONFIG_TESTNET,
   ONE_64x64,
+  PERP_STATE_STR,
+  PerpetualState,
 } from "./nodeSDKTypes";
-import { fromBytes4HexString, to4Chars, combineFlags, containsFlag } from "./utils";
+import {
+  fromBytes4HexString,
+  to4Chars,
+  combineFlags,
+  containsFlag,
+  contractSymbolToSymbol,
+  symbol4BToLongSymbol,
+} from "./utils";
 import {
   ABK64x64ToFloat,
   floatToABK64x64,
@@ -50,6 +59,8 @@ export default class PerpetualDataHandler {
   //this is initialized in the createProxyInstance function
   protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
   protected poolStaticInfos: Array<PoolStaticInfo>;
+  protected symbolList: Map<string, string>;
+
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
@@ -83,6 +94,7 @@ export default class PerpetualDataHandler {
     this.proxyABI = require(config.proxyABILocation);
     this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
     this.lobABI = require(config.limitOrderBookABILocation);
+    this.symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
   }
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
@@ -98,8 +110,7 @@ export default class PerpetualDataHandler {
    * @returns order book contract for the perpetual
    */
   public getOrderBookContract(symbol: string): ethers.Contract {
-    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-    let orderBookAddr = this.symbolToPerpStaticInfo.get(cleanSymbol)?.limitOrderBookAddr;
+    let orderBookAddr = this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr;
     if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
       throw Error(`no limit order book found for ${symbol} or no signer`);
     }
@@ -132,10 +143,10 @@ export default class PerpetualDataHandler {
 
       for (let k = 0; k < perpetualIDs.length; k++) {
         let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
-        let base = fromBytes4HexString(perp.S2BaseCCY);
-        let quote = fromBytes4HexString(perp.S2QuoteCCY);
-        let base3 = fromBytes4HexString(perp.S3BaseCCY);
-        let quote3 = fromBytes4HexString(perp.S3QuoteCCY);
+        let base = contractSymbolToSymbol(perp.S2BaseCCY, this.symbolList);
+        let quote = contractSymbolToSymbol(perp.S2QuoteCCY, this.symbolList);
+        let base3 = contractSymbolToSymbol(perp.S3BaseCCY, this.symbolList);
+        let quote3 = contractSymbolToSymbol(perp.S3QuoteCCY, this.symbolList);
         currentSymbols.push(base + "-" + quote);
         currentSymbolsS3.push(base3 + "-" + quote3);
         initRate.push(ABK64x64ToFloat(perp.fInitialMarginRate));
@@ -144,30 +155,30 @@ export default class PerpetualDataHandler {
         // try to find a limit order book
         let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
         currentLimitOrderBookAddr.push(lobAddr);
-        // we find out the pool currency by looking at all perpetuals
-        // unless for quanto perpetuals, we know the pool currency
-        // from the perpetual. This fails if we have a pool with only
-        // quanto perpetuals
-        if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-          poolCCY = base;
-          ccy.push(CollaterlCCY.BASE);
-        } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
-          poolCCY = quote;
-          ccy.push(CollaterlCCY.QUOTE);
-        } else {
-          ccy.push(CollaterlCCY.QUANTO);
+        if (poolCCY == undefined) {
+          // we find out the pool currency by looking at all perpetuals
+          // unless for quanto perpetuals, we know the pool currency
+          // from the perpetual. This fails if we have a pool with only
+          // quanto perpetuals
+          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
+            poolCCY = base;
+            ccy.push(CollaterlCCY.BASE);
+          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
+            poolCCY = quote;
+            ccy.push(CollaterlCCY.QUOTE);
+          } else {
+            poolCCY = base3;
+            ccy.push(CollaterlCCY.QUANTO);
+          }
         }
       }
       if (perpetualIDs.length == 0) {
         continue;
       }
-      if (poolCCY == undefined) {
-        throw Error("Pool only has quanto perps, unable to determine collateral currency");
-      }
       let oracleFactoryAddr = await proxyContract.getOracleFactory();
       let info: PoolStaticInfo = {
         poolId: j + 1,
-        poolMarginSymbol: poolCCY,
+        poolMarginSymbol: poolCCY!,
         poolMarginTokenAddr: poolMarginTokenAddr,
         shareTokenAddr: pool.shareTokenAddress,
         oracleFactoryAddr: oracleFactoryAddr,
@@ -188,7 +199,7 @@ export default class PerpetualDataHandler {
         });
       }
       // push margin token address into map
-      this.symbolToTokenAddrMap.set(poolCCY, poolMarginTokenAddr);
+      this.symbolToTokenAddrMap.set(poolCCY!, poolMarginTokenAddr);
     }
   }
 
@@ -219,6 +230,21 @@ export default class PerpetualDataHandler {
     return PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
   }
 
+  /**
+   * Get the symbol in long format of the perpetual id
+   * @param perpId perpetual id
+   */
+  public getSymbolFromPerpId(perpId: number): string | undefined {
+    let symbol4Bytes = PerpetualDataHandler.perpetualIdToSymbol(perpId, this.symbolToPerpStaticInfo);
+    if (symbol4Bytes == undefined) {
+      return undefined;
+    }
+  }
+
+  public symbol4BToLongSymbol(sym: string): string {
+    return symbol4BToLongSymbol(sym, this.symbolList);
+  }
+
   protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
     let idx = poolId - 1;
     return staticInfos[idx].poolMarginSymbol;
@@ -230,10 +256,8 @@ export default class PerpetualDataHandler {
     if (symbols.length == 3) {
       symbol = symbols[2];
     }
-    let cleanSymbol = to4Chars(symbol);
-    cleanSymbol = cleanSymbol.replace(/\0/g, "");
     let j = 0;
-    while (j < staticInfos.length && staticInfos[j].poolMarginSymbol != cleanSymbol) {
+    while (j < staticInfos.length && staticInfos[j].poolMarginSymbol != symbol) {
       j++;
     }
     if (j == staticInfos.length) {
@@ -262,8 +286,10 @@ export default class PerpetualDataHandler {
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: ethers.Contract
   ): Promise<MarginAccount> {
-    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-    let perpId = PerpetualDataHandler.symbolToPerpetualId(cleanSymbol, symbolToPerpStaticInfo);
+    let perpId = Number(symbol);
+    if (isNaN(perpId)) {
+      perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    }
     const idx_cash = 3;
     const idx_notional = 4;
     const idx_locked_in = 5;
@@ -283,7 +309,7 @@ export default class PerpetualDataHandler {
       entryPrice = 0;
     if (!isEmpty) {
       [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
-        cleanSymbol,
+        symbol,
         traderState,
         symbolToPerpStaticInfo
       );
@@ -329,15 +355,40 @@ export default class PerpetualDataHandler {
     return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
   }
 
+  protected static async _queryPerpetualState(
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract
+  ): Promise<PerpetualState> {
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let ccy = symbol.split("-");
+    let ammState = await _proxyContract.getAMMState(perpId);
+    let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
+    let state = {
+      id: perpId,
+      state: PERP_STATE_STR[ammState[13]],
+      baseCurrency: ccy[0],
+      quoteCurrency: ccy[1],
+      indexPrice: ABK64x64ToFloat(ammState[6]),
+      collToQuoteIndexPrice: ABK64x64ToFloat(ammState[7]),
+      markPrice: markPrice,
+      midPrice: ABK64x64ToFloat(ammState[10]),
+      currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
+      openInterestBC: ABK64x64ToFloat(ammState[11]),
+      maxPositionBC: ABK64x64ToFloat(ammState[12]),
+    };
+    return state;
+  }
+
   /**
    * Liquidation price
-   * @param cleanSymbol symbol after calling symbolToBytes4Symbol
+   * @param symbol symbol of the form BTC-USD-MATIC
    * @param traderState BigInt array according to smart contract
    * @param symbolToPerpStaticInfo mapping symbol->PerpStaticInfo
    * @returns liquidation mark-price, corresponding collateral/quote conversion
    */
   protected static _calculateLiquidationPrice(
-    cleanSymbol: string,
+    symbol: string,
     traderState: BigNumber[],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): [number, number, number, number, number] {
@@ -350,9 +401,9 @@ export default class PerpetualDataHandler {
     const idx_s2 = 10;
     let S2Liq: number;
     let S3Liq: number = ABK64x64ToFloat(traderState[idx_s3]);
-    let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(cleanSymbol);
+    let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(symbol);
     if (perpInfo == undefined) {
-      throw new Error(`no info for perpetual ${cleanSymbol}`);
+      throw new Error(`no info for perpetual ${symbol}`);
     }
     let tau = perpInfo.maintenanceMarginRate;
     let lockedInValueQC = ABK64x64ToFloat(traderState[idx_locked_in]);
@@ -382,7 +433,7 @@ export default class PerpetualDataHandler {
    * Finds the perpetual id for a symbol of the form
    * <base>-<quote>-<collateral>. The function first converts the
    * token names into bytes4 representation
-   * @param symbol                  symbol (e.g., BTC-USD-MATIC)
+   * @param symbol                  symbol (e.g., BTC-USD-MATC)
    * @param symbolToPerpStaticInfo  map that contains the bytes4-symbol to PerpetualStaticInfo
    * including id mapping
    * @returns perpetual id or it fails
@@ -391,12 +442,30 @@ export default class PerpetualDataHandler {
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): number {
-    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-    let id = symbolToPerpStaticInfo.get(cleanSymbol)?.id;
+    let id = symbolToPerpStaticInfo.get(symbol)?.id;
     if (id == undefined) {
       throw Error(`No perpetual found for symbol ${symbol}`);
     }
     return id;
+  }
+
+  /**
+   * Find the symbol ("ETH-USD-MATC") of the given perpetual id
+   * @param id perpetual id
+   * @param symbolToPerpStaticInfo map that contains the bytes4-symbol to PerpetualStaticInfo
+   * @returns symbol string or undefined
+   */
+  protected static perpetualIdToSymbol(
+    id: number,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): string | undefined {
+    let symbol;
+    for (symbol of symbolToPerpStaticInfo.keys()) {
+      if (symbolToPerpStaticInfo.get(symbol)?.id == id) {
+        return symbol;
+      }
+    }
+    return undefined;
   }
 
   protected static symbolToBytes4Symbol(symbol: string): string {
@@ -462,6 +531,7 @@ export default class PerpetualDataHandler {
       leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
       deadline: Number(order.iDeadline),
       timestamp: Number(order.createdTimestamp),
+      submittedBlock: Number(order.submittedBlock),
     };
     return userOrder;
   }
@@ -517,6 +587,7 @@ export default class PerpetualDataHandler {
       fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
       iDeadline: BigNumber.from(Math.round(iDeadline)),
       createdTimestamp: BigNumber.from(Math.round(order.timestamp)),
+      submittedBlock: 0,
     };
     return smOrder;
   }
@@ -586,8 +657,7 @@ export default class PerpetualDataHandler {
   }
 
   protected static _getLotSize(symbol: string, symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>): number {
-    let cleanSymbol = PerpetualDataHandler.symbolToBytes4Symbol(symbol);
-    let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(cleanSymbol);
+    let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(symbol);
     if (perpInfo == undefined) {
       throw new Error(`no info for perpetual ${symbol}`);
     }

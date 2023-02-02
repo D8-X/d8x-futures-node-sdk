@@ -1,4 +1,6 @@
 import { ethers } from "ethers";
+import { toUtf8Bytes } from "@ethersproject/strings";
+import { concat } from "@ethersproject/bytes";
 import { ABK64x64ToFloat } from "./d8XMath";
 import MarketData from "./marketData";
 import {
@@ -8,6 +10,7 @@ import {
   ZERO_ADDRESS,
   ORDER_TYPE_MARKET,
   PerpetualStaticInfo,
+  OrderResponse,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -138,7 +141,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
-  public async order(order: Order): Promise<ethers.ContractTransaction> {
+  public async order(order: Order): Promise<OrderResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -146,12 +149,8 @@ export default class AccountTrade extends WriteAccessHandler {
     if (Math.abs(order.quantity) < minSize) {
       throw Error("order size too small");
     }
-    let orderBookContract: ethers.Contract | null = null;
-    if (order.type != ORDER_TYPE_MARKET) {
-      orderBookContract = this.getOrderBookContract(order.symbol);
-    }
-
-    return await this._order(
+    let orderBookContract: ethers.Contract = this.getOrderBookContract(order.symbol);
+    let res: OrderResponse = await this._order(
       order,
       this.traderAddr,
       this.symbolToPerpStaticInfo,
@@ -161,6 +160,7 @@ export default class AccountTrade extends WriteAccessHandler {
       this.signer,
       this.gasLimit
     );
+    return res;
   }
 
   /**
@@ -188,13 +188,13 @@ export default class AccountTrade extends WriteAccessHandler {
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
    */
   public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string): Promise<number> {
-    if (this.proxyContract == null || this.signer == null) {
+    if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     if (typeof brokerAddr == "undefined") {
       brokerAddr = ZERO_ADDRESS;
     }
-    let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr);
     return feeTbps / 100_000;
   }
@@ -246,7 +246,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *   console.log(orderIds);
    * }
    * main();
-   *   
+   *
    * @returns {string[]} Array of Ids for all the orders currently open by this trader.
    */
   public async getOrderIds(symbol: string): Promise<string[]> {
@@ -267,7 +267,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param chainId chain Id of network
    * @param signer instance of ethers wallet that can write
    * @param gasLimit gas limit to be used for the trade
-   * @returns transaction hash
+   * @returns [transaction hash, order id]
    * @ignore
    */
   public async _order(
@@ -275,27 +275,20 @@ export default class AccountTrade extends WriteAccessHandler {
     traderAddr: string,
     symbolToPerpetualMap: Map<string, PerpetualStaticInfo>,
     proxyContract: ethers.Contract,
-    orderBookContract: ethers.Contract | null,
+    orderBookContract: ethers.Contract,
     chainId: number,
     signer: ethers.Wallet,
     gasLimit: number
-  ): Promise<ethers.ContractTransaction> {
+  ): Promise<OrderResponse> {
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap);
     // if we are here, we have a clean order
     // decide whether to send order to Limit Order Book or AMM based on order type
     let tx: ethers.ContractTransaction;
-    if (order.type == ORDER_TYPE_MARKET) {
-      // send market order
-      tx = await proxyContract.trade(scOrder, { gasLimit: gasLimit });
-    } else {
-      // conditional order so the order is sent to the order-book
-      if (orderBookContract == null) {
-        throw Error("Order book contract not provided.");
-      }
-      let signature = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-      tx = await orderBookContract.createLimitOrder(scOrder, signature, { gasLimit: gasLimit });
-    }
-    return tx;
+    // all orders are sent to the order-book
+    let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
+    tx = await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
+    let id = await this.createOrderId(digest);
+    return { tx: tx, orderId: id };
   }
 
   protected async _cancelOrder(
@@ -307,8 +300,8 @@ export default class AccountTrade extends WriteAccessHandler {
       throw Error(`Order Book contract for symbol ${symbol} or signer not defined`);
     }
     let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
-    let signature = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
-    return await orderBookContract.cancelLimitOrder(orderId, signature);
+    let [signature, digest] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
+    return await orderBookContract.cancelOrder(orderId, signature);
   }
 
   /**
@@ -327,6 +320,42 @@ export default class AccountTrade extends WriteAccessHandler {
     isNewOrder: boolean,
     signer: ethers.Wallet,
     proxyAddress: string
+  ): Promise<string[]> {
+    let digest = await this._createDigest(order, chainId, isNewOrder, proxyAddress);
+    let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+    let signature = await signer.signMessage(digestBuffer);
+    return [signature, digest];
+  }
+
+  /**
+   * Creates an order-id from the digest. Order-id is the 'digest' used in the smart contract.
+   * @param digest  created with _createDigest
+   * @returns orderId string
+   * @ignore
+   */
+  private async createOrderId(digest: string) {
+    let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+    const messagePrefix = "\x19Ethereum Signed Message:\n";
+    let tmp = concat([toUtf8Bytes(messagePrefix), toUtf8Bytes(String(digestBuffer.length)), digestBuffer]);
+    // see: https://github.com/ethers-io/ethers.js/blob/c80fcddf50a9023486e9f9acb1848aba4c19f7b6/packages/hash/src.ts/message.ts#L7
+    return ethers.utils.keccak256(tmp);
+  }
+
+  /**
+   * Creates a digest (order-id)
+   * @param order         smart-contract-type order
+   * @param chainId       chainId of network
+   * @param isNewOrder    true unless we cancel
+   * @param signer        ethereum-type wallet
+   * @param proxyAddress  address of the contract
+   * @returns digest
+   * @ignore
+   */
+  private async _createDigest(
+    order: SmartContractOrder,
+    chainId: number,
+    isNewOrder: boolean,
+    proxyAddress: string
   ): Promise<string> {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = ethers.utils.keccak256(
@@ -341,7 +370,7 @@ export default class AccountTrade extends WriteAccessHandler {
     );
     const TRADE_ORDER_TYPEHASH = ethers.utils.keccak256(
       Buffer.from(
-        "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint256 iDeadline,uint32 flags,int128 fLeverage,uint256 createdTimestamp)"
+        "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint64 iDeadline,uint32 flags,int128 fLeverage,uint64 createdTimestamp)"
       )
     );
     let structHash = ethers.utils.keccak256(
@@ -355,10 +384,10 @@ export default class AccountTrade extends WriteAccessHandler {
           "int128",
           "int128",
           "int128",
-          "uint256",
+          "uint64",
           "uint32",
           "int128",
-          "uint256",
+          "uint64",
         ],
         [
           TRADE_ORDER_TYPEHASH,
@@ -379,7 +408,6 @@ export default class AccountTrade extends WriteAccessHandler {
     let digest = ethers.utils.keccak256(
       abiCoder.encode(["bytes32", "bytes32", "bool"], [domainSeparator, structHash, isNewOrder])
     );
-    let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-    return await signer.signMessage(digestBuffer);
+    return digest;
   }
 }

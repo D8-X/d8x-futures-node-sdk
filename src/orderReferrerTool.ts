@@ -78,7 +78,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof referrerAddr == "undefined") {
       referrerAddr = this.traderAddr;
     }
-    return await orderBookSC.executeLimitOrderByDigest(orderId, referrerAddr, { gasLimit: this.gasLimit });
+    return await orderBookSC.executeOrder(orderId, referrerAddr, { gasLimit: this.gasLimit });
   }
 
   /**
@@ -234,9 +234,6 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    if (order.limitPrice == undefined) {
-      throw Error("order does not have a limit price");
-    }
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
       return false;
@@ -245,7 +242,10 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, this.symbolToPerpStaticInfo)) {
       return false;
     }
-    // check limit price
+    // check limit price, which may be undefined if it's an unrestricted market order
+    if (order.limitPrice == undefined) {
+      order.limitPrice = order.side == BUY_SIDE ? Infinity : 0;
+    }
     let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
       order.symbol,
       order.quantity,

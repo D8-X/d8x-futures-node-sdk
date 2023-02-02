@@ -19,7 +19,7 @@ require gas-payments.</p>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
     * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
-    * [.signOrder(order, traderAddr, feeDecimals, deadline)](#BrokerTool+signOrder) ⇒ <code>Order</code>
+    * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
 
 <a name="new_BrokerTool_new"></a>
@@ -329,7 +329,7 @@ main();
 ```
 <a name="BrokerTool+signOrder"></a>
 
-### brokerTool.signOrder(order, traderAddr, feeDecimals, deadline) ⇒ <code>Order</code>
+### brokerTool.signOrder(order, traderAddr) ⇒ <code>Order</code>
 <p>Adds this broker's signature to an order. An order signed by a broker is considered
 to be routed through this broker and benefits from the broker's fee conditions.</p>
 
@@ -338,10 +338,8 @@ to be routed through this broker and benefits from the broker's fee conditions.<
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order to sign.</p> |
+| order | <code>Order</code> | <p>Order to sign. It must contain valid broker fee, broker address, and order deadline.</p> |
 | traderAddr | <code>string</code> | <p>Address of trader submitting the order.</p> |
-| feeDecimals | <code>number</code> | <p>Fee that this broker imposes on this order. The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.</p> |
-| deadline | <code>number</code> | <p>Deadline for the order to be executed. Specify deadline as a unix timestamp</p> |
 
 **Example**  
 ```js
@@ -363,8 +361,8 @@ async function main() {
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
   console.log(signedOrder);
-  // execute order 
-  let orderTransaction = await accTrade.order(signedOrder); 
+  // execute order
+  let orderTransaction = await accTrade.order(signedOrder);
   console.log(orderTransaction.hash);
 }
 main();

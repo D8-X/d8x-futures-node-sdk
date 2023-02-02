@@ -81,6 +81,25 @@
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "",
+                "type": "uint24"
+            }
+        ],
+        "name": "orderBooks",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "owner",
         "outputs": [

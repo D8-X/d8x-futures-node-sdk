@@ -35,6 +35,37 @@ gas-payments.</p></dd>
 <dt><a href="#PerpetualDataHandler">PerpetualDataHandler</a></dt>
 <dd><p>Parent class for MarketData and WriteAccessHandler that handles
 common data and chain operations.</p></dd>
+<dt><a href="#PerpetualEventHandler">PerpetualEventHandler</a></dt>
+<dd><p>This class handles events and stores relevant variables
+as member variables. The events change the state of the member variables:
+mktData : MarketData relevant market data with current state (e.g. index price)
+ordersInPerpetual: Map&lt;number, OrderStruct&gt; all open orders for the given trader
+positionInPerpetual: Map&lt;number, MarginAccount&gt; all open positions for the given trader</p>
+<p>TODO:</p>
+<ul>
+<li>update functions for midprice &amp; index &amp; collateral prices without event</li>
+<li>testing</li>
+</ul>
+<p>Get data:</p>
+<ul>
+<li>getPerpetualData(perp id (string) or symbol) : PerpetualState. This is a reference!</li>
+<li>getExchangeInfo() : ExchangeInfo. This is a reference!</li>
+<li>getCurrentPositionRisk(perp id (string) or symbol) : MarginAccount. This is a reference!</li>
+<li>getOrdersInPerpetualMap : Map&lt;number, OrderStruct&gt;. This is a reference!</li>
+<li>getpositionInPerpetualMap : Map&lt;number, MarginAccount&gt;. This is a reference!</li>
+</ul>
+<p>Construct with a trader address and a marketData object
+Initialize to gather all the relevant data.
+Send event variables to event handler &quot;on<EventName>&quot; - this updates members</p>
+<ul>
+<li>[x] onUpdateMarkPrice              : emitted on proxy; updates markprice and index price data</li>
+<li>[x] onUpdateUpdateFundingRate      : emitted on proxy; sets funding rate</li>
+<li>[x] onExecutionFailed              : emitted on order book; removes an open order</li>
+<li>[x] onPerpetualLimitOrderCancelled : emitted on order book; removes an open order</li>
+<li>[x] onPerpetualLimitOrderCreated   : emitted on order book; adds an open order to the data</li>
+<li>[x] async onUpdateMarginAccount    : emitted on proxy; updates position data and open interest</li>
+<li>[x] onTrade                        : emitted on proxy; returns TradeEvent to be displayed</li>
+</ul></dd>
 <dt><a href="#WriteAccessHandler">WriteAccessHandler</a> ⇐ <code><a href="#PerpetualDataHandler">PerpetualDataHandler</a></code></dt>
 <dd><p>This is a parent class for the classes that require
 write access to the contracts.
@@ -56,6 +87,7 @@ require gas-payments.</p></dd>
     * [~calculateLiquidationPriceCollateralBase(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralBase) ⇒ <code>number</code>
     * [~calculateLiquidationPriceCollateralQuanto(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3, Sm)](#module_d8xMath..calculateLiquidationPriceCollateralQuanto) ⇒ <code>number</code>
     * [~calculateLiquidationPriceCollateralQuote(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralQuote) ⇒ <code>number</code>
+    * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒
 
 <a name="module_d8xMath..ABK64x64ToFloat"></a>
 
@@ -173,6 +205,24 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 | maintenance_margin_rate | <code>number</code> | <p>maintenance margin ratio</p> |
 | S3 | <code>number</code> | <p>collateral to quote conversion (=S2 if base-collateral, =1 if quuote collateral, = index S3 if quanto)</p> |
 
+<a name="module_d8xMath..getMarginRequiredForLeveragedTrade"></a>
+
+### d8xMath~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate) ⇒
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>Total collateral amount needed for the new position to have he desired leverage.</p>  
+
+| Param | Description |
+| --- | --- |
+| targetLeverage | <p>Leverage of the resulting position. It must be positive unless the resulting position is closed.</p> |
+| currentPosition | <p>Current position size, in base currency, signed.</p> |
+| currentLockedInValue | <p>Current locked in value, average entry price times position size, in quote currency.</p> |
+| tradeAmount | <p>Trade amount, in base currency, signed.</p> |
+| markPrice | <p>Mark price, positive.</p> |
+| indexPriceS2 | <p>Index price, positive.</p> |
+| indexPriceS3 | <p>Collateral index price, positive.</p> |
+| tradePrice | <p>Expected price to trade tradeAmount.</p> |
+| feeRate |  |
+
 <a name="module_utils"></a>
 
 ## utils
@@ -182,6 +232,9 @@ Result = x/2^64 if big number, x/2^29 if number</p>
     * [~toBytes4(s)](#module_utils..toBytes4) ⇒ <code>Buffer</code>
     * [~fromBytes4(b)](#module_utils..fromBytes4) ⇒ <code>string</code>
     * [~fromBytes4HexString(s)](#module_utils..fromBytes4HexString) ⇒ <code>string</code>
+    * [~contractSymbolToSymbol(s, mapping)](#module_utils..contractSymbolToSymbol) ⇒ <code>string</code>
+    * [~symbolToContractSymbol(s, mapping)](#module_utils..symbolToContractSymbol) ⇒ <code>Buffer</code>
+    * [~symbol4BToLongSymbol(s, mapping)](#module_utils..symbol4BToLongSymbol) ⇒ <code>string</code>
 
 <a name="module_utils..to4Chars"></a>
 
@@ -238,6 +291,41 @@ returned by the smart contract as bytes4</p>
 | --- | --- | --- |
 | s | <code>string</code> | <p>string representing a hex-number (&quot;0x...&quot;)</p> |
 
+<a name="module_utils..contractSymbolToSymbol"></a>
+
+### utils~contractSymbolToSymbol(s, mapping) ⇒ <code>string</code>
+**Kind**: inner method of [<code>utils</code>](#module_utils)  
+**Returns**: <code>string</code> - <p>User friendly currency symbol, e.g. &quot;MATIC&quot;</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| s | <code>string</code> | <p>String representing a hex-number (&quot;0x...&quot;)</p> |
+| mapping | <code>Object</code> | <p>List of symbol and clean symbol pairs, e.g. [{symbol: &quot;MATIC&quot;, cleanSymbol: &quot;MATC&quot;}, ...]</p> |
+
+<a name="module_utils..symbolToContractSymbol"></a>
+
+### utils~symbolToContractSymbol(s, mapping) ⇒ <code>Buffer</code>
+**Kind**: inner method of [<code>utils</code>](#module_utils)  
+**Returns**: <code>Buffer</code> - <p>Buffer that can be used with smart contract to identify tokens</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| s | <code>string</code> | <p>User friendly currency symbol, e.g. &quot;MATIC&quot;</p> |
+| mapping | <code>Object</code> | <p>List of symbol and clean symbol pairs, e.g. [{symbol: &quot;MATIC&quot;, cleanSymbol: &quot;MATC&quot;}, ...]</p> |
+
+<a name="module_utils..symbol4BToLongSymbol"></a>
+
+### utils~symbol4BToLongSymbol(s, mapping) ⇒ <code>string</code>
+<p>Converts symbol or symbol combination into long format</p>
+
+**Kind**: inner method of [<code>utils</code>](#module_utils)  
+**Returns**: <code>string</code> - <p>long format e.g. MATIC. if not found the element is &quot;&quot;</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| s | <code>string</code> | <p>symbol, e.g., USDC-MATC-USDC, MATC, USDC, ...</p> |
+| mapping | <code>Object</code> | <p>list of symbol and clean symbol pairs, e.g. [{symbol: &quot;MATIC&quot;, cleanSymbol: &quot;MATC&quot;}, ...]</p> |
+
 <a name="AccountTrade"></a>
 
 ## AccountTrade ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -255,7 +343,7 @@ require gas-payments.</p>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -263,6 +351,7 @@ require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_AccountTrade_new"></a>
 
@@ -472,17 +561,21 @@ async function main() {
   console.log(orderIds);
 }
 main();
-  
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### accountTrade.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### accountTrade.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### accountTrade.setAllowance(symbol, amount) ⇒
@@ -565,6 +658,18 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### accountTrade.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="BrokerTool"></a>
 
 ## BrokerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -586,9 +691,9 @@ require gas-payments.</p>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
     * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
-    * [.signOrder(order, traderAddr, feeDecimals, deadline)](#BrokerTool+signOrder) ⇒ <code>Order</code>
+    * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -596,6 +701,7 @@ require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_BrokerTool_new"></a>
 
@@ -904,7 +1010,7 @@ main();
 ```
 <a name="BrokerTool+signOrder"></a>
 
-### brokerTool.signOrder(order, traderAddr, feeDecimals, deadline) ⇒ <code>Order</code>
+### brokerTool.signOrder(order, traderAddr) ⇒ <code>Order</code>
 <p>Adds this broker's signature to an order. An order signed by a broker is considered
 to be routed through this broker and benefits from the broker's fee conditions.</p>
 
@@ -913,10 +1019,8 @@ to be routed through this broker and benefits from the broker's fee conditions.<
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order to sign.</p> |
+| order | <code>Order</code> | <p>Order to sign. It must contain valid broker fee, broker address, and order deadline.</p> |
 | traderAddr | <code>string</code> | <p>Address of trader submitting the order.</p> |
-| feeDecimals | <code>number</code> | <p>Fee that this broker imposes on this order. The fee is sent to the broker's wallet. Fee should be specified in decimals, e.g., 0.0001 equals 1bps.</p> |
-| deadline | <code>number</code> | <p>Deadline for the order to be executed. Specify deadline as a unix timestamp</p> |
 
 **Example**  
 ```js
@@ -938,8 +1042,8 @@ async function main() {
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
   console.log(signedOrder);
-  // execute order 
-  let orderTransaction = await accTrade.order(signedOrder); 
+  // execute order
+  let orderTransaction = await accTrade.order(signedOrder);
   console.log(orderTransaction.hash);
 }
 main();
@@ -977,13 +1081,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### brokerTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### brokerTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### brokerTool.setAllowance(symbol, amount) ⇒
@@ -1066,6 +1175,18 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### brokerTool.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="LiquidatorTool"></a>
 
 ## LiquidatorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1082,7 +1203,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
     * [.getAllActiveAccounts(symbol)](#LiquidatorTool+getAllActiveAccounts) ⇒ <code>Array.&lt;string&gt;</code>
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -1090,6 +1211,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_LiquidatorTool_new"></a>
 
@@ -1268,13 +1390,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### liquidatorTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### liquidatorTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### liquidatorTool.setAllowance(symbol, amount) ⇒
@@ -1357,6 +1484,18 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### liquidatorTool.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="LiquidityProviderTool"></a>
 
 ## LiquidityProviderTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1371,7 +1510,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.removeLiquidity(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+removeLiquidity) ⇒
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -1379,6 +1518,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_LiquidityProviderTool_new"></a>
 
@@ -1496,13 +1636,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### liquidityProviderTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### liquidityProviderTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### liquidityProviderTool.setAllowance(symbol, amount) ⇒
@@ -1585,6 +1730,18 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### liquidityProviderTool.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="MarketData"></a>
 
 ## MarketData ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
@@ -1597,6 +1754,8 @@ No gas required for the queries here.</p>
 
 * [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
+    * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
@@ -1604,11 +1763,14 @@ No gas required for the queries here.</p>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
+    * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒
+    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_MarketData_new"></a>
 
@@ -1634,6 +1796,31 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+createProxyInstance"></a>
+
+### marketData.createProxyInstance(provider)
+<p>Initialize the marketData-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
+<a name="MarketData+smartContractOrderToOrder"></a>
+
+### marketData.smartContractOrderToOrder(smOrder) ⇒
+<p>Convert the smart contract output of an order into a convenient format of type &quot;Order&quot;</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>more convenient format of order, type &quot;Order&quot;</p>  
+
+| Param | Description |
+| --- | --- |
+| smOrder | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
+
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
 ### marketData.getReadOnlyProxyInstance() ⇒
@@ -1693,16 +1880,6 @@ main();
 
 **Example**  
 ```js
-// Setup
-const config = PerpetualDataHandler.readSDKConfig("testnet");
-let mktData = new MarketData(config);
-await mktData.createProxyInstance();
-// Get all open orders for a trader/symbol
-let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-    "ETH-USD-MATIC");
-```
-**Example**  
-```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
@@ -1720,25 +1897,15 @@ main();
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
-<p>Information about the positions open by a given trader in a given perpetual contract.</p>
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string</p> |
 
-**Example**  
-```js
-// Setup
-const config = PerpetualDataHandler.readSDKConfig("testnet");
-let mktData = new MarketData(config);
-await mktData.createProxyInstance();
-// Get position risk info
-let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-    "ETH-USD-MATIC");
-```
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -1838,6 +2005,45 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getPerpetualState"></a>
+
+### marketData.getPerpetualState(symbol) ⇒
+<p>Query recent perpetual state from blockchain</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>PerpetualState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualMidPrice"></a>
+
+### marketData.getPerpetualMidPrice(symbol) ⇒ <code>number</code>
+<p>get the current mid-price for a perpetual</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>number</code> - <p>price</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get perpetual mid price
+  let midPrice = await mktData.getPerpetualMidPrice("ETH-USD-MATIC");
+  console.log(midPrice);
+}
+main();
+```
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### marketData.getOrderBookContract(symbol) ⇒
@@ -1898,6 +2104,18 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### marketData.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="OrderReferrerTool"></a>
 
 ## OrderReferrerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1916,7 +2134,7 @@ gas-payments.</p>
     * [.getOrderById(symbol, digest)](#OrderReferrerTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order)](#OrderReferrerTool+isTradeable) ⇒
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -1924,6 +2142,7 @@ gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -2140,13 +2359,18 @@ main();
 ```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### orderReferrerTool.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### orderReferrerTool.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### orderReferrerTool.setAllowance(symbol, amount) ⇒
@@ -2229,6 +2453,18 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### orderReferrerTool.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="PerpetualDataHandler"></a>
 
 ## PerpetualDataHandler
@@ -2244,9 +2480,11 @@ common data and chain operations.</p>
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
         * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
         * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+        * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
     * _static_
-        * [._calculateLiquidationPrice(cleanSymbol, traderState, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
+        * [._calculateLiquidationPrice(symbol, traderState, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
         * [.symbolToPerpetualId(symbol, symbolToPerpStaticInfo)](#PerpetualDataHandler.symbolToPerpetualId) ⇒
+        * [.perpetualIdToSymbol(id, symbolToPerpStaticInfo)](#PerpetualDataHandler.perpetualIdToSymbol) ⇒
         * [.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap)](#PerpetualDataHandler.toSmartContractOrder) ⇒
         * [._orderTypeToFlag(order)](#PerpetualDataHandler._orderTypeToFlag) ⇒
         * [.readSDKConfig(fileLocation)](#PerpetualDataHandler.readSDKConfig) ⇒
@@ -2306,9 +2544,20 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
 
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### perpetualDataHandler.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
+
 <a name="PerpetualDataHandler._calculateLiquidationPrice"></a>
 
-### PerpetualDataHandler.\_calculateLiquidationPrice(cleanSymbol, traderState, symbolToPerpStaticInfo) ⇒
+### PerpetualDataHandler.\_calculateLiquidationPrice(symbol, traderState, symbolToPerpStaticInfo) ⇒
 <p>Liquidation price</p>
 
 **Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
@@ -2316,7 +2565,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 | Param | Description |
 | --- | --- |
-| cleanSymbol | <p>symbol after calling symbolToBytes4Symbol</p> |
+| symbol | <p>symbol of the form BTC-USD-MATIC</p> |
 | traderState | <p>BigInt array according to smart contract</p> |
 | symbolToPerpStaticInfo | <p>mapping symbol-&gt;PerpStaticInfo</p> |
 
@@ -2332,8 +2581,21 @@ token names into bytes4 representation
 
 | Param | Description |
 | --- | --- |
-| symbol | <p>symbol (e.g., BTC-USD-MATIC)</p> |
+| symbol | <p>symbol (e.g., BTC-USD-MATC)</p> |
 | symbolToPerpStaticInfo | <p>map that contains the bytes4-symbol to PerpetualStaticInfo including id mapping</p> |
+
+<a name="PerpetualDataHandler.perpetualIdToSymbol"></a>
+
+### PerpetualDataHandler.perpetualIdToSymbol(id, symbolToPerpStaticInfo) ⇒
+<p>Find the symbol (&quot;ETH-USD-MATC&quot;) of the given perpetual id</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>symbol string or undefined</p>  
+
+| Param | Description |
+| --- | --- |
+| id | <p>perpetual id</p> |
+| symbolToPerpStaticInfo | <p>map that contains the bytes4-symbol to PerpetualStaticInfo</p> |
 
 <a name="PerpetualDataHandler.toSmartContractOrder"></a>
 
@@ -2374,6 +2636,290 @@ Checks for some misspecifications.</p>
 | --- | --- |
 | fileLocation | <p>json-file with required variables for config</p> |
 
+<a name="PerpetualEventHandler"></a>
+
+## PerpetualEventHandler
+<p>This class handles events and stores relevant variables
+as member variables. The events change the state of the member variables:
+mktData : MarketData relevant market data with current state (e.g. index price)
+ordersInPerpetual: Map&lt;number, OrderStruct&gt; all open orders for the given trader
+positionInPerpetual: Map&lt;number, MarginAccount&gt; all open positions for the given trader</p>
+<p>TODO:</p>
+<ul>
+<li>update functions for midprice &amp; index &amp; collateral prices without event</li>
+<li>testing</li>
+</ul>
+<p>Get data:</p>
+<ul>
+<li>getPerpetualData(perp id (string) or symbol) : PerpetualState. This is a reference!</li>
+<li>getExchangeInfo() : ExchangeInfo. This is a reference!</li>
+<li>getCurrentPositionRisk(perp id (string) or symbol) : MarginAccount. This is a reference!</li>
+<li>getOrdersInPerpetualMap : Map&lt;number, OrderStruct&gt;. This is a reference!</li>
+<li>getpositionInPerpetualMap : Map&lt;number, MarginAccount&gt;. This is a reference!</li>
+</ul>
+<p>Construct with a trader address and a marketData object
+Initialize to gather all the relevant data.
+Send event variables to event handler &quot;on<EventName>&quot; - this updates members</p>
+<ul>
+<li>[x] onUpdateMarkPrice              : emitted on proxy; updates markprice and index price data</li>
+<li>[x] onUpdateUpdateFundingRate      : emitted on proxy; sets funding rate</li>
+<li>[x] onExecutionFailed              : emitted on order book; removes an open order</li>
+<li>[x] onPerpetualLimitOrderCancelled : emitted on order book; removes an open order</li>
+<li>[x] onPerpetualLimitOrderCreated   : emitted on order book; adds an open order to the data</li>
+<li>[x] async onUpdateMarginAccount    : emitted on proxy; updates position data and open interest</li>
+<li>[x] onTrade                        : emitted on proxy; returns TradeEvent to be displayed</li>
+</ul>
+
+**Kind**: global class  
+
+* [PerpetualEventHandler](#PerpetualEventHandler)
+    * _instance_
+        * [.initialize()](#PerpetualEventHandler+initialize)
+        * [.getExchangeInfo()](#PerpetualEventHandler+getExchangeInfo) ⇒
+        * [.getOrdersInPerpetualMap()](#PerpetualEventHandler+getOrdersInPerpetualMap) ⇒
+        * [.getpositionInPerpetualMap()](#PerpetualEventHandler+getpositionInPerpetualMap) ⇒
+        * [.getPerpetualData(perpetualIdOrSymbol)](#PerpetualEventHandler+getPerpetualData) ⇒
+        * [.getCurrentPositionRisk(perpetualIdOrSymbol)](#PerpetualEventHandler+getCurrentPositionRisk) ⇒
+        * [.updatePrices(perpetualIdOrSymbol)](#PerpetualEventHandler+updatePrices)
+        * [.onUpdateMarkPrice(perpetualId, fMarkPricePremium, fSpotIndexPrice)](#PerpetualEventHandler+onUpdateMarkPrice) ⇒
+        * [.onUpdateUpdateFundingRate(fFundingRate)](#PerpetualEventHandler+onUpdateUpdateFundingRate)
+        * [.onExecutionFailed(perpetualId, trader, digest, reason)](#PerpetualEventHandler+onExecutionFailed)
+        * [.onPerpetualLimitOrderCancelled(orderId)](#PerpetualEventHandler+onPerpetualLimitOrderCancelled)
+        * [.onPerpetualLimitOrderCreated(perpetualId, trader, referrerAddr, brokerAddr, Order, digest)](#PerpetualEventHandler+onPerpetualLimitOrderCreated)
+        * [.onUpdateMarginAccount(perpetualId, trader, positionId, fPositionBC, fCashCC, fLockedInValueQC, fFundingPaymentCC, fOpenInterestBC)](#PerpetualEventHandler+onUpdateMarginAccount)
+        * [.onTrade(perpetualId, trader, positionId, order, orderDigest, newPositionSizeBC, price)](#PerpetualEventHandler+onTrade) ⇒
+    * _static_
+        * [.findOrderForId(orderId, orderMap)](#PerpetualEventHandler.findOrderForId) ⇒
+        * [.deleteOrder(orderStructs, orderId)](#PerpetualEventHandler.deleteOrder) ⇒
+        * [.ConvertUpdateMarkPrice(fMarkPricePremium, fSpotIndexPrice)](#PerpetualEventHandler.ConvertUpdateMarkPrice) ⇒
+
+<a name="PerpetualEventHandler+initialize"></a>
+
+### perpetualEventHandler.initialize()
+<p>Call this async function to initialize the
+market data</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+<a name="PerpetualEventHandler+getExchangeInfo"></a>
+
+### perpetualEventHandler.getExchangeInfo() ⇒
+<p>Get the current exchange info</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>exchange info</p>  
+<a name="PerpetualEventHandler+getOrdersInPerpetualMap"></a>
+
+### perpetualEventHandler.getOrdersInPerpetualMap() ⇒
+<p>getOrdersInPerpetualMap</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>this.ordersInPerpetual</p>  
+<a name="PerpetualEventHandler+getpositionInPerpetualMap"></a>
+
+### perpetualEventHandler.getpositionInPerpetualMap() ⇒
+<p>getpositionInPerpetualMap</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>this.positionInPerpetual</p>  
+<a name="PerpetualEventHandler+getPerpetualData"></a>
+
+### perpetualEventHandler.getPerpetualData(perpetualIdOrSymbol) ⇒
+<p>Get the data for a perpetual with a given index</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>perpetual data for this idx</p>  
+
+| Param | Description |
+| --- | --- |
+| perpetualIdOrSymbol | <p>perpetual idx as string or symbol for which we want the data</p> |
+
+<a name="PerpetualEventHandler+getCurrentPositionRisk"></a>
+
+### perpetualEventHandler.getCurrentPositionRisk(perpetualIdOrSymbol) ⇒
+<p>Get the trader's current position risk (margin account data)</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>undefined if no position or margin account (='position risk')</p>  
+
+| Param | Description |
+| --- | --- |
+| perpetualIdOrSymbol | <p>perpetual id as string ('100003') or symbol ('BTC-USD-MATIC')</p> |
+
+<a name="PerpetualEventHandler+updatePrices"></a>
+
+### perpetualEventHandler.updatePrices(perpetualIdOrSymbol)
+<p>Update the following prices:</p>
+<ul>
+<li>index price</li>
+<li>collateral price</li>
+<li>mid-price</li>
+</ul>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+
+| Param | Description |
+| --- | --- |
+| perpetualIdOrSymbol | <p>perpetual id as string ('100003') or symbol ('BTC-USD-MATIC')</p> |
+
+<a name="PerpetualEventHandler+onUpdateMarkPrice"></a>
+
+### perpetualEventHandler.onUpdateMarkPrice(perpetualId, fMarkPricePremium, fSpotIndexPrice) ⇒
+<p>Handle the event UpdateMarkPrice and update relevant
+data</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>void</p>  
+
+| Param | Description |
+| --- | --- |
+| perpetualId | <p>perpetual Id</p> |
+| fMarkPricePremium | <p>premium rate in ABDK format</p> |
+| fSpotIndexPrice | <p>spot index price in ABDK format</p> |
+
+<a name="PerpetualEventHandler+onUpdateUpdateFundingRate"></a>
+
+### perpetualEventHandler.onUpdateUpdateFundingRate(fFundingRate)
+<p>Handle the event UpdateFundingRate and update relevant
+data
+UpdateFundingRate(uint24 indexed perpetualId, int128 fFundingRate)</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+
+| Param | Description |
+| --- | --- |
+| fFundingRate | <p>funding rate in ABDK format</p> |
+
+<a name="PerpetualEventHandler+onExecutionFailed"></a>
+
+### perpetualEventHandler.onExecutionFailed(perpetualId, trader, digest, reason)
+<p>event ExecutionFailed(
+uint24 indexed perpetualId,
+address indexed trader,
+bytes32 digest,
+string reason
+);</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+
+| Param | Description |
+| --- | --- |
+| perpetualId | <p>id of the perpetual</p> |
+| trader | <p>address of the trader</p> |
+| digest | <p>digest of the order/cancel order</p> |
+| reason | <p>reason why the execution failed</p> |
+
+<a name="PerpetualEventHandler+onPerpetualLimitOrderCancelled"></a>
+
+### perpetualEventHandler.onPerpetualLimitOrderCancelled(orderId)
+<p>Event emitted by perpetual proxy
+event PerpetualLimitOrderCancelled(bytes32 indexed orderHash);</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+
+| Param | Description |
+| --- | --- |
+| orderId | <p>string order id/digest</p> |
+
+<a name="PerpetualEventHandler+onPerpetualLimitOrderCreated"></a>
+
+### perpetualEventHandler.onPerpetualLimitOrderCreated(perpetualId, trader, referrerAddr, brokerAddr, Order, digest)
+<p>event PerpetualLimitOrderCreated(
+uint24 indexed perpetualId,
+address indexed trader,
+address referrerAddr,
+address brokerAddr,
+Order order,
+bytes32 digest
+)</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+
+| Param | Description |
+| --- | --- |
+| perpetualId | <p>id of the perpetual</p> |
+| trader | <p>address of the trader</p> |
+| referrerAddr | <p>address of the referrer</p> |
+| brokerAddr | <p>address of the broker</p> |
+| Order | <p>order struct</p> |
+| digest | <p>order id</p> |
+
+<a name="PerpetualEventHandler+onUpdateMarginAccount"></a>
+
+### perpetualEventHandler.onUpdateMarginAccount(perpetualId, trader, positionId, fPositionBC, fCashCC, fLockedInValueQC, fFundingPaymentCC, fOpenInterestBC)
+<p>This function is async -&gt; queries the margin account</p>
+
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+
+| Param | Description |
+| --- | --- |
+| perpetualId | <p>id of the perpetual</p> |
+| trader | <p>trader address</p> |
+| positionId | <p>position id</p> |
+| fPositionBC | <p>position size in base currency</p> |
+| fCashCC | <p>margin collateral in margin account</p> |
+| fLockedInValueQC | <p>pos*average opening price</p> |
+| fFundingPaymentCC | <p>funding payment made</p> |
+| fOpenInterestBC | <p>open interest</p> |
+
+<a name="PerpetualEventHandler+onTrade"></a>
+
+### perpetualEventHandler.onTrade(perpetualId, trader, positionId, order, orderDigest, newPositionSizeBC, price) ⇒
+**Kind**: instance method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>trade event data in regular number format</p>  
+
+| Param | Description |
+| --- | --- |
+| perpetualId | <p>perpetual id</p> |
+| trader | <p>trader address</p> |
+| positionId | <p>position id</p> |
+| order | <p>order struct</p> |
+| orderDigest | <p>order id</p> |
+| newPositionSizeBC | <p>new pos size in base currency ABDK</p> |
+| price | <p>price in ABDK format</p> |
+
+<a name="PerpetualEventHandler.findOrderForId"></a>
+
+### PerpetualEventHandler.findOrderForId(orderId, orderMap) ⇒
+<p>static function to find the number of the  OrderStruct with given orderId</p>
+
+**Kind**: static method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>id of perpetual that contains order with id = orderId or undefined</p>  
+
+| Param | Description |
+| --- | --- |
+| orderId | <p>id/digest of order</p> |
+| orderMap | <p>mapping for perpetualId-&gt;OrderStruct</p> |
+
+<a name="PerpetualEventHandler.deleteOrder"></a>
+
+### PerpetualEventHandler.deleteOrder(orderStructs, orderId) ⇒
+<p>Delete the order with given id from the class member data</p>
+
+**Kind**: static method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>void</p>  
+
+| Param | Description |
+| --- | --- |
+| orderStructs | <p>array of order struct as stored for the trader and a given perpetual</p> |
+| orderId | <p>digest/order id</p> |
+
+<a name="PerpetualEventHandler.ConvertUpdateMarkPrice"></a>
+
+### PerpetualEventHandler.ConvertUpdateMarkPrice(fMarkPricePremium, fSpotIndexPrice) ⇒
+<p>UpdateMarkPrice(
+uint24 indexed perpetualId,
+int128 fMarkPricePremium,
+int128 fSpotIndexPrice
+)</p>
+
+**Kind**: static method of [<code>PerpetualEventHandler</code>](#PerpetualEventHandler)  
+**Returns**: <p>mark price and spot index in float</p>  
+
+| Param | Description |
+| --- | --- |
+| fMarkPricePremium | <p>premium rate in ABDK format</p> |
+| fSpotIndexPrice | <p>spot index price in ABDK format</p> |
+
 <a name="WriteAccessHandler"></a>
 
 ## WriteAccessHandler ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
@@ -2387,7 +2933,7 @@ require gas-payments.</p>
 
 * [WriteAccessHandler](#WriteAccessHandler) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new WriteAccessHandler(config, privateKey)](#new_WriteAccessHandler_new)
-    * [.createProxyInstance()](#WriteAccessHandler+createProxyInstance)
+    * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
@@ -2395,6 +2941,7 @@ require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
 
 <a name="new_WriteAccessHandler_new"></a>
 
@@ -2409,12 +2956,17 @@ require gas-payments.</p>
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### writeAccessHandler.createProxyInstance()
-<p>Initialize the AccountTrade-Class with this function
+### writeAccessHandler.createProxyInstance(provider)
+<p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
 <a name="WriteAccessHandler+setAllowance"></a>
 
 ### writeAccessHandler.setAllowance(symbol, amount) ⇒
@@ -2494,4 +3046,16 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### writeAccessHandler.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
 

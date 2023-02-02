@@ -15,7 +15,17 @@ import {
 } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
-import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString, containsFlag, combineFlags } from "../src/utils";
+import {
+  to4Chars,
+  symbol4BToLongSymbol,
+  toBytes4,
+  fromBytes4,
+  fromBytes4HexString,
+  containsFlag,
+  combineFlags,
+  symbolToContractSymbol,
+  contractSymbolToSymbol,
+} from "../src/utils";
 import { BigNumber, ethers } from "ethers";
 
 let pk: string = <string>process.env.PK;
@@ -33,8 +43,8 @@ describe("utils", () => {
     }
   });
   it("4Chars", async () => {
-    let examples = ["MATIC", "FEDORA", "A", "AEIOUAEI", "D8X", "ARmAGEDON"];
-    let solutions = ["MATC", "FEDR", "A\0\0\0", "AEIO", "D8X\0", "RmGD"];
+    let examples = ["MATIC", "FEDORA", "A", "AEIOUAEI", "D8X", "ARmAGEDON", "stMATIC"];
+    let solutions = ["MATC", "FEDR", "A\0\0\0", "AEIO", "D8X\0", "RmGD", "stMT"];
     for (let k = 0; k < examples.length; k++) {
       let sol = to4Chars(examples[k]);
       let deencoded = fromBytes4(toBytes4(examples[k]));
@@ -110,6 +120,49 @@ describe("utils", () => {
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeFalsy;
   });
 
+  it("symbol4BToLongSymbol", async () => {
+    let symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    // add fake ccy with clash
+    symbolList.set("MXTC", "MATUC");
+    // add actual liquid staked matic
+    symbolList.set(to4Chars("stMATIC"), "stMATIC");
+    let examples = ["MATC", "MXTC-ETH", "XXX-ETH", "MATC-ETH-XAU", "MATC-USD-stMT"];
+    let solutions = ["MATIC", "MATUC-ETH", "XXX-ETH", "MATIC-ETH-XAU", "MATIC-USD-stMATIC"];
+    for (let j = 0; j < examples.length; j++) {
+      let v = symbol4BToLongSymbol(examples[j], symbolList);
+      let bIsEqual = v == solutions[j];
+      if (!bIsEqual) {
+        console.log("symbol4BToLongSymbol mismatch:");
+        console.log("input  =", examples[j]);
+        console.log("received =", v);
+        console.log("expected =", solutions[j]);
+      }
+      expect(bIsEqual).toBeTruthy();
+    }
+  });
+
+  it("symbol <-> contract symbol", async () => {
+    let symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    // add fake ccy with clash
+    symbolList.set("MXTC", "MATUC");
+    // add actual liquid staked matic
+    symbolList.set(to4Chars("stMATIC"), "stMATIC");
+    let examples = ["MATC", "MXTC", "XXX", "ETH", "stMT"];
+    let solutions = ["MATIC", "MATUC", "XXX", "ETH", "stMATIC"];
+    for (let k = 0; k < examples.length; k++) {
+      let hexString = toHexString(symbolToContractSymbol(examples[k], symbolList));
+      let longSymbol = contractSymbolToSymbol(hexString, symbolList);
+      let isEqual = solutions[k] == longSymbol;
+      if (!isEqual) {
+        console.log("example    =", examples[k]);
+        console.log("hexString  =", hexString);
+        console.log("longSymbol =", longSymbol);
+        console.log("solutions  =", solutions[k]);
+      }
+      expect(isEqual).toBeTruthy();
+    }
+  });
+
   function flagToOrderTypeCOPY(order: SmartContractOrder): string {
     let flag = BigNumber.from(order.flags);
     let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
@@ -125,6 +178,15 @@ describe("utils", () => {
     } else {
       return ORDER_TYPE_MARKET;
     }
+  }
+
+  function toHexString(byteArray: Buffer): string {
+    return (
+      "0x" +
+      Array.from(byteArray, function (byte: any) {
+        return ("0" + (byte & 0xff).toString(16)).slice(-2);
+      }).join("")
+    );
   }
 
   function orderTypeToFlagCOPY(order: Order): BigNumber {

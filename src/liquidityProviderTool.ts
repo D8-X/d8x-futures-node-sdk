@@ -149,12 +149,4 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     });
     return tx;
   }
-
-  /*
-  TODO:
-  - add liquidity
-    addLiquidity(uint8 _poolId, int128 _fTokenAmount)
-  - remove liquidity
-    function removeLiquidity(uint8 _poolId, int128 _fShareAmount) external override nonReentrant 
-  */
 }

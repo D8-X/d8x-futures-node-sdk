@@ -209,12 +209,6 @@
             {
                 "indexed": false,
                 "internalType": "address",
-                "name": "treasuryAddress",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
                 "name": "marginTokenAddress",
                 "type": "address"
             },
@@ -412,19 +406,13 @@
         "anonymous": false,
         "inputs": [
             {
-                "indexed": true,
-                "internalType": "uint8",
-                "name": "poolId",
-                "type": "uint8"
-            },
-            {
                 "indexed": false,
-                "internalType": "int128",
-                "name": "brokerCollateralLotSize",
-                "type": "int128"
+                "internalType": "uint8",
+                "name": "delay",
+                "type": "uint8"
             }
         ],
-        "name": "SetBrokerCollateralLotSize",
+        "name": "SetBlockDelay",
         "type": "event"
     },
     {
@@ -526,44 +514,6 @@
             }
         ],
         "name": "SetEmergencyState",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint8",
-                "name": "poolId",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint16",
-                "name": "fundTransferConvergenceHours",
-                "type": "uint16"
-            }
-        ],
-        "name": "SetFundTransferConvergenceHours",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint8",
-                "name": "poolId",
-                "type": "uint8"
-            },
-            {
-                "indexed": false,
-                "internalType": "int128",
-                "name": "maxTransferPerConvergencePeriod",
-                "type": "int128"
-            }
-        ],
-        "name": "SetMaxTransferPerConvergencePeriod",
         "type": "event"
     },
     {
@@ -715,12 +665,18 @@
             },
             {
                 "indexed": false,
-                "internalType": "uint16",
-                "name": "targetPoolSizeUpdateTime",
-                "type": "uint16"
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
+                "name": "value",
+                "type": "int128"
             }
         ],
-        "name": "SetTargetPoolSizeUpdateTime",
+        "name": "SetPoolParameter",
         "type": "event"
     },
     {
@@ -928,14 +884,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "indexed": false,
@@ -963,6 +924,31 @@
             }
         ],
         "name": "Trade",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "oldOBFactory",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "newOBFactory",
+                "type": "address"
+            }
+        ],
+        "name": "TransferAddressTo",
         "type": "event"
     },
     {
@@ -1044,31 +1030,6 @@
             }
         ],
         "name": "TransferFeeToReferrer",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint64",
-                "name": "poolId",
-                "type": "uint64"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "oldTreasury",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "newTreasury",
-                "type": "address"
-            }
-        ],
-        "name": "TransferTreasuryTo",
         "type": "event"
     },
     {
@@ -1300,6 +1261,12 @@
             {
                 "indexed": false,
                 "internalType": "int128",
+                "name": "fMidPricePremium",
+                "type": "int128"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
                 "name": "fMarkPricePremium",
                 "type": "int128"
             },
@@ -1427,9 +1394,9 @@
                 "type": "uint8"
             },
             {
-                "internalType": "int128",
-                "name": "_fTokenAmount",
-                "type": "int128"
+                "internalType": "uint256",
+                "name": "_tokenAmount",
+                "type": "uint256"
             }
         ],
         "name": "addLiquidity",
@@ -1638,7 +1605,7 @@
             },
             {
                 "internalType": "int128",
-                "name": "_fMinimalSpread",
+                "name": "_fBidAskSpread",
                 "type": "int128"
             },
             {
@@ -1816,14 +1783,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -1831,12 +1803,12 @@
                 "type": "tuple"
             },
             {
-                "internalType": "bytes",
-                "name": "signature",
-                "type": "bytes"
+                "internalType": "uint16",
+                "name": "_feeTbps",
+                "type": "uint16"
             }
         ],
-        "name": "cancelOrder",
+        "name": "chargePostingFee",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -1845,7 +1817,7 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_perpId",
+                "name": "_perpetualId",
                 "type": "uint24"
             }
         ],
@@ -1862,11 +1834,6 @@
     },
     {
         "inputs": [
-            {
-                "internalType": "address",
-                "name": "_treasuryAddress",
-                "type": "address"
-            },
             {
                 "internalType": "address",
                 "name": "_marginTokenAddress",
@@ -2053,14 +2020,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2157,14 +2129,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2243,14 +2220,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2336,6 +2318,24 @@
         "inputs": [
             {
                 "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "_digest",
+                "type": "bytes32"
+            }
+        ],
+        "name": "executeCancelOrder",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24",
                 "name": "_iPerpetualId",
                 "type": "uint24"
             },
@@ -2393,16 +2393,16 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_iPerpetualId",
+                "name": "_perpetualId",
                 "type": "uint24"
             }
         ],
         "name": "getAMMState",
         "outputs": [
             {
-                "internalType": "int128[13]",
+                "internalType": "int128[15]",
                 "name": "",
-                "type": "int128[13]"
+                "type": "int128[15]"
             }
         ],
         "stateMutability": "view",
@@ -2412,7 +2412,7 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_perpId",
+                "name": "_perpetualId",
                 "type": "uint24"
             }
         ],
@@ -2420,7 +2420,7 @@
         "outputs": [
             {
                 "internalType": "address[]",
-                "name": "perpActiveAccounts",
+                "name": "",
                 "type": "address[]"
             }
         ],
@@ -2431,7 +2431,7 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_perpId",
+                "name": "_perpetualId",
                 "type": "uint24"
             },
             {
@@ -2449,7 +2449,7 @@
         "outputs": [
             {
                 "internalType": "address[]",
-                "name": "chunkPerpActiveAccounts",
+                "name": "",
                 "type": "address[]"
             }
         ],
@@ -2465,7 +2465,7 @@
             },
             {
                 "internalType": "address",
-                "name": "brokerAddr",
+                "name": "_brokerAddr",
                 "type": "address"
             }
         ],
@@ -2729,7 +2729,7 @@
         "inputs": [
             {
                 "internalType": "uint8",
-                "name": "_id",
+                "name": "_poolId",
                 "type": "uint8"
             }
         ],
@@ -2766,11 +2766,6 @@
                         "internalType": "uint16",
                         "name": "iFundTransferConvergenceHours",
                         "type": "uint16"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "treasuryAddress",
-                        "type": "address"
                     },
                     {
                         "internalType": "address",
@@ -2850,7 +2845,7 @@
             },
             {
                 "internalType": "address",
-                "name": "_account",
+                "name": "_traderAddress",
                 "type": "address"
             }
         ],
@@ -2879,6 +2874,11 @@
                         "type": "int128"
                     },
                     {
+                        "internalType": "uint64",
+                        "name": "iLastOpenBlock",
+                        "type": "uint64"
+                    },
+                    {
                         "internalType": "uint16",
                         "name": "feeTbps",
                         "type": "uint16"
@@ -2897,25 +2897,6 @@
                 "internalType": "struct PerpStorage.MarginAccount",
                 "name": "",
                 "type": "tuple"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            }
-        ],
-        "name": "getMaxPosition",
-        "outputs": [
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
             }
         ],
         "stateMutability": "view",
@@ -2986,58 +2967,29 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_perpId",
+                "name": "_perpetualId",
                 "type": "uint24"
-            },
+            }
+        ],
+        "name": "getOrderBookAddress",
+        "outputs": [
             {
                 "internalType": "address",
-                "name": "_trader",
+                "name": "",
                 "type": "address"
             }
         ],
-        "name": "getPerpMarginAccount",
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getOrderBookFactoryAddress",
         "outputs": [
             {
-                "components": [
-                    {
-                        "internalType": "int128",
-                        "name": "fLockedInValueQC",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fCashCC",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fPositionBC",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fUnitAccumulatedFundingStart",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "feeTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "brokerFeeTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "bytes16",
-                        "name": "positionId",
-                        "type": "bytes16"
-                    }
-                ],
-                "internalType": "struct PerpStorage.MarginAccount",
+                "internalType": "address",
                 "name": "",
-                "type": "tuple"
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -3082,7 +3034,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "iPriceUpdateTimeSec",
+                        "name": "iLastSettlementPriceUpdateBlock",
                         "type": "uint64"
                     },
                     {
@@ -3281,9 +3233,19 @@
                         "type": "int32"
                     },
                     {
-                        "internalType": "int32",
-                        "name": "fMinimalSpread",
-                        "type": "int32"
+                        "internalType": "uint16",
+                        "name": "minimalSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "jumpSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iLastPriceJumpBlock",
+                        "type": "uint64"
                     },
                     {
                         "internalType": "uint64",
@@ -3595,17 +3557,17 @@
                 "type": "uint8"
             },
             {
-                "internalType": "int128",
-                "name": "_fShareAmount",
-                "type": "int128"
+                "internalType": "uint256",
+                "name": "_shareAmount",
+                "type": "uint256"
             }
         ],
         "name": "getTokenAmountToReturn",
         "outputs": [
             {
-                "internalType": "int128",
+                "internalType": "uint256",
                 "name": "",
-                "type": "int128"
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -3615,12 +3577,12 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_iPerpetualId",
+                "name": "_perpetualId",
                 "type": "uint24"
             },
             {
                 "internalType": "address",
-                "name": "_traderAddr",
+                "name": "_traderAddress",
                 "type": "address"
             }
         ],
@@ -3636,10 +3598,23 @@
         "type": "function"
     },
     {
+        "inputs": [],
+        "name": "getTreasuryAddress",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_iPerpetualId",
+                "name": "_perpetualId",
                 "type": "uint24"
             },
             {
@@ -3657,6 +3632,30 @@
             }
         ],
         "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "_numBlockSinceLastOpen",
+                "type": "uint256"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fLambda",
+                "type": "int128"
+            }
+        ],
+        "name": "holdingPeriodPenalty",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "pure",
         "type": "function"
     },
     {
@@ -3686,11 +3685,35 @@
             },
             {
                 "internalType": "address",
-                "name": "_account",
+                "name": "_traderAddress",
                 "type": "address"
             }
         ],
         "name": "isActiveAccount",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes4",
+                "name": "_baseCurrency",
+                "type": "bytes4"
+            },
+            {
+                "internalType": "bytes4",
+                "name": "_quoteCurrency",
+                "type": "bytes4"
+            }
+        ],
+        "name": "isMarketClosed",
         "outputs": [
             {
                 "internalType": "bool",
@@ -3743,12 +3766,31 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_iPerpetualId",
+                "name": "_perpetualId",
+                "type": "uint24"
+            }
+        ],
+        "name": "isPerpMarketClosed",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "isClosed",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
                 "type": "uint24"
             },
             {
                 "internalType": "address",
-                "name": "_traderAddr",
+                "name": "_traderAddress",
                 "type": "address"
             }
         ],
@@ -3857,14 +3899,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -3957,6 +4004,96 @@
     {
         "inputs": [
             {
+                "components": [
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "brokerFeeTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "traderAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "brokerAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "referrerAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fAmount",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLimitPrice",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTriggerPrice",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLeverage",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iDeadline",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "createdTimestamp",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
+                    }
+                ],
+                "internalType": "struct IPerpetualOrder.Order",
+                "name": "_order",
+                "type": "tuple"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_feeTbps",
+                "type": "uint16"
+            }
+        ],
+        "name": "rebatePostingFee",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint24",
                 "name": "_iPerpetualId",
                 "type": "uint24"
@@ -4034,9 +4171,9 @@
                 "type": "uint8"
             },
             {
-                "internalType": "int128",
-                "name": "_fShareAmount",
-                "type": "int128"
+                "internalType": "uint256",
+                "name": "_shareAmount",
+                "type": "uint256"
             }
         ],
         "name": "removeLiquidity",
@@ -4074,16 +4211,11 @@
         "inputs": [
             {
                 "internalType": "uint8",
-                "name": "_poolId",
+                "name": "_delay",
                 "type": "uint8"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fBrokerCollateralLotSize",
-                "type": "int128"
             }
         ],
-        "name": "setBrokerCollateralLotSize",
+        "name": "setBlockDelay",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -4163,24 +4295,6 @@
                 "type": "uint8"
             },
             {
-                "internalType": "uint16",
-                "name": "_iFundTransferConvergenceHours",
-                "type": "uint16"
-            }
-        ],
-        "name": "setFundTransferConvergenceHours",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint8",
-                "name": "_poolId",
-                "type": "uint8"
-            },
-            {
                 "internalType": "address",
                 "name": "_brokerAddr",
                 "type": "address"
@@ -4192,42 +4306,6 @@
             }
         ],
         "name": "setInitialVolumeForFee",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            },
-            {
-                "internalType": "int128",
-                "name": "_value",
-                "type": "int128"
-            }
-        ],
-        "name": "setMaxPosition",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint8",
-                "name": "_poolId",
-                "type": "uint8"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fMaxTransferPerConvergencePeriod",
-                "type": "int128"
-            }
-        ],
-        "name": "setMaxTransferPerConvergencePeriod",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -4272,6 +4350,19 @@
             }
         ],
         "name": "setOracleForPerpetual",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_orderBookFactory",
+                "type": "address"
+            }
+        ],
+        "name": "setOrderBookFactory",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -4412,12 +4503,17 @@
                 "type": "uint8"
             },
             {
-                "internalType": "uint16",
-                "name": "_iTargetPoolSizeUpdateTime",
-                "type": "uint16"
+                "internalType": "string",
+                "name": "_name",
+                "type": "string"
+            },
+            {
+                "internalType": "int128",
+                "name": "_value",
+                "type": "int128"
             }
         ],
-        "name": "setTargetPoolSizeUpdateTime",
+        "name": "setPoolParam",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -4460,11 +4556,6 @@
     },
     {
         "inputs": [
-            {
-                "internalType": "uint8",
-                "name": "_liqPoolID",
-                "type": "uint8"
-            },
             {
                 "internalType": "address",
                 "name": "_treasury",
@@ -4610,14 +4701,19 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "iDeadline",
-                        "type": "uint256"
+                        "type": "uint64"
                     },
                     {
-                        "internalType": "uint256",
+                        "internalType": "uint64",
                         "name": "createdTimestamp",
-                        "type": "uint256"
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "submittedBlock",
+                        "type": "uint64"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -4625,92 +4721,7 @@
                 "type": "tuple"
             }
         ],
-        "name": "trade",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "brokerFeeTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "traderAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "brokerAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "referrerAddr",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fAmount",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fLimitPrice",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fTriggerPrice",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "iDeadline",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "createdTimestamp",
-                        "type": "uint256"
-                    }
-                ],
-                "internalType": "struct IPerpetualOrder.Order",
-                "name": "_order",
-                "type": "tuple"
-            },
-            {
-                "internalType": "bytes",
-                "name": "signature",
-                "type": "bytes"
-            }
-        ],
-        "name": "tradeBySig",
+        "name": "tradeViaOrderBook",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -4902,6 +4913,40 @@
         ],
         "name": "validateStopPrice",
         "outputs": [],
+        "stateMutability": "pure",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint16",
+                "name": "_jumpTbps",
+                "type": "uint16"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_MinimalSpreadTbps",
+                "type": "uint16"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_numBlockSinceJump",
+                "type": "uint256"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fLambda",
+                "type": "int128"
+            }
+        ],
+        "name": "volatilitySpread",
+        "outputs": [
+            {
+                "internalType": "int128",
+                "name": "",
+                "type": "int128"
+            }
+        ],
         "stateMutability": "pure",
         "type": "function"
     },

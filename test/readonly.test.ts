@@ -128,6 +128,13 @@ describe("readOnly", () => {
       console.log("Order Ids for trader:");
       console.log(ids);
     });
+    it("getOrderStatus", async () => {
+      let ids = await accTrade.getOrderIds("ETH-USD-MATIC");
+      if (ids.length > 0) {
+        let status = await mktData.getOrderStatus("ETH-USD-MATIC", ids[0]);
+        console.log(status);
+      }
+    });
   });
 
   describe("Liquidity Provider", () => {
@@ -245,11 +252,11 @@ describe("readOnly", () => {
         quantity: 0.5,
         leverage: 2,
         timestamp: Date.now() / 1000,
+        brokerFeeTbps: 500,
+        deadline: Math.round(Date.now() / 1000) + 10000,
       };
       const myAddress = new ethers.Wallet(pk).address;
-      let brokerFee = 0.05;
-      let deadline = Math.round(Date.now() / 1000) + 10000;
-      let signedOrder = await brokerTool.signOrder(order, myAddress, brokerFee, deadline);
+      let signedOrder = await brokerTool.signOrder(order, myAddress);
       let fee = await brokerTool.determineExchangeFee(signedOrder, myAddress);
       console.log(`exchange fee for a broker-signed order with my address is ${10_000 * fee} basis points`);
     });
