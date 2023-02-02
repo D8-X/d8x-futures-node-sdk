@@ -1,6 +1,6 @@
 import WriteAccessHandler from "./writeAccessHandler";
 import { NodeSDKConfig } from "./nodeSDKTypes";
-import { ABK64x64ToFloat } from "./d8XMath";
+import { ethers } from "ethers";
 
 /**
  * Functions to liquidate traders. This class requires a private key
@@ -54,9 +54,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @returns {number} Liquidated amount.
+   * @returns Transaction object.
    */
-  public async liquidateTrader(symbol: string, traderAddr: string, liquidatorAddr: string = "") {
+  public async liquidateTrader(
+    symbol: string,
+    traderAddr: string,
+    liquidatorAddr: string = ""
+  ): Promise<ethers.ContractTransaction> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -116,10 +120,9 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @ignore
    */
   public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, gasLimit: number) {
-    let tx = await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
+    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
       gasLimit: gasLimit,
     });
-    return ABK64x64ToFloat(tx.value ?? 0);
   }
 
   /**

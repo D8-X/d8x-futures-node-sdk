@@ -10,6 +10,8 @@ import OrderReferrerTool from "../src/orderReferrerTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
+const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
+
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
@@ -32,6 +34,8 @@ describe("write and spoil gas and tokens", () => {
     await accTrade.createProxyInstance();
     liqTool = new LiquidatorTool(config, pk);
     await liqTool.createProxyInstance();
+    mktData = new MarketData(config);
+    await mktData.createProxyInstance();
   });
 
   it("set allowance", async () => {
@@ -63,6 +67,22 @@ describe("write and spoil gas and tokens", () => {
     }
 
     //*/
+  });
+  it("post & execute market order", async () => {
+    let refTool = new OrderReferrerTool(config, pk);
+    await refTool.createProxyInstance();
+    let order: Order = {
+      symbol: "BTC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 0.01,
+      leverage: 10,
+      timestamp: Date.now() / 1000,
+    };
+    let resp = await accTrade.order(order);
+    await delay(4000);
+    let tx = await refTool.executeOrder("BTC-USD-MATIC", resp.orderId);
+    console.log("tx hash = ", tx.hash);
   });
   it("post limit order", async () => {
     let order: Order = {
@@ -117,20 +137,19 @@ describe("write and spoil gas and tokens", () => {
   });
 
   it("should liquidate trader", async () => {
-    const myAddress = new ethers.Wallet(pk).address;
-    let liqAmount = await liqTool.liquidateTrader("BTC-USD-MATIC", myAddress);
-    console.log(liqAmount);
-  });
-  it("execute market order posted above", async () => {
-    let refTool = new OrderReferrerTool(config, pk);
-    await refTool.createProxyInstance();
-
-    mktData = new MarketData(config);
-    await mktData.createProxyInstance();
-    wallet = new ethers.Wallet(pk);
-    let res = await mktData.openOrders(wallet.address, "BTC-USD-MATIC");
-
-    let tx = await refTool.executeOrder("BTC-USD-MATIC", orderId);
-    console.log("tx hash = ", tx.hash);
+    let posRisk = await mktData.positionRisk(accTrade.getAddress(), "BTC-USD-MATIC");
+    console.log("trying to liquidate account:");
+    console.log(posRisk);
+    let tx = await liqTool.liquidateTrader("BTC-USD-MATIC", accTrade.getAddress());
+    let txReceipt = await tx.wait();
+    let liqEvent = txReceipt.events!.filter((x) => x.event == "Liquidate");
+    if (liqEvent == undefined || liqEvent.length == 0) {
+      console.log("not liquidated");
+      expect(posRisk.leverage < 20).toBeTruthy();
+    } else {
+      console.log("liquidate event:", liqEvent[0]);
+      expect(posRisk.leverage > 10).toBeTruthy();
+    }
+    console.log(liqEvent);
   });
 });
