@@ -69,7 +69,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   public async executeOrder(
     symbol: string,
     orderId: string,
-    referrerAddr?: string
+    referrerAddr?: string,
+    nonce?: number
   ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -78,7 +79,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof referrerAddr == "undefined") {
       referrerAddr = this.traderAddr;
     }
-    return await orderBookSC.executeOrder(orderId, referrerAddr, { gasLimit: this.gasLimit });
+    const options = { gasLimit: this.gasLimit, nonce: nonce };
+    return await orderBookSC.executeOrder(orderId, referrerAddr, options);
   }
 
   /**
@@ -279,12 +281,10 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     return true;
   }
 
-  /**
-   * TODO:
-   * - [x] executeLimitOrderByDigest
-   * - [x] pollLimitOrders
-   * - [x] isTradeable
-   * - [ ] get all limit orders
-   * - [ ] tests
-   */
+  public async getTransactionCount(blockTag?: ethers.providers.BlockTag): Promise<number> {
+    if (this.signer == null) {
+      throw Error("no wallet initialized. Use createProxyInstance().");
+    }
+    return await this.signer.getTransactionCount(blockTag);
+  }
 }
