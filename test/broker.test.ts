@@ -4,6 +4,8 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import BrokerTool from "../src/brokerTool";
 
+const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
+
 /**
  * These tests require 2 funded accounts:
  * export PK1="F1R5T..."
@@ -17,7 +19,7 @@ let RPC: string = <string>process.env.RPC;
 let config: NodeSDKConfig;
 let brokerTool: BrokerTool;
 let lotSize: number;
-
+let lotsDeposit: number;
 describe("broker tools that spend gas and tokens", () => {
   beforeAll(async function () {
     config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
@@ -30,15 +32,14 @@ describe("broker tools that spend gas and tokens", () => {
   });
 
   it("should set allowance to deposit n lots", async () => {
-    let lotsDeposit = 15;
+    lotsDeposit = 1;
     lotSize = await brokerTool.getLotSize("MATIC");
-    let txHash = await brokerTool.setAllowance("MATIC", lotsDeposit * lotSize);
+    let txHash = await brokerTool.setAllowance("MATIC");
     console.log(`set allowance tx hash = ${txHash}`);
   });
 
   it("should deposit lots and see fee decrease", async () => {
     let symbol = "MATIC";
-    let lotsDeposit = 15;
     let lotsBefore = await brokerTool.getBrokerDesignation(symbol);
     let feeBefore = await brokerTool.getFeeForBrokerDesignation(symbol);
     console.log(`current broker designation is ${lotsBefore} lots, with an induced fee of ${feeBefore * 10_000} bps`);
@@ -55,12 +56,15 @@ describe("broker tools that spend gas and tokens", () => {
 
   it("should trade a lot (to increase broker traded volume)", async () => {
     //* UNCOMMENT TO ENABLE TRADING - this will spend tokens and not just on gas!
-    let accTrade = new AccountTrade(config, pk1);
-    const myAddress = new ethers.Wallet(pk1).address;
+    let accTrade = new AccountTrade(config, pk2);
     await accTrade.createProxyInstance();
+
+    // trade
+    console.log("trader address:", accTrade.getAddress());
+
     let tx = await accTrade.setAllowance("MATIC");
     await tx.wait();
-    let numOpenClose = 10;
+    let numOpenClose = 3;
     let brokerFeeTbps = 10; // 0.01%
     for (var k = 0; k < numOpenClose; k++) {
       for (var j = 0; j < 2; j++) {
@@ -75,10 +79,12 @@ describe("broker tools that spend gas and tokens", () => {
           leverage: 10,
           timestamp: Math.round(Date.now() / 1000),
           brokerFeeTbps: brokerFeeTbps,
-          deadline: Math.round(Date.now() / 1000) + 10000,
+          deadline: Math.round(Date.now() / 1000) + 100000,
         };
-        let signedOrder = await brokerTool.signOrder(order, myAddress);
+        let signedOrder = await brokerTool.signOrder(order, accTrade.getAddress());
         let resp = await accTrade.order(signedOrder);
+        // wait for 10 seconds, enough for the order to be executed
+        await delay(10000);
         console.log("trade transaction hash =", resp.tx.hash);
         let fee1 = await brokerTool.getFeeForBrokerVolume("MATIC");
         let fee2 = await accTrade.queryExchangeFee("MATIC");
@@ -89,7 +95,6 @@ describe("broker tools that spend gas and tokens", () => {
   });
 
   it("should transfer ownership", async () => {
-    // TODO: uncomment when new contracts are deployed, this only spends tokens for gas
     let symbol = "MATIC";
     let oldAddress = new ethers.Wallet(pk1).address;
     let newAddress = new ethers.Wallet(pk2).address;
