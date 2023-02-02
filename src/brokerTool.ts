@@ -382,6 +382,7 @@ export default class BrokerTool extends WriteAccessHandler {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
+    order.brokerAddr = this.traderAddr;
     order.brokerSignature = await BrokerTool._signOrder(
       order.symbol,
       order.brokerFeeTbps!,
