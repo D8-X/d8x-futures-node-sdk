@@ -3,6 +3,7 @@ import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
+import APIInterface from "../src/apiInterface";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
@@ -23,6 +24,7 @@ let brokerTool: BrokerTool;
 let refTool: OrderReferrerTool;
 let accTrade: AccountTrade;
 let orderIds: string[];
+let apiInterface: APIInterface;
 let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
@@ -50,6 +52,25 @@ describe("readOnly", () => {
   //     }
   //   });
   // });
+  describe("APIInteface", () => {
+    beforeAll(async () => {
+      apiInterface = new APIInterface(config);
+      await apiInterface.createProxyInstance();
+      wallet = new ethers.Wallet(pk);
+    });
+    it("order digest", async () => {
+      let order: Order = {
+        symbol: "BTC-USD-MATIC",
+        side: "BUY",
+        type: "MARKET",
+        quantity: -0.05,
+        leverage: 2,
+        timestamp: Date.now() / 1000,
+      };
+      let res = await apiInterface.orderDigest(order, wallet.address);
+      console.log(res.digest);
+    });
+  });
 
   describe("MarketData", () => {
     beforeAll(async () => {
@@ -59,7 +80,6 @@ describe("readOnly", () => {
       }
       mktData = new MarketData(config);
       await mktData.createProxyInstance();
-      wallet = new ethers.Wallet(pk);
     });
     it("exchange info", async () => {
       let info: ExchangeInfo = await mktData.exchangeInfo();
