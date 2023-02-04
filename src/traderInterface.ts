@@ -9,7 +9,7 @@ import TraderDigests from "./traderDigests";
  * so that signatures can be handled in frontend via wallet
  * @extends MarketData
  */
-export default class APIInterface extends MarketData {
+export default class TraderInterface extends MarketData {
   protected chainId: number = 0;
   protected digestTool: TraderDigests;
 
@@ -78,7 +78,7 @@ export default class APIInterface extends MarketData {
       throw Error("order size too small");
     }
     let orderBookContract: ethers.Contract = this.getOrderBookContract(order.symbol);
-    let scOrder = APIInterface.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
+    let scOrder = TraderInterface.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
     let digest = await this.digestTool.createDigest(scOrder, this.chainId, true, this.proxyContract.address);
     return { digest: digest, OBAddr: orderBookContract.address, SCOrder: scOrder };
   }

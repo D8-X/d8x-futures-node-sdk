@@ -3,7 +3,7 @@ import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
-import APIInterface from "../src/apiInterface";
+import APIInterface from "../src/traderInterface";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
