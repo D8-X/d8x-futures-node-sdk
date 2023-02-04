@@ -48,7 +48,6 @@ import {
   calculateLiquidationPriceCollateralBase,
   calculateLiquidationPriceCollateralQuote,
 } from "./d8XMath";
-import { Config } from "jest";
 
 /**
  * Parent class for MarketData and WriteAccessHandler that handles

@@ -3,12 +3,12 @@ import MarketData from "./marketData";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { NodeSDKConfig, SmartContractOrder, Order } from "./nodeSDKTypes";
 import TraderDigests from "./traderDigests";
-/*
-   interface that can be used by front-end that wraps all private functions
-   so that signatures can be handled in frontend via wallet
 
-*/
-
+/**
+ * Interface that can be used by front-end that wraps all private functions
+ * so that signatures can be handled in frontend via wallet
+ * @extends MarketData
+ */
 export default class APIInterface extends MarketData {
   protected chainId: number = 0;
   protected digestTool: TraderDigests;
@@ -19,7 +19,13 @@ export default class APIInterface extends MarketData {
   // accTrade.queryExchangeFee("MATIC")
   // accTrade.getCurrentTraderVolume("MATIC")
   // accTrade.getOrderIds("MATIC-USD-MATIC")
-  constructor(config: NodeSDKConfig) {
+
+  /**
+   * Constructor
+   * @param {NodeSDKConfig} config Configuration object, see
+   * PerpetualDataHandler.readSDKConfig.
+   */
+  public constructor(config: NodeSDKConfig) {
     super(config);
     this.digestTool = new TraderDigests();
   }
