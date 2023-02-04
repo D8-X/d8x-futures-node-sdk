@@ -31,7 +31,7 @@ export default class APIInterface extends MarketData {
    * @param provider optional provider
    */
   public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
-    super.createProxyInstance(provider);
+    await super.createProxyInstance(provider);
     this.chainId = (await this.provider!.getNetwork()).chainId;
   }
 
@@ -55,6 +55,7 @@ export default class APIInterface extends MarketData {
   /**
    * Create smart contract order and digest that the trader signs.
    * await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
+   * Order must contain broker fee and broker address if there is supposed to be a broker.
    * @param order order struct
    * @param traderAddr address of the trader
    * @returns tuple of digest that the trader has to sign, order book address, and smart contract order
