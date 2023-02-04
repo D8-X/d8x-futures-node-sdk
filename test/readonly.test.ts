@@ -3,13 +3,13 @@ import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
-import APIInterface from "../src/traderInterface";
 import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
+import TraderInterface from "../src/traderInterface";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -24,7 +24,7 @@ let brokerTool: BrokerTool;
 let refTool: OrderReferrerTool;
 let accTrade: AccountTrade;
 let orderIds: string[];
-let apiInterface: APIInterface;
+let apiInterface: TraderInterface;
 let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
@@ -54,7 +54,7 @@ describe("readOnly", () => {
   // });
   describe("APIInteface", () => {
     beforeAll(async () => {
-      apiInterface = new APIInterface(config);
+      apiInterface = new TraderInterface(config);
       await apiInterface.createProxyInstance();
       wallet = new ethers.Wallet(pk);
     });
@@ -67,8 +67,9 @@ describe("readOnly", () => {
         leverage: 2,
         timestamp: Date.now() / 1000,
       };
-      let res = await apiInterface.orderDigest(order, wallet.address);
-      console.log(res.digest);
+      let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
+      let res = await apiInterface.orderDigest(orderSC);
+      console.log(res);
     });
   });
 

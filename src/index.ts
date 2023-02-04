@@ -6,6 +6,7 @@ import OrderReferrerTool from "./orderReferrerTool";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 import LiquidatorTool from "./liquidatorTool";
+import TraderInterface from "./traderInterface";
 // import {
 //   NodeSDKConfig,
 //   MarginAccount,
@@ -31,4 +32,5 @@ export {
   PerpetualDataHandler,
   WriteAccessHandler,
   LiquidatorTool,
+  TraderInterface,
 };

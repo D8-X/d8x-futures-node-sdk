@@ -25,7 +25,7 @@ export default class TraderInterface extends MarketData {
    * @param {NodeSDKConfig} config Configuration object, see
    * PerpetualDataHandler.readSDKConfig.
    */
-  public constructor(config: NodeSDKConfig) {
+  constructor(config: NodeSDKConfig) {
     super(config);
     this.digestTool = new TraderDigests();
   }
@@ -59,27 +59,38 @@ export default class TraderInterface extends MarketData {
   }
 
   /**
+   * Get the order book address for a perpetual
+   * @param symbol symbol (e.g. MATIC-USD-MATIC)
+   * @returns order book address for the perpetual
+   */
+  public getOrderBookAddress(symbol: string): string {
+    let orderBookContract: ethers.Contract = this.getOrderBookContract(symbol);
+    return orderBookContract.address;
+  }
+
+  /**
+   * createSmartContractOrder from user-friendly order
+   * @param order order struct
+   * @param traderAddr address of trader
+   * @returns Smart contract type order struct
+   */
+  public createSmartContractOrder(order: Order, traderAddr: string): SmartContractOrder {
+    let scOrder = TraderInterface.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
+    return scOrder;
+  }
+
+  /**
    * Create smart contract order and digest that the trader signs.
    * await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
    * Order must contain broker fee and broker address if there is supposed to be a broker.
-   * @param order order struct
-   * @param traderAddr address of the trader
-   * @returns tuple of digest that the trader has to sign, order book address, and smart contract order
+   * @param scOrder smart contract order struct (get from order via createSCOrder)
+   * @returns digest that the trader has to sign
    */
-  public async orderDigest(
-    order: Order,
-    traderAddr: string
-  ): Promise<{ digest: string; OBAddr: string; SCOrder: SmartContractOrder }> {
+  public async orderDigest(scOrder: SmartContractOrder): Promise<string> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let minSize = PerpetualDataHandler._getMinimalPositionSize(order.symbol, this.symbolToPerpStaticInfo);
-    if (Math.abs(order.quantity) < minSize) {
-      throw Error("order size too small");
-    }
-    let orderBookContract: ethers.Contract = this.getOrderBookContract(order.symbol);
-    let scOrder = TraderInterface.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
     let digest = await this.digestTool.createDigest(scOrder, this.chainId, true, this.proxyContract.address);
-    return { digest: digest, OBAddr: orderBookContract.address, SCOrder: scOrder };
+    return digest;
   }
 }
