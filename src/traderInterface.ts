@@ -3,7 +3,7 @@ import MarketData from "./marketData";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import { NodeSDKConfig, SmartContractOrder, Order } from "./nodeSDKTypes";
 import TraderDigests from "./traderDigests";
-
+import { ABK64x64ToFloat } from "./d8XMath";
 /**
  * Interface that can be used by front-end that wraps all private functions
  * so that signatures can be handled in frontend via wallet
@@ -16,8 +16,6 @@ export default class TraderInterface extends MarketData {
   // accTrade.order(order)
   // cancelOrder(symbol: string, orderId: string)
   // accTrade.setAllowance
-  // accTrade.queryExchangeFee("MATIC")
-  // accTrade.getCurrentTraderVolume("MATIC")
   // accTrade.getOrderIds("MATIC-USD-MATIC")
 
   /**
@@ -45,6 +43,21 @@ export default class TraderInterface extends MarketData {
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let feeTbps = await this.proxyContract.queryExchangeFee(poolId, traderAddr, brokerAddr);
     return feeTbps / 100_000;
+  }
+
+  /**
+   *
+   * @param poolSymbolName pool symbol, e.g. MATIC
+   * @param traderAddr address of the trader
+   * @returns volume in USD
+   */
+  public async getCurrentTraderVolume(poolSymbolName: string, traderAddr: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr);
+    return ABK64x64ToFloat(volume);
   }
 
   /**

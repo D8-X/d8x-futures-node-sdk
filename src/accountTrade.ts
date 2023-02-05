@@ -203,7 +203,7 @@ export default class AccountTrade extends WriteAccessHandler {
   }
 
   /**
-   * Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+   * Exponentially weighted EMA of the total USD trading volume of all trades performed by this trader.
    * The weights are chosen so that in average this coincides with the 30 day volume.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example

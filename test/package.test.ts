@@ -3,7 +3,7 @@ import { PerpetualDataHandler, ZERO_ADDRESS } from "@d8x/perpetuals-sdk";
 import { TraderInterface } from "@d8x/perpetuals-sdk";
 import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 // npm link "@d8x/perpetuals-sdk"
-
+jest.setTimeout(300000);
 describe("Front-end-like functionality", () => {
   beforeAll(async () => {});
   it("order digest", async () => {
@@ -25,5 +25,7 @@ describe("Front-end-like functionality", () => {
     console.log(res);
     let fee = await apiInterface.queryExchangeFee("MATIC", wallet.address, ZERO_ADDRESS);
     console.log("fee=", fee);
+    let vol = await apiInterface.getCurrentTraderVolume("MATIC", wallet.address);
+    console.log("vol=", vol);
   });
 });
