@@ -11,7 +11,7 @@ import TraderDigests from "./traderDigests";
  */
 export default class TraderInterface extends MarketData {
   protected chainId: number = 0;
-  protected digestTool: TraderDigests;
+  public digestTool: TraderDigests;
 
   // accTrade.order(order)
   // cancelOrder(symbol: string, orderId: string)
