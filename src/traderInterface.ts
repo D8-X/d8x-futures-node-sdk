@@ -31,6 +31,23 @@ export default class TraderInterface extends MarketData {
   }
 
   /**
+   * Get the fee that is charged to the trader for a given broker (can be ZERO-address),
+   * without broker fee
+   * @param poolSymbolName pool currency (e.g. MATIC)
+   * @param traderAddr address of trader
+   * @param brokerAddr address of broker
+   * @returns fee (in decimals) that is charged by exchange (without broker)
+   */
+  public async queryExchangeFee(poolSymbolName: string, traderAddr: string, brokerAddr: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, traderAddr, brokerAddr);
+    return feeTbps / 100_000;
+  }
+
+  /**
    * Initialize the marketData-Class with this function
    * to create instance of D8X perpetual contract and gather information
    * about perpetual currencies

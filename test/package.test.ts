@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { PerpetualDataHandler } from "@d8x/perpetuals-sdk";
+import { PerpetualDataHandler, ZERO_ADDRESS } from "@d8x/perpetuals-sdk";
 import { TraderInterface } from "@d8x/perpetuals-sdk";
 import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 // npm link "@d8x/perpetuals-sdk"
@@ -23,5 +23,7 @@ describe("Front-end-like functionality", () => {
     let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
     let res = await apiInterface.orderDigest(orderSC);
     console.log(res);
+    let fee = await apiInterface.queryExchangeFee("MATIC", wallet.address, ZERO_ADDRESS);
+    console.log("fee=", fee);
   });
 });
