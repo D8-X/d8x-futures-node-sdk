@@ -7,6 +7,7 @@ import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 import LiquidatorTool from "./liquidatorTool";
 import TraderInterface from "./traderInterface";
+import PerpetualEventHandler from "./perpetualEventHandler";
 // import {
 //   NodeSDKConfig,
 //   MarginAccount,
@@ -33,4 +34,5 @@ export {
   WriteAccessHandler,
   LiquidatorTool,
   TraderInterface,
+  PerpetualEventHandler,
 };
