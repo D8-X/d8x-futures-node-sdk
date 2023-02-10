@@ -53,6 +53,8 @@ describe("Front-end-like functionality", () => {
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
 
+    let symbol = mktData.getSymbolFromPerpId(100000);
+    console.log(`symbolFromPerpetualId ${100000} -> ${symbol}`);
     // exchangeInfo to determine pools and perpetuals
     let info = await mktData.exchangeInfo();
     for (var pool of info.pools) {

@@ -234,10 +234,7 @@ export default class PerpetualDataHandler {
    * @param perpId perpetual id
    */
   public getSymbolFromPerpId(perpId: number): string | undefined {
-    let symbol4Bytes = PerpetualDataHandler.perpetualIdToSymbol(perpId, this.symbolToPerpStaticInfo);
-    if (symbol4Bytes == undefined) {
-      return undefined;
-    }
+    return PerpetualDataHandler.perpetualIdToSymbol(perpId, this.symbolToPerpStaticInfo);
   }
 
   public symbol4BToLongSymbol(sym: string): string {
@@ -449,7 +446,7 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Find the symbol ("ETH-USD-MATC") of the given perpetual id
+   * Find the long symbol ("ETH-USD-MATIC") of the given perpetual id
    * @param id perpetual id
    * @param symbolToPerpStaticInfo map that contains the bytes4-symbol to PerpetualStaticInfo
    * @returns symbol string or undefined
