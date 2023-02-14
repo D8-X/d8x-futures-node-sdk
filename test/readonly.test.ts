@@ -291,7 +291,6 @@ describe("readOnly", () => {
       }
       refTool = new OrderReferrerTool(config, pk);
       await refTool.createProxyInstance();
-      let numOrders;
     });
     it("get order by id/digest", async () => {
       let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
@@ -307,6 +306,18 @@ describe("readOnly", () => {
       let openOrders = await refTool.getAllOpenOrders(symbol);
       console.log(`Open orders for symbol ${symbol}:\n${openOrders}`);
       // console.log(openOrders);
+    });
+    it("should check if an order is tradeable", async () => {
+      let symbol = "MATIC-USD-MATIC";
+      let openOrders = await refTool.getAllOpenOrders(symbol);
+      let isTradeable = await refTool.isTradeable(openOrders[0][0]);
+      console.log(isTradeable);
+    });
+    it("should check if a batch of orders is tradeable", async () => {
+      let symbol = "MATIC-USD-MATIC";
+      let openOrders = await refTool.getAllOpenOrders(symbol);
+      let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
+      console.log(isTradeable);
     });
     it("poll limit orders", async () => {
       let val = await refTool.pollLimitOrders("MATIC-USD-MATIC", 15, undefined);

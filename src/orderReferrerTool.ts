@@ -1,5 +1,13 @@
 import WriteAccessHandler from "./writeAccessHandler";
-import { BUY_SIDE, NodeSDKConfig, Order, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./nodeSDKTypes";
+import {
+  BUY_SIDE,
+  NodeSDKConfig,
+  Order,
+  PerpetualStaticInfo,
+  SELL_SIDE,
+  ZERO_ADDRESS,
+  ZERO_ORDER_ID,
+} from "./nodeSDKTypes";
 import { BigNumber, ethers } from "ethers";
 import PerpetualDataHandler from "./perpetualDataHandler";
 
@@ -236,24 +244,69 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    // check expiration date
-    if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
-      return false;
-    }
-    // check order size
-    if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, this.symbolToPerpStaticInfo)) {
-      return false;
-    }
-    // check limit price, which may be undefined if it's an unrestricted market order
-    if (order.limitPrice == undefined) {
-      order.limitPrice = order.side == BUY_SIDE ? Infinity : 0;
-    }
     let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
       order.symbol,
       order.quantity,
       this.symbolToPerpStaticInfo,
       this.proxyContract
     );
+    let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
+      order.symbol,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract
+    );
+    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, this.symbolToPerpStaticInfo);
+  }
+
+  public async isTradeableBatch(orders: Order[]): Promise<boolean[]> {
+    if (orders.length == 0) {
+      return [];
+    }
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    if (orders.filter((o) => o.symbol == orders[0].symbol).length < orders.length) {
+      throw Error("all orders in a batch must have the same symbol");
+    }
+    let orderPrice = await Promise.all(
+      orders.map((o) =>
+        PerpetualDataHandler._queryPerpetualPrice(
+          o.symbol,
+          o.quantity,
+          this.symbolToPerpStaticInfo,
+          this.proxyContract!
+        )
+      )
+    );
+    let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
+      orders[0].symbol,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract
+    );
+    return orders.map((o, idx) =>
+      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, this.symbolToPerpStaticInfo)
+    );
+  }
+
+  public static _isTradeable(
+    order: Order,
+    orderPrice: number,
+    markPrice: number,
+    symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
+  ): boolean {
+    // check expiration date
+    if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
+      return false;
+    }
+    // check order size
+    if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap)) {
+      return false;
+    }
+    // check limit price, which may be undefined if it's an unrestricted market order
+    if (order.limitPrice == undefined) {
+      order.limitPrice = order.side == BUY_SIDE ? Infinity : 0;
+    }
+
     if (
       (order.side == BUY_SIDE && orderPrice > order.limitPrice) ||
       (order.side == SELL_SIDE && orderPrice < order.limitPrice)
@@ -265,12 +318,6 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       // nothing to check, order is tradeable
       return true;
     }
-    // we need the mark price to check
-    let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
-      order.symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract
-    );
     if (
       (order.side == BUY_SIDE && markPrice < order.stopPrice) ||
       (order.side == SELL_SIDE && markPrice > order.stopPrice)
