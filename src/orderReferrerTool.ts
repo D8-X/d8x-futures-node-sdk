@@ -18,6 +18,7 @@ import PerpetualDataHandler from "./perpetualDataHandler";
  * @extends WriteAccessHandler
  */
 export default class OrderReferrerTool extends WriteAccessHandler {
+  static BLOCK_DELAY = 2;
   /**
    * Constructor.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
@@ -255,7 +256,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       this.symbolToPerpStaticInfo,
       this.proxyContract
     );
-    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, this.symbolToPerpStaticInfo);
+    let block = await this.provider!.getBlockNumber();
+    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, block, this.symbolToPerpStaticInfo);
   }
 
   public async isTradeableBatch(orders: Order[]): Promise<boolean[]> {
@@ -283,8 +285,9 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       this.symbolToPerpStaticInfo,
       this.proxyContract
     );
+    let block = await this.provider!.getBlockNumber();
     return orders.map((o, idx) =>
-      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, this.symbolToPerpStaticInfo)
+      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, block, this.symbolToPerpStaticInfo)
     );
   }
 
@@ -292,12 +295,18 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     order: Order,
     orderPrice: number,
     markPrice: number,
+    block: number,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): boolean {
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
       return false;
     }
+
+    if (order.submittedBlock == undefined || order.submittedBlock + this.BLOCK_DELAY > block) {
+      return false;
+    }
+
     // check order size
     if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap)) {
       return false;
