@@ -20,6 +20,7 @@ No gas required for the queries here.</p>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒
+    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
 
 <a name="new_MarketData_new"></a>
@@ -262,6 +263,19 @@ main();
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>PerpetualState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualStaticInfo"></a>
+
+### marketData.getPerpetualStaticInfo(symbol) ⇒
+<p>Query perpetual static info.
+This information is queried once at createProxyInstance-time and remains static after that.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>PerpetualStaticInfo copy.</p>  
 
 | Param | Description |
 | --- | --- |

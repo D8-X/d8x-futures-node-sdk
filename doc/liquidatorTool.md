@@ -9,7 +9,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ <code>WriteAccessHandler</code>
     * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
-    * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒ <code>number</code>
+    * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
@@ -43,11 +43,11 @@ main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
-### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒ <code>number</code>
+### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒
 <p>Liquidate a trader.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
-**Returns**: <code>number</code> - <p>Liquidated amount.</p>  
+**Returns**: <p>Transaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |

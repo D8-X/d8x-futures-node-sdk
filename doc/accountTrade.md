@@ -173,7 +173,7 @@ main();
 <a name="AccountTrade+getCurrentTraderVolume"></a>
 
 ### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
-<p>Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+<p>Exponentially weighted EMA of the total USD trading volume of all trades performed by this trader.
 The weights are chosen so that in average this coincides with the 30 day volume.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
