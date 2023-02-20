@@ -466,7 +466,7 @@ export default class MarketData extends PerpetualDataHandler {
   public getPerpetualStaticInfo(symbol: string): PerpetualStaticInfo {
     let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
     if (perpInfo == undefined) {
-      throw Error(`Perpetual with symbol ${symbol} not found.`);
+      throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
     }
     // return new copy, not a reference
     let res: PerpetualStaticInfo = {
