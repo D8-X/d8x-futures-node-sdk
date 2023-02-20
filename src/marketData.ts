@@ -13,6 +13,7 @@ import {
   CLOSED_SIDE,
   SELL_SIDE,
   CollaterlCCY,
+  PerpetualStaticInfo,
 } from "./nodeSDKTypes";
 import { BigNumber, BytesLike, ethers } from "ethers";
 import {
@@ -454,6 +455,31 @@ export default class MarketData extends PerpetualDataHandler {
       this.proxyContract
     );
     return state;
+  }
+
+  /**
+   * Query perpetual static info.
+   * This information is queried once at createProxyInstance-time and remains static after that.
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @returns PerpetualStaticInfo copy.
+   */
+  public getPerpetualStaticInfo(symbol: string): PerpetualStaticInfo {
+    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (perpInfo == undefined) {
+      throw Error(`Perpetual with symbol ${symbol} not found.`);
+    }
+    // return new copy, not a reference
+    let res: PerpetualStaticInfo = {
+      id: perpInfo.id,
+      limitOrderBookAddr: perpInfo.limitOrderBookAddr,
+      initialMarginRate: perpInfo.initialMarginRate,
+      maintenanceMarginRate: perpInfo.maintenanceMarginRate,
+      collateralCurrencyType: perpInfo.collateralCurrencyType,
+      S2Symbol: perpInfo.S2Symbol,
+      S3Symbol: perpInfo.S3Symbol,
+      lotSizeBC: perpInfo.lotSizeBC,
+    };
+    return res;
   }
 
   /**

@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
@@ -90,6 +90,10 @@ describe("readOnly", () => {
         console.log(`Perpetuals in ${k}-th pool:`);
         console.log(pool.perpetuals);
       }
+    });
+    it("perp static info", async () => {
+      let info: PerpetualStaticInfo = await mktData.getPerpetualStaticInfo("MATIC-USD-MATIC");
+      console.log(info);
     });
     it("oracle routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
