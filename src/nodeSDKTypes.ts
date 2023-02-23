@@ -1,4 +1,4 @@
-import { BytesLike, BigNumber, BigNumberish, constants, ContractTransaction } from "ethers";
+import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction } from "ethers";
 export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_MAINNET = "notthereyet";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";

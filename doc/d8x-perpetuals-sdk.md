@@ -346,6 +346,8 @@ require gas-payments.</p>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.addCollateral(symbol, amount)](#AccountTrade+addCollateral)
+    * [.removeCollateral(symbol, amount)](#AccountTrade+removeCollateral)
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -565,6 +567,26 @@ async function main() {
 }
 main();
 ```
+<a name="AccountTrade+addCollateral"></a>
+
+### accountTrade.addCollateral(symbol, amount)
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| amount | <code>number</code> | <p>How much collateral to add, in units of collateral currency, e.g. MATIC</p> |
+
+<a name="AccountTrade+removeCollateral"></a>
+
+### accountTrade.removeCollateral(symbol, amount)
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| amount | <code>number</code> | <p>How much collateral to remove, in units of collateral currency, e.g. MATIC</p> |
+
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
 ### accountTrade.createProxyInstance(provider)
@@ -2953,6 +2975,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.createProxyInstance(provider)](#TraderInterface+createProxyInstance)
     * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
     * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
+    * [.getProxyAddress(symbol)](#TraderInterface+getProxyAddress) ⇒
     * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
     * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
@@ -3048,6 +3071,18 @@ orderBookContract.cancelOrder(orderId, signature);</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol (e.g. MATIC-USD-MATIC)</p> |
+
+<a name="TraderInterface+getProxyAddress"></a>
+
+### traderInterface.getProxyAddress(symbol) ⇒
+<p>Get the proxy address for a perpetual</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
 <a name="TraderInterface+createSmartContractOrder"></a>
 

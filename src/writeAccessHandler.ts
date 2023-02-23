@@ -1,8 +1,7 @@
-import { BigNumber, BigNumberish, ethers, Wallet } from "ethers";
-import PerpetualDataHandler from "./perpetualDataHandler";
-import { NodeSDKConfig, MAX_UINT_256, ERC20_ABI } from "./nodeSDKTypes";
-import { to4Chars } from "./utils";
+import { BigNumber, ethers } from "ethers";
 import { floatToDec18 } from "./d8XMath";
+import { ERC20_ABI, MAX_UINT_256, NodeSDKConfig } from "./nodeSDKTypes";
+import PerpetualDataHandler from "./perpetualDataHandler";
 
 /**
  * This is a parent class for the classes that require

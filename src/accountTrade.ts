@@ -1,19 +1,17 @@
 import { ethers } from "ethers";
-
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import {
   NodeSDKConfig,
   Order,
+  OrderResponse,
+  PerpetualStaticInfo,
   SmartContractOrder,
   ZERO_ADDRESS,
-  ORDER_TYPE_MARKET,
-  PerpetualStaticInfo,
-  OrderResponse,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import WriteAccessHandler from "./writeAccessHandler";
 import TraderDigests from "./traderDigests";
+import WriteAccessHandler from "./writeAccessHandler";
 
 /**
  * Functions to create, submit and cancel orders on the exchange.

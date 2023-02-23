@@ -1,4 +1,4 @@
-import WriteAccessHandler from "./writeAccessHandler";
+import { BigNumber, ethers } from "ethers";
 import {
   BUY_SIDE,
   NodeSDKConfig,
@@ -8,8 +8,8 @@ import {
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
-import { BigNumber, ethers } from "ethers";
 import PerpetualDataHandler from "./perpetualDataHandler";
+import WriteAccessHandler from "./writeAccessHandler";
 
 /**
  * Functions to execute existing conditional orders from the limit order book. This class

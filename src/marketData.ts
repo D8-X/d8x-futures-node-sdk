@@ -1,35 +1,35 @@
+import { BigNumber, ethers } from "ethers";
 import {
-  ExchangeInfo,
-  NodeSDKConfig,
-  MarginAccount,
-  PoolState,
-  PerpetualState,
-  COLLATERAL_CURRENCY_BASE,
-  COLLATERAL_CURRENCY_QUANTO,
-  PERP_STATE_STR,
-  ZERO_ADDRESS,
-  PoolStaticInfo,
-  BUY_SIDE,
-  CLOSED_SIDE,
-  SELL_SIDE,
-  CollaterlCCY,
-  PerpetualStaticInfo,
-} from "./nodeSDKTypes";
-import { BigNumber, BytesLike, ethers } from "ethers";
-import {
-  floatToABK64x64,
   ABK64x64ToFloat,
-  getNewPositionLeverage,
-  getMarginRequiredForLeveragedTrade,
   calculateLiquidationPriceCollateralBase,
   calculateLiquidationPriceCollateralQuanto,
   calculateLiquidationPriceCollateralQuote,
+  getMarginRequiredForLeveragedTrade,
   getMaxSignedPositionSize,
+  getNewPositionLeverage,
 } from "./d8XMath";
-import { contractSymbolToSymbol, fromBytes4HexString, toBytes4 } from "./utils";
-import PerpetualDataHandler from "./perpetualDataHandler";
-import { SmartContractOrder, Order } from "./nodeSDKTypes";
 import "./nodeSDKTypes";
+import {
+  BUY_SIDE,
+  CLOSED_SIDE,
+  COLLATERAL_CURRENCY_BASE,
+  COLLATERAL_CURRENCY_QUANTO,
+  CollaterlCCY,
+  ExchangeInfo,
+  MarginAccount,
+  NodeSDKConfig,
+  Order,
+  PerpetualState,
+  PerpetualStaticInfo,
+  PERP_STATE_STR,
+  PoolState,
+  PoolStaticInfo,
+  SELL_SIDE,
+  SmartContractOrder,
+  ZERO_ADDRESS,
+} from "./nodeSDKTypes";
+import PerpetualDataHandler from "./perpetualDataHandler";
+import { contractSymbolToSymbol, toBytes4 } from "./utils";
 
 /**
  * Functions to access market data (e.g., information on open orders, information on products that can be traded).
@@ -74,6 +74,17 @@ export default class MarketData extends PerpetualDataHandler {
     }
     await this.initContractsAndData(this.provider);
   }
+
+    /**
+   * Get the proxy address
+   * @returns Address of the perpetual proxy contract
+   */
+    public getProxyAddress(): string {
+      if (this.proxyContract == null) {
+        throw Error("no proxy contract initialized. Use createProxyInstance().");
+      }
+      return this.proxyContract.address;
+    }
 
   /**
    * Convert the smart contract output of an order into a convenient format of type "Order"
