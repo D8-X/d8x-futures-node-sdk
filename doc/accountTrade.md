@@ -15,6 +15,8 @@ require gas-payments.</p>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.addCollateral(symbol, amount)](#AccountTrade+addCollateral)
+    * [.removeCollateral(symbol, amount)](#AccountTrade+removeCollateral)
 
 <a name="new_AccountTrade_new"></a>
 
@@ -173,7 +175,7 @@ main();
 <a name="AccountTrade+getCurrentTraderVolume"></a>
 
 ### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
-<p>Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+<p>Exponentially weighted EMA of the total USD trading volume of all trades performed by this trader.
 The weights are chosen so that in average this coincides with the 30 day volume.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
@@ -225,3 +227,23 @@ async function main() {
 }
 main();
 ```
+<a name="AccountTrade+addCollateral"></a>
+
+### accountTrade.addCollateral(symbol, amount)
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| amount | <code>number</code> | <p>How much collateral to add, in units of collateral currency, e.g. MATIC</p> |
+
+<a name="AccountTrade+removeCollateral"></a>
+
+### accountTrade.removeCollateral(symbol, amount)
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| amount | <code>number</code> | <p>How much collateral to remove, in units of collateral currency, e.g. MATIC</p> |
+

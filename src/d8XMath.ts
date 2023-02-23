@@ -1,4 +1,3 @@
-import { assert } from "console";
 import { BigNumber } from "ethers";
 import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
 

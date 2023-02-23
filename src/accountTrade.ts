@@ -1,19 +1,17 @@
 import { ethers } from "ethers";
-
-import { ABK64x64ToFloat } from "./d8XMath";
+import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import {
   NodeSDKConfig,
   Order,
+  OrderResponse,
+  PerpetualStaticInfo,
   SmartContractOrder,
   ZERO_ADDRESS,
-  ORDER_TYPE_MARKET,
-  PerpetualStaticInfo,
-  OrderResponse,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import WriteAccessHandler from "./writeAccessHandler";
 import TraderDigests from "./traderDigests";
+import WriteAccessHandler from "./writeAccessHandler";
 
 /**
  * Functions to create, submit and cancel orders on the exchange.
@@ -328,5 +326,33 @@ export default class AccountTrade extends WriteAccessHandler {
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     let signature = await signer.signMessage(digestBuffer);
     return [signature, digest];
+  }
+
+  /**
+   *
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {number} amount How much collateral to add, in units of collateral currency, e.g. MATIC
+   */
+  public async addCollateral(symbol: string, amount: number): Promise<ethers.ContractTransaction> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let perpId = this.getPerpIdFromSymbol(symbol);
+    let fAmountCC = floatToABK64x64(amount);
+    return await this.proxyContract.deposit(perpId, fAmountCC);
+  }
+
+  /**
+   *
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {number} amount How much collateral to remove, in units of collateral currency, e.g. MATIC
+   */
+  public async removeCollateral(symbol: string, amount: number): Promise<ethers.ContractTransaction> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let perpId = this.getPerpIdFromSymbol(symbol);
+    let fAmountCC = floatToABK64x64(amount);
+    return await this.proxyContract.withdraw(perpId, fAmountCC);
   }
 }

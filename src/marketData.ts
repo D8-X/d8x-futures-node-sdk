@@ -1,34 +1,35 @@
+import { BigNumber, ethers } from "ethers";
 import {
-  ExchangeInfo,
-  NodeSDKConfig,
-  MarginAccount,
-  PoolState,
-  PerpetualState,
-  COLLATERAL_CURRENCY_BASE,
-  COLLATERAL_CURRENCY_QUANTO,
-  PERP_STATE_STR,
-  ZERO_ADDRESS,
-  PoolStaticInfo,
-  BUY_SIDE,
-  CLOSED_SIDE,
-  SELL_SIDE,
-  CollaterlCCY,
-} from "./nodeSDKTypes";
-import { BigNumber, BytesLike, ethers } from "ethers";
-import {
-  floatToABK64x64,
   ABK64x64ToFloat,
-  getNewPositionLeverage,
-  getMarginRequiredForLeveragedTrade,
   calculateLiquidationPriceCollateralBase,
   calculateLiquidationPriceCollateralQuanto,
   calculateLiquidationPriceCollateralQuote,
+  getMarginRequiredForLeveragedTrade,
   getMaxSignedPositionSize,
+  getNewPositionLeverage,
 } from "./d8XMath";
-import { contractSymbolToSymbol, fromBytes4HexString, toBytes4 } from "./utils";
-import PerpetualDataHandler from "./perpetualDataHandler";
-import { SmartContractOrder, Order } from "./nodeSDKTypes";
 import "./nodeSDKTypes";
+import {
+  BUY_SIDE,
+  CLOSED_SIDE,
+  COLLATERAL_CURRENCY_BASE,
+  COLLATERAL_CURRENCY_QUANTO,
+  CollaterlCCY,
+  ExchangeInfo,
+  MarginAccount,
+  NodeSDKConfig,
+  Order,
+  PerpetualState,
+  PerpetualStaticInfo,
+  PERP_STATE_STR,
+  PoolState,
+  PoolStaticInfo,
+  SELL_SIDE,
+  SmartContractOrder,
+  ZERO_ADDRESS,
+} from "./nodeSDKTypes";
+import PerpetualDataHandler from "./perpetualDataHandler";
+import { contractSymbolToSymbol, toBytes4 } from "./utils";
 
 /**
  * Functions to access market data (e.g., information on open orders, information on products that can be traded).
@@ -73,6 +74,17 @@ export default class MarketData extends PerpetualDataHandler {
     }
     await this.initContractsAndData(this.provider);
   }
+
+    /**
+   * Get the proxy address
+   * @returns Address of the perpetual proxy contract
+   */
+    public getProxyAddress(): string {
+      if (this.proxyContract == null) {
+        throw Error("no proxy contract initialized. Use createProxyInstance().");
+      }
+      return this.proxyContract.address;
+    }
 
   /**
    * Convert the smart contract output of an order into a convenient format of type "Order"
@@ -454,6 +466,31 @@ export default class MarketData extends PerpetualDataHandler {
       this.proxyContract
     );
     return state;
+  }
+
+  /**
+   * Query perpetual static info.
+   * This information is queried once at createProxyInstance-time and remains static after that.
+   * @param symbol symbol of the form ETH-USD-MATIC
+   * @returns PerpetualStaticInfo copy.
+   */
+  public getPerpetualStaticInfo(symbol: string): PerpetualStaticInfo {
+    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (perpInfo == undefined) {
+      throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
+    }
+    // return new copy, not a reference
+    let res: PerpetualStaticInfo = {
+      id: perpInfo.id,
+      limitOrderBookAddr: perpInfo.limitOrderBookAddr,
+      initialMarginRate: perpInfo.initialMarginRate,
+      maintenanceMarginRate: perpInfo.maintenanceMarginRate,
+      collateralCurrencyType: perpInfo.collateralCurrencyType,
+      S2Symbol: perpInfo.S2Symbol,
+      S3Symbol: perpInfo.S3Symbol,
+      lotSizeBC: perpInfo.lotSizeBC,
+    };
+    return res;
   }
 
   /**

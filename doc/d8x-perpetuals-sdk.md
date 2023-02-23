@@ -66,6 +66,9 @@ Send event variables to event handler &quot;on<EventName>&quot; - this updates m
 <li>[x] async onUpdateMarginAccount    : emitted on proxy; updates position data and open interest</li>
 <li>[x] onTrade                        : emitted on proxy; returns TradeEvent to be displayed</li>
 </ul></dd>
+<dt><a href="#TraderInterface">TraderInterface</a> ⇐ <code><a href="#MarketData">MarketData</a></code></dt>
+<dd><p>Interface that can be used by front-end that wraps all private functions
+so that signatures can be handled in frontend via wallet</p></dd>
 <dt><a href="#WriteAccessHandler">WriteAccessHandler</a> ⇐ <code><a href="#PerpetualDataHandler">PerpetualDataHandler</a></code></dt>
 <dd><p>This is a parent class for the classes that require
 write access to the contracts.
@@ -343,6 +346,8 @@ require gas-payments.</p>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName)](#AccountTrade+getCurrentTraderVolume) ⇒ <code>number</code>
     * [.getOrderIds(symbol)](#AccountTrade+getOrderIds) ⇒ <code>Array.&lt;string&gt;</code>
+    * [.addCollateral(symbol, amount)](#AccountTrade+addCollateral)
+    * [.removeCollateral(symbol, amount)](#AccountTrade+removeCollateral)
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -510,7 +515,7 @@ main();
 <a name="AccountTrade+getCurrentTraderVolume"></a>
 
 ### accountTrade.getCurrentTraderVolume(poolSymbolName) ⇒ <code>number</code>
-<p>Exponentially weighted EMA of the total trading volume of all trades performed by this trader.
+<p>Exponentially weighted EMA of the total USD trading volume of all trades performed by this trader.
 The weights are chosen so that in average this coincides with the 30 day volume.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
@@ -562,6 +567,26 @@ async function main() {
 }
 main();
 ```
+<a name="AccountTrade+addCollateral"></a>
+
+### accountTrade.addCollateral(symbol, amount)
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| amount | <code>number</code> | <p>How much collateral to add, in units of collateral currency, e.g. MATIC</p> |
+
+<a name="AccountTrade+removeCollateral"></a>
+
+### accountTrade.removeCollateral(symbol, amount)
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| amount | <code>number</code> | <p>How much collateral to remove, in units of collateral currency, e.g. MATIC</p> |
+
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
 ### accountTrade.createProxyInstance(provider)
@@ -1198,7 +1223,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
-    * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒ <code>number</code>
+    * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
@@ -1241,11 +1266,11 @@ main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
-### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒ <code>number</code>
+### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒
 <p>Liquidate a trader.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
-**Returns**: <code>number</code> - <p>Liquidated amount.</p>  
+**Returns**: <p>Transaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1764,6 +1789,7 @@ No gas required for the queries here.</p>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒
+    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
@@ -2012,6 +2038,19 @@ main();
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>PerpetualState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualStaticInfo"></a>
+
+### marketData.getPerpetualStaticInfo(symbol) ⇒
+<p>Query perpetual static info.
+This information is queried once at createProxyInstance-time and remains static after that.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>PerpetualStaticInfo copy.</p>  
 
 | Param | Description |
 | --- | --- |
@@ -2587,7 +2626,7 @@ token names into bytes4 representation
 <a name="PerpetualDataHandler.perpetualIdToSymbol"></a>
 
 ### PerpetualDataHandler.perpetualIdToSymbol(id, symbolToPerpStaticInfo) ⇒
-<p>Find the symbol (&quot;ETH-USD-MATC&quot;) of the given perpetual id</p>
+<p>Find the long symbol (&quot;ETH-USD-MATIC&quot;) of the given perpetual id</p>
 
 **Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 **Returns**: <p>symbol string or undefined</p>  
@@ -2919,6 +2958,489 @@ int128 fSpotIndexPrice
 | --- | --- |
 | fMarkPricePremium | <p>premium rate in ABDK format</p> |
 | fSpotIndexPrice | <p>spot index price in ABDK format</p> |
+
+<a name="TraderInterface"></a>
+
+## TraderInterface ⇐ [<code>MarketData</code>](#MarketData)
+<p>Interface that can be used by front-end that wraps all private functions
+so that signatures can be handled in frontend via wallet</p>
+
+**Kind**: global class  
+**Extends**: [<code>MarketData</code>](#MarketData)  
+
+* [TraderInterface](#TraderInterface) ⇐ [<code>MarketData</code>](#MarketData)
+    * [new TraderInterface(config)](#new_TraderInterface_new)
+    * [.queryExchangeFee(poolSymbolName, traderAddr, brokerAddr)](#TraderInterface+queryExchangeFee) ⇒
+    * [.getCurrentTraderVolume(poolSymbolName, traderAddr)](#TraderInterface+getCurrentTraderVolume) ⇒
+    * [.createProxyInstance(provider)](#TraderInterface+createProxyInstance)
+    * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
+    * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
+    * [.getProxyAddress(symbol)](#TraderInterface+getProxyAddress) ⇒
+    * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
+    * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
+    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
+    * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
+    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
+    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
+    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+    * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
+    * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
+    * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒
+    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
+    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+
+<a name="new_TraderInterface_new"></a>
+
+### new TraderInterface(config)
+<p>Constructor</p>
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
+
+<a name="TraderInterface+queryExchangeFee"></a>
+
+### traderInterface.queryExchangeFee(poolSymbolName, traderAddr, brokerAddr) ⇒
+<p>Get the fee that is charged to the trader for a given broker (can be ZERO-address),
+without broker fee</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>fee (in decimals) that is charged by exchange (without broker)</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbolName | <p>pool currency (e.g. MATIC)</p> |
+| traderAddr | <p>address of trader</p> |
+| brokerAddr | <p>address of broker</p> |
+
+<a name="TraderInterface+getCurrentTraderVolume"></a>
+
+### traderInterface.getCurrentTraderVolume(poolSymbolName, traderAddr) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>volume in USD</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbolName | <p>pool symbol, e.g. MATIC</p> |
+| traderAddr | <p>address of the trader</p> |
+
+<a name="TraderInterface+createProxyInstance"></a>
+
+### traderInterface.createProxyInstance(provider)
+<p>Initialize the marketData-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>createProxyInstance</code>](#MarketData+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
+
+<a name="TraderInterface+cancelOrderDigest"></a>
+
+### traderInterface.cancelOrderDigest(symbol, orderId) ⇒
+<p>Get digest to cancel an order. Digest needs to be signed and submitted via
+orderBookContract.cancelOrder(orderId, signature);</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>tuple of digest which the trader needs to sign and address of order book contract</p>  
+
+| Param |
+| --- |
+| symbol | 
+| orderId | 
+
+<a name="TraderInterface+getOrderBookAddress"></a>
+
+### traderInterface.getOrderBookAddress(symbol) ⇒
+<p>Get the order book address for a perpetual</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>order book address for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol (e.g. MATIC-USD-MATIC)</p> |
+
+<a name="TraderInterface+getProxyAddress"></a>
+
+### traderInterface.getProxyAddress(symbol) ⇒
+<p>Get the proxy address for a perpetual</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="TraderInterface+createSmartContractOrder"></a>
+
+### traderInterface.createSmartContractOrder(order, traderAddr) ⇒
+<p>createSmartContractOrder from user-friendly order</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>Smart contract type order struct</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>order struct</p> |
+| traderAddr | <p>address of trader</p> |
+
+<a name="TraderInterface+orderDigest"></a>
+
+### traderInterface.orderDigest(scOrder) ⇒
+<p>Create smart contract order and digest that the trader signs.
+await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
+Order must contain broker fee and broker address if there is supposed to be a broker.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>digest that the trader has to sign</p>  
+
+| Param | Description |
+| --- | --- |
+| scOrder | <p>smart contract order struct (get from order via createSCOrder)</p> |
+
+<a name="MarketData+smartContractOrderToOrder"></a>
+
+### traderInterface.smartContractOrderToOrder(smOrder) ⇒
+<p>Convert the smart contract output of an order into a convenient format of type &quot;Order&quot;</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>smartContractOrderToOrder</code>](#MarketData+smartContractOrderToOrder)  
+**Returns**: <p>more convenient format of order, type &quot;Order&quot;</p>  
+
+| Param | Description |
+| --- | --- |
+| smOrder | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
+
+<a name="MarketData+getReadOnlyProxyInstance"></a>
+
+### traderInterface.getReadOnlyProxyInstance() ⇒
+<p>Get contract instance. Useful for event listening.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getReadOnlyProxyInstance</code>](#MarketData+getReadOnlyProxyInstance)  
+**Returns**: <p>read-only proxy instance</p>  
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // Get contract instance
+  let proxy = await mktData.getReadOnlyProxyInstance();
+  console.log(proxy);
+}
+main();
+```
+<a name="MarketData+exchangeInfo"></a>
+
+### traderInterface.exchangeInfo() ⇒ <code>ExchangeInfo</code>
+<p>Information about the products traded in the exchange.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>exchangeInfo</code>](#MarketData+exchangeInfo)  
+**Returns**: <code>ExchangeInfo</code> - <p>Array of static data for all the pools and perpetuals in the system.</p>  
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // Get exchange info
+  let info = await mktData.exchangeInfo();
+  console.log(info);
+}
+main();
+```
+<a name="MarketData+openOrders"></a>
+
+### traderInterface.openOrders(traderAddr, symbol) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
+<p>All open orders for a trader-address and a symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>openOrders</code>](#MarketData+openOrders)  
+**Returns**: <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code> - <p>Array of open orders and corresponding order-ids.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // Get all open orders for a trader/symbol
+  let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+      "ETH-USD-MATIC");
+  console.log(opOrder);
+}
+main();
+```
+<a name="MarketData+positionRisk"></a>
+
+### traderInterface.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>positionRisk</code>](#MarketData+positionRisk)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // Get position risk info
+  let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+      "ETH-USD-MATIC");
+  console.log(posRisk);
+}
+main();
+```
+<a name="MarketData+getOraclePrice"></a>
+
+### traderInterface.getOraclePrice(base, quote) ⇒ <code>number</code>
+<p>Uses the Oracle(s) in the exchange to get the latest price of a given index in a given currency, if a route exists.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getOraclePrice</code>](#MarketData+getOraclePrice)  
+**Returns**: <code>number</code> - <p>Price of index in given currency.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| base | <code>string</code> | <p>Index name, e.g. ETH.</p> |
+| quote | <code>string</code> | <p>Quote currency, e.g. USD.</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get oracle price
+  let price = await mktData.getOraclePrice("ETH", "USD");
+  console.log(price);
+}
+main();
+```
+<a name="MarketData+getMarkPrice"></a>
+
+### traderInterface.getMarkPrice(symbol) ⇒
+<p>Get the current mark price</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getMarkPrice</code>](#MarketData+getMarkPrice)  
+**Returns**: <p>mark price</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get mark price
+  let price = await mktData.getMarkPrice("ETH-USD-MATIC");
+  console.log(price);
+}
+main();
+```
+<a name="MarketData+getPerpetualPrice"></a>
+
+### traderInterface.getPerpetualPrice(symbol, quantity) ⇒
+<p>get the current price for a given quantity</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpetualPrice</code>](#MarketData+getPerpetualPrice)  
+**Returns**: <p>price (number)</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| quantity | <p>quantity to be traded, negative if short</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get perpetual price
+  let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
+  console.log(price);
+}
+main();
+```
+<a name="MarketData+getPerpetualState"></a>
+
+### traderInterface.getPerpetualState(symbol) ⇒
+<p>Query recent perpetual state from blockchain</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpetualState</code>](#MarketData+getPerpetualState)  
+**Returns**: <p>PerpetualState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualStaticInfo"></a>
+
+### traderInterface.getPerpetualStaticInfo(symbol) ⇒
+<p>Query perpetual static info.
+This information is queried once at createProxyInstance-time and remains static after that.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpetualStaticInfo</code>](#MarketData+getPerpetualStaticInfo)  
+**Returns**: <p>PerpetualStaticInfo copy.</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPerpetualMidPrice"></a>
+
+### traderInterface.getPerpetualMidPrice(symbol) ⇒ <code>number</code>
+<p>get the current mid-price for a perpetual</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpetualMidPrice</code>](#MarketData+getPerpetualMidPrice)  
+**Returns**: <code>number</code> - <p>price</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get perpetual mid price
+  let midPrice = await mktData.getPerpetualMidPrice("ETH-USD-MATIC");
+  console.log(midPrice);
+}
+main();
+```
+<a name="PerpetualDataHandler+getOrderBookContract"></a>
+
+### traderInterface.getOrderBookContract(symbol) ⇒
+<p>Returns the order-book contract for the symbol if found or fails</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
+**Returns**: <p>order book contract for the perpetual</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+_fillSymbolMaps"></a>
+
+### traderInterface.\_fillSymbolMaps()
+<p>Called when initializing. This function fills this.symbolToTokenAddrMap,
+and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
+
+### traderInterface.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+<p>Get pool symbol given a pool Id.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
+**Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolId | <code>number</code> | <p>Pool Id.</p> |
+
+<a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
+
+### traderInterface.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get pool Id given a pool symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Pool Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Pool symbol.</p> |
+
+<a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
+
+### traderInterface.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+<p>Get perpetual Id given a perpetual symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
+**Returns**: <code>number</code> - <p>Perpetual Id.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol, e.g. &quot;BTC-USD-MATIC&quot;.</p> |
+
+<a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
+
+### traderInterface.getSymbolFromPerpId(perpId)
+<p>Get the symbol in long format of the perpetual id</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+
+| Param | Description |
+| --- | --- |
+| perpId | <p>perpetual id</p> |
 
 <a name="WriteAccessHandler"></a>
 

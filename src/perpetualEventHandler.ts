@@ -1,17 +1,17 @@
-import { BigNumber, utils } from "ethers";
-import { ABK64x64ToFloat, mul64x64, div64x64 } from "./d8XMath";
+import { BigNumber } from "ethers";
+import { emitWarning } from "process";
+import { ABK64x64ToFloat, mul64x64 } from "./d8XMath";
+import MarketData from "./marketData";
 import {
-  PerpetualState,
-  ONE_64x64,
   ExchangeInfo,
-  Order,
-  SmartContractOrder,
   MarginAccount,
+  ONE_64x64,
+  Order,
   OrderStruct,
+  PerpetualState,
+  SmartContractOrder,
   TradeEvent,
 } from "./nodeSDKTypes";
-import { emitWarning } from "process";
-import MarketData from "./marketData";
 
 /**
  * This class handles events and stores relevant variables

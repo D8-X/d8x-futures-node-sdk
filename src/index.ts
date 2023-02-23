@@ -8,18 +8,7 @@ import WriteAccessHandler from "./writeAccessHandler";
 import LiquidatorTool from "./liquidatorTool";
 import TraderInterface from "./traderInterface";
 import PerpetualEventHandler from "./perpetualEventHandler";
-// import {
-//   NodeSDKConfig,
-//   MarginAccount,
-//   CollaterlCCY,
-//   PoolStaticInfo,
-//   PerpetualStaticInfo,
-//   ExchangeInfo,
-//   PoolState,
-//   PerpetualState,
-//   Order,
-//   SmartContractOrder,
-// } from "./nodeSDKTypes";
+
 export * from "./nodeSDKTypes";
 export * from "./utils";
 export * from "./d8XMath";

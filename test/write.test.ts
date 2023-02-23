@@ -45,6 +45,20 @@ describe("write and spoil gas and tokens", () => {
     //*/
   });
 
+  it("add collateral", async () => {
+    //*uncomment
+    let tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10);
+    console.log(`add collateral tx hash = ${tx.hash}`);
+    //*/
+  });
+
+  it("rempve collateral", async () => {
+    //*uncomment
+    let tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 10);
+    console.log(`remove collateral tx hash = ${tx.hash}`);
+    //*/
+  });
+
   it("trade", async () => {
     let order: Order = {
       symbol: "BTC-USD-MATIC",
