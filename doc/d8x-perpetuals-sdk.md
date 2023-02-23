@@ -1780,6 +1780,7 @@ No gas required for the queries here.</p>
 * [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
     * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
@@ -1835,6 +1836,13 @@ about perpetual currencies</p>
 | --- | --- |
 | provider | <p>optional provider</p> |
 
+<a name="MarketData+getProxyAddress"></a>
+
+### marketData.getProxyAddress() ⇒
+<p>Get the proxy address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
 ### marketData.smartContractOrderToOrder(smOrder) ⇒
@@ -2527,6 +2535,7 @@ common data and chain operations.</p>
         * [.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap)](#PerpetualDataHandler.toSmartContractOrder) ⇒
         * [._orderTypeToFlag(order)](#PerpetualDataHandler._orderTypeToFlag) ⇒
         * [.readSDKConfig(fileLocation)](#PerpetualDataHandler.readSDKConfig) ⇒
+        * [._getABIFromContract(contract, functionName)](#PerpetualDataHandler._getABIFromContract) ⇒
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
@@ -2674,6 +2683,19 @@ Checks for some misspecifications.</p>
 | Param | Description |
 | --- | --- |
 | fileLocation | <p>json-file with required variables for config</p> |
+
+<a name="PerpetualDataHandler._getABIFromContract"></a>
+
+### PerpetualDataHandler.\_getABIFromContract(contract, functionName) ⇒
+<p>Get the ABI of a function in a given contract</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Function ABI as a single JSON string</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>A contract instance, e.g. this.proxyContract</p> |
+| functionName | <p>Name of the function whose ABI we want</p> |
 
 <a name="PerpetualEventHandler"></a>
 
@@ -2975,9 +2997,11 @@ so that signatures can be handled in frontend via wallet</p>
     * [.createProxyInstance(provider)](#TraderInterface+createProxyInstance)
     * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
     * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
-    * [.getProxyAddress(symbol)](#TraderInterface+getProxyAddress) ⇒
     * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
     * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
+    * [.getProxyABI(method)](#TraderInterface+getProxyABI) ⇒
+    * [.getOrderBookABI(symbol, method)](#TraderInterface+getOrderBookABI) ⇒
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
@@ -3072,18 +3096,6 @@ orderBookContract.cancelOrder(orderId, signature);</p>
 | --- | --- |
 | symbol | <p>symbol (e.g. MATIC-USD-MATIC)</p> |
 
-<a name="TraderInterface+getProxyAddress"></a>
-
-### traderInterface.getProxyAddress(symbol) ⇒
-<p>Get the proxy address for a perpetual</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Returns**: <p>Address of the perpetual proxy contract</p>  
-
-| Param | Description |
-| --- | --- |
-| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
-
 <a name="TraderInterface+createSmartContractOrder"></a>
 
 ### traderInterface.createSmartContractOrder(order, traderAddr) ⇒
@@ -3111,6 +3123,39 @@ Order must contain broker fee and broker address if there is supposed to be a br
 | --- | --- |
 | scOrder | <p>smart contract order struct (get from order via createSCOrder)</p> |
 
+<a name="TraderInterface+getProxyABI"></a>
+
+### traderInterface.getProxyABI(method) ⇒
+<p>Get the ABI of a method in the proxy contract</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>ABI as a single string</p>  
+
+| Param | Description |
+| --- | --- |
+| method | <p>Name of the method</p> |
+
+<a name="TraderInterface+getOrderBookABI"></a>
+
+### traderInterface.getOrderBookABI(symbol, method) ⇒
+<p>Get the ABI of a method in the Limit Order Book contract corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>ABI as a single string</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form MATIC-USD-MATIC</p> |
+| method | <p>Name of the method</p> |
+
+<a name="MarketData+getProxyAddress"></a>
+
+### traderInterface.getProxyAddress() ⇒
+<p>Get the proxy address</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getProxyAddress</code>](#MarketData+getProxyAddress)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
 ### traderInterface.smartContractOrderToOrder(smOrder) ⇒

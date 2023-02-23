@@ -682,4 +682,15 @@ export default class PerpetualDataHandler {
     let config: NodeSDKConfig = <NodeSDKConfig>configFile;
     return config;
   }
+
+  /**
+   * Get the ABI of a function in a given contract
+   * @param contract A contract instance, e.g. this.proxyContract
+   * @param functionName Name of the function whose ABI we want
+   * @returns Function ABI as a single JSON string
+   */
+  protected static _getABIFromContract(contract: ethers.Contract, functionName: string): string {
+    const FormatTypes = ethers.utils.FormatTypes;
+    return contract.interface.getFunction(functionName).format(FormatTypes.full);
+  }
 }

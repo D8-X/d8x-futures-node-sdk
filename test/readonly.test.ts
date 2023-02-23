@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ContractInterface, ethers } from "ethers";
 import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
@@ -70,6 +70,32 @@ describe("readOnly", () => {
       let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
       let res = await apiInterface.orderDigest(orderSC);
       console.log(res);
+    });
+    it("get proxy ABI", async () => {
+      // Signer or provider
+      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      // Address of the contract
+      let contractAddr = apiInterface.getProxyAddress();
+      // ABI as it would come from the API:
+      let abi = apiInterface.getProxyABI("getOraclePrice");
+      console.log(abi);
+      // contract instance
+      let contract = new ethers.Contract(contractAddr, [abi], provider);
+      let px = await contract.getOraclePrice([toBytes4("MATIC"), toBytes4("USD")]);
+      console.log(`price of MATIC-USD: ${ABK64x64ToFloat(px)}`);
+    });
+    it("get LOB ABI", async () => {
+      // Signer or provider
+      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      // Address of the contract
+      let contractAddr = apiInterface.getOrderBookAddress("MATIC-USD-MATIC");
+      // ABI as it would come from the API:
+      let abi = apiInterface.getOrderBookABI("MATIC-USD-MATIC", "orderCount");
+      console.log(abi);
+      // contract instance
+      let contract = new ethers.Contract(contractAddr, [abi], provider);
+      let numOrders = await contract.orderCount();
+      console.log(`orderCount in MATIC-USD-MATIC order book: ${numOrders}`);
     });
   });
 

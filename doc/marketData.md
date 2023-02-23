@@ -11,6 +11,7 @@ No gas required for the queries here.</p>
 * [MarketData](#MarketData) ⇐ <code>PerpetualDataHandler</code>
     * [new MarketData(config)](#new_MarketData_new)
     * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
@@ -60,6 +61,13 @@ about perpetual currencies</p>
 | --- | --- |
 | provider | <p>optional provider</p> |
 
+<a name="MarketData+getProxyAddress"></a>
+
+### marketData.getProxyAddress() ⇒
+<p>Get the proxy address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
 ### marketData.smartContractOrderToOrder(smOrder) ⇒
