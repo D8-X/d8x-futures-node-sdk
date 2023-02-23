@@ -14,11 +14,11 @@ Node TypeScript SDK for D8X Perpetual Futures
 
 ### Test
 
-`npm test`
+`yarn test`
 
 ### NPM Package Deployment
 
-`npm run build`
-`npm login`
-increase version via `npm version patch`
-`npm publish`
+`yarn build`
+`yarn build:doc`
+`yarn login`
+`yarn publish`
