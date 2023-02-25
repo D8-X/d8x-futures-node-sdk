@@ -92,13 +92,14 @@ export interface PerpetualStaticInfo {
 export interface ExchangeInfo {
   pools: PoolState[];
   oracleFactoryAddr: string;
+  proxyAddr: string;
 }
 
 /**
  * @global
  * @typedef {Object} PoolState
  * @property {boolean} isRunning True if the pool is running.
- * @property {string} marginTokenAddr Address of the token used by the pool.
+ * @property {string} marginTokenAddr  Address of the token used by the pool.
  * This is the token used for margin deposits, liquidity provision, and trading fees.
  * @property {string} poolShareTokenAddr Address of the pool share token.
  * This is the token issued to external liquidity providers.

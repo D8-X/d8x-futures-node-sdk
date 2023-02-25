@@ -75,16 +75,16 @@ export default class MarketData extends PerpetualDataHandler {
     await this.initContractsAndData(this.provider);
   }
 
-    /**
+  /**
    * Get the proxy address
    * @returns Address of the perpetual proxy contract
    */
-    public getProxyAddress(): string {
-      if (this.proxyContract == null) {
-        throw Error("no proxy contract initialized. Use createProxyInstance().");
-      }
-      return this.proxyContract.address;
+  public getProxyAddress(): string {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    return this.proxyContract.address;
+  }
 
   /**
    * Convert the smart contract output of an order into a convenient format of type "Order"
@@ -213,7 +213,6 @@ export default class MarketData extends PerpetualDataHandler {
   public async positionRiskOnTrade(
     traderAddr: string,
     order: Order,
-    perpetualState: PerpetualState,
     currentPositionRisk?: MarginAccount
   ): Promise<MarginAccount> {
     if (this.proxyContract == null) {
@@ -222,20 +221,52 @@ export default class MarketData extends PerpetualDataHandler {
     if (currentPositionRisk == undefined) {
       currentPositionRisk = await this.positionRisk(traderAddr, order.symbol);
     }
-    let tradeAmount = order.quantity * (order.side == BUY_SIDE ? 1 : -1);
-    let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
-    let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
-    let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
-    let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
-
+    // price for this order = limit price (conservative) if given, else the current perp price
+    let tradeAmount = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
+    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
     // total fee rate = exchange fee + broker fee
     let feeRate =
       (await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
       (order.brokerFeeTbps ?? 0) / 100_000;
+    let perpetualState = await this.getPerpetualState(order.symbol);
+    console.log("perpetualState", perpetualState);
+    return MarketData._positionRiskOnTrade(
+      order.symbol,
+      tradeAmount,
+      order.leverage,
+      order.keepPositionLvg,
+      tradePrice,
+      feeRate,
+      perpetualState,
+      currentPositionRisk,
+      this.symbolToPerpStaticInfo
+    );
+  }
 
-    // price for this order = limit price (conservative) if given, else the current perp price
-    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
+  /**
+   *
+   * @param traderAddr Address of trader
+   * @param order Order to be submitted
+   * @param perpetualState
+   * @param currentPositionRisk
+   * @returns
+   */
+  protected static _positionRiskOnTrade(
+    symbol: string,
+    tradeAmount: number,
+    tradeLeverage: number | undefined,
+    keepPositionLvg: boolean | undefined,
+    tradePrice: number,
+    feeRate: number,
+    perpetualState: PerpetualState,
+    currentPositionRisk: MarginAccount,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): MarginAccount {
+    let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
+    let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
+    let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
+    let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
 
     // need these for leverage/margin calculations
     let [markPrice, indexPriceS2, indexPriceS3] = [
@@ -245,7 +276,7 @@ export default class MarketData extends PerpetualDataHandler {
     ];
     let newCollateral: number;
     let newLeverage: number;
-    if (order.keepPositionLvg) {
+    if (keepPositionLvg) {
       // we have a target leverage for the resulting position
       // this gives us the total margin needed in the account so that it satisfies the leverage condition
       newCollateral = getMarginRequiredForLeveragedTrade(
@@ -259,6 +290,17 @@ export default class MarketData extends PerpetualDataHandler {
         tradePrice,
         feeRate
       );
+      /**
+       * export function getDepositAmountForLvgTrade(
+    pos0: number,
+    b0: number,
+    tradeAmnt: number,
+    targetLvg: number,
+    price: number,
+    S3: number,
+    S2Mark: number,
+    maxLvg?: number
+       */
       // the new leverage follows from the updated margin and position
       newLeverage = getNewPositionLeverage(
         tradeAmount,
@@ -274,7 +316,7 @@ export default class MarketData extends PerpetualDataHandler {
     } else {
       // the order has its own leverage and margin requirements
       let tradeCollateral = getMarginRequiredForLeveragedTrade(
-        order.leverage,
+        tradeLeverage,
         0,
         0,
         tradeAmount,
@@ -302,8 +344,8 @@ export default class MarketData extends PerpetualDataHandler {
 
     // liquidation vars
     let S2Liq: number, S3Liq: number | undefined;
-    let tau = this.symbolToPerpStaticInfo.get(order.symbol)!.maintenanceMarginRate;
-    let ccyType = this.symbolToPerpStaticInfo.get(order.symbol)!.collateralCurrencyType;
+    let tau = symbolToPerpStaticInfo.get(symbol)!.maintenanceMarginRate;
+    let ccyType = symbolToPerpStaticInfo.get(symbol)!.collateralCurrencyType;
     if (ccyType == CollaterlCCY.BASE) {
       S2Liq = calculateLiquidationPriceCollateralBase(newLockedInValue, newPosition, newCollateral, tau);
       S3Liq = S2Liq;
@@ -563,7 +605,7 @@ export default class MarketData extends PerpetualDataHandler {
   ): Promise<ExchangeInfo> {
     let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
     let factory = await _proxyContract.getOracleFactory();
-    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory };
+    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
     const numPools = nestedPerpetualIDs.length;
     for (var j = 0; j < numPools; j++) {
       let perpetualIDs = nestedPerpetualIDs[j];

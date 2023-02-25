@@ -140,6 +140,22 @@ describe("readOnly", () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
       console.log("mgn=", mgn);
     });
+    it("get margin info if a trade was performed", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let order: Order = {
+        symbol: "MATIC-USD-MATIC",
+        side: "BUY",
+        type: "MARKET",
+        quantity: 5,
+        leverage: 2,
+        timestamp: Date.now() / 1000,
+      };
+      let mgnAfter = await mktData.positionRiskOnTrade(wallet.address, order);
+      let mgnAfter2 = await mktData.positionRiskOnTrade(wallet.address, order, mgnBefore);
+      console.log("mgnBefore:", mgnBefore);
+      console.log("mgnAfter :", mgnAfter);
+      console.log("mgnAfter2:", mgnAfter2);
+    });
 
     it("get pool id", async () => {
       let perpSymbol = "ETH-USD-MATIC";
