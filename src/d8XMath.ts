@@ -222,6 +222,38 @@ export function getMarginRequiredForLeveragedTrade(
   return collRequired;
 }
 
+/**
+ * Determine amount to be deposited into margin account so that the given leverage
+ * is obtained when trading a position pos (trade amount = position)
+ * Does NOT include fees
+ * Smart contract equivalent: calcMarginForTargetLeverage(..., _ignorePosBalance = false & balance = b0)
+ * @param {number} pos0 - current position
+ * @param {number} b0 - current balance
+ * @param {number} tradeAmnt - amount to trade
+ * @param {number} targetLvg - target leverage
+ * @param {number} price - price to trade amount 'tradeAmnt'
+ * @param {number} S3 - collateral to quote conversion (=S2 if base-collateral, =1 if quote collateral, = index S3 if quanto)
+ * @param {number} S2Mark - mark price
+ * @returns {number} Amount to be deposited to have the given leverage when trading into position pos before fees
+ */
+export function getDepositAmountForLvgTrade(
+  pos0: number,
+  b0: number,
+  tradeAmnt: number,
+  targetLvg: number,
+  price: number,
+  S3: number,
+  S2Mark: number,
+  maxLvg?: number
+) {
+  let pnl = (tradeAmnt * (S2Mark - price)) / S3;
+  if (targetLvg == 0) {
+    targetLvg = (Math.abs(pos0) * S2Mark) / S3 / b0;
+    targetLvg = Math.min(targetLvg, maxLvg!);
+  }
+  let b = (Math.abs(pos0 + tradeAmnt) * S2Mark) / S3 / targetLvg;
+  return -(b0 + pnl - b);
+}
 export function getMaxSignedPositionSize(
   marginCollateral: number,
   currentPosition: number,
@@ -244,6 +276,19 @@ export function getMaxSignedPositionSize(
   return availableCash / effectiveMarginRate;
 }
 
+/**
+ * Compute the leverage resulting from a trade
+ * @param tradeAmount Amount to trade, in base currency, signed
+ * @param marginCollateral Amount of cash in the margin account, after the trade, in collateral currency
+ * @param currentPosition Position size before the trade
+ * @param currentLockedInValue Locked-in value before the trade
+ * @param indexPriceS2 Spot price of the index when the trade happens
+ * @param indexPriceS3 Spot price of the collateral currency when the trade happens
+ * @param markPrice Mark price of the index when the trade happens
+ * @param limitPrice Price charged to trade tradeAmount
+ * @param feeRate Trading fee rate applicable to this trade
+ * @returns
+ */
 export function getNewPositionLeverage(
   tradeAmount: number,
   marginCollateral: number,
@@ -259,5 +304,29 @@ export function getNewPositionLeverage(
   let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - limitPrice);
   return (
     (Math.abs(newPosition) * indexPriceS2) / (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount))
+  );
+}
+
+export function getMaxCollateralToRemove(
+  currentPosition: number,
+  currentLockedInValue: number,
+  currentAvailableCash: number,
+  markPrice: number,
+  indexPriceS2: number,
+  indexPriceS3: number,
+  initialMarginRate: number
+): number {
+  return (
+    getMarginRequiredForLeveragedTrade(
+      1 / initialMarginRate,
+      currentPosition,
+      currentLockedInValue,
+      0,
+      markPrice,
+      indexPriceS2,
+      indexPriceS3,
+      indexPriceS2,
+      0
+    ) - currentAvailableCash
   );
 }
