@@ -195,7 +195,7 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns {MarginAccount}
+   * @returns {MarginAccount} Position risk of trader.
    */
   public async positionRisk(traderAddr: string, symbol: string): Promise<MarginAccount> {
     if (this.proxyContract == null) {
@@ -210,6 +210,13 @@ export default class MarketData extends PerpetualDataHandler {
     return mgnAcct;
   }
 
+  /**
+   * Estimates what the position risk will be if a given order is executed.
+   * @param traderAddr Address of trader
+   * @param order Order to be submitted
+   * @param currentPositionRisk Position risk before trade
+   * @returns {MarginAccount} Position risk after trade
+   */
   public async positionRiskOnTrade(
     traderAddr: string,
     order: Order,
@@ -244,14 +251,6 @@ export default class MarketData extends PerpetualDataHandler {
     );
   }
 
-  /**
-   *
-   * @param traderAddr Address of trader
-   * @param order Order to be submitted
-   * @param perpetualState
-   * @param currentPositionRisk
-   * @returns
-   */
   protected static _positionRiskOnTrade(
     symbol: string,
     tradeAmount: number,

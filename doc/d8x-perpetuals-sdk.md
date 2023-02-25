@@ -90,7 +90,8 @@ require gas-payments.</p></dd>
     * [~calculateLiquidationPriceCollateralBase(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralBase) ⇒ <code>number</code>
     * [~calculateLiquidationPriceCollateralQuanto(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3, Sm)](#module_d8xMath..calculateLiquidationPriceCollateralQuanto) ⇒ <code>number</code>
     * [~calculateLiquidationPriceCollateralQuote(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralQuote) ⇒ <code>number</code>
-    * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒
+    * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒ <code>number</code>
+    * [~getNewPositionLeverage(tradeAmount, marginCollateral, currentPosition, currentLockedInValue, indexPriceS2, indexPriceS3, markPrice, limitPrice, feeRate)](#module_d8xMath..getNewPositionLeverage) ⇒
 
 <a name="module_d8xMath..ABK64x64ToFloat"></a>
 
@@ -210,9 +211,9 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 
 <a name="module_d8xMath..getMarginRequiredForLeveragedTrade"></a>
 
-### d8xMath~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate) ⇒
+### d8xMath~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate) ⇒ <code>number</code>
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
-**Returns**: <p>Total collateral amount needed for the new position to have he desired leverage.</p>  
+**Returns**: <code>number</code> - <p>Total collateral amount needed for the new position to have he desired leverage.</p>  
 
 | Param | Description |
 | --- | --- |
@@ -225,6 +226,26 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 | indexPriceS3 | <p>Collateral index price, positive.</p> |
 | tradePrice | <p>Expected price to trade tradeAmount.</p> |
 | feeRate |  |
+
+<a name="module_d8xMath..getNewPositionLeverage"></a>
+
+### d8xMath~getNewPositionLeverage(tradeAmount, marginCollateral, currentPosition, currentLockedInValue, indexPriceS2, indexPriceS3, markPrice, limitPrice, feeRate) ⇒
+<p>Compute the leverage resulting from a trade</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>Leverage of the resulting position</p>  
+
+| Param | Description |
+| --- | --- |
+| tradeAmount | <p>Amount to trade, in base currency, signed</p> |
+| marginCollateral | <p>Amount of cash in the margin account, after the trade, in collateral currency</p> |
+| currentPosition | <p>Position size before the trade</p> |
+| currentLockedInValue | <p>Locked-in value before the trade</p> |
+| indexPriceS2 | <p>Spot price of the index when the trade happens</p> |
+| indexPriceS3 | <p>Spot price of the collateral currency when the trade happens</p> |
+| markPrice | <p>Mark price of the index when the trade happens</p> |
+| limitPrice | <p>Price charged to trade tradeAmount</p> |
+| feeRate | <p>Trading fee rate applicable to this trade</p> |
 
 <a name="module_utils"></a>
 
@@ -1786,6 +1807,7 @@ No gas required for the queries here.</p>
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -1934,6 +1956,7 @@ main();
 <p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1956,6 +1979,20 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+positionRiskOnTrade"></a>
+
+### marketData.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if a given order is executed.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| order | <p>Order to be submitted</p> |
+| currentPositionRisk | <p>Position risk before trade</p> |
+
 <a name="MarketData+getOraclePrice"></a>
 
 ### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>
@@ -3007,6 +3044,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -3252,6 +3290,7 @@ main();
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>positionRisk</code>](#MarketData+positionRisk)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -3274,6 +3313,21 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+positionRiskOnTrade"></a>
+
+### traderInterface.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if a given order is executed.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>positionRiskOnTrade</code>](#MarketData+positionRiskOnTrade)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| order | <p>Order to be submitted</p> |
+| currentPositionRisk | <p>Position risk before trade</p> |
+
 <a name="MarketData+getOraclePrice"></a>
 
 ### traderInterface.getOraclePrice(base, quote) ⇒ <code>number</code>

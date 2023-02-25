@@ -17,6 +17,7 @@ No gas required for the queries here.</p>
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -159,6 +160,7 @@ main();
 <p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -181,6 +183,20 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+positionRiskOnTrade"></a>
+
+### marketData.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if a given order is executed.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| order | <p>Order to be submitted</p> |
+| currentPositionRisk | <p>Position risk before trade</p> |
+
 <a name="MarketData+getOraclePrice"></a>
 
 ### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>
