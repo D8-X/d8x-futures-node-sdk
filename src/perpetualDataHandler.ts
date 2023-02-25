@@ -373,6 +373,11 @@ export default class PerpetualDataHandler {
       openInterestBC: ABK64x64ToFloat(ammState[11]),
       maxPositionBC: ABK64x64ToFloat(ammState[12]),
     };
+    if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.BASE) {
+      state.collToQuoteIndexPrice = state.indexPrice;
+    } else if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.QUOTE) {
+      state.collToQuoteIndexPrice = 1;
+    }
     return state;
   }
 
