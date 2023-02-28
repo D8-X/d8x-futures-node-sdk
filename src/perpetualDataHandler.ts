@@ -506,8 +506,10 @@ export default class PerpetualDataHandler {
     let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
     let limitPrice, stopPrice;
     let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
-    if (fLimitPrice.eq(0) || fLimitPrice.eq(MAX_64x64)) {
-      limitPrice = undefined;
+    if (fLimitPrice.eq(0)) {
+      limitPrice = side == BUY_SIDE ? undefined : 0;
+    } else if (fLimitPrice.eq(MAX_64x64)) {
+      limitPrice = side == BUY_SIDE ? Infinity : undefined;
     } else {
       limitPrice = ABK64x64ToFloat(fLimitPrice);
     }
