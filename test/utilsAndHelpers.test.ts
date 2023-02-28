@@ -74,14 +74,24 @@ describe("utils", () => {
   });
   it("combine flags 1", async () => {
     let flag = combineFlags(MASK_STOP_ORDER, MASK_KEEP_POS_LEVERAGE);
+    expect(flag.gt(0)).toBeTruthy;
     expect(containsFlag(flag, MASK_STOP_ORDER)).toBeTruthy;
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeTruthy;
     expect(containsFlag(flag, MASK_MARKET_ORDER)).toBeFalsy;
   });
   it("combine flags 2", async () => {
     let flag = combineFlags(MASK_LIMIT_ORDER, MASK_STOP_ORDER);
+    expect(flag.gt(0)).toBeTruthy;
     expect(containsFlag(flag, MASK_STOP_ORDER)).toBeTruthy;
     expect(containsFlag(flag, MASK_LIMIT_ORDER)).toBeTruthy;
+    expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeFalsy;
+  });
+
+  it("combine flags 3", async () => {
+    let flag = combineFlags(MASK_LIMIT_ORDER, MASK_CLOSE_ONLY);
+    expect(flag.gt(0)).toBeTruthy;
+    expect(containsFlag(flag, MASK_LIMIT_ORDER)).toBeTruthy;
+    expect(containsFlag(flag, MASK_CLOSE_ONLY)).toBeTruthy;
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeFalsy;
   });
 
