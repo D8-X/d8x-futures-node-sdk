@@ -156,6 +156,20 @@ describe("readOnly", () => {
       console.log("mgnAfter :", mgnAfter);
       console.log("mgnAfter2:", mgnAfter2);
     });
+    it("get margin info if collateral is added", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let deposit = 100;
+      let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
+      console.log("mgnBefore:", mgnBefore);
+      console.log("mgnAfter :", mgnAfter);
+    });
+    it("get margin info if collateral is removed", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let deposit = -100;
+      let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
+      console.log("mgnBefore:", mgnBefore);
+      console.log("mgnAfter :", mgnAfter);
+    });
 
     it("get pool id", async () => {
       let perpSymbol = "ETH-USD-MATIC";
