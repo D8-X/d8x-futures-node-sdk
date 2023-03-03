@@ -1808,6 +1808,7 @@ No gas required for the queries here.</p>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -1992,6 +1993,20 @@ main();
 | traderAddr | <p>Address of trader</p> |
 | order | <p>Order to be submitted</p> |
 | currentPositionRisk | <p>Position risk before trade</p> |
+
+<a name="MarketData+positionRiskOnCollateralAction"></a>
+
+### marketData.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
+| currentPositionRisk | <p>Position risk before</p> |
 
 <a name="MarketData+getOraclePrice"></a>
 
@@ -3045,6 +3060,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -3327,6 +3343,21 @@ main();
 | traderAddr | <p>Address of trader</p> |
 | order | <p>Order to be submitted</p> |
 | currentPositionRisk | <p>Position risk before trade</p> |
+
+<a name="MarketData+positionRiskOnCollateralAction"></a>
+
+### traderInterface.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>positionRiskOnCollateralAction</code>](#MarketData+positionRiskOnCollateralAction)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
+| currentPositionRisk | <p>Position risk before</p> |
 
 <a name="MarketData+getOraclePrice"></a>
 
