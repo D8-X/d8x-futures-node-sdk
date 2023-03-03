@@ -597,6 +597,25 @@ export default class MarketData extends PerpetualDataHandler {
     return digests;
   }
 
+  public async getAvailableMargin(traderAddr: string, symbol: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let mgnAcct = await PerpetualDataHandler.getMarginAccount(
+      traderAddr,
+      symbol,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract
+    );
+    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
+    let balanceCC = mgnAcct.collateralCC + mgnAcct.unrealizedPnlQuoteCCY / mgnAcct.collToQuoteConversion;
+    let initalMarginCC = Math.abs(
+      (perpInfo!.initialMarginRate * mgnAcct.positionNotionalBaseCCY * mgnAcct.markPrice) /
+        mgnAcct.collToQuoteConversion
+    );
+    return balanceCC - initalMarginCC;
+  }
+
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
