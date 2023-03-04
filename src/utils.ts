@@ -124,7 +124,7 @@ export function symbol4BToLongSymbol(s: string, mapping: Map<string, string>): s
 }
 
 export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {
-  return BigNumber.from(parseInt(f1.toString()) | parseInt(f2.toString()));
+  return BigNumber.from((parseInt(f1.toString()) | parseInt(f2.toString())) >>> 0);
 }
 
 export function containsFlag(f1: BigNumber, f2: BigNumber): boolean {

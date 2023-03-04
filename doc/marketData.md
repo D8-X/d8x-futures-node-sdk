@@ -11,11 +11,14 @@ No gas required for the queries here.</p>
 * [MarketData](#MarketData) ⇐ <code>PerpetualDataHandler</code>
     * [new MarketData(config)](#new_MarketData_new)
     * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -60,6 +63,13 @@ about perpetual currencies</p>
 | --- | --- |
 | provider | <p>optional provider</p> |
 
+<a name="MarketData+getProxyAddress"></a>
+
+### marketData.getProxyAddress() ⇒
+<p>Get the proxy address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
 ### marketData.smartContractOrderToOrder(smOrder) ⇒
@@ -151,6 +161,7 @@ main();
 <p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -173,6 +184,34 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+positionRiskOnTrade"></a>
+
+### marketData.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if a given order is executed.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| order | <p>Order to be submitted</p> |
+| currentPositionRisk | <p>Position risk before trade</p> |
+
+<a name="MarketData+positionRiskOnCollateralAction"></a>
+
+### marketData.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
+| currentPositionRisk | <p>Position risk before</p> |
+
 <a name="MarketData+getOraclePrice"></a>
 
 ### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>

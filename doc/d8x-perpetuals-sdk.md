@@ -90,7 +90,8 @@ require gas-payments.</p></dd>
     * [~calculateLiquidationPriceCollateralBase(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralBase) ⇒ <code>number</code>
     * [~calculateLiquidationPriceCollateralQuanto(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3, Sm)](#module_d8xMath..calculateLiquidationPriceCollateralQuanto) ⇒ <code>number</code>
     * [~calculateLiquidationPriceCollateralQuote(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralQuote) ⇒ <code>number</code>
-    * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒
+    * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒ <code>number</code>
+    * [~getNewPositionLeverage(tradeAmount, marginCollateral, currentPosition, currentLockedInValue, indexPriceS2, indexPriceS3, markPrice, limitPrice, feeRate)](#module_d8xMath..getNewPositionLeverage) ⇒
 
 <a name="module_d8xMath..ABK64x64ToFloat"></a>
 
@@ -210,9 +211,9 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 
 <a name="module_d8xMath..getMarginRequiredForLeveragedTrade"></a>
 
-### d8xMath~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate) ⇒
+### d8xMath~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate) ⇒ <code>number</code>
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
-**Returns**: <p>Total collateral amount needed for the new position to have he desired leverage.</p>  
+**Returns**: <code>number</code> - <p>Total collateral amount needed for the new position to have he desired leverage.</p>  
 
 | Param | Description |
 | --- | --- |
@@ -225,6 +226,26 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 | indexPriceS3 | <p>Collateral index price, positive.</p> |
 | tradePrice | <p>Expected price to trade tradeAmount.</p> |
 | feeRate |  |
+
+<a name="module_d8xMath..getNewPositionLeverage"></a>
+
+### d8xMath~getNewPositionLeverage(tradeAmount, marginCollateral, currentPosition, currentLockedInValue, indexPriceS2, indexPriceS3, markPrice, limitPrice, feeRate) ⇒
+<p>Compute the leverage resulting from a trade</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>Leverage of the resulting position</p>  
+
+| Param | Description |
+| --- | --- |
+| tradeAmount | <p>Amount to trade, in base currency, signed</p> |
+| marginCollateral | <p>Amount of cash in the margin account, after the trade, in collateral currency</p> |
+| currentPosition | <p>Position size before the trade</p> |
+| currentLockedInValue | <p>Locked-in value before the trade</p> |
+| indexPriceS2 | <p>Spot price of the index when the trade happens</p> |
+| indexPriceS3 | <p>Spot price of the collateral currency when the trade happens</p> |
+| markPrice | <p>Mark price of the index when the trade happens</p> |
+| limitPrice | <p>Price charged to trade tradeAmount</p> |
+| feeRate | <p>Trading fee rate applicable to this trade</p> |
 
 <a name="module_utils"></a>
 
@@ -1780,11 +1801,14 @@ No gas required for the queries here.</p>
 * [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
     * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -1835,6 +1859,13 @@ about perpetual currencies</p>
 | --- | --- |
 | provider | <p>optional provider</p> |
 
+<a name="MarketData+getProxyAddress"></a>
+
+### marketData.getProxyAddress() ⇒
+<p>Get the proxy address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
 ### marketData.smartContractOrderToOrder(smOrder) ⇒
@@ -1926,6 +1957,7 @@ main();
 <p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1948,6 +1980,34 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+positionRiskOnTrade"></a>
+
+### marketData.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if a given order is executed.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| order | <p>Order to be submitted</p> |
+| currentPositionRisk | <p>Position risk before trade</p> |
+
+<a name="MarketData+positionRiskOnCollateralAction"></a>
+
+### marketData.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
+| currentPositionRisk | <p>Position risk before</p> |
+
 <a name="MarketData+getOraclePrice"></a>
 
 ### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>
@@ -2527,6 +2587,7 @@ common data and chain operations.</p>
         * [.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap)](#PerpetualDataHandler.toSmartContractOrder) ⇒
         * [._orderTypeToFlag(order)](#PerpetualDataHandler._orderTypeToFlag) ⇒
         * [.readSDKConfig(fileLocation)](#PerpetualDataHandler.readSDKConfig) ⇒
+        * [._getABIFromContract(contract, functionName)](#PerpetualDataHandler._getABIFromContract) ⇒
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
@@ -2674,6 +2735,19 @@ Checks for some misspecifications.</p>
 | Param | Description |
 | --- | --- |
 | fileLocation | <p>json-file with required variables for config</p> |
+
+<a name="PerpetualDataHandler._getABIFromContract"></a>
+
+### PerpetualDataHandler.\_getABIFromContract(contract, functionName) ⇒
+<p>Get the ABI of a function in a given contract</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Function ABI as a single JSON string</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>A contract instance, e.g. this.proxyContract</p> |
+| functionName | <p>Name of the function whose ABI we want</p> |
 
 <a name="PerpetualEventHandler"></a>
 
@@ -2975,14 +3049,18 @@ so that signatures can be handled in frontend via wallet</p>
     * [.createProxyInstance(provider)](#TraderInterface+createProxyInstance)
     * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
     * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
-    * [.getProxyAddress(symbol)](#TraderInterface+getProxyAddress) ⇒
     * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
     * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
+    * [.getProxyABI(method)](#TraderInterface+getProxyABI) ⇒
+    * [.getOrderBookABI(symbol, method)](#TraderInterface+getOrderBookABI) ⇒
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -3072,18 +3150,6 @@ orderBookContract.cancelOrder(orderId, signature);</p>
 | --- | --- |
 | symbol | <p>symbol (e.g. MATIC-USD-MATIC)</p> |
 
-<a name="TraderInterface+getProxyAddress"></a>
-
-### traderInterface.getProxyAddress(symbol) ⇒
-<p>Get the proxy address for a perpetual</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Returns**: <p>Address of the perpetual proxy contract</p>  
-
-| Param | Description |
-| --- | --- |
-| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
-
 <a name="TraderInterface+createSmartContractOrder"></a>
 
 ### traderInterface.createSmartContractOrder(order, traderAddr) ⇒
@@ -3111,6 +3177,39 @@ Order must contain broker fee and broker address if there is supposed to be a br
 | --- | --- |
 | scOrder | <p>smart contract order struct (get from order via createSCOrder)</p> |
 
+<a name="TraderInterface+getProxyABI"></a>
+
+### traderInterface.getProxyABI(method) ⇒
+<p>Get the ABI of a method in the proxy contract</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>ABI as a single string</p>  
+
+| Param | Description |
+| --- | --- |
+| method | <p>Name of the method</p> |
+
+<a name="TraderInterface+getOrderBookABI"></a>
+
+### traderInterface.getOrderBookABI(symbol, method) ⇒
+<p>Get the ABI of a method in the Limit Order Book contract corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>ABI as a single string</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form MATIC-USD-MATIC</p> |
+| method | <p>Name of the method</p> |
+
+<a name="MarketData+getProxyAddress"></a>
+
+### traderInterface.getProxyAddress() ⇒
+<p>Get the proxy address</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getProxyAddress</code>](#MarketData+getProxyAddress)  
+**Returns**: <p>Address of the perpetual proxy contract</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
 ### traderInterface.smartContractOrderToOrder(smOrder) ⇒
@@ -3207,6 +3306,7 @@ main();
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>positionRisk</code>](#MarketData+positionRisk)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -3229,6 +3329,36 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+positionRiskOnTrade"></a>
+
+### traderInterface.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if a given order is executed.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>positionRiskOnTrade</code>](#MarketData+positionRiskOnTrade)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| order | <p>Order to be submitted</p> |
+| currentPositionRisk | <p>Position risk before trade</p> |
+
+<a name="MarketData+positionRiskOnCollateralAction"></a>
+
+### traderInterface.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+<p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>positionRiskOnCollateralAction</code>](#MarketData+positionRiskOnCollateralAction)  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Address of trader</p> |
+| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
+| currentPositionRisk | <p>Position risk before</p> |
+
 <a name="MarketData+getOraclePrice"></a>
 
 ### traderInterface.getOraclePrice(base, quote) ⇒ <code>number</code>

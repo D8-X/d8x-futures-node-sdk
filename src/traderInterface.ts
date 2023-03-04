@@ -123,4 +123,30 @@ export default class TraderInterface extends MarketData {
     let digest = await this.digestTool.createDigest(scOrder, this.chainId, true, this.proxyContract.address);
     return digest;
   }
+
+  /**
+   * Get the ABI of a method in the proxy contract
+   * @param method Name of the method
+   * @returns ABI as a single string
+   */
+  public getProxyABI(method: string): string {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    return PerpetualDataHandler._getABIFromContract(this.proxyContract, method);
+  }
+
+  /**
+   * Get the ABI of a method in the Limit Order Book contract corresponding to a given symbol.
+   * @param symbol Symbol of the form MATIC-USD-MATIC
+   * @param method Name of the method
+   * @returns ABI as a single string
+   */
+  public getOrderBookABI(symbol: string, method: string): string {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let orderBookContract: ethers.Contract = this.getOrderBookContract(symbol);
+    return PerpetualDataHandler._getABIFromContract(orderBookContract, method);
+  }
 }

@@ -373,6 +373,11 @@ export default class PerpetualDataHandler {
       openInterestBC: ABK64x64ToFloat(ammState[11]),
       maxPositionBC: ABK64x64ToFloat(ammState[12]),
     };
+    if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.BASE) {
+      state.collToQuoteIndexPrice = state.indexPrice;
+    } else if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.QUOTE) {
+      state.collToQuoteIndexPrice = 1;
+    }
     return state;
   }
 
@@ -421,7 +426,8 @@ export default class PerpetualDataHandler {
     } else {
       S2Liq = calculateLiquidationPriceCollateralQuote(lockedInValueQC, position, cashCC, tau);
     }
-    let pnl = position * Sm - lockedInValueQC - unpaidFunding;
+    // account cash + pnl = avail cash + pos Sm - L = margin balance
+    let pnl = position * Sm - lockedInValueQC + unpaidFunding;
     return [S2Liq, S3Liq, tau, pnl, unpaidFundingCC];
   }
 
@@ -501,8 +507,10 @@ export default class PerpetualDataHandler {
     let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
     let limitPrice, stopPrice;
     let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
-    if (fLimitPrice.eq(0) || fLimitPrice.eq(MAX_64x64)) {
-      limitPrice = undefined;
+    if (fLimitPrice.eq(0)) {
+      limitPrice = side == BUY_SIDE ? undefined : 0;
+    } else if (fLimitPrice.eq(MAX_64x64)) {
+      limitPrice = side == BUY_SIDE ? Infinity : undefined;
     } else {
       limitPrice = ABK64x64ToFloat(fLimitPrice);
     }
@@ -681,5 +689,16 @@ export default class PerpetualDataHandler {
     let configFile = require(fileLocation);
     let config: NodeSDKConfig = <NodeSDKConfig>configFile;
     return config;
+  }
+
+  /**
+   * Get the ABI of a function in a given contract
+   * @param contract A contract instance, e.g. this.proxyContract
+   * @param functionName Name of the function whose ABI we want
+   * @returns Function ABI as a single JSON string
+   */
+  protected static _getABIFromContract(contract: ethers.Contract, functionName: string): string {
+    const FormatTypes = ethers.utils.FormatTypes;
+    return contract.interface.getFunction(functionName).format(FormatTypes.full);
   }
 }

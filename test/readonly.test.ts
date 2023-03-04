@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ContractInterface, ethers } from "ethers";
 import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
@@ -71,6 +71,32 @@ describe("readOnly", () => {
       let res = await apiInterface.orderDigest(orderSC);
       console.log(res);
     });
+    it("get proxy ABI", async () => {
+      // Signer or provider
+      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      // Address of the contract
+      let contractAddr = apiInterface.getProxyAddress();
+      // ABI as it would come from the API:
+      let abi = apiInterface.getProxyABI("getOraclePrice");
+      console.log(abi);
+      // contract instance
+      let contract = new ethers.Contract(contractAddr, [abi], provider);
+      let px = await contract.getOraclePrice([toBytes4("MATIC"), toBytes4("USD")]);
+      console.log(`price of MATIC-USD: ${ABK64x64ToFloat(px)}`);
+    });
+    it("get LOB ABI", async () => {
+      // Signer or provider
+      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      // Address of the contract
+      let contractAddr = apiInterface.getOrderBookAddress("MATIC-USD-MATIC");
+      // ABI as it would come from the API:
+      let abi = apiInterface.getOrderBookABI("MATIC-USD-MATIC", "orderCount");
+      console.log(abi);
+      // contract instance
+      let contract = new ethers.Contract(contractAddr, [abi], provider);
+      let numOrders = await contract.orderCount();
+      console.log(`orderCount in MATIC-USD-MATIC order book: ${numOrders}`);
+    });
   });
 
   describe("MarketData", () => {
@@ -113,6 +139,36 @@ describe("readOnly", () => {
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
       console.log("mgn=", mgn);
+    });
+    it("get margin info if a trade was performed", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let order: Order = {
+        symbol: "MATIC-USD-MATIC",
+        side: "BUY",
+        type: "MARKET",
+        quantity: 5,
+        leverage: 2,
+        timestamp: Date.now() / 1000,
+      };
+      let mgnAfter = await mktData.positionRiskOnTrade(wallet.address, order);
+      let mgnAfter2 = await mktData.positionRiskOnTrade(wallet.address, order, mgnBefore);
+      console.log("mgnBefore:", mgnBefore);
+      console.log("mgnAfter :", mgnAfter);
+      console.log("mgnAfter2:", mgnAfter2);
+    });
+    it("get margin info if collateral is added", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let deposit = 100;
+      let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
+      console.log("mgnBefore:", mgnBefore);
+      console.log("mgnAfter :", mgnAfter);
+    });
+    it("get margin info if collateral is removed", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let deposit = -100;
+      let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
+      console.log("mgnBefore:", mgnBefore);
+      console.log("mgnAfter :", mgnAfter);
     });
 
     it("get pool id", async () => {

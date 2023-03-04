@@ -189,7 +189,7 @@ export function calculateLiquidationPriceCollateralQuote(
  * @param indexPriceS3 Collateral index price, positive.
  * @param tradePrice Expected price to trade tradeAmount.
  * @param feeRate
- * @returns Total collateral amount needed for the new position to have he desired leverage.
+ * @returns {number} Total collateral amount needed for the new position to have he desired leverage.
  */
 export function getMarginRequiredForLeveragedTrade(
   targetLeverage: number | undefined,
@@ -244,6 +244,19 @@ export function getMaxSignedPositionSize(
   return availableCash / effectiveMarginRate;
 }
 
+/**
+ * Compute the leverage resulting from a trade
+ * @param tradeAmount Amount to trade, in base currency, signed
+ * @param marginCollateral Amount of cash in the margin account, after the trade, in collateral currency
+ * @param currentPosition Position size before the trade
+ * @param currentLockedInValue Locked-in value before the trade
+ * @param indexPriceS2 Spot price of the index when the trade happens
+ * @param indexPriceS3 Spot price of the collateral currency when the trade happens
+ * @param markPrice Mark price of the index when the trade happens
+ * @param limitPrice Price charged to trade tradeAmount
+ * @param feeRate Trading fee rate applicable to this trade
+ * @returns Leverage of the resulting position
+ */
 export function getNewPositionLeverage(
   tradeAmount: number,
   marginCollateral: number,
@@ -259,5 +272,29 @@ export function getNewPositionLeverage(
   let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - limitPrice);
   return (
     (Math.abs(newPosition) * indexPriceS2) / (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount))
+  );
+}
+
+export function getMaxCollateralToRemove(
+  currentPosition: number,
+  currentLockedInValue: number,
+  currentAvailableCash: number,
+  markPrice: number,
+  indexPriceS2: number,
+  indexPriceS3: number,
+  initialMarginRate: number
+): number {
+  return (
+    getMarginRequiredForLeveragedTrade(
+      1 / initialMarginRate,
+      currentPosition,
+      currentLockedInValue,
+      0,
+      markPrice,
+      indexPriceS2,
+      indexPriceS3,
+      indexPriceS2,
+      0
+    ) - currentAvailableCash
   );
 }

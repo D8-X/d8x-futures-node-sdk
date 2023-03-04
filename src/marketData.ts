@@ -75,16 +75,16 @@ export default class MarketData extends PerpetualDataHandler {
     await this.initContractsAndData(this.provider);
   }
 
-    /**
+  /**
    * Get the proxy address
    * @returns Address of the perpetual proxy contract
    */
-    public getProxyAddress(): string {
-      if (this.proxyContract == null) {
-        throw Error("no proxy contract initialized. Use createProxyInstance().");
-      }
-      return this.proxyContract.address;
+  public getProxyAddress(): string {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    return this.proxyContract.address;
+  }
 
   /**
    * Convert the smart contract output of an order into a convenient format of type "Order"
@@ -195,7 +195,7 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns {MarginAccount}
+   * @returns {MarginAccount} Position risk of trader.
    */
   public async positionRisk(traderAddr: string, symbol: string): Promise<MarginAccount> {
     if (this.proxyContract == null) {
@@ -210,10 +210,16 @@ export default class MarketData extends PerpetualDataHandler {
     return mgnAcct;
   }
 
+  /**
+   * Estimates what the position risk will be if a given order is executed.
+   * @param traderAddr Address of trader
+   * @param order Order to be submitted
+   * @param currentPositionRisk Position risk before trade
+   * @returns {MarginAccount} Position risk after trade
+   */
   public async positionRiskOnTrade(
     traderAddr: string,
     order: Order,
-    perpetualState: PerpetualState,
     currentPositionRisk?: MarginAccount
   ): Promise<MarginAccount> {
     if (this.proxyContract == null) {
@@ -222,21 +228,79 @@ export default class MarketData extends PerpetualDataHandler {
     if (currentPositionRisk == undefined) {
       currentPositionRisk = await this.positionRisk(traderAddr, order.symbol);
     }
-    let tradeAmount = order.quantity * (order.side == BUY_SIDE ? 1 : -1);
-    let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
-    let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
-    let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
-    let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
-
+    // price for this order = limit price (conservative) if given, else the current perp price
+    let tradeAmount = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
+    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
     // total fee rate = exchange fee + broker fee
     let feeRate =
       (await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
       (order.brokerFeeTbps ?? 0) / 100_000;
+    let perpetualState = await this.getPerpetualState(order.symbol);
 
-    // price for this order = limit price (conservative) if given, else the current perp price
-    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
+    return MarketData._positionRiskOnAccountAction(
+      order.symbol,
+      tradeAmount,
+      0,
+      order.leverage,
+      order.keepPositionLvg,
+      tradePrice,
+      feeRate,
+      perpetualState,
+      currentPositionRisk,
+      this.symbolToPerpStaticInfo
+    );
+  }
 
+  /**
+   * Estimates what the position risk will be if given amount of collateral is added/removed from the account.
+   * @param traderAddr Address of trader
+   * @param deltaCollateral Amount of collateral to add or remove (signed)
+   * @param currentPositionRisk Position risk before
+   * @returns {MarginAccount} Position risk after
+   */
+  public async positionRiskOnCollateralAction(
+    deltaCollateral: number,
+    currentPositionRisk: MarginAccount
+  ): Promise<MarginAccount> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let perpetualState = await this.getPerpetualState(currentPositionRisk.symbol);
+
+    return MarketData._positionRiskOnAccountAction(
+      currentPositionRisk.symbol,
+      0,
+      deltaCollateral,
+      undefined,
+      false,
+      0,
+      0,
+      perpetualState,
+      currentPositionRisk,
+      this.symbolToPerpStaticInfo
+    );
+  }
+
+  protected static _positionRiskOnAccountAction(
+    symbol: string,
+    tradeAmount: number,
+    marginDeposit: number,
+    tradeLeverage: number | undefined,
+    keepPositionLvg: boolean | undefined,
+    tradePrice: number,
+    feeRate: number,
+    perpetualState: PerpetualState,
+    currentPositionRisk: MarginAccount,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): MarginAccount {
+    let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
+    let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
+    let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
+    let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
+    if (tradeAmount == 0) {
+      keepPositionLvg = false;
+    }
     // need these for leverage/margin calculations
     let [markPrice, indexPriceS2, indexPriceS3] = [
       perpetualState.markPrice,
@@ -245,7 +309,7 @@ export default class MarketData extends PerpetualDataHandler {
     ];
     let newCollateral: number;
     let newLeverage: number;
-    if (order.keepPositionLvg) {
+    if (keepPositionLvg) {
       // we have a target leverage for the resulting position
       // this gives us the total margin needed in the account so that it satisfies the leverage condition
       newCollateral = getMarginRequiredForLeveragedTrade(
@@ -271,10 +335,10 @@ export default class MarketData extends PerpetualDataHandler {
         tradePrice,
         feeRate
       );
-    } else {
+    } else if (tradeAmount != 0) {
       // the order has its own leverage and margin requirements
       let tradeCollateral = getMarginRequiredForLeveragedTrade(
-        order.leverage,
+        tradeLeverage,
         0,
         0,
         tradeAmount,
@@ -297,13 +361,27 @@ export default class MarketData extends PerpetualDataHandler {
         tradePrice,
         feeRate
       );
+    } else {
+      // there is no order, adding/removing collateral
+      newCollateral = currentPositionRisk.collateralCC + marginDeposit;
+      newLeverage = getNewPositionLeverage(
+        0,
+        newCollateral,
+        currentPosition,
+        lockedInValue,
+        indexPriceS2,
+        indexPriceS3,
+        markPrice,
+        0,
+        0
+      );
     }
     let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
 
     // liquidation vars
     let S2Liq: number, S3Liq: number | undefined;
-    let tau = this.symbolToPerpStaticInfo.get(order.symbol)!.maintenanceMarginRate;
-    let ccyType = this.symbolToPerpStaticInfo.get(order.symbol)!.collateralCurrencyType;
+    let tau = symbolToPerpStaticInfo.get(symbol)!.maintenanceMarginRate;
+    let ccyType = symbolToPerpStaticInfo.get(symbol)!.collateralCurrencyType;
     if (ccyType == CollaterlCCY.BASE) {
       S2Liq = calculateLiquidationPriceCollateralBase(newLockedInValue, newPosition, newCollateral, tau);
       S3Liq = S2Liq;
@@ -327,7 +405,7 @@ export default class MarketData extends PerpetualDataHandler {
       entryPrice: Math.abs(newLockedInValue / newPosition),
       leverage: newLeverage,
       markPrice: markPrice,
-      unrealizedPnlQuoteCCY: tradeAmount * (markPrice - tradePrice),
+      unrealizedPnlQuoteCCY: currentPositionRisk.unrealizedPnlQuoteCCY + tradeAmount * (markPrice - tradePrice),
       unrealizedFundingCollateralCCY: currentPositionRisk.unrealizedFundingCollateralCCY,
       collateralCC: newCollateral,
       collToQuoteConversion: indexPriceS3,
@@ -556,6 +634,25 @@ export default class MarketData extends PerpetualDataHandler {
     return digests;
   }
 
+  public async getAvailableMargin(traderAddr: string, symbol: string): Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let mgnAcct = await PerpetualDataHandler.getMarginAccount(
+      traderAddr,
+      symbol,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract
+    );
+    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
+    let balanceCC = mgnAcct.collateralCC + mgnAcct.unrealizedPnlQuoteCCY / mgnAcct.collToQuoteConversion;
+    let initalMarginCC = Math.abs(
+      (perpInfo!.initialMarginRate * mgnAcct.positionNotionalBaseCCY * mgnAcct.markPrice) /
+        mgnAcct.collToQuoteConversion
+    );
+    return balanceCC - initalMarginCC;
+  }
+
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
@@ -563,7 +660,7 @@ export default class MarketData extends PerpetualDataHandler {
   ): Promise<ExchangeInfo> {
     let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
     let factory = await _proxyContract.getOracleFactory();
-    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory };
+    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
     const numPools = nestedPerpetualIDs.length;
     for (var j = 0; j < numPools; j++) {
       let perpetualIDs = nestedPerpetualIDs[j];

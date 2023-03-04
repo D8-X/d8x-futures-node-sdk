@@ -311,15 +311,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap)) {
       return false;
     }
-    // check limit price, which may be undefined if it's an unrestricted market order
+    // check limit price: fromSmartContractOrder will set it to undefined when not tradeable
     if (order.limitPrice == undefined) {
-      order.limitPrice = order.side == BUY_SIDE ? Infinity : 0;
+      return false;
     }
-
-    if (
-      (order.side == BUY_SIDE && orderPrice > order.limitPrice) ||
-      (order.side == SELL_SIDE && orderPrice < order.limitPrice)
-    ) {
+    let limitPrice = order.limitPrice!;
+    if ((order.side == BUY_SIDE && orderPrice > limitPrice) || (order.side == SELL_SIDE && orderPrice < limitPrice)) {
       return false;
     }
     // do we need to check trigger/stop?
