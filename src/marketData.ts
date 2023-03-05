@@ -234,8 +234,9 @@ export default class MarketData extends PerpetualDataHandler {
     let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
     // total fee rate = exchange fee + broker fee
     let feeRate =
-      (await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
-      (order.brokerFeeTbps ?? 0) / 100_000;
+      ((await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
+        (order.brokerFeeTbps ?? 0)) /
+      100_000;
     let perpetualState = await this.getPerpetualState(order.symbol);
 
     return MarketData._positionRiskOnAccountAction(
