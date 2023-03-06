@@ -1,5 +1,5 @@
 import { ContractInterface, ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo, BUY_SIDE, SELL_SIDE } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
@@ -130,6 +130,32 @@ describe("readOnly", () => {
         console.log(`${basequote[0]}-${basequote[1]} = ${px}`);
       }
     });
+    it("getWalletBalance", async () => {
+      let bal = await mktData.getWalletBalance(wallet.address, "ETH-USD-MATIC");
+      console.log(`balance of ${wallet.address}: ${bal}`);
+    });
+    it("maxOrderSizeForTrader (long)", async () => {
+      let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
+      let bal = await mktData.getWalletBalance(wallet.address, "ETH-USD-MATIC");
+      let perpState = await mktData.getPerpetualState("ETH-USD-MATIC");
+      // without wallet
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos, perpState);
+      // with wallet
+      let maxTradeSize2 = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos, perpState, bal);
+      console.log(`max long trade size w/o   wallet: ${maxTradeSize}`);
+      console.log(`max long trade size w/   wallet: ${maxTradeSize2}`);
+    });
+    it("maxOrderSizeForTrader (short)", async () => {
+      let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
+      let bal = await mktData.getWalletBalance(wallet.address, "ETH-USD-MATIC");
+      let perpState = await mktData.getPerpetualState("ETH-USD-MATIC");
+      // without wallet
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos, perpState);
+      // with wallet
+      let maxTradeSize2 = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos, perpState, bal);
+      console.log(`max short trade size w/o  wallet: ${maxTradeSize}`);
+      console.log(`max short trade size w/  wallet: ${maxTradeSize2}`);
+    });
     it("openOrders", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
       console.log("order ids=", ordersStruct.orderIds);
@@ -146,8 +172,8 @@ describe("readOnly", () => {
         symbol: "MATIC-USD-MATIC",
         side: "BUY",
         type: "MARKET",
-        quantity: 5,
-        leverage: 2,
+        quantity: 200,
+        leverage: 1,
         timestamp: Date.now() / 1000,
       };
       let mgnAfter = await mktData.positionRiskOnTrade(wallet.address, order);

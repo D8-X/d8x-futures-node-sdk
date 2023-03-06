@@ -4,6 +4,7 @@ import {
   calculateLiquidationPriceCollateralBase,
   calculateLiquidationPriceCollateralQuanto,
   calculateLiquidationPriceCollateralQuote,
+  floatToABK64x64,
   getMarginRequiredForLeveragedTrade,
   getMaxSignedPositionSize,
   getNewPositionLeverage,
@@ -15,6 +16,7 @@ import {
   COLLATERAL_CURRENCY_BASE,
   COLLATERAL_CURRENCY_QUANTO,
   CollaterlCCY,
+  ERC20_ABI,
   ExchangeInfo,
   MarginAccount,
   NodeSDKConfig,
@@ -401,9 +403,9 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let newPositionRisk: MarginAccount = {
       symbol: currentPositionRisk.symbol,
-      positionNotionalBaseCCY: newPosition,
+      positionNotionalBaseCCY: Math.abs(newPosition),
       side: side,
-      entryPrice: Math.abs(newLockedInValue / newPosition),
+      entryPrice: newPosition == 0 ? 0 : Math.abs(newLockedInValue / newPosition),
       leverage: newLeverage,
       markPrice: markPrice,
       unrealizedPnlQuoteCCY: currentPositionRisk.unrealizedPnlQuoteCCY + tradeAmount * (markPrice - tradePrice),
@@ -416,7 +418,56 @@ export default class MarketData extends PerpetualDataHandler {
     return newPositionRisk;
   }
 
-  public maxOrderSizeForTrader(side: string, positionRisk: MarginAccount, perpetualState: PerpetualState): number {
+  /**
+   * Gets the pool index (in exchangeInfo) corresponding to a given symbol.
+   * @param symbol Symbol of the form ETH-USD-MATIC
+   * @returns Pool index
+   */
+  public getPoolIndexFromSymbol(symbol: string): number {
+    let pools = this.poolStaticInfos!;
+    let poolId = this.getPoolIdFromSymbol(symbol);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return k;
+      }
+      k++;
+    }
+    return -1;
+  }
+
+  /**
+   * Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.
+   * @param address Address to check
+   * @param symbol Symbol of the form ETH-USD-MATIC.
+   * @returns Balance
+   */
+  public async getWalletBalance(address: string, symbol: string): Promise<number> {
+    let poolIdx = this.getPoolIndexFromSymbol(symbol);
+    let marginTokenAddr = this.poolStaticInfos[poolIdx].poolMarginTokenAddr;
+    let token = new ethers.Contract(marginTokenAddr, ERC20_ABI, this.provider!);
+    let walletBalanceDec18 = await token.balanceOf(address);
+    return walletBalanceDec18 / 10 ** 18;
+  }
+
+  /**
+   * Gets the maximal order size considering the existing position, state of the perpetual, and optionally any additional collateral to be posted.
+   * @param side BUY or SELL
+   * @param positionRisk Current position risk (as seen in positionRisk)
+   * @param perpetualState Current perpetual state (as seen in exchangeInfo)
+   * @param walletBalance Optional wallet balance to consider in the calculation
+   * @returns Maximal trade size, not signed
+   */
+  public async maxOrderSizeForTrader(
+    side: string,
+    positionRisk: MarginAccount,
+    perpetualState: PerpetualState,
+    walletBalance?: number
+  ): Promise<number> {
+    if (walletBalance != undefined) {
+      positionRisk = await this.positionRiskOnCollateralAction(walletBalance, positionRisk);
+    }
     let initialMarginRate = this.symbolToPerpStaticInfo.get(positionRisk.symbol)!.initialMarginRate;
     // fees not considered here
     let maxPosition = getMaxSignedPositionSize(
@@ -431,7 +482,15 @@ export default class MarketData extends PerpetualDataHandler {
       perpetualState.indexPrice,
       perpetualState.collToQuoteIndexPrice
     );
-    return maxPosition - positionRisk.positionNotionalBaseCCY;
+    let curPosition = side == BUY_SIDE ? positionRisk.positionNotionalBaseCCY : -positionRisk.positionNotionalBaseCCY;
+    let tradeAmount = maxPosition - curPosition;
+    let perpId = this.getPerpIdFromSymbol(positionRisk.symbol);
+    let perpMaxPositionABK = await this.proxyContract!.getMaxSignedTradeSizeForPos(
+      perpId,
+      floatToABK64x64(curPosition),
+      floatToABK64x64(tradeAmount)
+    );
+    return ABK64x64ToFloat(perpMaxPositionABK.abs());
   }
 
   /**

@@ -19,6 +19,9 @@ No gas required for the queries here.</p>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
+    * [.getPoolIndexFromSymbol(symbol)](#MarketData+getPoolIndexFromSymbol) ⇒
+    * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+    * [.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance)](#MarketData+maxOrderSizeForTrader) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -211,6 +214,46 @@ main();
 | traderAddr | <p>Address of trader</p> |
 | deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
 | currentPositionRisk | <p>Position risk before</p> |
+
+<a name="MarketData+getPoolIndexFromSymbol"></a>
+
+### marketData.getPoolIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Pool index</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getWalletBalance"></a>
+
+### marketData.getWalletBalance(address, symbol) ⇒
+<p>Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Balance</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>Address to check</p> |
+| symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+<a name="MarketData+maxOrderSizeForTrader"></a>
+
+### marketData.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance) ⇒
+<p>Gets the maximal order size considering the existing position, state of the perpetual, and optionally any additional collateral to be posted.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Maximal trade size, not signed</p>  
+
+| Param | Description |
+| --- | --- |
+| side | <p>BUY or SELL</p> |
+| positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
+| perpetualState | <p>Current perpetual state (as seen in exchangeInfo)</p> |
+| walletBalance | <p>Optional wallet balance to consider in the calculation</p> |
 
 <a name="MarketData+getOraclePrice"></a>
 
