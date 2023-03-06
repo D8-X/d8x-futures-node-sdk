@@ -315,7 +315,7 @@ export default class PerpetualDataHandler {
     }
     let mgn: MarginAccount = {
       symbol: symbol,
-      positionNotionalBaseCCY: isEmpty ? 0 : ABK64x64ToFloat(traderState[idx_notional]),
+      positionNotionalBaseCCY: isEmpty ? 0 : ABK64x64ToFloat(traderState[idx_notional].abs()),
       side: isEmpty ? CLOSED_SIDE : side,
       entryPrice: isEmpty ? 0 : entryPrice,
       leverage: isEmpty ? 0 : ABK64x64ToFloat(traderState[idx_lvg]),
