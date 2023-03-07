@@ -713,6 +713,15 @@ export default class MarketData extends PerpetualDataHandler {
     return balanceCC - initalMarginCC;
   }
 
+  public async getPythIds(symbol: string): Promise<string[]> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    let perpId = this.getPerpIdFromSymbol(symbol);
+    let idsB32 = await this.proxyContract.getPythIds(perpId);
+    return idsB32.apply((id: string) => ethers.utils.parseBytes32String(id));
+  }
+
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,

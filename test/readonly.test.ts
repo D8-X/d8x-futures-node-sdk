@@ -121,6 +121,11 @@ describe("readOnly", () => {
       let info: PerpetualStaticInfo = await mktData.getPerpetualStaticInfo("MATIC-USD-MATIC");
       console.log(info);
     });
+    it("get pyth ids", async () => {
+      // TODO: uncomment when deployed
+      let pyhIds = []; // await mktData.getPythIds("ETH-USD-MATIC");
+      console.log(`pyth ids = ${pyhIds}`);
+    });
     it("oracle routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
 
