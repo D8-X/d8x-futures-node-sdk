@@ -123,7 +123,7 @@ describe("readOnly", () => {
     });
     it("get pyth ids", async () => {
       // TODO: uncomment when deployed
-      let pyhIds = []; // await mktData.getPythIds("ETH-USD-MATIC");
+      let pyhIds: string[] = []; // await mktData.getPythIds("ETH-USD-MATIC");
       console.log(`pyth ids = ${pyhIds}`);
     });
     it("oracle routes", async () => {
