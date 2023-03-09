@@ -10,7 +10,8 @@
     "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderReferrerTool.ts --configure ./jsdoc2md.json > ./doc/orderReferrerTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
     "test": "jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
-    "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts"
+    "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
+    "prepublish": "yarn build"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
@@ -32,7 +33,7 @@
   },
   "name": "@d8x/perpetuals-sdk",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
-  "version": "0.0.44",
+  "version": "0.0.45",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "directories": {
