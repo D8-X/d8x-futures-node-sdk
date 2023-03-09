@@ -25,3 +25,5 @@ export {
   TraderInterface,
   PerpetualEventHandler,
 };
+
+export * from "./version";
