@@ -92,6 +92,7 @@ require gas-payments.</p></dd>
     * [~calculateLiquidationPriceCollateralQuote(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralQuote) ⇒ <code>number</code>
     * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒ <code>number</code>
     * [~getNewPositionLeverage(tradeAmount, marginCollateral, currentPosition, currentLockedInValue, indexPriceS2, indexPriceS3, markPrice, limitPrice, feeRate)](#module_d8xMath..getNewPositionLeverage) ⇒
+    * [~getDepositAmountForLvgTrade(pos0, b0, tradeAmnt, targetLvg, price, S3, S2Mark)](#module_d8xMath..getDepositAmountForLvgTrade) ⇒ <code>number</code>
 
 <a name="module_d8xMath..ABK64x64ToFloat"></a>
 
@@ -246,6 +247,27 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 | markPrice | <p>Mark price of the index when the trade happens</p> |
 | limitPrice | <p>Price charged to trade tradeAmount</p> |
 | feeRate | <p>Trading fee rate applicable to this trade</p> |
+
+<a name="module_d8xMath..getDepositAmountForLvgTrade"></a>
+
+### d8xMath~getDepositAmountForLvgTrade(pos0, b0, tradeAmnt, targetLvg, price, S3, S2Mark) ⇒ <code>number</code>
+<p>Determine amount to be deposited into margin account so that the given leverage
+is obtained when trading a position pos (trade amount = position)
+Does NOT include fees
+Smart contract equivalent: calcMarginForTargetLeverage(..., _ignorePosBalance = false &amp; balance = b0)</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <code>number</code> - <p>Amount to be deposited to have the given leverage when trading into position pos before fees</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| pos0 | <code>number</code> | <p>current position</p> |
+| b0 | <code>number</code> | <p>current balance</p> |
+| tradeAmnt | <code>number</code> | <p>amount to trade</p> |
+| targetLvg | <code>number</code> | <p>target leverage</p> |
+| price | <code>number</code> | <p>price to trade amount 'tradeAmnt'</p> |
+| S3 | <code>number</code> | <p>collateral to quote conversion (=S2 if base-collateral, =1 if quote collateral, = index S3 if quanto)</p> |
+| S2Mark | <code>number</code> | <p>mark price</p> |
 
 <a name="module_utils"></a>
 
