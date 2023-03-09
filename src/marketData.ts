@@ -5,6 +5,7 @@ import {
   calculateLiquidationPriceCollateralQuanto,
   calculateLiquidationPriceCollateralQuote,
   floatToABK64x64,
+  getDepositAmountForLvgTrade,
   getMarginRequiredForLeveragedTrade,
   getMaxSignedPositionSize,
   getNewPositionLeverage,
@@ -297,13 +298,17 @@ export default class MarketData extends PerpetualDataHandler {
     currentPositionRisk: MarginAccount,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): MarginAccount {
-    let currentPosition = currentPositionRisk.positionNotionalBaseCCY;
-    let newPosition = currentPositionRisk.positionNotionalBaseCCY + tradeAmount;
-    let side = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
+    let currentSide = currentPositionRisk.side;
+    let currentPosition = (currentSide == BUY_SIDE ? 1 : -1) * currentPositionRisk.positionNotionalBaseCCY;
+    let newPosition = currentPosition + tradeAmount;
+    let newSide = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
     let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
     if (tradeAmount == 0) {
       keepPositionLvg = false;
     }
+    let isOpen = newPosition != 0 && (tradeAmount == 0 || currentPosition == 0 || tradeAmount * currentPosition > 0);
+    let isFlip = Math.abs(tradeAmount) > Math.abs(currentPosition) && !isOpen;
+    let keepPositionLvgOnClose = keepPositionLvg && !isOpen;
     // need these for leverage/margin calculations
     let [markPrice, indexPriceS2, indexPriceS3] = [
       perpetualState.markPrice,
@@ -339,19 +344,26 @@ export default class MarketData extends PerpetualDataHandler {
         feeRate
       );
     } else if (tradeAmount != 0) {
-      // the order has its own leverage and margin requirements
-      let tradeCollateral = getMarginRequiredForLeveragedTrade(
-        tradeLeverage,
-        0,
-        0,
-        tradeAmount,
-        markPrice,
-        indexPriceS2,
-        indexPriceS3,
-        tradePrice,
-        feeRate
-      );
-      newCollateral = currentPositionRisk.collateralCC + tradeCollateral;
+      let depositAtTradeTime: number;
+      if (!isOpen && !isFlip && !keepPositionLvgOnClose) {
+        // no deposit from trader's wallet, but there is realized pnl
+        depositAtTradeTime = tradeAmount * (tradePrice - currentPositionRisk.entryPrice);
+      } else {
+        // target lvg will default current lvg if not specified
+        let targetLvg = isFlip || isOpen ? tradeLeverage ?? 0 : 0;
+        let b0, pos0;
+        [b0, pos0] = isOpen ? [0, 0] : [currentPositionRisk.collateralCC, currentPosition];
+        depositAtTradeTime = getDepositAmountForLvgTrade(
+          b0,
+          pos0,
+          tradeAmount,
+          targetLvg,
+          tradePrice,
+          indexPriceS2,
+          markPrice
+        );
+      }
+      newCollateral = currentPositionRisk.collateralCC + depositAtTradeTime;
       // the new leverage corresponds to increasing the position and collateral according to the order
       newLeverage = getNewPositionLeverage(
         tradeAmount,
@@ -380,7 +392,7 @@ export default class MarketData extends PerpetualDataHandler {
       );
     }
     let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
-
+    let entryPrice = newPosition == 0 ? 0 : Math.abs(newLockedInValue / newPosition);
     // liquidation vars
     let S2Liq: number, S3Liq: number | undefined;
     let tau = symbolToPerpStaticInfo.get(symbol)!.maintenanceMarginRate;
@@ -401,14 +413,15 @@ export default class MarketData extends PerpetualDataHandler {
     } else {
       S2Liq = calculateLiquidationPriceCollateralQuote(newLockedInValue, newPosition, newCollateral, tau);
     }
+
     let newPositionRisk: MarginAccount = {
       symbol: currentPositionRisk.symbol,
       positionNotionalBaseCCY: Math.abs(newPosition),
-      side: side,
-      entryPrice: newPosition == 0 ? 0 : Math.abs(newLockedInValue / newPosition),
+      side: newSide,
+      entryPrice: entryPrice,
       leverage: newLeverage,
       markPrice: markPrice,
-      unrealizedPnlQuoteCCY: currentPositionRisk.unrealizedPnlQuoteCCY + tradeAmount * (markPrice - tradePrice),
+      unrealizedPnlQuoteCCY: newPosition * markPrice - newLockedInValue,
       unrealizedFundingCollateralCCY: currentPositionRisk.unrealizedFundingCollateralCCY,
       collateralCC: newCollateral,
       collToQuoteConversion: indexPriceS3,
