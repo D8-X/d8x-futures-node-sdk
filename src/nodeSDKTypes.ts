@@ -1,6 +1,5 @@
 import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction } from "ethers";
-export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
-export const DEFAULT_CONFIG_MAINNET = "notthereyet";
+export const DEFAULT_CONFIG = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
 
@@ -33,6 +32,7 @@ export const BUY_SIDE = "BUY";
 export const SELL_SIDE = "SELL";
 export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
+  name: string | undefined;
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;

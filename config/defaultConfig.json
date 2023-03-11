@@ -1,10 +1,35 @@
-{
-  "name": "v1.5",
-  "proxyAddr": "0xaB6AD25eE5CA28E7d7b16A33A33897aE34BF9e67",
-  "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
-  "proxyABILocation": "../abi/IPerpetualManager.json",
-  "limitOrderBookFactoryAddr": "0xe95422bf27C62F3b9ae19d6032aC58c1bd13C71E",
-  "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
-  "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
-  "symbolListLocation": "../config/symbolList.json"
-}
+[
+  {
+    "name": "testnet",
+    "version": 1.5,
+    "proxyAddr": "0xaB6AD25eE5CA28E7d7b16A33A33897aE34BF9e67",
+    "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
+    "proxyABILocation": "../abi/IPerpetualManager.json",
+    "limitOrderBookFactoryAddr": "0xe95422bf27C62F3b9ae19d6032aC58c1bd13C71E",
+    "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
+    "symbolListLocation": "../config/symbolList.json"
+  },
+  {
+    "name": "mainnet",
+    "version": 0,
+    "proxyAddr": "",
+    "nodeURL": "",
+    "proxyABILocation": "../abi/IPerpetualManager.json",
+    "limitOrderBookFactoryAddr": "",
+    "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
+    "symbolListLocation": "../config/symbolList.json"
+  },
+  {
+    "name": "central-park",
+    "version": 1.0,
+    "proxyAddr": "0x20A2D5C60f0c0baA365b6Db2729286dba383400f",
+    "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
+    "proxyABILocation": "../abi/central-park/IPerpetualManager.json",
+    "limitOrderBookFactoryAddr": "0xdcBd9fEc5F1d972af3E269E9d4E9998BB4ECd306",
+    "limitOrderBookFactoryABILocation": "../abi/central-park/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "../abi/central-park/LimitOrderBook.json",
+    "symbolListLocation": "../config/symbolList.json"
+  }
+]

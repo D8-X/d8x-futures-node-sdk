@@ -24,13 +24,11 @@ import {
   MASK_STOP_ORDER,
   MarginAccount,
   PoolStaticInfo,
-  DEFAULT_CONFIG_MAINNET_NAME,
-  DEFAULT_CONFIG_MAINNET,
-  DEFAULT_CONFIG_TESTNET_NAME,
-  DEFAULT_CONFIG_TESTNET,
   ONE_64x64,
   PERP_STATE_STR,
   PerpetualState,
+  DEFAULT_CONFIG,
+  DEFAULT_CONFIG_MAINNET_NAME,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -677,18 +675,46 @@ export default class PerpetualDataHandler {
 
   /**
    * Read config file into NodeSDKConfig interface
-   * @param fileLocation json-file with required variables for config
+   * @param configNameOrfileLocation json-file with required variables for config, or name of a default known config
    * @returns NodeSDKConfig
    */
-  public static readSDKConfig(fileLocation: string): NodeSDKConfig {
-    if (fileLocation == DEFAULT_CONFIG_MAINNET_NAME) {
-      fileLocation = DEFAULT_CONFIG_MAINNET;
-    } else if (fileLocation == DEFAULT_CONFIG_TESTNET_NAME) {
-      fileLocation = DEFAULT_CONFIG_TESTNET;
+  public static readSDKConfig(configNameOrFileLocation: string, version?: string): NodeSDKConfig {
+    let config;
+    if (/\.json$/.test(configNameOrFileLocation)) {
+      // file path
+      let configFile = require(configNameOrFileLocation);
+      config = <NodeSDKConfig>configFile;
+    } else {
+      // name
+      let configFile = require(DEFAULT_CONFIG);
+      configFile = configFile.filter((c: any) => c.name == configNameOrFileLocation);
+      if (configFile.length == 0) {
+        throw Error(`Config name ${configNameOrFileLocation} not found.`);
+      } else if (configFile.length > 1) {
+        throw Error(`Config name ${configNameOrFileLocation} not unique.`);
+      }
+      for (let configItem of configFile) {
+        if (configItem.name == configNameOrFileLocation) {
+          config = <NodeSDKConfig>configItem;
+          break;
+        }
+      }
     }
-    let configFile = require(fileLocation);
-    let config: NodeSDKConfig = <NodeSDKConfig>configFile;
+    if (config == undefined) {
+      throw Error(`Config file ${configNameOrFileLocation} not found.`);
+    }
     return config;
+    // if (configNameOrfileLocation == DEFAULT_CONFIG_MAINNET_NAME) {
+    //   configNameOrfileLocation = DEFAULT_CONFIG_MAINNET;
+    // } else if (configNameOrfileLocation == DEFAULT_CONFIG_TESTNET_NAME) {
+    //   configNameOrfileLocation = DEFAULT_CONFIG_TESTNET;
+    // } else {
+    //   let config = require(DEFAULT_CONFIG);
+    //   // check names stored in default config
+    // }
+    // let configFile = require(configNameOrfileLocation);
+    // let config: NodeSDKConfig = <NodeSDKConfig>configFile;
+    // return config;
   }
 
   /**

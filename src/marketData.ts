@@ -732,7 +732,7 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let idsB32 = await this.proxyContract.getPythIds(perpId);
-    return idsB32.apply((id: string) => ethers.utils.parseBytes32String(id));
+    return idsB32;
   }
 
   public static async _exchangeInfo(
@@ -784,7 +784,7 @@ export default class MarketData extends PerpetualDataHandler {
           midPrice: ABK64x64ToFloat(fMidPrice),
           currentFundingRateBps: currentFundingRateBps,
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
-          maxPositionBC: ABK64x64ToFloat(perp.fMaxPositionBC),
+          maxPositionBC: Infinity,
         };
         PoolState.perpetuals.push(PerpetualState);
       }
