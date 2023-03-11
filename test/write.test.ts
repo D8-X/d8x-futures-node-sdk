@@ -25,7 +25,7 @@ let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    config = PerpetualDataHandler.readSDKConfig("central-park");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -43,6 +43,10 @@ describe("write and spoil gas and tokens", () => {
     let tx = await accTrade.setAllowance("MATIC");
     console.log(`set allowance tx hash = ${tx.hash}`);
     //*/
+  });
+
+  it("swaps MATIC for mock token", async () => {
+    let tx = await accTrade.swapForMockToken("USDC", "0.001");
   });
 
   // it("add collateral", async () => {

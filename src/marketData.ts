@@ -432,25 +432,6 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Gets the pool index (in exchangeInfo) corresponding to a given symbol.
-   * @param symbol Symbol of the form ETH-USD-MATIC
-   * @returns Pool index
-   */
-  public getPoolIndexFromSymbol(symbol: string): number {
-    let pools = this.poolStaticInfos!;
-    let poolId = this.getPoolIdFromSymbol(symbol);
-    let k = 0;
-    while (k < pools.length) {
-      if (pools[k].poolId == poolId) {
-        // pool found
-        return k;
-      }
-      k++;
-    }
-    return -1;
-  }
-
-  /**
    * Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.
    * @param address Address to check
    * @param symbol Symbol of the form ETH-USD-MATIC.
@@ -761,8 +742,10 @@ export default class MarketData extends PerpetualDataHandler {
       };
       for (var k = 0; k < perpetualIDs.length; k++) {
         let perp = await _proxyContract.getPerpetual(perpetualIDs[k]);
-        let fIndexS2 = await _proxyContract.getOraclePrice([perp.S2BaseCCY, perp.S2QuoteCCY]);
-        let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0));
+        let fIndexS2: BigNumber = await _proxyContract.getOraclePrice([perp.S2BaseCCY, perp.S2QuoteCCY]);
+        let fMidPrice = fIndexS2.eq(0)
+          ? BigNumber.from(0)
+          : await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0));
         let indexS2 = ABK64x64ToFloat(fIndexS2);
         let indexS3 = 1;
         if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {

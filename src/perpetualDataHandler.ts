@@ -727,4 +727,37 @@ export default class PerpetualDataHandler {
     const FormatTypes = ethers.utils.FormatTypes;
     return contract.interface.getFunction(functionName).format(FormatTypes.full);
   }
+
+  /**
+   * Gets the pool index (in exchangeInfo) corresponding to a given symbol.
+   * @param symbol Symbol of the form ETH-USD-MATIC
+   * @returns Pool index
+   */
+  public getPoolIndexFromSymbol(symbol: string): number {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return k;
+      }
+      k++;
+    }
+    return -1;
+  }
+
+  public getMarginTokenFromSymbol(symbol: string): string | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolMarginTokenAddr;
+      }
+      k++;
+    }
+    return undefined;
+  }
 }
