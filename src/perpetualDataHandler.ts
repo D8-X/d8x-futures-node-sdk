@@ -178,12 +178,15 @@ export default class PerpetualDataHandler {
         poolMarginSymbol: poolCCY!,
         poolMarginTokenAddr: poolMarginTokenAddr,
         shareTokenAddr: pool.shareTokenAddress,
-        oracleFactoryAddr: oracleFactoryAddr,
+        oracleFactoryAddr: oracleFactoryAddr, 
       };
       this.poolStaticInfos.push(info);
       let currentSymbols3 = currentSymbols.map((x) => x + "-" + poolCCY);
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
+        // add pyth IDs
+        let idsB32 = await proxyContract.getPythIds(perpetualIDs[k]);
+
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
@@ -193,6 +196,7 @@ export default class PerpetualDataHandler {
           S2Symbol: currentSymbols[k],
           S3Symbol: currentSymbolsS3[k],
           lotSizeBC: lotSizes[k],
+          pythIds: idsB32
         });
       }
       // push margin token address into map

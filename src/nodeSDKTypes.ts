@@ -82,6 +82,7 @@ export interface PerpetualStaticInfo {
   S2Symbol: string;
   S3Symbol: string;
   lotSizeBC: number;
+  pythIds: string[];
 }
 
 /**
