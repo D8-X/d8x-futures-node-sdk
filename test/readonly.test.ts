@@ -10,6 +10,8 @@ import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
+import PriceFeeds from "../src/priceFeeds";
+
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -161,6 +163,11 @@ describe("readOnly", () => {
     it("get pyth ids", async () => {
       let pyhIds: string[] = mktData.getPythIds("ETH-USD-MATIC");
       console.log(`pyth ids = ${pyhIds}`);
+    });
+    it("get recent prices", async()=> {
+      let priceFeeds = new PriceFeeds("https://pyth.testnet.quantena.tech/api", mktData);
+      let prices = await priceFeeds.fetchCurrentPrices("ETH-USD-MATIC");
+      console.log("pyth prices = ", prices);
     });
     it("oracle routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
