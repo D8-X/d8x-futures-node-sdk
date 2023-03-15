@@ -1,5 +1,7 @@
+import {BigNumber} from "ethers";
 import MarketData from "./marketData";
 import {PriceFeedConfig, PriceFeedSubmission, VaaPxExtension} from "./nodeSDKTypes"
+import {decNToFloat} from "./d8XMath";
 
 export default class PriceFeeds {
   private config: PriceFeedConfig;
@@ -95,15 +97,18 @@ export default class PriceFeeds {
 
     // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
-    const px = new Array<VaaPxExtension>();
+    const prices = new Array<{px: number, timestamp: number}>();
     for(let k=0; k<orderEndpointNumber.length; k++) {
       let endpointId = Math.floor(orderEndpointNumber[k]/100);
       let idWithinEndpoint = orderEndpointNumber[k]-100*endpointId;
       priceFeedUpdates.push(data[endpointId][0][idWithinEndpoint]);
-      px.push(data[endpointId][1][idWithinEndpoint]);
+      let pxInfo : VaaPxExtension = data[endpointId][1][idWithinEndpoint];
+      let price = decNToFloat(BigNumber.from(pxInfo.price), -pxInfo.expo);
+      let pxInfo2 = {px: price, timestamp: pxInfo.publish_time};
+      prices.push(pxInfo2);
     }
     
-    return {"symbols": symbols, priceFeeds: priceFeedUpdates, priceInfo: px};
+    return {"symbols": symbols, priceFeedVaas: priceFeedUpdates, priceInfo: prices};
   }
 
   private async fetchQuery(query: string) : Promise<[string[], VaaPxExtension[]]> {
