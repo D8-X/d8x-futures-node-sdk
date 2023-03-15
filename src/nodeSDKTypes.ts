@@ -206,3 +206,15 @@ export interface SmartContractOrder {
         uint256 iDeadline;
         uint256 createdTimestamp;
         */
+
+export interface PriceFeedConfig {
+  network: string,
+  ids: Array<{symbol:string, id: string, type: string, origin:string}>,
+  endpoints: Array<{type:string, endpoint: string}>;
+}
+
+export interface PriceFeedSubmission {
+  symbols: string[];
+  pricefeeds: string[]; 
+  timestamps: number[]
+}

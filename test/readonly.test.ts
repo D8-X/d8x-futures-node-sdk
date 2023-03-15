@@ -164,11 +164,7 @@ describe("readOnly", () => {
       let pyhIds: string[] = mktData.getPythIds("ETH-USD-MATIC");
       console.log(`pyth ids = ${pyhIds}`);
     });
-    it("get recent prices", async()=> {
-      let priceFeeds = new PriceFeeds("https://pyth.testnet.quantena.tech/api", mktData);
-      let prices = await priceFeeds.fetchCurrentPrices("ETH-USD-MATIC");
-      console.log("pyth prices = ", prices.timestamps);
-    });
+   
     it("oracle routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
 

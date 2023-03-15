@@ -26,6 +26,7 @@
     "version": 1.0,
     "proxyAddr": "0x20A2D5C60f0c0baA365b6Db2729286dba383400f",
     "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
+    "priceFeedConfigNetwork": "testnet",
     "proxyABILocation": "../abi/central-park/IPerpetualManager.json",
     "limitOrderBookFactoryAddr": "0xdcBd9fEc5F1d972af3E269E9d4E9998BB4ECd306",
     "limitOrderBookFactoryABILocation": "../abi/central-park/LimitOrderBookFactory.json",
