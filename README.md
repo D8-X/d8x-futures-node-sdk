@@ -14,11 +14,16 @@ Node TypeScript SDK for D8X Perpetual Futures
 
 #### Optional
 - To execute orders and liquidate traders, we recommend to run your own Pyth-price service
-    - Efficient execution requires the endpoint `api/latest_vaas_ts` which is available
+    - Efficient execution requires the endpoint `api/latest_vaas_px` which is available
     in D8X's [fork](https://github.com/D8-X/pyth-crosschain-d8x.git) of [Pyth's repo](https://github.com/pyth-network/pyth-crosschain.git)
     - Follow the instructions on [Wormhole Spy](https://github.com/pyth-network/pyth-crosschain/tree/main/price_service/server), specifically
-      - Copy `.env.example` into `.env` and edit as described
-      - For the D8X fork (with `api/latest_vaas_ts`) to run, you need to build the image as described in the last paragraph
+      - Copy `.env.example` into `.env` and edit as described in the Readme
+      - For the D8X fork (with `api/latest_vaas_px`) to run, you need to build the image as described in the last [paragraph of the Readme here](https://github.com/D8-X/pyth-crosschain-d8x/tree/main/price_service/server).
+      Ensure your own price server is enabled in docker-compose:
+        ```
+        # image: public.ecr.aws/pyth-network/xc-server:v3.0.0
+        image: pyth_price_server
+        ```
 ### Test
 
 `yarn test`
