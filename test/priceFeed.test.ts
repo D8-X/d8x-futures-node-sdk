@@ -28,7 +28,7 @@ describe("priceFeed", () => {
   it("get recent prices", async()=> {
     let priceFeeds = new PriceFeeds(mktData, "testnet");
     let prices = await priceFeeds.getLatestFeedPrices("ETH-USD-MATIC");
-    console.log("pyth prices = ", prices.timestamps);
+    console.log("pyth price info = ", prices.priceInfo);
     console.log("symbols = ", prices.symbols);
   });
 });

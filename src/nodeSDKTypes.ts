@@ -1,4 +1,5 @@
 import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction } from "ethers";
+import { NumberLiteralType } from "typescript";
 export const DEFAULT_CONFIG = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
@@ -215,6 +216,13 @@ export interface PriceFeedConfig {
 
 export interface PriceFeedSubmission {
   symbols: string[];
-  pricefeeds: string[]; 
-  timestamps: number[]
+  priceFeeds: string[]; 
+  priceInfo: VaaPxExtension[];
+}
+
+export interface VaaPxExtension {
+  conf: BigNumber;
+  expo: number;
+  price: BigNumber;
+  publish_time: number;
 }

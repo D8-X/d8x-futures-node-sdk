@@ -1,5 +1,5 @@
 import MarketData from "./marketData";
-import {PriceFeedConfig, PriceFeedSubmission} from "./nodeSDKTypes"
+import {PriceFeedConfig, PriceFeedSubmission, VaaPxExtension} from "./nodeSDKTypes"
 
 export default class PriceFeeds {
   private config: PriceFeedConfig;
@@ -57,7 +57,8 @@ export default class PriceFeeds {
   /**
    * 
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
-   * @returns array of price feed updates that can be submitted to the smart contract and corresponding timestamps
+   * @returns array of price feed updates that can be submitted to the smart contract 
+   * and corresponding price information 
    */
   public async getLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
     let feedIds = this.mktData.getPythIds(symbol);
@@ -77,7 +78,7 @@ export default class PriceFeeds {
       if (queries[id]==undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id]+"/latest_vaas_ts?";
+        queries[id] = this.feedEndpoints[id]+"/latest_vaas_px?";
         idCountPriceFeeds[id]=0;
       }
       queries[id] = queries[id] + "ids[]="+feedIds[k]+"&"
@@ -94,30 +95,30 @@ export default class PriceFeeds {
 
     // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
-    const timestamps = new Array<number>();
+    const px = new Array<VaaPxExtension>();
     for(let k=0; k<orderEndpointNumber.length; k++) {
       let endpointId = Math.floor(orderEndpointNumber[k]/100);
       let idWithinEndpoint = orderEndpointNumber[k]-100*endpointId;
       priceFeedUpdates.push(data[endpointId][0][idWithinEndpoint]);
-      timestamps.push(data[endpointId][1][idWithinEndpoint]);
+      px.push(data[endpointId][1][idWithinEndpoint]);
     }
     
-    return {"symbols": symbols, pricefeeds: priceFeedUpdates, timestamps: timestamps};
+    return {"symbols": symbols, priceFeeds: priceFeedUpdates, priceInfo: px};
   }
 
-  private async fetchQuery(query: string) : Promise<[string[], number[]]> {
+  private async fetchQuery(query: string) : Promise<[string[], VaaPxExtension[]]> {
     const headers = {headers: {'Content-Type': 'application/json'}};
     let response = await fetch(query, headers);
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
     }
-    let values=(await response.json()) as string[];
+    let values=(await response.json()) as Array<[string, VaaPxExtension]>;
     const priceFeedUpdates = new Array<string>();
-    const timestamps = new Array<number>();
+    const px = new Array<VaaPxExtension>();
     for(let k=0; k<values.length; k++) {
       priceFeedUpdates.push("0x" + Buffer.from(values[k][0], "base64").toString("hex"));
-      timestamps.push(parseInt(values[k][1]));
+      px.push(values[k][1]);
     }
-    return [priceFeedUpdates, timestamps];
+    return [priceFeedUpdates, px];
   }
 }
