@@ -708,19 +708,6 @@ export default class MarketData extends PerpetualDataHandler {
     return balanceCC - initalMarginCC;
   }
 
-  /**
-   * Get list of required pyth price source IDs for given perpetual
-   * @param symbol perpetual symbol, e.g., BTC-USD-MATIC
-   * @returns list of required pyth price sources for this perpetual
-   */
-  public getPythIds(symbol: string): string[] {
-    if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
-    }
-    let staticInfo = this.getPerpetualStaticInfo(symbol);
-    return staticInfo.pythIds;
-  }
-
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,

@@ -243,6 +243,19 @@ export default class PerpetualDataHandler {
     return symbol4BToLongSymbol(sym, this.symbolList);
   }
 
+  /**
+   * Get list of required pyth price source IDs for given perpetual
+   * @param symbol perpetual symbol, e.g., BTC-USD-MATIC
+   * @returns list of required pyth price sources for this perpetual
+   */
+  public getPythIds(symbol: string): string[] {
+    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (perpInfo == undefined) {
+      throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
+    }
+    return perpInfo.pythIds;
+  }
+
   protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
     let idx = poolId - 1;
     return staticInfos[idx].poolMarginSymbol;

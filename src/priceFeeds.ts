@@ -1,23 +1,34 @@
 import {BigNumber} from "ethers";
-import MarketData from "./marketData";
+import PerpetualDataHandler from "./perpetualDataHandler";
 import {PriceFeedConfig, PriceFeedSubmission, VaaPxExtension} from "./nodeSDKTypes"
 import {decNToFloat} from "./d8XMath";
 
+/**
+ * This class communicates with the REST API that provides price-data that is
+ * to be submitted to the smart contracts for certain functions such as
+ * trader liquidations, trade executions, change of trader margin amount.
+ */
 export default class PriceFeeds {
   private config: PriceFeedConfig;
   private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
   private feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-  private mktData : MarketData;
+  private dataHandler : PerpetualDataHandler;
  
-  constructor(mktData: MarketData, priceFeedConfigNetwork: string) {
+  constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     
     let configs = <PriceFeedConfig[]>require("../config/priceFeedConfig.json");
     this.config = PriceFeeds.selectConfig(configs, priceFeedConfigNetwork);
     [this.feedInfo, this.feedEndpoints] = PriceFeeds.constructFeedInfo(this.config);
-    this.mktData = mktData;
+    this.dataHandler = dataHandler;
   }
 
-  static selectConfig(configs: PriceFeedConfig[], network: string) {
+  /**
+   * Searches for configuration for given network
+   * @param configs pricefeed configuration from json 
+   * @param network e.g. testnet
+   * @returns selected configuration
+   */
+  static selectConfig(configs: PriceFeedConfig[], network: string) : PriceFeedConfig {
     let k=0;
     while(k<configs.length) {
       if (configs[k].network==network) {
@@ -28,6 +39,11 @@ export default class PriceFeeds {
     throw new Error(`PriceFeeds: config not found for network ${network}`);
   }
 
+  /**
+   * Wraps configuration into convenient data-structure
+   * @param config configuration for the selected network
+   * @returns feedInfo-map and endPoints-array
+   */
   static constructFeedInfo(config: PriceFeedConfig) : [Map<string, {symbol:string, endpointId: number}>, string[]]{
     let feed = new Map<string, {symbol:string, endpointId: number}>();
     let endpointId = -1;
@@ -57,13 +73,14 @@ export default class PriceFeeds {
   }
 
   /**
-   * 
+   * Get the latest prices for a given perpetual from the offchain oracle
+   * networks
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
    * @returns array of price feed updates that can be submitted to the smart contract 
    * and corresponding price information 
    */
   public async getLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
-    let feedIds = this.mktData.getPythIds(symbol);
+    let feedIds = this.dataHandler.getPythIds(symbol);
     let queries = new Array<string>(this.feedEndpoints.length);
     // we need to preserve the order of the price feeds
     let orderEndpointNumber = new Array<number>();
@@ -111,6 +128,11 @@ export default class PriceFeeds {
     return {"symbols": symbols, priceFeedVaas: priceFeedUpdates, priceInfo: prices};
   }
 
+  /**
+   * Queries the REST endpoint and returns parsed price data
+   * @param query query price-info from endpoint
+   * @returns vaa and price info
+   */
   private async fetchQuery(query: string) : Promise<[string[], VaaPxExtension[]]> {
     const headers = {headers: {'Content-Type': 'application/json'}};
     let response = await fetch(query, headers);
