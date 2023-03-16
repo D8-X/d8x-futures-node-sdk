@@ -153,7 +153,7 @@ export interface OrderStruct {
 }
 
 export interface Order {
-  symbol: string;
+  symbol: string;//symbol of the form ETH-USD-MATIC
   side: string;
   type: string;
   quantity: number;
