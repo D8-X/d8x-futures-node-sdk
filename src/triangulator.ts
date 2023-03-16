@@ -45,7 +45,7 @@ export default class Triangulator {
    */
   public static calculateTriangulatedPrice(triangulation: [string[], boolean[]], feedIdxPrices: Map<string, number>) : number {
     let px = 1;
-    for (let j = 0; j < triangulation.length; j++) {
+    for (let j = 0; j < triangulation[0].length; j++) {
       let pxFeed = feedIdxPrices.get(triangulation[0][j]);
       if (pxFeed == undefined) {
         // no price available for given index
@@ -55,7 +55,7 @@ export default class Triangulator {
     }
     return px;
   }
-  
+
   /**
    * Finds shortest path and returns indices required and whether to divide or not
    * @example triangulate BTC-USDC:  [ [ 'BTC-USD', 'USDC-USD' ], [ false, true ] ]
