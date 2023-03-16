@@ -270,7 +270,7 @@
             },
             {
                 "internalType": "bytes[]",
-                "name": "_pythUpdateData",
+                "name": "_updateData",
                 "type": "bytes[]"
             },
             {

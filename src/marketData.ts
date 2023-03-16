@@ -621,7 +621,7 @@ export default class MarketData extends PerpetualDataHandler {
       S2Symbol: perpInfo.S2Symbol,
       S3Symbol: perpInfo.S3Symbol,
       lotSizeBC: perpInfo.lotSizeBC,
-      pythIds: perpInfo.pythIds
+      priceIds: perpInfo.priceIds,
     };
     return res;
   }
@@ -709,16 +709,16 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Get list of required pyth price source IDs for given perpetual
+   * Get list of required price IDs for given perpetual
    * @param symbol perpetual symbol, e.g., BTC-USD-MATIC
-   * @returns list of required pyth price sources for this perpetual
+   * @returns list of required ids for this perpetual
    */
-  public getPythIds(symbol: string): string[] {
+  public getPriceIds(symbol: string): string[] {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let staticInfo = this.getPerpetualStaticInfo(symbol);
-    return staticInfo.pythIds;
+    return staticInfo.priceIds;
   }
 
   public static async _exchangeInfo(

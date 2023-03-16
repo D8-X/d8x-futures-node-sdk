@@ -161,10 +161,10 @@ describe("readOnly", () => {
       console.log(info);
     });
     it("get pyth ids", async () => {
-      let pyhIds: string[] = mktData.getPythIds("ETH-USD-MATIC");
+      let pyhIds: string[] = mktData.getPriceIds("ETH-USD-MATIC");
       console.log(`pyth ids = ${pyhIds}`);
     });
-   
+
     it("oracle routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
 

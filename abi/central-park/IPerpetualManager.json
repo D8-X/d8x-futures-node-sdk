@@ -1885,25 +1885,6 @@
     {
         "inputs": [
             {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            }
-        ],
-        "name": "countOnDemandFeeds",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "address",
                 "name": "_marginTokenAddress",
                 "type": "address"
@@ -2007,11 +1988,21 @@
                 "internalType": "int128",
                 "name": "_fAmount",
                 "type": "int128"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_updateData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "_publishTimes",
+                "type": "uint64[]"
             }
         ],
         "name": "deposit",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -2472,6 +2463,11 @@
                 "internalType": "uint24",
                 "name": "_perpetualId",
                 "type": "uint24"
+            },
+            {
+                "internalType": "int128[2]",
+                "name": "_fIndexPrice",
+                "type": "int128[2]"
             }
         ],
         "name": "getAMMState",
@@ -3282,12 +3278,12 @@
                     },
                     {
                         "internalType": "int128",
-                        "name": "fkStar",
+                        "name": "fLotSizeBC",
                         "type": "int128"
                     },
                     {
                         "internalType": "int128",
-                        "name": "fLotSizeBC",
+                        "name": "fkStar",
                         "type": "int128"
                     },
                     {
@@ -3462,12 +3458,17 @@
                 "type": "uint24"
             }
         ],
-        "name": "getPythIds",
+        "name": "getPriceInfo",
         "outputs": [
             {
                 "internalType": "bytes32[]",
-                "name": "",
+                "name": "ids",
                 "type": "bytes32[]"
+            },
+            {
+                "internalType": "bool[]",
+                "name": "isPyth",
+                "type": "bool[]"
             }
         ],
         "stateMutability": "view",
@@ -3733,30 +3734,6 @@
     {
         "inputs": [
             {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            },
-            {
-                "internalType": "bool",
-                "name": "_isBaseline",
-                "type": "bool"
-            }
-        ],
-        "name": "getUpdatedTargetAMMFundSize",
-        "outputs": [
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "uint256",
                 "name": "_numBlockSinceLastOpen",
                 "type": "uint256"
@@ -3944,7 +3921,7 @@
             },
             {
                 "internalType": "bytes[]",
-                "name": "_pythUpdateData",
+                "name": "_updateData",
                 "type": "bytes[]"
             },
             {
@@ -4105,6 +4082,11 @@
                 "internalType": "int128",
                 "name": "_fTradeAmountBC",
                 "type": "int128"
+            },
+            {
+                "internalType": "int128[2]",
+                "name": "_fIndexPrice",
+                "type": "int128[2]"
             }
         ],
         "name": "queryPerpetualPrice",
@@ -4291,32 +4273,6 @@
             }
         ],
         "stateMutability": "pure",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            }
-        ],
-        "name": "requestPriceUpdate",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            }
-        ],
-        "name": "requestPriceUpdateByPerp",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
     },
     {
@@ -5038,7 +4994,7 @@
             },
             {
                 "internalType": "bytes[]",
-                "name": "_pythUpdateData",
+                "name": "_updateData",
                 "type": "bytes[]"
             },
             {
@@ -5047,14 +5003,8 @@
                 "type": "uint64[]"
             }
         ],
-        "name": "updatePythFeeds",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
+        "name": "updatePriceFeeds",
+        "outputs": [],
         "stateMutability": "payable",
         "type": "function"
     },
@@ -5154,11 +5104,21 @@
                 "internalType": "int128",
                 "name": "_fAmount",
                 "type": "int128"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_updateData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "_publishTimes",
+                "type": "uint64[]"
             }
         ],
         "name": "withdraw",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -5167,11 +5127,21 @@
                 "internalType": "uint24",
                 "name": "_iPerpetualId",
                 "type": "uint24"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_updateData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "_publishTimes",
+                "type": "uint64[]"
             }
         ],
         "name": "withdrawAll",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {

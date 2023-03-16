@@ -35,6 +35,7 @@ export const SELL_SIDE = "SELL";
 export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
   name: string | undefined;
+  version: number;
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;
@@ -83,7 +84,7 @@ export interface PerpetualStaticInfo {
   S2Symbol: string;
   S3Symbol: string;
   lotSizeBC: number;
-  pythIds: string[];
+  priceIds: string[];
 }
 
 /**
@@ -209,15 +210,15 @@ export interface SmartContractOrder {
         */
 
 export interface PriceFeedConfig {
-  network: string,
-  ids: Array<{symbol:string, id: string, type: string, origin:string}>,
-  endpoints: Array<{type:string, endpoint: string}>;
+  network: string;
+  ids: Array<{ symbol: string; id: string; type: string; origin: string }>;
+  endpoints: Array<{ type: string; endpoint: string }>;
 }
 
 export interface PriceFeedSubmission {
   symbols: string[];
-  priceFeedVaas: string[]; 
-  priceInfo: Array<{px: number, timestamp: number}>;
+  priceFeedVaas: string[];
+  priceInfo: Array<{ px: number; timestamp: number }>;
 }
 
 export interface VaaPxExtension {

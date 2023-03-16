@@ -178,14 +178,15 @@ export default class PerpetualDataHandler {
         poolMarginSymbol: poolCCY!,
         poolMarginTokenAddr: poolMarginTokenAddr,
         shareTokenAddr: pool.shareTokenAddress,
-        oracleFactoryAddr: oracleFactoryAddr, 
+        oracleFactoryAddr: oracleFactoryAddr,
       };
       this.poolStaticInfos.push(info);
       let currentSymbols3 = currentSymbols.map((x) => x + "-" + poolCCY);
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
-        // add pyth IDs
-        let idsB32 = await proxyContract.getPythIds(perpetualIDs[k]);
+        // add price IDs
+        let idsB32, isPyth;
+        [idsB32, isPyth] = await proxyContract.getPriceInfo(perpetualIDs[k]);
 
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
@@ -196,7 +197,7 @@ export default class PerpetualDataHandler {
           S2Symbol: currentSymbols[k],
           S3Symbol: currentSymbolsS3[k],
           lotSizeBC: lotSizes[k],
-          pythIds: idsB32
+          priceIds: idsB32,
         });
       }
       // push margin token address into map
@@ -349,7 +350,10 @@ export default class PerpetualDataHandler {
     _proxyContract: ethers.Contract
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let ammState = await _proxyContract.getAMMState(perpId);
+    // TODO: use input
+    let S2 = BigNumber.from(0);
+    let S3 = BigNumber.from(0);
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
   }
 
@@ -360,7 +364,10 @@ export default class PerpetualDataHandler {
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ccy = symbol.split("-");
-    let ammState = await _proxyContract.getAMMState(perpId);
+    // TODO: use input
+    let S2 = BigNumber.from(0);
+    let S3 = BigNumber.from(0);
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
     let state = {
       id: perpId,
@@ -695,6 +702,7 @@ export default class PerpetualDataHandler {
       if (configFile.length == 0) {
         throw Error(`Config name ${configNameOrFileLocation} not found.`);
       } else if (configFile.length > 1) {
+        // TODO: pick one with highest version, unless version is given
         throw Error(`Config name ${configNameOrFileLocation} not unique.`);
       }
       for (let configItem of configFile) {
@@ -708,17 +716,6 @@ export default class PerpetualDataHandler {
       throw Error(`Config file ${configNameOrFileLocation} not found.`);
     }
     return config;
-    // if (configNameOrfileLocation == DEFAULT_CONFIG_MAINNET_NAME) {
-    //   configNameOrfileLocation = DEFAULT_CONFIG_MAINNET;
-    // } else if (configNameOrfileLocation == DEFAULT_CONFIG_TESTNET_NAME) {
-    //   configNameOrfileLocation = DEFAULT_CONFIG_TESTNET;
-    // } else {
-    //   let config = require(DEFAULT_CONFIG);
-    //   // check names stored in default config
-    // }
-    // let configFile = require(configNameOrfileLocation);
-    // let config: NodeSDKConfig = <NodeSDKConfig>configFile;
-    // return config;
   }
 
   /**
