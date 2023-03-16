@@ -218,7 +218,8 @@ export interface PriceFeedConfig {
 export interface PriceFeedSubmission {
   symbols: string[];
   priceFeedVaas: string[]; 
-  priceInfo: Array<{px: number, timestamp: number}>;
+  prices: number[];
+  timestamps: number[];
 }
 
 export interface VaaPxExtension {

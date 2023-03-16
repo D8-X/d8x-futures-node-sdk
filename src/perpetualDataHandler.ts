@@ -129,6 +129,7 @@ export default class PerpetualDataHandler {
       throw Error("proxy or limit order book not defined");
     }
     this.nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(proxyContract);
+    let requiredPairs = new Set<string>();
     for (let j = 0; j < this.nestedPerpetualIDs.length; j++) {
       let pool = await proxyContract.getLiquidityPool(j + 1);
       let poolMarginTokenAddr = pool.marginTokenAddress;
@@ -148,8 +149,14 @@ export default class PerpetualDataHandler {
         let quote = contractSymbolToSymbol(perp.S2QuoteCCY, this.symbolList);
         let base3 = contractSymbolToSymbol(perp.S3BaseCCY, this.symbolList);
         let quote3 = contractSymbolToSymbol(perp.S3QuoteCCY, this.symbolList);
-        currentSymbols.push(base + "-" + quote);
-        currentSymbolsS3.push(base3 + "-" + quote3);
+        let sym = base + "-" + quote;
+        let sym3 = base3 + "-" + quote3;
+        requiredPairs.add(sym);
+        if (sym3!="-") {
+          requiredPairs.add(sym3);
+        }
+        currentSymbols.push(sym);
+        currentSymbolsS3.push(sym3);
         initRate.push(ABK64x64ToFloat(perp.fInitialMarginRate));
         mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
         lotSizes.push(ABK64x64ToFloat(perp.fLotSizeBC));
@@ -206,6 +213,10 @@ export default class PerpetualDataHandler {
       // push margin token address into map
       this.symbolToTokenAddrMap.set(poolCCY!, poolMarginTokenAddr);
     }
+    // pre-calculate all triangulation paths so we can easily get from
+    // the prices of price-feeds to the index price required, e.g. 
+    // BTC-USDC : BTC-USD / USDC-USD 
+    this.priceFeedGetter.initializeTriangulations(requiredPairs);
   }
 
   /**
