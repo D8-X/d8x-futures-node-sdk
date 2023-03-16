@@ -280,7 +280,7 @@ export default class PerpetualDataHandler {
     if (perpInfo == undefined) {
       throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
     }
-    return perpInfo.pythIds;
+    return perpInfo.priceIds;
   }
 
   protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
