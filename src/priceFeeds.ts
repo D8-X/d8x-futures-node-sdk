@@ -45,8 +45,8 @@ export default class PriceFeeds {
    * Get the latest prices for a given perpetual from the offchain oracle
    * networks
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
-   * @returns array of price feed updates that can be submitted to the smart contract 
-   * and corresponding price information 
+   * @returns array of price feed updates that can be submitted to the smart contract
+   * and corresponding price information
    */
   public async fetchLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
     let feedIds = this.dataHandler.getPythIds(symbol);
@@ -54,32 +54,35 @@ export default class PriceFeeds {
     // we need to preserve the order of the price feeds
     let orderEndpointNumber = new Array<number>();
     // count how many prices per endpoint
-    let idCountPriceFeeds = new Array<number>(this.feedEndpoints.length)
+    let idCountPriceFeeds = new Array<number>(this.feedEndpoints.length);
     let symbols = new Array<string>();
-    for (let k=0; k<feedIds.length; k++) {
+    for (let k = 0; k < feedIds.length; k++) {
       let info = this.feedInfo.get(feedIds[k]);
-      if (info==undefined) {
+      if (info == undefined) {
         throw new Error(`priceFeeds: config for symbol ${symbol} insufficient`);
       }
       let id = info.endpointId;
       symbols.push(info.symbol);
-      if (queries[id]==undefined) {
+      if (queries[id] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id]+"/latest_vaas_px?";
-        idCountPriceFeeds[id]=0;
+        queries[id] = this.feedEndpoints[id] + "/latest_vaas_px?";
+        idCountPriceFeeds[id] = 0;
       }
-      queries[id] = queries[id] + "ids[]="+feedIds[k]+"&"
-      orderEndpointNumber.push(id*100+idCountPriceFeeds[id]);
-      idCountPriceFeeds[id] = idCountPriceFeeds[id]+1;
+      queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";
+      orderEndpointNumber.push(id * 100 + idCountPriceFeeds[id]);
+      idCountPriceFeeds[id] = idCountPriceFeeds[id] + 1;
     }
-       
-    let data = await Promise.all(queries.map(async (q) => {
-      if(q!=undefined) {
-        return this.fetchQuery(q);
-      } else {
-        return [[], []];
-      }}));
+
+    let data = await Promise.all(
+      queries.map(async (q) => {
+        if (q != undefined) {
+          return this.fetchQuery(q);
+        } else {
+          return [[], []];
+        }
+      })
+    );
 
     // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
@@ -89,7 +92,7 @@ export default class PriceFeeds {
       let endpointId = Math.floor(orderEndpointNumber[k]/100);
       let idWithinEndpoint = orderEndpointNumber[k]-100*endpointId;
       priceFeedUpdates.push(data[endpointId][0][idWithinEndpoint]);
-      let pxInfo : VaaPxExtension = data[endpointId][1][idWithinEndpoint];
+      let pxInfo: VaaPxExtension = data[endpointId][1][idWithinEndpoint];
       let price = decNToFloat(BigNumber.from(pxInfo.price), -pxInfo.expo);
       prices.push(price);
       timestamps.push(pxInfo.publish_time);
@@ -140,10 +143,10 @@ export default class PriceFeeds {
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
     }
-    let values=(await response.json()) as Array<[string, VaaPxExtension]>;
+    let values = (await response.json()) as Array<[string, VaaPxExtension]>;
     const priceFeedUpdates = new Array<string>();
     const px = new Array<VaaPxExtension>();
-    for(let k=0; k<values.length; k++) {
+    for (let k = 0; k < values.length; k++) {
       priceFeedUpdates.push("0x" + Buffer.from(values[k][0], "base64").toString("hex"));
       px.push(values[k][1]);
     }

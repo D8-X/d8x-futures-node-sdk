@@ -621,7 +621,7 @@ export default class MarketData extends PerpetualDataHandler {
       S2Symbol: perpInfo.S2Symbol,
       S3Symbol: perpInfo.S3Symbol,
       lotSizeBC: perpInfo.lotSizeBC,
-      pythIds: perpInfo.pythIds
+      priceIds: perpInfo.priceIds,
     };
     return res;
   }
@@ -735,9 +735,11 @@ export default class MarketData extends PerpetualDataHandler {
       for (var k = 0; k < perpetualIDs.length; k++) {
         let perp = await _proxyContract.getPerpetual(perpetualIDs[k]);
         let fIndexS2: BigNumber = await _proxyContract.getOraclePrice([perp.S2BaseCCY, perp.S2QuoteCCY]);
-        let fMidPrice = fIndexS2.eq(0)
-          ? BigNumber.from(0)
-          : await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0));
+        // TODO: here we send "0" for off-chain oracle prices, we could send actual ones
+        let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0), [
+          BigNumber.from(0),
+          BigNumber.from(0),
+        ]);
         let indexS2 = ABK64x64ToFloat(fIndexS2);
         let indexS3 = 1;
         if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
