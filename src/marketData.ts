@@ -571,15 +571,21 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns price (number)
    */
-  public async getPerpetualPrice(symbol: string, quantity: number): Promise<number> {
+  public async getPerpetualPrice(symbol: string, quantity: number, indexPrices?:[number, number]): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    if (indexPrices==undefined) {
+      // fetch from API
+      let obj = await this.fetchPriceSubmissionInfoForPerpetual(symbol);
+      indexPrices = obj.pxS2S3;
     }
     return await PerpetualDataHandler._queryPerpetualPrice(
       symbol,
       quantity,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
   }
 

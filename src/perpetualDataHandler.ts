@@ -154,6 +154,8 @@ export default class PerpetualDataHandler {
         requiredPairs.add(sym);
         if (sym3!="-") {
           requiredPairs.add(sym3);
+        } else {
+          sym3 = "";
         }
         currentSymbols.push(sym);
         currentSymbolsS3.push(sym3);
@@ -263,9 +265,9 @@ export default class PerpetualDataHandler {
    * Get PriceFeedSubmission data required for blockchain queries that involve price data, and the corresponding
    * triangulated prices for the indices S2 and S3
    * @param symbol pool symbol of the form "ETH-USD-MATIC"
-   * @returns PriceFeedSubmission and prices for S2 and S3. Only [S2price] if S3 not defined.
+   * @returns PriceFeedSubmission and prices for S2 and S3. [S2price, 0] if S3 not defined.
    */
-  public async fetchPriceSubmissionInfoForPerpetual(symbol: string) : Promise<{submission : PriceFeedSubmission, pxS2S3 : number[]}> {
+  public async fetchPriceSubmissionInfoForPerpetual(symbol: string) : Promise<{submission : PriceFeedSubmission, pxS2S3 : [number,number]}> {
     // get index
     let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
     if (staticInfo==undefined) {
@@ -275,7 +277,11 @@ export default class PerpetualDataHandler {
     // fetch prices from required price-feeds (REST)
     let submission : PriceFeedSubmission = await this.priceFeedGetter.fetchLatestFeedPrices(symbol);
     // calculate index-prices from price-feeds
-    let indices = this.priceFeedGetter.calculateTriangulatedPricesFromFeeds(indexSymbols, submission);
+    let response = this.priceFeedGetter.calculateTriangulatedPricesFromFeeds(indexSymbols, submission);
+    let indices : [number, number]= [response[0], 0];
+    if (response.length>1) {
+      indices[1] = response[1];
+    }
     return {submission : submission, pxS2S3: indices};
   }
 
@@ -396,13 +402,12 @@ export default class PerpetualDataHandler {
     symbol: string,
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    indexPrices: [number, number]
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), [
-      BigNumber.from(0),
-      BigNumber.from(0),
-    ]);
+    let fIndexPrices = indexPrices.map(x=>floatToABK64x64(x));
+    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), fIndexPrices);
     return ABK64x64ToFloat(fPrice);
   }
 

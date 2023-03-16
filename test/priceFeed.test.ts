@@ -32,7 +32,7 @@ describe("priceFeed", () => {
     console.log("symbols = ", prices.symbols);
   });
   it("get recent prices from market data directly", async()=> {
-    let prices = await mktData.fetchLatestFeedPrices("ETH-USD-MATIC");
+    let prices = await mktData.fetchLatestFeedPrices("MATIC-USD-MATIC");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -55,7 +55,7 @@ describe("priceFeed", () => {
     expect(px[2]).toBeCloseTo(pricesExpected[2], 5);
   });
   it("fetch info from data handler", async()=> {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("ETH-USD-MATIC");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("MATIC-USD-MATIC");
     console.log(l);
   });
 });
