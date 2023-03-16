@@ -9,6 +9,7 @@ import {
   PerpetualStaticInfo,
   SmartContractOrder,
   ZERO_ADDRESS,
+  PriceFeedSubmission
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
@@ -340,7 +341,8 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    return await this.proxyContract.deposit(perpId, fAmountCC);
+    let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPrices(symbol);
+    return await this.proxyContract.deposit(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {gasLimit: this.gasLimit});
   }
 
   /**
@@ -354,7 +356,8 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    return await this.proxyContract.withdraw(perpId, fAmountCC);
+    let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPrices(symbol);
+    return await this.proxyContract.withdraw(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {gasLimit: this.gasLimit});
   }
 
   public async swapForMockToken(symbol: string, amountToPay: string) {
