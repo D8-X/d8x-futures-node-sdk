@@ -152,8 +152,7 @@ describe("readOnly", () => {
       console.log(info);
       for (var k = 0; k < info.pools.length; k++) {
         let pool = info.pools[k];
-        console.log(`Perpetuals in ${k}-th pool:`);
-        console.log(pool.perpetuals);
+        console.log(`Perpetuals in ${pool.poolSymbol} pool:\n`, pool.perpetuals);
       }
     });
     it("perp static info", async () => {

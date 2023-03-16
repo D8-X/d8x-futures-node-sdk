@@ -340,7 +340,10 @@ export default class PerpetualDataHandler {
     _proxyContract: ethers.Contract
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount));
+    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), [
+      BigNumber.from(0),
+      BigNumber.from(0),
+    ]);
     return ABK64x64ToFloat(fPrice);
   }
 
