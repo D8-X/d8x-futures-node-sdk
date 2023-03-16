@@ -1,5 +1,5 @@
 import WriteAccessHandler from "./writeAccessHandler";
-import { NodeSDKConfig } from "./nodeSDKTypes";
+import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import { ethers } from "ethers";
 
 /**
@@ -37,6 +37,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader to be liquidated.
    * @param {string=} liquidatorAddr Address to be credited if the liquidation succeeds.
+   * @param {PriceFeedSubmission} priceFeedData optional. VAA and timestamps for oracle. If not provided will query from REST API.
    * Defaults to the wallet used to execute the liquidation.
    * @example
    * import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -59,7 +60,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
   public async liquidateTrader(
     symbol: string,
     traderAddr: string,
-    liquidatorAddr: string = ""
+    liquidatorAddr: string = "",
+    priceFeedData?: PriceFeedSubmission
   ): Promise<ethers.ContractTransaction> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
@@ -70,7 +72,10 @@ export default class LiquidatorTool extends WriteAccessHandler {
       liquidatorAddr = this.traderAddr;
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, this.gasLimit);
+    if (priceFeedData==undefined) {
+      priceFeedData = await this.fetchLatestFeedPrices(symbol);
+    }
+    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, this.gasLimit);
   }
 
   /**
@@ -116,11 +121,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param perpetualId Perpetual id.
    * @param liquidatorAddr Address to be credited for the liquidation.
    * @param traderAddr Address of the trader to be liquidated.
+   * @param priceFeedData contains VAA and timestamps required
    * @param gasLimit Gas limit.
    * @ignore
    */
-  public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, gasLimit: number) {
-    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
+  public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, priceFeedData: PriceFeedSubmission, gasLimit: number) {
+    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {
       gasLimit: gasLimit,
     });
   }
