@@ -79,7 +79,7 @@ export default class PriceFeeds {
    * @returns array of price feed updates that can be submitted to the smart contract 
    * and corresponding price information 
    */
-  public async getLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
+  public async fetchLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
     let feedIds = this.dataHandler.getPythIds(symbol);
     let queries = new Array<string>(this.feedEndpoints.length);
     // we need to preserve the order of the price feeds

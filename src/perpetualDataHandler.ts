@@ -29,6 +29,7 @@ import {
   PerpetualState,
   DEFAULT_CONFIG,
   DEFAULT_CONFIG_MAINNET_NAME,
+  PriceFeedSubmission,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -46,6 +47,7 @@ import {
   calculateLiquidationPriceCollateralBase,
   calculateLiquidationPriceCollateralQuote,
 } from "./d8XMath";
+import PriceFeeds from "./priceFeeds";
 
 /**
  * Parent class for MarketData and WriteAccessHandler that handles
@@ -74,6 +76,7 @@ export default class PerpetualDataHandler {
   protected provider: ethers.providers.JsonRpcProvider | null = null;
 
   private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
+  private priceFeedGetter : PriceFeeds;
 
   // pools are numbered consecutively starting at 1
   // nestedPerpetualIDs contains an array for each pool
@@ -92,6 +95,7 @@ export default class PerpetualDataHandler {
     this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
     this.lobABI = require(config.limitOrderBookABILocation);
     this.symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
@@ -241,6 +245,17 @@ export default class PerpetualDataHandler {
 
   public symbol4BToLongSymbol(sym: string): string {
     return symbol4BToLongSymbol(sym, this.symbolList);
+  }
+
+  /**
+   * Get the latest prices for a given perpetual from the offchain oracle
+   * networks
+   * @param symbol perpetual symbol of the form BTC-USD-MATIC
+   * @returns array of price feed updates that can be submitted to the smart contract 
+   * and corresponding price information 
+   */
+  public async fetchLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
+    return await this.priceFeedGetter.fetchLatestFeedPrices(symbol);
   }
 
   /**
