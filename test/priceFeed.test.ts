@@ -53,8 +53,10 @@ describe("priceFeed", () => {
     expect(px[0]).toBeCloseTo(pricesExpected[0], 5);
     expect(px[1]).toBeCloseTo(pricesExpected[1], 5);
     expect(px[2]).toBeCloseTo(pricesExpected[2], 5);
-
-    
+  });
+  it("fetch info from data handler", async()=> {
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("ETH-USD-MATIC");
+    console.log(l);
   });
 });
   

@@ -260,6 +260,26 @@ export default class PerpetualDataHandler {
   }
 
   /**
+   * Get PriceFeedSubmission data required for blockchain queries that involve price data, and the corresponding
+   * triangulated prices for the indices S2 and S3
+   * @param symbol pool symbol of the form "ETH-USD-MATIC"
+   * @returns PriceFeedSubmission and prices for S2 and S3. Only [S2price] if S3 not defined.
+   */
+  public async fetchPriceSubmissionInfoForPerpetual(symbol: string) : Promise<{submission : PriceFeedSubmission, pxS2S3 : number[]}> {
+    // get index
+    let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (staticInfo==undefined) {
+      throw new Error(`No static info for perpetual with symbol ${symbol}`);
+    }
+    let indexSymbols = staticInfo.S3Symbol=="" ? [staticInfo.S2Symbol] : [staticInfo.S2Symbol,staticInfo.S3Symbol];
+    // fetch prices from required price-feeds (REST)
+    let submission : PriceFeedSubmission = await this.priceFeedGetter.fetchLatestFeedPrices(symbol);
+    // calculate index-prices from price-feeds
+    let indices = this.priceFeedGetter.calculateTriangulatedPricesFromFeeds(indexSymbols, submission);
+    return {submission : submission, pxS2S3: indices};
+  }
+
+  /**
    * Get the latest prices for a given perpetual from the offchain oracle
    * networks
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
