@@ -293,7 +293,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
 
   public static _isTradeable(
     order: Order,
-    orderPrice: number,
+    tradePrice: number,
     markPrice: number,
     block: number,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
@@ -316,7 +316,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       return false;
     }
     let limitPrice = order.limitPrice!;
-    if ((order.side == BUY_SIDE && orderPrice > limitPrice) || (order.side == SELL_SIDE && orderPrice < limitPrice)) {
+    if ((order.side == BUY_SIDE && tradePrice > limitPrice) || (order.side == SELL_SIDE && tradePrice < limitPrice)) {
       return false;
     }
     // do we need to check trigger/stop?
