@@ -42,6 +42,7 @@ export interface NodeSDKConfig {
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
   symbolListLocation: string;
+  priceFeedConfigNetwork: string;
   gasLimit?: number | undefined;
 }
 
