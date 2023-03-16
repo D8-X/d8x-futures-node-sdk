@@ -49,7 +49,7 @@ export default class PriceFeeds {
    * and corresponding price information
    */
   public async fetchLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
-    let feedIds = this.dataHandler.getPythIds(symbol);
+    let feedIds = this.dataHandler.getPriceIds(symbol);
     let queries = new Array<string>(this.feedEndpoints.length);
     // we need to preserve the order of the price feeds
     let orderEndpointNumber = new Array<number>();

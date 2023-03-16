@@ -544,11 +544,15 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns mark price
    */
-  public async getMarkPrice(symbol: string): Promise<number> {
+  public async getMarkPrice(symbol: string, indexPrices?: [number, number]): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    return await PerpetualDataHandler._queryPerpetualMarkPrice(symbol, this.symbolToPerpStaticInfo, this.proxyContract);
+    if(indexPrices==undefined) {
+      let obj = this.fetchPriceSubmissionInfoForPerpetual(symbol);
+      indexPrices = (await obj).pxS2S3;
+    }
+    return await PerpetualDataHandler._queryPerpetualMarkPrice(symbol, this.symbolToPerpStaticInfo, this.proxyContract, indexPrices);
   }
 
   /**
@@ -592,16 +596,22 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Query recent perpetual state from blockchain
    * @param symbol symbol of the form ETH-USD-MATIC
+   * @param indexPrices S2 and S3 prices, if not provided fetch via REST API
    * @returns PerpetualState reference
    */
-  public async getPerpetualState(symbol: string): Promise<PerpetualState> {
+  public async getPerpetualState(symbol: string, indexPrices?: [number, number]): Promise<PerpetualState> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    if (indexPrices==undefined) {
+      let obj = await this.fetchPriceSubmissionInfoForPerpetual(symbol);
+      indexPrices = obj.pxS2S3;
     }
     let state: PerpetualState = await PerpetualDataHandler._queryPerpetualState(
       symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
     return state;
   }

@@ -301,7 +301,7 @@ export default class PerpetualDataHandler {
    * @param symbol perpetual symbol, e.g., BTC-USD-MATIC
    * @returns list of required pyth price sources for this perpetual
    */
-  public getPythIds(symbol: string): string[] {
+  public getPriceIds(symbol: string): string[] {
     let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
     if (perpInfo == undefined) {
       throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
@@ -414,12 +414,11 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    indexPrices: [number, number]
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    // TODO: use input
-    let S2 = BigNumber.from(0);
-    let S3 = BigNumber.from(0);
+    let [S2, S3] = indexPrices.map(x=>floatToABK64x64(x));
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
   }
@@ -427,13 +426,12 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualState(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    indexPrices: [number, number]
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ccy = symbol.split("-");
-    // TODO: use input
-    let S2 = BigNumber.from(0);
-    let S3 = BigNumber.from(0);
+    let [S2, S3] = indexPrices.map(x=>floatToABK64x64(x));
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
     let state = {

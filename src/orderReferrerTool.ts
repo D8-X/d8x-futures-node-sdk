@@ -224,6 +224,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Check if a conditional order can be executed
    * @param order order structure
+   * @param indexPrices pair of index prices S2 and S3. S3 set to zero if not required. If undefined
+   * the function will fetch the latest prices from the REST API
    * @example
    * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -241,26 +243,39 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * main();
    * @returns true if order can be executed for the current state of the perpetuals
    */
-  public async isTradeable(order: Order): Promise<boolean> {
+  public async isTradeable(order: Order, indexPrices?: [number, number]): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    if (indexPrices==undefined) {
+      let obj = await this.fetchPriceSubmissionInfoForPerpetual(order.symbol);
+      indexPrices = obj.pxS2S3;
     }
     let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
       order.symbol,
       order.quantity,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
     let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
       order.symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
     let block = await this.provider!.getBlockNumber();
     return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, block, this.symbolToPerpStaticInfo);
   }
 
-  public async isTradeableBatch(orders: Order[]): Promise<boolean[]> {
+  /**
+   * Check for a batch of orders on the same perpetual whether they can be traded
+   * @param orders orders belonging to 1 perpetual
+   * @param indexPrice S2,S3-index prices for the given perpetual. Will fetch prices from REST API
+   * if not defined.
+   * @returns array of tradeable boolean 
+   */
+  public async isTradeableBatch(orders: Order[], indexPrices?: [number,number]): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
     }
@@ -270,20 +285,26 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (orders.filter((o) => o.symbol == orders[0].symbol).length < orders.length) {
       throw Error("all orders in a batch must have the same symbol");
     }
+    if (indexPrices==undefined) {
+      let obj = await this.fetchPriceSubmissionInfoForPerpetual(orders[0].symbol);
+      indexPrices = obj.pxS2S3;
+    }
     let orderPrice = await Promise.all(
       orders.map((o) =>
         PerpetualDataHandler._queryPerpetualPrice(
           o.symbol,
           o.quantity,
           this.symbolToPerpStaticInfo,
-          this.proxyContract!
+          this.proxyContract!,
+          indexPrices!
         )
       )
     );
     let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
       orders[0].symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
     let block = await this.provider!.getBlockNumber();
     return orders.map((o, idx) =>

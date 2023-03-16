@@ -462,14 +462,20 @@ describe("readOnly", () => {
     it("should check if an order is tradeable", async () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      let isTradeable = await refTool.isTradeable(openOrders[0][0]);
-      console.log(isTradeable);
+      if(openOrders[0].length>0) {
+        let isTradeable = await refTool.isTradeable(openOrders[0][0]);
+        console.log(isTradeable);
+      } else {
+        console.warn("no orders to check");
+      }
     });
     it("should check if a batch of orders is tradeable", async () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
-      console.log(isTradeable);
+      if(openOrders[0].length>0) {
+        let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
+        console.log(isTradeable);
+      }
     });
     it("poll limit orders", async () => {
       let val = await refTool.pollLimitOrders("MATIC-USD-MATIC", 15, undefined);
