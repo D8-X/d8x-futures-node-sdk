@@ -80,12 +80,6 @@ export default class AccountTrade extends WriteAccessHandler {
     return await this._cancelOrder(symbol, orderId, orderBookContract);
   }
 
-  /*
-    TODO: -deposit (margin into account)
-          -withdraw margin withdraw(uint24 _iPerpetualId, int128 _fAmount)
-
-  */
-
   /**
    * Submits an order to the exchange.
    * @param {Order} order Order structure. As a minimum the structure needs to
