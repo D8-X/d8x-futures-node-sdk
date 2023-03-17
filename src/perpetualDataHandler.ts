@@ -76,7 +76,7 @@ export default class PerpetualDataHandler {
   protected provider: ethers.providers.JsonRpcProvider | null = null;
 
   private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
-  private priceFeedGetter : PriceFeeds;
+  protected priceFeedGetter : PriceFeeds;
 
   // pools are numbered consecutively starting at 1
   // nestedPerpetualIDs contains an array for each pool
@@ -268,21 +268,22 @@ export default class PerpetualDataHandler {
    * @returns PriceFeedSubmission and prices for S2 and S3. [S2price, 0] if S3 not defined.
    */
   public async fetchPriceSubmissionInfoForPerpetual(symbol: string) : Promise<{submission : PriceFeedSubmission, pxS2S3 : [number,number]}> {
-    // get index
-    let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
-    if (staticInfo==undefined) {
-      throw new Error(`No static info for perpetual with symbol ${symbol}`);
-    }
-    let indexSymbols = staticInfo.S3Symbol=="" ? [staticInfo.S2Symbol] : [staticInfo.S2Symbol,staticInfo.S3Symbol];
     // fetch prices from required price-feeds (REST)
-    let submission : PriceFeedSubmission = await this.priceFeedGetter.fetchLatestFeedPrices(symbol);
-    // calculate index-prices from price-feeds
-    let response = this.priceFeedGetter.calculateTriangulatedPricesFromFeeds(indexSymbols, submission);
-    let indices : [number, number]= [response[0], 0];
-    if (response.length>1) {
-      indices[1] = response[1];
-    }
-    return {submission : submission, pxS2S3: indices};
+    return await this.priceFeedGetter.fetchFeedPricesAndIndices(symbol);
+  }
+
+  /**
+   * Get the symbols required as indices for the given perpetual
+   * @param symbol of the form ETH-USD-MATIC, specifying the perpetual
+   * @returns name of underlying index prices, e.g. ["MATIC-USD", ""]
+   */
+  public getIndexSymbols(symbol: string) : [string, string] {
+     // get index
+     let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
+     if (staticInfo==undefined) {
+       throw new Error(`No static info for perpetual with symbol ${symbol}`);
+     }
+     return [staticInfo.S2Symbol,staticInfo.S3Symbol];
   }
 
   /**

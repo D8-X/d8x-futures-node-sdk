@@ -40,6 +40,19 @@ export default class PriceFeeds {
       this.triangulations.set(symbol, triangulation);
     }
   }
+
+  public async fetchFeedPricesAndIndices(symbol: string) : Promise<{submission: PriceFeedSubmission, pxS2S3: [number,number]}> {
+    let indexSymbols = this.dataHandler.getIndexSymbols(symbol);
+    // fetch prices from required price-feeds (REST)
+    let submission : PriceFeedSubmission = await this.fetchLatestFeedPrices(symbol);
+    // calculate index-prices from price-feeds
+    let response = this.calculateTriangulatedPricesFromFeeds(indexSymbols.filter((x)=>x!=''), submission);
+    let indices : [number, number]= [response[0], 0];
+    if (response.length>1) {
+      indices[1] = response[1];
+    }
+    return {submission : submission, pxS2S3: indices};
+  }
   
   /**
    * Get the latest prices for a given perpetual from the offchain oracle

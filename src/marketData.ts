@@ -32,6 +32,7 @@ import {
   ZERO_ADDRESS,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
+import PriceFeeds from "./priceFeeds";
 import { contractSymbolToSymbol, toBytes4 } from "./utils";
 
 /**
@@ -145,7 +146,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos, this.symbolList);
+    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos, this.symbolList, this.priceFeedGetter);
   }
 
   /**
@@ -727,12 +728,14 @@ export default class MarketData extends PerpetualDataHandler {
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
-    _symbolList: Map<string, string>
+    _symbolList: Map<string, string>,
+    _priceFeedGetter: PriceFeeds
   ): Promise<ExchangeInfo> {
     let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
     let factory = await _proxyContract.getOracleFactory();
     let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
     const numPools = nestedPerpetualIDs.length;
+    let idxPriceMap= new Map<string, number>;
     for (var j = 0; j < numPools; j++) {
       let perpetualIDs = nestedPerpetualIDs[j];
       let pool = await _proxyContract.getLiquidityPool(j + 1);
@@ -748,21 +751,40 @@ export default class MarketData extends PerpetualDataHandler {
         brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
         perpetuals: [],
       };
+      let poolSymbol = PoolState.poolSymbol;
       for (var k = 0; k < perpetualIDs.length; k++) {
         let perp = await _proxyContract.getPerpetual(perpetualIDs[k]);
-        let fIndexS2: BigNumber = await _proxyContract.getOraclePrice([perp.S2BaseCCY, perp.S2QuoteCCY]);
-        // TODO: here we send "0" for off-chain oracle prices, we could send actual ones
-        let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0), [
-          BigNumber.from(0),
-          BigNumber.from(0),
-        ]);
-        let indexS2 = ABK64x64ToFloat(fIndexS2);
+        let symS2 = contractSymbolToSymbol(perp.S2BaseCCY, _symbolList)+"-"+contractSymbolToSymbol(perp.S2QuoteCCY, _symbolList);
+        let symS3 = contractSymbolToSymbol(perp.S3BaseCCY, _symbolList)+"-"+contractSymbolToSymbol(perp.S3QuoteCCY, _symbolList);
+        let perpSymbol = symS2+"-"+poolSymbol;
+        //console.log("perpsymbol=",perpSymbol);
+        let indexS2 : number | undefined = idxPriceMap.get(symS2);
+        if (indexS2==undefined) {
+          let obj = await _priceFeedGetter.fetchFeedPricesAndIndices(perpSymbol);
+          indexS2 = obj.pxS2S3[0];
+          idxPriceMap.set(symS2, indexS2);
+          if (symS3!="-") {
+            idxPriceMap.set(symS3, obj.pxS2S3[1]);
+          }
+        }
         let indexS3 = 1;
         if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
           indexS3 = indexS2;
         } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUANTO) {
-          indexS3 = ABK64x64ToFloat(await _proxyContract.getOraclePrice([perp.S3BaseCCY, perp.S3QuoteCCY]));
+          let _indexS3 = idxPriceMap.get(symS2);
+          if (_indexS3==undefined) {
+            let obj = await _priceFeedGetter.fetchFeedPricesAndIndices(perpSymbol);
+            indexS3 = obj.pxS2S3[1];
+            idxPriceMap.set(symS3, indexS3);
+          } else {
+            indexS3 = _indexS3;
+          }
         }
+        let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0), [
+          floatToABK64x64(indexS2),
+          floatToABK64x64(indexS3)
+        ]);
+        
         let markPremiumRate = ABK64x64ToFloat(perp.currentMarkPremiumRate.fPrice);
         let currentFundingRateBps = 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate);
         let state = PERP_STATE_STR[perp.state];
