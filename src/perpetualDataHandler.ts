@@ -433,7 +433,7 @@ export default class PerpetualDataHandler {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ccy = symbol.split("-");
     let [S2, S3] = [indexPrices[0], indexPrices[1]];
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(x=>floatToABK64x64(x)));
     let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
     let state = {
       id: perpId,
