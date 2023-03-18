@@ -7,6 +7,7 @@ import {
   SELL_SIDE,
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
+  PriceFeedSubmission
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -46,8 +47,9 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
-   * @param {string=} referrerAddr Address of the wallet to be credited for executing the order,
-   * if different from the one submitting this transaction.
+   * @param {string=} referrerAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {number=} nonce optional nonce 
+   * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual 
    * @example
    * import { OrderReferrerTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
    * async function main() {
@@ -79,7 +81,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     symbol: string,
     orderId: string,
     referrerAddr?: string,
-    nonce?: number
+    nonce?: number,
+    submission?: PriceFeedSubmission
   ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -88,8 +91,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof referrerAddr == "undefined") {
       referrerAddr = this.traderAddr;
     }
-    const options = { gasLimit: this.gasLimit, nonce: nonce };
-    return await orderBookSC.executeOrder(orderId, referrerAddr, options);
+    const options = { gasLimit: this.gasLimit, nonce: nonce, value: 2 * this.PRICE_UPDATE_FEE_GWEI };
+    if (submission==undefined) {
+      submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    }
+    return await orderBookSC.executeOrder(orderId, referrerAddr, submission?.priceFeedVaas, submission?.timestamps, options);
   }
 
   /**
@@ -286,8 +292,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("all orders in a batch must have the same symbol");
     }
     if (indexPrices==undefined) {
-      let obj = await this.fetchLatestFeedPriceInfo(orders[0].symbol);
-      indexPrices = [obj.prices[0], obj.prices[1], obj.isMarketClosed[0], obj.isMarketClosed[1]];
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(orders[0].symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
     if(indexPrices[2] || indexPrices[3]) {
       // market closed

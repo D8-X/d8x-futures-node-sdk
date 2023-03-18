@@ -336,7 +336,8 @@ export default class AccountTrade extends WriteAccessHandler {
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
     let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPriceInfo(symbol);
-    return await this.proxyContract.deposit(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {gasLimit: this.gasLimit});
+    return await this.proxyContract.deposit(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, 
+      {gasLimit: this.gasLimit, value: 2*this.PRICE_UPDATE_FEE_GWEI});
   }
 
   /**
@@ -351,7 +352,8 @@ export default class AccountTrade extends WriteAccessHandler {
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
     let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPriceInfo(symbol);
-    return await this.proxyContract.withdraw(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {gasLimit: this.gasLimit});
+    return await this.proxyContract.withdraw(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, 
+      {gasLimit: this.gasLimit, value: 2*this.PRICE_UPDATE_FEE_GWEI});
   }
 
   public async swapForMockToken(symbol: string, amountToPay: string) {

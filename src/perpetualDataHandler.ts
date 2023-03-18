@@ -54,6 +54,7 @@ import PriceFeeds from "./priceFeeds";
  * common data and chain operations.
  */
 export default class PerpetualDataHandler {
+  PRICE_UPDATE_FEE_GWEI = 1;
   //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
   //this is initialized in the createProxyInstance function
   protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;

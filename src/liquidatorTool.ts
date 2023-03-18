@@ -75,7 +75,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (priceFeedData==undefined) {
       priceFeedData = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, this.gasLimit);
+    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, {gasLimit: this.gasLimit, value: 2*this.PRICE_UPDATE_FEE_GWEI});
   }
 
   /**
@@ -122,13 +122,11 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param liquidatorAddr Address to be credited for the liquidation.
    * @param traderAddr Address of the trader to be liquidated.
    * @param priceFeedData contains VAA and timestamps required
-   * @param gasLimit Gas limit.
+   * @param options E.g., Gas limit, fee.
    * @ignore
    */
-  public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, priceFeedData: PriceFeedSubmission, gasLimit: number) {
-    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {
-      gasLimit: gasLimit,
-    });
+  public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, priceFeedData: PriceFeedSubmission, options: object) {
+    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, priceFeedData.priceFeedVaas, priceFeedData.timestamps, options);
   }
 
   /**

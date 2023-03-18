@@ -49,73 +49,72 @@ describe("write and spoil gas and tokens", () => {
     let tx = await accTrade.swapForMockToken("USDC", "0.001");
   });
 
-  // it("add collateral", async () => {
-  //   //*uncomment
-  //   let tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10);
-  //   console.log(`add collateral tx hash = ${tx.hash}`);
-  //   //*/
-  // });
+  it("add collateral", async () => {
+    //*uncomment
+    let tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10);
+    console.log(`add collateral tx hash = ${tx.hash}`);
+    //*/
+  });
 
-  // it("rempve collateral", async () => {
-  //   //*uncomment
-  //   let tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 10);
-  //   console.log(`remove collateral tx hash = ${tx.hash}`);
-  //   //*/
-  // });
+  it("remove collateral", async () => {
+    //*uncomment
+    let tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 10);
+    console.log(`remove collateral tx hash = ${tx.hash}`);
+    //*/
+  });
 
   it("trade", async () => {
-    // let order: Order = {
-    //   symbol: "BTC-USD-MATIC",
-    //   side: "BUY",
-    //   type: "MARKET",
-    //   quantity: 0.05,
-    //   leverage: 2,
-    //   timestamp: Date.now() / 1000,
-    // };
-    // let order: Order = {
-    //   symbol: "ETH-USD-MATIC",
-    //   side: "BUY",
-    //   type: "LIMIT",
-    //   limitPrice: 0,
-    //   quantity: 1,
-    //   leverage: 5,
-    //   reduceOnly: true,
-    //   keepPositionLvg: false,
-    //   timestamp: 1677588583,
-    //   deadline: 1677617383,
-    // };
+    let order: Order = {
+      symbol: "BTC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 0.05,
+      leverage: 2,
+      timestamp: Date.now() / 1000,
+    };
+    /*
+    let order: Order = {
+      symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "LIMIT",
+      limitPrice: 0,
+      quantity: 1,
+      leverage: 5,
+      reduceOnly: true,
+      keepPositionLvg: false,
+      timestamp: 1677588583,
+      deadline: 1677617383,
+    };*/
 
-    // //* UNCOMMENT TO ENABLE TRADING
-    // let resp: OrderResponse;
-    // try {
-    //   resp = await accTrade.order(order);
-    //   console.log("trade transaction hash =", resp.tx.hash);
-    //   console.log("orderId =", resp.orderId);
-    //   // execute trade
-    //   orderId = resp.orderId;
-    // } catch (err) {
-    //   console.log("Error=", err);
-    // }
-    console.log(floatToABK64x64(Infinity));
-
-    //   //*/
+    //* UNCOMMENT TO ENABLE TRADING
+    let resp: OrderResponse;
+    try {
+      resp = await accTrade.order(order);
+      console.log("trade transaction hash =", resp.tx.hash);
+      console.log("orderId =", resp.orderId);
+      // execute trade
+      orderId = resp.orderId;
+    } catch (err) {
+      console.log("Error=", err);
+    }
+    console.log("order submitted");
   });
-  // it("post & execute market order", async () => {
-  //   let refTool = new OrderReferrerTool(config, pk);
-  //   await refTool.createProxyInstance();
-  //   let order: Order = {
-  //     symbol: "BTC-USD-MATIC",
-  //     side: "BUY",
-  //     type: "MARKET",
-  //     quantity: 0.01,
-  //     leverage: 10,
-  //     timestamp: Date.now() / 1000,
-  //   };
-  //   let resp = await accTrade.order(order);
-  //   await delay(4000);
-  //   let tx = await refTool.executeOrder("BTC-USD-MATIC", resp.orderId);
-  //   console.log("tx hash = ", tx.hash);
-  // });
+  it("post & execute market order", async () => {
+    let refTool = new OrderReferrerTool(config, pk);
+    await refTool.createProxyInstance();
+    let order: Order = {
+      symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 0.1,
+      leverage: 10,
+      timestamp: Date.now() / 1000,
+    };
+    let resp = await accTrade.order(order);
+    await delay(4000);
+    let tx = await refTool.executeOrder("ETH-USD-MATIC", resp.orderId);
+    console.log("tx hash = ", tx.hash);
+  });
   // it("post limit order", async () => {
   //   let order: Order = {
   //     symbol: "MATIC-USD-MATIC",
