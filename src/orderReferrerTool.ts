@@ -275,7 +275,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * if not defined.
    * @returns array of tradeable boolean 
    */
-  public async isTradeableBatch(orders: Order[], indexPrices?: [number,number]): Promise<boolean[]> {
+  public async isTradeableBatch(orders: Order[], indexPrices?: [number,number, boolean, boolean]): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
     }
@@ -286,9 +286,14 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("all orders in a batch must have the same symbol");
     }
     if (indexPrices==undefined) {
-      let obj = await this.fetchPriceSubmissionInfoForPerpetual(orders[0].symbol);
-      indexPrices = obj.pxS2S3;
+      let obj = await this.fetchLatestFeedPriceInfo(orders[0].symbol);
+      indexPrices = [obj.prices[0], obj.prices[1], obj.isMarketClosed[0], obj.isMarketClosed[1]];
     }
+    if(indexPrices[2] || indexPrices[3]) {
+      // market closed
+      return orders.map((o) =>false);
+    }
+    
     let orderPrice = await Promise.all(
       orders.map((o) =>
         PerpetualDataHandler._queryPerpetualPrice(
@@ -296,7 +301,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
           o.quantity,
           this.symbolToPerpStaticInfo,
           this.proxyContract!,
-          indexPrices!
+          [indexPrices![0], indexPrices![1]]
         )
       )
     );
@@ -304,7 +309,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       orders[0].symbol,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
-      indexPrices
+      [indexPrices![0], indexPrices![1]]
     );
     let block = await this.provider!.getBlockNumber();
     return orders.map((o, idx) =>
