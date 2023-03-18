@@ -146,7 +146,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos, this.symbolList, this.priceFeedGetter);
+    return await MarketData._exchangeInfo(this.proxyContract, this.poolStaticInfos, this.symbolToPerpStaticInfo, this.symbolList, this.priceFeedGetter);
   }
 
   /**
@@ -597,22 +597,22 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Query recent perpetual state from blockchain
    * @param symbol symbol of the form ETH-USD-MATIC
-   * @param indexPrices S2 and S3 prices, if not provided fetch via REST API
+   * @param indexPrices S2 and S3 prices/isMarketOpen if not provided fetch via REST API
    * @returns PerpetualState reference
    */
-  public async getPerpetualState(symbol: string, indexPrices?: [number, number]): Promise<PerpetualState> {
+  public async getPerpetualState(symbol: string, indexPriceInfo?: [number, number, boolean, boolean]): Promise<PerpetualState> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    if (indexPrices==undefined) {
-      let obj = await this.fetchPriceSubmissionInfoForPerpetual(symbol);
-      indexPrices = obj.pxS2S3;
+    if (indexPriceInfo==undefined) {
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+      indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
     let state: PerpetualState = await PerpetualDataHandler._queryPerpetualState(
       symbol,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
-      indexPrices
+      indexPriceInfo
     );
     return state;
   }
@@ -728,6 +728,7 @@ export default class MarketData extends PerpetualDataHandler {
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
+    _symbolToPerpStaticInfo : Map<string, PerpetualStaticInfo>,
     _symbolList: Map<string, string>,
     _priceFeedGetter: PriceFeeds
   ): Promise<ExchangeInfo> {
@@ -735,7 +736,14 @@ export default class MarketData extends PerpetualDataHandler {
     let factory = await _proxyContract.getOracleFactory();
     let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
     const numPools = nestedPerpetualIDs.length;
-    let idxPriceMap= new Map<string, number>;
+    
+    // get all prices
+    let allSym = new Array<string>();
+    for(let symbol of _symbolToPerpStaticInfo.keys()) {
+      allSym.push(symbol);
+    }
+    let idxPriceMap : Map<string, [number,boolean]> = await _priceFeedGetter.fetchPrices(allSym);
+
     for (var j = 0; j < numPools; j++) {
       let perpetualIDs = nestedPerpetualIDs[j];
       let pool = await _proxyContract.getLiquidityPool(j + 1);
@@ -758,26 +766,22 @@ export default class MarketData extends PerpetualDataHandler {
         let symS3 = contractSymbolToSymbol(perp.S3BaseCCY, _symbolList)+"-"+contractSymbolToSymbol(perp.S3QuoteCCY, _symbolList);
         let perpSymbol = symS2+"-"+poolSymbol;
         //console.log("perpsymbol=",perpSymbol);
-        let indexS2 : number | undefined = idxPriceMap.get(symS2);
-        if (indexS2==undefined) {
-          let obj = await _priceFeedGetter.fetchFeedPricesAndIndices(perpSymbol);
-          indexS2 = obj.pxS2S3[0];
-          idxPriceMap.set(symS2, indexS2);
-          if (symS3!="-") {
-            idxPriceMap.set(symS3, obj.pxS2S3[1]);
-          }
+        let res = idxPriceMap.get(symS2)
+        if (res==undefined) {
+          throw new Error(`Price for index ${symS2} could not be fetched - config issue`);
         }
+        let [indexS2, isS2MktClosed] : [number, boolean] = [res[0], res[1]];
         let indexS3 = 1;
+        let isS3MktClosed = false;
         if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
           indexS3 = indexS2;
         } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUANTO) {
-          let _indexS3 = idxPriceMap.get(symS2);
-          if (_indexS3==undefined) {
-            let obj = await _priceFeedGetter.fetchFeedPricesAndIndices(perpSymbol);
-            indexS3 = obj.pxS2S3[1];
-            idxPriceMap.set(symS3, indexS3);
+          res = idxPriceMap.get(symS3);
+          if (res==undefined) {
+            throw new Error(`Price for index ${symS3} could not be fetched - config issue`);
           } else {
-            indexS3 = _indexS3;
+            indexS3 = res[0];
+            isS3MktClosed = res[1]; 
           }
         }
         let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0), [
@@ -800,6 +804,7 @@ export default class MarketData extends PerpetualDataHandler {
           currentFundingRateBps: currentFundingRateBps,
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
           maxPositionBC: Infinity,
+          isMarketClosed: isS2MktClosed || isS3MktClosed
         };
         PoolState.perpetuals.push(PerpetualState);
       }

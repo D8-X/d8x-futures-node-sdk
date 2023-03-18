@@ -73,7 +73,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     if (priceFeedData==undefined) {
-      priceFeedData = await this.fetchLatestFeedPrices(symbol);
+      priceFeedData = await this.fetchLatestFeedPriceInfo(symbol);
     }
     return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, this.gasLimit);
   }

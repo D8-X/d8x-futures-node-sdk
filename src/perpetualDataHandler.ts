@@ -269,7 +269,7 @@ export default class PerpetualDataHandler {
    */
   public async fetchPriceSubmissionInfoForPerpetual(symbol: string) : Promise<{submission : PriceFeedSubmission, pxS2S3 : [number,number]}> {
     // fetch prices from required price-feeds (REST)
-    return await this.priceFeedGetter.fetchFeedPricesAndIndices(symbol);
+    return await this.priceFeedGetter.fetchFeedPriceInfoAndIndicesForPerpetual(symbol);
   }
 
   /**
@@ -293,8 +293,8 @@ export default class PerpetualDataHandler {
    * @returns array of price feed updates that can be submitted to the smart contract 
    * and corresponding price information 
    */
-  public async fetchLatestFeedPrices(symbol: string) : Promise<PriceFeedSubmission> {
-    return await this.priceFeedGetter.fetchLatestFeedPrices(symbol);
+  public async fetchLatestFeedPriceInfo(symbol: string) : Promise<PriceFeedSubmission> {
+    return await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
   }
 
   /**
@@ -428,11 +428,11 @@ export default class PerpetualDataHandler {
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: ethers.Contract,
-    indexPrices: [number, number]
+    indexPrices: [number, number, boolean, boolean]
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ccy = symbol.split("-");
-    let [S2, S3] = indexPrices.map(x=>floatToABK64x64(x));
+    let [S2, S3] = [indexPrices[0], indexPrices[1]];
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
     let state = {
@@ -447,6 +447,7 @@ export default class PerpetualDataHandler {
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
       maxPositionBC: ABK64x64ToFloat(ammState[12]),
+      isMarketClosed: indexPrices[2] || indexPrices[3]
     };
     if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.BASE) {
       state.collToQuoteIndexPrice = state.indexPrice;

@@ -25,14 +25,26 @@ describe("priceFeed", () => {
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });
-  it("get recent prices", async()=> {
+  it("get recent prices and submission info for perpetual", async()=> {
     let priceFeeds = new PriceFeeds(mktData, "testnet");
-    let prices = await priceFeeds.fetchLatestFeedPrices("ETH-USD-MATIC");
+    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("ETH-USD-MATIC");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
+  it("get recent prices for perpetual", async()=> {
+    let priceFeeds = new PriceFeeds(mktData, "testnet");
+    let prices = await priceFeeds.fetchPricesForPerpetual("ETH-USD-MATIC");
+    console.log("pyth price info = ", prices);
+  });
+  it("get recent prices", async()=> {
+    let priceFeeds = new PriceFeeds(mktData, "testnet");
+    //let query = "https://pyth.testnet.quantena.tech/api/latest_price_feeds?ids[]=0x796d24444ff50728b58e94b1f53dc3a406b2f1ba9d0d0b91d4406c37491a6feb&ids[]=0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b";
+    let prices = await priceFeeds.fetchAllFeedPrices();
+    console.log("pyth price info = ", prices);
+  });
+  
   it("get recent prices from market data directly", async()=> {
-    let prices = await mktData.fetchLatestFeedPrices("MATIC-USD-MATIC");
+    let prices = await mktData.fetchLatestFeedPriceInfo("MATIC-USD-MATIC");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -47,12 +59,16 @@ describe("priceFeed", () => {
     let fakeSubmission : PriceFeedSubmission = 
       {symbols: ["BTC-USD", "ETH-USD", "USDC-USD"], priceFeedVaas: ["","",""],
       prices: [20000, 1400, 0.95],
-      timestamps: [timestampSec, timestampSec, timestampSec]};
-    let px = priceFeeds.calculateTriangulatedPricesFromFeeds(["ETH-USDC", "BTC-USDC", "ETH-USD"], fakeSubmission);
+      isMarketClosed: [false, true, false],
+      timestamps: [timestampSec, timestampSec, timestampSec-70_000]};
+    let px = priceFeeds.calculateTriangulatedPricesFromFeedInfo(["ETH-USDC", "BTC-USDC", "ETH-USD"], fakeSubmission);
     let pricesExpected = [1400/0.95, 20000/0.95, 1400];
-    expect(px[0]).toBeCloseTo(pricesExpected[0], 5);
-    expect(px[1]).toBeCloseTo(pricesExpected[1], 5);
-    expect(px[2]).toBeCloseTo(pricesExpected[2], 5);
+    expect(px[0][0]).toBeCloseTo(pricesExpected[0], 5);
+    expect(px[0][1]).toBeCloseTo(pricesExpected[1], 5);
+    expect(px[0][2]).toBeCloseTo(pricesExpected[2], 5);
+    expect(px[1][0]).toBeTruthy();
+    expect(px[1][1]).toBeFalsy();
+    expect(px[1][2]).toBeTruthy();// market closed
   });
   it("fetch info from data handler", async()=> {
     let l = await mktData.fetchPriceSubmissionInfoForPerpetual("MATIC-USD-MATIC");

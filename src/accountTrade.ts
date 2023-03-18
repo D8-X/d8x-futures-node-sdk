@@ -335,7 +335,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPrices(symbol);
+    let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPriceInfo(symbol);
     return await this.proxyContract.deposit(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {gasLimit: this.gasLimit});
   }
 
@@ -350,7 +350,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPrices(symbol);
+    let priceFeedData : PriceFeedSubmission = await this.fetchLatestFeedPriceInfo(symbol);
     return await this.proxyContract.withdraw(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {gasLimit: this.gasLimit});
   }
 

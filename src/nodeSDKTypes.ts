@@ -140,6 +140,7 @@ export interface PerpetualState {
   currentFundingRateBps: number;
   openInterestBC: number;
   maxPositionBC: number;
+  isMarketClosed: boolean;
 }
 
 export interface OrderResponse {
@@ -220,10 +221,11 @@ export interface PriceFeedSubmission {
   symbols: string[];
   priceFeedVaas: string[]; 
   prices: number[];
+  isMarketClosed: boolean[];
   timestamps: number[];
 }
 
-export interface VaaPxExtension {
+export interface PriceFeedFormat {
   conf: BigNumber;
   expo: number;
   price: BigNumber;

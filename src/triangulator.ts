@@ -41,19 +41,22 @@ export default class Triangulator {
    * Calculate the triangulated price from underlying prices
    * @param triangulation triangulation of with symbol and is-inverted flag 
    * @param feedIdxPrices map of symbol to price
-   * @returns triangulated price (scalar)
+   * @returns triangulated price (scalar), true if market closed or price unavailable
    */
-  public static calculateTriangulatedPrice(triangulation: [string[], boolean[]], feedIdxPrices: Map<string, number>) : number {
+  public static calculateTriangulatedPrice(triangulation: [string[], boolean[]], feedIdxPrices: Map<string, [number, boolean]>) : [number,boolean] {
     let px = 1;
+    let isOpen = true;
     for (let j = 0; j < triangulation[0].length; j++) {
-      let pxFeed = feedIdxPrices.get(triangulation[0][j]);
+      let pxFeed : [number, boolean]|undefined = feedIdxPrices.get(triangulation[0][j]);
       if (pxFeed == undefined) {
         // no price available for given index
-        return -1;
+        return [-1, true];
       }
-      px = triangulation[1][j] ? px / pxFeed : px * pxFeed;
+      px = triangulation[1][j] ? px / pxFeed[0] : px * pxFeed[0];
+      let isClosed = pxFeed[1];
+      isOpen = isOpen && !isClosed;
     }
-    return px;
+    return [px, !isOpen];
   }
 
   /**
