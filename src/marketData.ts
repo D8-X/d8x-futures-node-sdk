@@ -550,8 +550,8 @@ export default class MarketData extends PerpetualDataHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if(indexPrices==undefined) {
-      let obj = this.fetchPriceSubmissionInfoForPerpetual(symbol);
-      indexPrices = (await obj).pxS2S3;
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
     return await PerpetualDataHandler._queryPerpetualMarkPrice(symbol, this.symbolToPerpStaticInfo, this.proxyContract, indexPrices);
   }
@@ -582,8 +582,8 @@ export default class MarketData extends PerpetualDataHandler {
     }
     if (indexPrices==undefined) {
       // fetch from API
-      let obj = await this.fetchPriceSubmissionInfoForPerpetual(symbol);
-      indexPrices = obj.pxS2S3;
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
     return await PerpetualDataHandler._queryPerpetualPrice(
       symbol,

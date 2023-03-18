@@ -248,8 +248,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (indexPrices==undefined) {
-      let obj = await this.fetchPriceSubmissionInfoForPerpetual(order.symbol);
-      indexPrices = obj.pxS2S3;
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
     let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
       order.symbol,
@@ -293,7 +293,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       // market closed
       return orders.map((o) =>false);
     }
-    
+
     let orderPrice = await Promise.all(
       orders.map((o) =>
         PerpetualDataHandler._queryPerpetualPrice(
