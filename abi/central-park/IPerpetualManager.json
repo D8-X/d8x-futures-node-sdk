@@ -3462,12 +3462,12 @@
         "outputs": [
             {
                 "internalType": "bytes32[]",
-                "name": "ids",
+                "name": "",
                 "type": "bytes32[]"
             },
             {
                 "internalType": "bool[]",
-                "name": "isPyth",
+                "name": "",
                 "type": "bool[]"
             }
         ],
@@ -5001,6 +5001,11 @@
                 "internalType": "uint64[]",
                 "name": "_publishTimes",
                 "type": "uint64[]"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_blockAge",
+                "type": "uint256"
             }
         ],
         "name": "updatePriceFeeds",
