@@ -738,11 +738,16 @@ export default class MarketData extends PerpetualDataHandler {
     const numPools = nestedPerpetualIDs.length;
     
     // get all prices
-    let allSym = new Array<string>();
-    for(let symbol of _symbolToPerpStaticInfo.keys()) {
-      allSym.push(symbol);
+    let allSym = new Set<string>();
+    for(let perpSymbol of _symbolToPerpStaticInfo.keys()) {
+      let sInfo : PerpetualStaticInfo | undefined = _symbolToPerpStaticInfo.get(perpSymbol);
+      allSym.add(sInfo!.S2Symbol);
+      if(sInfo!.S3Symbol!='') {
+        allSym.add(sInfo!.S3Symbol);
+      }
     }
-    let idxPriceMap : Map<string, [number,boolean]> = await _priceFeedGetter.fetchPrices(allSym);
+    let allSymArr = Array.from(allSym.values());
+    let idxPriceMap : Map<string, [number,boolean]> = await _priceFeedGetter.fetchPrices(allSymArr);
 
     for (var j = 0; j < numPools; j++) {
       let perpetualIDs = nestedPerpetualIDs[j];
