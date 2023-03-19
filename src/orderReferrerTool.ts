@@ -7,7 +7,7 @@ import {
   SELL_SIDE,
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
-  PriceFeedSubmission
+  PriceFeedSubmission,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -48,8 +48,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
    * @param {string=} referrerAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
-   * @param {number=} nonce optional nonce 
-   * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual 
+   * @param {number=} nonce optional nonce
+   * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
    * @example
    * import { OrderReferrerTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
    * async function main() {
@@ -91,11 +91,22 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof referrerAddr == "undefined") {
       referrerAddr = this.traderAddr;
     }
-    const options = { gasLimit: this.gasLimit, nonce: nonce, value: 2 * this.PRICE_UPDATE_FEE_GWEI };
-    if (submission==undefined) {
+    if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
     }
-    return await orderBookSC.executeOrder(orderId, referrerAddr, submission?.priceFeedVaas, submission?.timestamps, options);
+    const options = {
+      gasLimit: this.gasLimit,
+      nonce: nonce,
+      value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
+    };
+    console.log(submission);
+    return await orderBookSC.executeOrder(
+      orderId,
+      referrerAddr,
+      submission?.priceFeedVaas,
+      submission?.timestamps,
+      options
+    );
   }
 
   /**
@@ -253,7 +264,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    if (indexPrices==undefined) {
+    if (indexPrices == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
@@ -279,9 +290,9 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param orders orders belonging to 1 perpetual
    * @param indexPrice S2,S3-index prices for the given perpetual. Will fetch prices from REST API
    * if not defined.
-   * @returns array of tradeable boolean 
+   * @returns array of tradeable boolean
    */
-  public async isTradeableBatch(orders: Order[], indexPrices?: [number,number, boolean, boolean]): Promise<boolean[]> {
+  public async isTradeableBatch(orders: Order[], indexPrices?: [number, number, boolean, boolean]): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
     }
@@ -291,13 +302,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (orders.filter((o) => o.symbol == orders[0].symbol).length < orders.length) {
       throw Error("all orders in a batch must have the same symbol");
     }
-    if (indexPrices==undefined) {
+    if (indexPrices == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(orders[0].symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
-    if(indexPrices[2] || indexPrices[3]) {
+    if (indexPrices[2] || indexPrices[3]) {
       // market closed
-      return orders.map((o) =>false);
+      return orders.map((o) => false);
     }
 
     let orderPrice = await Promise.all(

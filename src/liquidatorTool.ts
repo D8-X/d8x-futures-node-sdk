@@ -72,10 +72,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
       liquidatorAddr = this.traderAddr;
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    if (priceFeedData==undefined) {
+    if (priceFeedData == undefined) {
       priceFeedData = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, {gasLimit: this.gasLimit, value: 2*this.PRICE_UPDATE_FEE_GWEI});
+    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, {
+      gasLimit: this.gasLimit,
+      value: this.PRICE_UPDATE_FEE_GWEI * priceFeedData.priceFeedVaas.length,
+    });
   }
 
   /**
@@ -125,8 +128,21 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param options E.g., Gas limit, fee.
    * @ignore
    */
-  public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, priceFeedData: PriceFeedSubmission, options: object) {
-    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, priceFeedData.priceFeedVaas, priceFeedData.timestamps, options);
+  public async _liquidateByAMM(
+    perpetualId: number,
+    liquidatorAddr: string,
+    traderAddr: string,
+    priceFeedData: PriceFeedSubmission,
+    options: object
+  ) {
+    return await this.proxyContract!.liquidateByAMM(
+      perpetualId,
+      liquidatorAddr,
+      traderAddr,
+      priceFeedData.priceFeedVaas,
+      priceFeedData.timestamps,
+      options
+    );
   }
 
   /**
