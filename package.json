@@ -46,7 +46,7 @@
     "src/*.md",
     "dist/*.ts",
     "dist/*.js",
-    "abi/*.json",
+    "abi/**/*.json",
     "config/*.json"
   ],
   "repository": {

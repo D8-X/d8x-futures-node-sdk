@@ -4,10 +4,10 @@
     "version": 1.5,
     "proxyAddr": "0xaB6AD25eE5CA28E7d7b16A33A33897aE34BF9e67",
     "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
-    "proxyABILocation": "../abi/IPerpetualManager.json",
+    "proxyABILocation": "../abi/testnet/IPerpetualManager.json",
     "limitOrderBookFactoryAddr": "0xe95422bf27C62F3b9ae19d6032aC58c1bd13C71E",
-    "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
+    "limitOrderBookFactoryABILocation": "../abi/testnet/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "../abi/testnet/LimitOrderBook.json",
     "symbolListLocation": "../config/symbolList.json"
   },
   {
@@ -15,10 +15,10 @@
     "version": 0,
     "proxyAddr": "",
     "nodeURL": "",
-    "proxyABILocation": "../abi/IPerpetualManager.json",
+    "proxyABILocation": "",
     "limitOrderBookFactoryAddr": "",
-    "limitOrderBookFactoryABILocation": "../abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "../abi/LimitOrderBook.json",
+    "limitOrderBookFactoryABILocation": "",
+    "limitOrderBookABILocation": "",
     "symbolListLocation": "../config/symbolList.json"
   },
   {
