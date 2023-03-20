@@ -77,7 +77,7 @@ export default class PerpetualDataHandler {
   protected provider: ethers.providers.JsonRpcProvider | null = null;
 
   private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
-  protected priceFeedGetter : PriceFeeds;
+  protected priceFeedGetter: PriceFeeds;
 
   // pools are numbered consecutively starting at 1
   // nestedPerpetualIDs contains an array for each pool
@@ -153,7 +153,7 @@ export default class PerpetualDataHandler {
         let sym = base + "-" + quote;
         let sym3 = base3 + "-" + quote3;
         requiredPairs.add(sym);
-        if (sym3!="-") {
+        if (sym3 != "-") {
           requiredPairs.add(sym3);
         } else {
           sym3 = "";
@@ -218,8 +218,8 @@ export default class PerpetualDataHandler {
       this.symbolToTokenAddrMap.set(poolCCY!, poolMarginTokenAddr);
     }
     // pre-calculate all triangulation paths so we can easily get from
-    // the prices of price-feeds to the index price required, e.g. 
-    // BTC-USDC : BTC-USD / USDC-USD 
+    // the prices of price-feeds to the index price required, e.g.
+    // BTC-USDC : BTC-USD / USDC-USD
     this.priceFeedGetter.initializeTriangulations(requiredPairs);
   }
 
@@ -268,7 +268,9 @@ export default class PerpetualDataHandler {
    * @param symbol pool symbol of the form "ETH-USD-MATIC"
    * @returns PriceFeedSubmission and prices for S2 and S3. [S2price, 0] if S3 not defined.
    */
-  public async fetchPriceSubmissionInfoForPerpetual(symbol: string) : Promise<{submission : PriceFeedSubmission, pxS2S3 : [number,number]}> {
+  public async fetchPriceSubmissionInfoForPerpetual(
+    symbol: string
+  ): Promise<{ submission: PriceFeedSubmission; pxS2S3: [number, number] }> {
     // fetch prices from required price-feeds (REST)
     return await this.priceFeedGetter.fetchFeedPriceInfoAndIndicesForPerpetual(symbol);
   }
@@ -278,23 +280,23 @@ export default class PerpetualDataHandler {
    * @param symbol of the form ETH-USD-MATIC, specifying the perpetual
    * @returns name of underlying index prices, e.g. ["MATIC-USD", ""]
    */
-  public getIndexSymbols(symbol: string) : [string, string] {
-     // get index
-     let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
-     if (staticInfo==undefined) {
-       throw new Error(`No static info for perpetual with symbol ${symbol}`);
-     }
-     return [staticInfo.S2Symbol,staticInfo.S3Symbol];
+  public getIndexSymbols(symbol: string): [string, string] {
+    // get index
+    let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (staticInfo == undefined) {
+      throw new Error(`No static info for perpetual with symbol ${symbol}`);
+    }
+    return [staticInfo.S2Symbol, staticInfo.S3Symbol];
   }
 
   /**
    * Get the latest prices for a given perpetual from the offchain oracle
    * networks
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
-   * @returns array of price feed updates that can be submitted to the smart contract 
-   * and corresponding price information 
+   * @returns array of price feed updates that can be submitted to the smart contract
+   * and corresponding price information
    */
-  public async fetchLatestFeedPriceInfo(symbol: string) : Promise<PriceFeedSubmission> {
+  public async fetchLatestFeedPriceInfo(symbol: string): Promise<PriceFeedSubmission> {
     return await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
   }
 
@@ -408,7 +410,7 @@ export default class PerpetualDataHandler {
     indexPrices: [number, number]
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let fIndexPrices = indexPrices.map(x=>floatToABK64x64(x));
+    let fIndexPrices = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
     let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), fIndexPrices);
     return ABK64x64ToFloat(fPrice);
   }
@@ -420,7 +422,7 @@ export default class PerpetualDataHandler {
     indexPrices: [number, number]
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let [S2, S3] = indexPrices.map(x=>floatToABK64x64(x));
+    let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
   }
@@ -434,7 +436,10 @@ export default class PerpetualDataHandler {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ccy = symbol.split("-");
     let [S2, S3] = [indexPrices[0], indexPrices[1]];
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(x=>floatToABK64x64(x)));
+    let ammState = await _proxyContract.getAMMState(
+      perpId,
+      [S2, S3].map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x))
+    );
     let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
     let state = {
       id: perpId,
@@ -448,7 +453,7 @@ export default class PerpetualDataHandler {
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
       maxPositionBC: ABK64x64ToFloat(ammState[12]),
-      isMarketClosed: indexPrices[2] || indexPrices[3]
+      isMarketClosed: indexPrices[2] || indexPrices[3],
     };
     if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.BASE) {
       state.collToQuoteIndexPrice = state.indexPrice;

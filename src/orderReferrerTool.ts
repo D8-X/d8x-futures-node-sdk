@@ -99,7 +99,6 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       nonce: nonce,
       value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
     };
-    console.log(submission);
     return await orderBookSC.executeOrder(
       orderId,
       referrerAddr,
