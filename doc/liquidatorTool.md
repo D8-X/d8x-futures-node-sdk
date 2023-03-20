@@ -9,7 +9,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ <code>WriteAccessHandler</code>
     * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
-    * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr])](#LiquidatorTool+liquidateTrader) ⇒
+    * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData)](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
@@ -43,7 +43,7 @@ main();
 ```
 <a name="LiquidatorTool+liquidateTrader"></a>
 
-### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr]) ⇒
+### liquidatorTool.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData) ⇒
 <p>Liquidate a trader.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
@@ -53,7 +53,8 @@ main();
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | traderAddr | <code>string</code> | <p>Address of the trader to be liquidated.</p> |
-| [liquidatorAddr] | <code>string</code> | <p>Address to be credited if the liquidation succeeds. Defaults to the wallet used to execute the liquidation.</p> |
+| [liquidatorAddr] | <code>string</code> | <p>Address to be credited if the liquidation succeeds.</p> |
+| priceFeedData | <code>PriceFeedSubmission</code> | <p>optional. VAA and timestamps for oracle. If not provided will query from REST API. Defaults to the wallet used to execute the liquidation.</p> |
 
 **Example**  
 ```js

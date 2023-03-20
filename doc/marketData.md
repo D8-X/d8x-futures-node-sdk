@@ -19,13 +19,12 @@ No gas required for the queries here.</p>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
-    * [.getPoolIndexFromSymbol(symbol)](#MarketData+getPoolIndexFromSymbol) ⇒
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
     * [.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance)](#MarketData+maxOrderSizeForTrader) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
-    * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒
+    * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
     * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
 
@@ -215,18 +214,6 @@ main();
 | deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
 | currentPositionRisk | <p>Position risk before</p> |
 
-<a name="MarketData+getPoolIndexFromSymbol"></a>
-
-### marketData.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
-
-**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Pool index</p>  
-
-| Param | Description |
-| --- | --- |
-| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
-
 <a name="MarketData+getWalletBalance"></a>
 
 ### marketData.getWalletBalance(address, symbol) ⇒
@@ -340,7 +327,7 @@ main();
 ```
 <a name="MarketData+getPerpetualState"></a>
 
-### marketData.getPerpetualState(symbol) ⇒
+### marketData.getPerpetualState(symbol, indexPrices) ⇒
 <p>Query recent perpetual state from blockchain</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -349,6 +336,7 @@ main();
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
 
 <a name="MarketData+getPerpetualStaticInfo"></a>
 
