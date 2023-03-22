@@ -166,21 +166,20 @@ export default class PerpetualDataHandler {
         // try to find a limit order book
         let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
         currentLimitOrderBookAddr.push(lobAddr);
-        if (poolCCY == undefined) {
-          // we find out the pool currency by looking at all perpetuals
-          // unless for quanto perpetuals, we know the pool currency
-          // from the perpetual. This fails if we have a pool with only
-          // quanto perpetuals
-          if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-            poolCCY = base;
-            ccy.push(CollaterlCCY.BASE);
-          } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
-            poolCCY = quote;
-            ccy.push(CollaterlCCY.QUOTE);
-          } else {
-            poolCCY = base3;
-            ccy.push(CollaterlCCY.QUANTO);
-          }
+
+        // we find out the pool currency by looking at all perpetuals
+        // unless for quanto perpetuals, we know the pool currency
+        // from the perpetual. This fails if we have a pool with only
+        // quanto perpetuals
+        if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
+          poolCCY = poolCCY ?? base;
+          ccy.push(CollaterlCCY.BASE);
+        } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
+          poolCCY = poolCCY ?? quote;
+          ccy.push(CollaterlCCY.QUOTE);
+        } else {
+          poolCCY = poolCCY ?? base3;
+          ccy.push(CollaterlCCY.QUANTO);
         }
       }
       if (perpetualIDs.length == 0) {
@@ -439,20 +438,23 @@ export default class PerpetualDataHandler {
     indexPrices: [number, number, boolean, boolean]
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
     let ccy = symbol.split("-");
     let [S2, S3] = [indexPrices[0], indexPrices[1]];
-    let ammState = await _proxyContract.getAMMState(
-      perpId,
-      [S2, S3].map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x))
-    );
-    let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
+    if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
+      S3 = S2;
+    } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
+      S3 = 1;
+    }
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64));
+    let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state = {
       id: perpId,
       state: PERP_STATE_STR[ammState[13]],
       baseCurrency: ccy[0],
       quoteCurrency: ccy[1],
-      indexPrice: ABK64x64ToFloat(ammState[6]),
-      collToQuoteIndexPrice: ABK64x64ToFloat(ammState[7]),
+      indexPrice: S2,
+      collToQuoteIndexPrice: S3,
       markPrice: markPrice,
       midPrice: ABK64x64ToFloat(ammState[10]),
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
@@ -460,11 +462,6 @@ export default class PerpetualDataHandler {
       maxPositionBC: ABK64x64ToFloat(ammState[12]),
       isMarketClosed: indexPrices[2] || indexPrices[3],
     };
-    if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.BASE) {
-      state.collToQuoteIndexPrice = state.indexPrice;
-    } else if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.QUOTE) {
-      state.collToQuoteIndexPrice = 1;
-    }
     return state;
   }
 
