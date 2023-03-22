@@ -289,7 +289,8 @@ export function getNewPositionLeverage(
   let newPosition = tradeAmount + currentPosition;
   let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - limitPrice);
   return (
-    (Math.abs(newPosition) * indexPriceS2) / (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount))
+    (Math.abs(newPosition) * markPrice) /
+    (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount) * indexPriceS2)
   );
 }
 

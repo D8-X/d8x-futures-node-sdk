@@ -352,12 +352,17 @@ export default class PerpetualDataHandler {
     traderAddr: string,
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    _pxS2S3?: [number, number | undefined]
   ): Promise<MarginAccount> {
     let perpId = Number(symbol);
     if (isNaN(perpId)) {
       perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     }
+    // TODO: correct numbers using actual S2, S3
+    // if (_pxS2S3 == undefined) {
+    //   // fetch s2,s3
+    // }
     const idx_cash = 3;
     const idx_notional = 4;
     const idx_locked_in = 5;
