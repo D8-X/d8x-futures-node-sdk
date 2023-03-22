@@ -231,13 +231,18 @@ export default class MarketData extends PerpetualDataHandler {
   public async positionRiskOnTrade(
     traderAddr: string,
     order: Order,
-    currentPositionRisk?: MarginAccount
+    currentPositionRisk?: MarginAccount,
+    indexPriceInfo?: [number, number, boolean, boolean]
   ): Promise<MarginAccount> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (currentPositionRisk == undefined) {
       currentPositionRisk = await this.positionRisk(traderAddr, order.symbol);
+    }
+    if (indexPriceInfo == undefined) {
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(currentPositionRisk.symbol);
+      indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
     // price for this order = limit price (conservative) if given, else the current perp price
@@ -248,7 +253,7 @@ export default class MarketData extends PerpetualDataHandler {
       ((await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
         (order.brokerFeeTbps ?? 0)) /
       100_000;
-    let perpetualState = await this.getPerpetualState(order.symbol);
+    let perpetualState = await this.getPerpetualState(order.symbol, indexPriceInfo);
 
     return MarketData._positionRiskOnAccountAction(
       order.symbol,
@@ -273,12 +278,17 @@ export default class MarketData extends PerpetualDataHandler {
    */
   public async positionRiskOnCollateralAction(
     deltaCollateral: number,
-    currentPositionRisk: MarginAccount
+    currentPositionRisk: MarginAccount,
+    indexPriceInfo?: [number, number, boolean, boolean]
   ): Promise<MarginAccount> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let perpetualState = await this.getPerpetualState(currentPositionRisk.symbol);
+    if (indexPriceInfo == undefined) {
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(currentPositionRisk.symbol);
+      indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
+    }
+    let perpetualState = await this.getPerpetualState(currentPositionRisk.symbol, indexPriceInfo);
 
     return MarketData._positionRiskOnAccountAction(
       currentPositionRisk.symbol,
@@ -311,6 +321,8 @@ export default class MarketData extends PerpetualDataHandler {
     let newPosition = currentPosition + tradeAmount;
     let newSide = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
     let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
+    let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
+    let newEntryPrice = newPosition == 0 ? 0 : Math.abs(newLockedInValue / newPosition);
     if (tradeAmount == 0) {
       keepPositionLvg = false;
     }
@@ -345,37 +357,37 @@ export default class MarketData extends PerpetualDataHandler {
         newCollateral,
         currentPosition,
         lockedInValue,
-        indexPriceS2,
-        indexPriceS3,
-        markPrice,
         tradePrice,
-        feeRate
+        indexPriceS3,
+        markPrice
       );
     } else if (tradeAmount != 0) {
       let deltaCash: number;
       if (!isOpen && !isFlip && !keepPositionLvgOnClose) {
         // cash comes from realized pnl
         deltaCash = (tradeAmount * (tradePrice - currentPositionRisk.entryPrice)) / indexPriceS3;
+        newLockedInValue = lockedInValue + currentPositionRisk.entryPrice * tradeAmount;
       } else {
         // target lvg will default current lvg if not specified
         let targetLvg = isFlip || isOpen ? tradeLeverage ?? 0 : 0;
         let b0, pos0;
         [b0, pos0] = isOpen ? [0, 0] : [currentPositionRisk.collateralCC, currentPosition];
         // cash comes from trader wallet
-        deltaCash = getDepositAmountForLvgTrade(b0, pos0, tradeAmount, targetLvg, tradePrice, indexPriceS2, markPrice);
+        deltaCash = getDepositAmountForLvgTrade(b0, pos0, tradeAmount, targetLvg, tradePrice, indexPriceS3, markPrice);
+        // premium/instantaneous pnl
+        // deltaCash -= (tradeAmount * (tradePrice - indexPriceS2)) / indexPriceS3;
+        newLockedInValue = lockedInValue + tradeAmount * tradePrice;
       }
-      newCollateral = currentPositionRisk.collateralCC + deltaCash;
+      newCollateral = currentPositionRisk.collateralCC + deltaCash; // - (feeRate * Math.abs(tradeAmount) * indexPriceS2) / indexPriceS3;
       // the new leverage corresponds to increasing the position and collateral according to the order
       newLeverage = getNewPositionLeverage(
-        tradeAmount,
+        0,
         newCollateral,
-        currentPosition,
-        lockedInValue,
-        indexPriceS2,
-        indexPriceS3,
-        markPrice,
+        newPosition,
+        newLockedInValue,
         tradePrice,
-        feeRate
+        indexPriceS3,
+        markPrice
       );
     } else {
       // there is no order, adding/removing collateral
@@ -387,13 +399,10 @@ export default class MarketData extends PerpetualDataHandler {
         lockedInValue,
         indexPriceS2,
         indexPriceS3,
-        markPrice,
-        0,
-        0
+        markPrice
       );
     }
-    let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
-    let entryPrice = newPosition == 0 ? 0 : Math.abs(newLockedInValue / newPosition);
+
     // liquidation vars
     let S2Liq: number, S3Liq: number | undefined;
     let tau = symbolToPerpStaticInfo.get(symbol)!.maintenanceMarginRate;
@@ -419,7 +428,7 @@ export default class MarketData extends PerpetualDataHandler {
       symbol: currentPositionRisk.symbol,
       positionNotionalBaseCCY: Math.abs(newPosition),
       side: newSide,
-      entryPrice: entryPrice,
+      entryPrice: newEntryPrice,
       leverage: newLeverage,
       markPrice: markPrice,
       unrealizedPnlQuoteCCY: newPosition * markPrice - newLockedInValue,
