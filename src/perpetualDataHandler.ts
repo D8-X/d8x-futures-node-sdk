@@ -834,4 +834,50 @@ export default class PerpetualDataHandler {
     }
     return undefined;
   }
+
+  /**
+   * Performs basic validity checks on a given order
+   * @param order Order struct
+   * @param traderAccount Trader account
+   * @param perpStaticInfo Symbol to perpetual info map
+   */
+  protected static checkOrder(
+    order: Order,
+    traderAccount: MarginAccount,
+    perpStaticInfo: Map<string, PerpetualStaticInfo>
+  ) {
+    // this throws error if not found
+    let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
+
+    // check side
+    if (order.side != BUY_SIDE && order.side != SELL_SIDE) {
+      throw Error(`order side must be ${BUY_SIDE} or ${SELL_SIDE}`);
+    }
+
+    // check amount
+    let lotSize = perpStaticInfo.get(order.symbol)!.lotSizeBC;
+    let curPos =
+      traderAccount.side == CLOSED_SIDE
+        ? 0
+        : (traderAccount.side == BUY_SIDE ? 1 : -1) * traderAccount.positionNotionalBaseCCY;
+    let newPos = curPos + (order.side == BUY_SIDE ? 1 : -1) * order.quantity;
+    if (Math.abs(order.quantity) < lotSize || (Math.abs(newPos) >= lotSize && Math.abs(newPos) < 10 * lotSize)) {
+      throw Error(`trade amount too small: ${order.quantity} ${perpStaticInfo.get(order.symbol)!.S2Symbol}`);
+    }
+
+    // check limit price
+    if (order.side == BUY_SIDE && order.limitPrice != undefined && order.limitPrice <= 0) {
+      throw Error(`invalid limit price for buy order: ${order.limitPrice}`);
+    }
+
+    // broker fee
+    if (order.brokerFeeTbps != undefined && order.brokerFeeTbps < 0) {
+      throw Error(`invalid broker fee: ${order.brokerFeeTbps / 10} bps`);
+    }
+
+    // stop price
+    if (order.stopPrice != undefined && order.stopPrice < 0) {
+      throw Error(`invalid stop price: ${order.stopPrice}`);
+    }
+  }
 }
