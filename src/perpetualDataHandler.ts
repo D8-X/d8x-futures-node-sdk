@@ -24,13 +24,12 @@ import {
   MASK_STOP_ORDER,
   MarginAccount,
   PoolStaticInfo,
-  DEFAULT_CONFIG_MAINNET_NAME,
-  DEFAULT_CONFIG_MAINNET,
-  DEFAULT_CONFIG_TESTNET_NAME,
-  DEFAULT_CONFIG_TESTNET,
   ONE_64x64,
   PERP_STATE_STR,
   PerpetualState,
+  DEFAULT_CONFIG,
+  DEFAULT_CONFIG_MAINNET_NAME,
+  PriceFeedSubmission,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -48,12 +47,14 @@ import {
   calculateLiquidationPriceCollateralBase,
   calculateLiquidationPriceCollateralQuote,
 } from "./d8XMath";
+import PriceFeeds from "./priceFeeds";
 
 /**
  * Parent class for MarketData and WriteAccessHandler that handles
  * common data and chain operations.
  */
 export default class PerpetualDataHandler {
+  PRICE_UPDATE_FEE_GWEI = 1;
   //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
   //this is initialized in the createProxyInstance function
   protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
@@ -76,6 +77,7 @@ export default class PerpetualDataHandler {
   protected provider: ethers.providers.JsonRpcProvider | null = null;
 
   private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
+  protected priceFeedGetter: PriceFeeds;
 
   // pools are numbered consecutively starting at 1
   // nestedPerpetualIDs contains an array for each pool
@@ -94,6 +96,7 @@ export default class PerpetualDataHandler {
     this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
     this.lobABI = require(config.limitOrderBookABILocation);
     this.symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
@@ -127,6 +130,7 @@ export default class PerpetualDataHandler {
       throw Error("proxy or limit order book not defined");
     }
     this.nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(proxyContract);
+    let requiredPairs = new Set<string>();
     for (let j = 0; j < this.nestedPerpetualIDs.length; j++) {
       let pool = await proxyContract.getLiquidityPool(j + 1);
       let poolMarginTokenAddr = pool.marginTokenAddress;
@@ -146,8 +150,16 @@ export default class PerpetualDataHandler {
         let quote = contractSymbolToSymbol(perp.S2QuoteCCY, this.symbolList);
         let base3 = contractSymbolToSymbol(perp.S3BaseCCY, this.symbolList);
         let quote3 = contractSymbolToSymbol(perp.S3QuoteCCY, this.symbolList);
-        currentSymbols.push(base + "-" + quote);
-        currentSymbolsS3.push(base3 + "-" + quote3);
+        let sym = base + "-" + quote;
+        let sym3 = base3 + "-" + quote3;
+        requiredPairs.add(sym);
+        if (sym3 != "-") {
+          requiredPairs.add(sym3);
+        } else {
+          sym3 = "";
+        }
+        currentSymbols.push(sym);
+        currentSymbolsS3.push(sym3);
         initRate.push(ABK64x64ToFloat(perp.fInitialMarginRate));
         mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
         lotSizes.push(ABK64x64ToFloat(perp.fLotSizeBC));
@@ -186,6 +198,10 @@ export default class PerpetualDataHandler {
       let currentSymbols3 = currentSymbols.map((x) => x + "-" + poolCCY);
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
+        // add price IDs
+        let idsB32, isPyth;
+        [idsB32, isPyth] = await proxyContract.getPriceInfo(perpetualIDs[k]);
+
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
@@ -195,11 +211,16 @@ export default class PerpetualDataHandler {
           S2Symbol: currentSymbols[k],
           S3Symbol: currentSymbolsS3[k],
           lotSizeBC: lotSizes[k],
+          priceIds: idsB32,
         });
       }
       // push margin token address into map
       this.symbolToTokenAddrMap.set(poolCCY!, poolMarginTokenAddr);
     }
+    // pre-calculate all triangulation paths so we can easily get from
+    // the prices of price-feeds to the index price required, e.g.
+    // BTC-USDC : BTC-USD / USDC-USD
+    this.priceFeedGetter.initializeTriangulations(requiredPairs);
   }
 
   /**
@@ -239,6 +260,57 @@ export default class PerpetualDataHandler {
 
   public symbol4BToLongSymbol(sym: string): string {
     return symbol4BToLongSymbol(sym, this.symbolList);
+  }
+
+  /**
+   * Get PriceFeedSubmission data required for blockchain queries that involve price data, and the corresponding
+   * triangulated prices for the indices S2 and S3
+   * @param symbol pool symbol of the form "ETH-USD-MATIC"
+   * @returns PriceFeedSubmission and prices for S2 and S3. [S2price, 0] if S3 not defined.
+   */
+  public async fetchPriceSubmissionInfoForPerpetual(
+    symbol: string
+  ): Promise<{ submission: PriceFeedSubmission; pxS2S3: [number, number] }> {
+    // fetch prices from required price-feeds (REST)
+    return await this.priceFeedGetter.fetchFeedPriceInfoAndIndicesForPerpetual(symbol);
+  }
+
+  /**
+   * Get the symbols required as indices for the given perpetual
+   * @param symbol of the form ETH-USD-MATIC, specifying the perpetual
+   * @returns name of underlying index prices, e.g. ["MATIC-USD", ""]
+   */
+  public getIndexSymbols(symbol: string): [string, string] {
+    // get index
+    let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (staticInfo == undefined) {
+      throw new Error(`No static info for perpetual with symbol ${symbol}`);
+    }
+    return [staticInfo.S2Symbol, staticInfo.S3Symbol];
+  }
+
+  /**
+   * Get the latest prices for a given perpetual from the offchain oracle
+   * networks
+   * @param symbol perpetual symbol of the form BTC-USD-MATIC
+   * @returns array of price feed updates that can be submitted to the smart contract
+   * and corresponding price information
+   */
+  public async fetchLatestFeedPriceInfo(symbol: string): Promise<PriceFeedSubmission> {
+    return await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+  }
+
+  /**
+   * Get list of required pyth price source IDs for given perpetual
+   * @param symbol perpetual symbol, e.g., BTC-USD-MATIC
+   * @returns list of required pyth price sources for this perpetual
+   */
+  public getPriceIds(symbol: string): string[] {
+    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (perpInfo == undefined) {
+      throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
+    }
+    return perpInfo.priceIds;
   }
 
   protected static _getSymbolFromPoolId(poolId: number, staticInfos: PoolStaticInfo[]): string {
@@ -334,31 +406,40 @@ export default class PerpetualDataHandler {
     symbol: string,
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    indexPrices: [number, number]
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount));
+    let fIndexPrices = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
+    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), fIndexPrices);
     return ABK64x64ToFloat(fPrice);
   }
 
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    indexPrices: [number, number]
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let ammState = await _proxyContract.getAMMState(perpId);
+    let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
     return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
   }
 
   protected static async _queryPerpetualState(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract
+    _proxyContract: ethers.Contract,
+    indexPrices: [number, number, boolean, boolean]
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let ccy = symbol.split("-");
-    let ammState = await _proxyContract.getAMMState(perpId);
+    let [S2, S3] = [indexPrices[0], indexPrices[1]];
+    let ammState = await _proxyContract.getAMMState(
+      perpId,
+      [S2, S3].map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x))
+    );
     let markPrice = ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
     let state = {
       id: perpId,
@@ -372,6 +453,7 @@ export default class PerpetualDataHandler {
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
       maxPositionBC: ABK64x64ToFloat(ammState[12]),
+      isMarketClosed: indexPrices[2] || indexPrices[3],
     };
     if (symbolToPerpStaticInfo.get(symbol)?.collateralCurrencyType == CollaterlCCY.BASE) {
       state.collToQuoteIndexPrice = state.indexPrice;
@@ -677,17 +759,35 @@ export default class PerpetualDataHandler {
 
   /**
    * Read config file into NodeSDKConfig interface
-   * @param fileLocation json-file with required variables for config
+   * @param configNameOrfileLocation json-file with required variables for config, or name of a default known config
    * @returns NodeSDKConfig
    */
-  public static readSDKConfig(fileLocation: string): NodeSDKConfig {
-    if (fileLocation == DEFAULT_CONFIG_MAINNET_NAME) {
-      fileLocation = DEFAULT_CONFIG_MAINNET;
-    } else if (fileLocation == DEFAULT_CONFIG_TESTNET_NAME) {
-      fileLocation = DEFAULT_CONFIG_TESTNET;
+  public static readSDKConfig(configNameOrFileLocation: string, version?: string): NodeSDKConfig {
+    let config;
+    if (/\.json$/.test(configNameOrFileLocation)) {
+      // file path
+      let configFile = require(configNameOrFileLocation);
+      config = <NodeSDKConfig>configFile;
+    } else {
+      // name
+      let configFile = require(DEFAULT_CONFIG);
+      configFile = configFile.filter((c: any) => c.name == configNameOrFileLocation);
+      if (configFile.length == 0) {
+        throw Error(`Config name ${configNameOrFileLocation} not found.`);
+      } else if (configFile.length > 1) {
+        // TODO: pick one with highest version, unless version is given
+        throw Error(`Config name ${configNameOrFileLocation} not unique.`);
+      }
+      for (let configItem of configFile) {
+        if (configItem.name == configNameOrFileLocation) {
+          config = <NodeSDKConfig>configItem;
+          break;
+        }
+      }
     }
-    let configFile = require(fileLocation);
-    let config: NodeSDKConfig = <NodeSDKConfig>configFile;
+    if (config == undefined) {
+      throw Error(`Config file ${configNameOrFileLocation} not found.`);
+    }
     return config;
   }
 
@@ -700,5 +800,38 @@ export default class PerpetualDataHandler {
   protected static _getABIFromContract(contract: ethers.Contract, functionName: string): string {
     const FormatTypes = ethers.utils.FormatTypes;
     return contract.interface.getFunction(functionName).format(FormatTypes.full);
+  }
+
+  /**
+   * Gets the pool index (in exchangeInfo) corresponding to a given symbol.
+   * @param symbol Symbol of the form ETH-USD-MATIC
+   * @returns Pool index
+   */
+  public getPoolIndexFromSymbol(symbol: string): number {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return k;
+      }
+      k++;
+    }
+    return -1;
+  }
+
+  public getMarginTokenFromSymbol(symbol: string): string | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolMarginTokenAddr;
+      }
+      k++;
+    }
+    return undefined;
   }
 }

@@ -1,10 +1,11 @@
 import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction } from "ethers";
-export const DEFAULT_CONFIG_TESTNET = "../config/defaultConfig.json";
-export const DEFAULT_CONFIG_MAINNET = "notthereyet";
+import { NumberLiteralType } from "typescript";
+export const DEFAULT_CONFIG = "../config/defaultConfig.json";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
 
 export const ERC20_ABI = require("../abi/ERC20.json");
+export const MOCK_TOKEN_SWAP_ABI = require("../abi/MockTokenSwap.json");
 export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;
 export const COLLATERAL_CURRENCY_QUANTO = 2;
@@ -33,6 +34,8 @@ export const BUY_SIDE = "BUY";
 export const SELL_SIDE = "SELL";
 export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
+  name: string | undefined;
+  version: number;
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;
@@ -40,6 +43,7 @@ export interface NodeSDKConfig {
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
   symbolListLocation: string;
+  priceFeedConfigNetwork: string;
   gasLimit?: number | undefined;
 }
 
@@ -81,6 +85,7 @@ export interface PerpetualStaticInfo {
   S2Symbol: string;
   S3Symbol: string;
   lotSizeBC: number;
+  priceIds: string[];
 }
 
 /**
@@ -135,6 +140,7 @@ export interface PerpetualState {
   currentFundingRateBps: number;
   openInterestBC: number;
   maxPositionBC: number;
+  isMarketClosed: boolean;
 }
 
 export interface OrderResponse {
@@ -148,7 +154,7 @@ export interface OrderStruct {
 }
 
 export interface Order {
-  symbol: string;
+  symbol: string;//symbol of the form ETH-USD-MATIC
   side: string;
   type: string;
   quantity: number;
@@ -204,3 +210,24 @@ export interface SmartContractOrder {
         uint256 iDeadline;
         uint256 createdTimestamp;
         */
+
+export interface PriceFeedConfig {
+  network: string;
+  ids: Array<{ symbol: string; id: string; type: string; origin: string }>;
+  endpoints: Array<{ type: string; endpoint: string }>;
+}
+
+export interface PriceFeedSubmission {
+  symbols: string[];
+  priceFeedVaas: string[]; 
+  prices: number[];
+  isMarketClosed: boolean[];
+  timestamps: number[];
+}
+
+export interface PriceFeedFormat {
+  conf: BigNumber;
+  expo: number;
+  price: BigNumber;
+  publish_time: number;
+}

@@ -10,12 +10,13 @@ gas-payments.</p>
 
 * [OrderReferrerTool](#OrderReferrerTool) ⇐ <code>WriteAccessHandler</code>
     * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
-    * [.executeOrder(symbol, orderId, [referrerAddr])](#OrderReferrerTool+executeOrder) ⇒
+    * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
     * [.getOrderById(symbol, digest)](#OrderReferrerTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
-    * [.isTradeable(order)](#OrderReferrerTool+isTradeable) ⇒
+    * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
+    * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -45,7 +46,7 @@ main();
 ```
 <a name="OrderReferrerTool+executeOrder"></a>
 
-### orderReferrerTool.executeOrder(symbol, orderId, [referrerAddr]) ⇒
+### orderReferrerTool.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission]) ⇒
 <p>Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
@@ -55,7 +56,9 @@ main();
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | orderId | <code>string</code> | <p>ID of the order to be executed.</p> |
-| [referrerAddr] | <code>string</code> | <p>Address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| [referrerAddr] | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| [nonce] | <code>number</code> | <p>optional nonce</p> |
+| [submission] | <code>PriceFeedSubmission</code> | <p>optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual</p> |
 
 **Example**  
 ```js
@@ -203,7 +206,7 @@ main();
 ```
 <a name="OrderReferrerTool+isTradeable"></a>
 
-### orderReferrerTool.isTradeable(order) ⇒
+### orderReferrerTool.isTradeable(order, indexPrices) ⇒
 <p>Check if a conditional order can be executed</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
@@ -212,6 +215,7 @@ main();
 | Param | Description |
 | --- | --- |
 | order | <p>order structure</p> |
+| indexPrices | <p>pair of index prices S2 and S3. S3 set to zero if not required. If undefined the function will fetch the latest prices from the REST API</p> |
 
 **Example**  
 ```js
@@ -230,3 +234,16 @@ async function main() {
 }
 main();
 ```
+<a name="OrderReferrerTool+isTradeableBatch"></a>
+
+### orderReferrerTool.isTradeableBatch(orders, indexPrice) ⇒
+<p>Check for a batch of orders on the same perpetual whether they can be traded</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>array of tradeable boolean</p>  
+
+| Param | Description |
+| --- | --- |
+| orders | <p>orders belonging to 1 perpetual</p> |
+| indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
+

@@ -2,12 +2,14 @@ import { ethers } from "ethers";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import {
+  MOCK_TOKEN_SWAP_ABI,
   NodeSDKConfig,
   Order,
   OrderResponse,
   PerpetualStaticInfo,
   SmartContractOrder,
   ZERO_ADDRESS,
+  PriceFeedSubmission,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
@@ -77,12 +79,6 @@ export default class AccountTrade extends WriteAccessHandler {
 
     return await this._cancelOrder(symbol, orderId, orderBookContract);
   }
-
-  /*
-    TODO: -deposit (margin into account)
-          -withdraw margin withdraw(uint24 _iPerpetualId, int128 _fAmount)
-
-  */
 
   /**
    * Submits an order to the exchange.
@@ -339,7 +335,11 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    return await this.proxyContract.deposit(perpId, fAmountCC);
+    let priceFeedData: PriceFeedSubmission = await this.fetchLatestFeedPriceInfo(symbol);
+    return await this.proxyContract.deposit(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {
+      gasLimit: this.gasLimit,
+      value: this.PRICE_UPDATE_FEE_GWEI * priceFeedData.priceFeedVaas.length,
+    });
   }
 
   /**
@@ -353,6 +353,29 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    return await this.proxyContract.withdraw(perpId, fAmountCC);
+    let priceFeedData: PriceFeedSubmission = await this.fetchLatestFeedPriceInfo(symbol);
+    return await this.proxyContract.withdraw(perpId, fAmountCC, priceFeedData.priceFeedVaas, priceFeedData.timestamps, {
+      gasLimit: this.gasLimit,
+      value: this.PRICE_UPDATE_FEE_GWEI * priceFeedData.priceFeedVaas.length,
+    });
+  }
+
+  public async swapForMockToken(symbol: string, amountToPay: string) {
+    if (this.signer == null) {
+      throw Error("no wallet initialized. Use createProxyInstance().");
+    }
+    let tokenAddress = this.getMarginTokenFromSymbol(symbol);
+    if (tokenAddress == undefined) {
+      throw Error("symbols not found");
+    }
+    let tokenToSwap = new Map<string, string>(Object.entries(require("../config/mockSwap.json")));
+    let swapAddress = tokenToSwap.get(tokenAddress);
+    if (swapAddress == undefined) {
+      throw Error("No swap contract found for symbol.");
+    }
+    let contract = new ethers.Contract(swapAddress, MOCK_TOKEN_SWAP_ABI, this.signer.provider);
+    return await contract.swapToMockToken({
+      value: ethers.utils.parseEther(amountToPay),
+    });
   }
 }

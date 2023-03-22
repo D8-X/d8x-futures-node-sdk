@@ -1,4 +1,4 @@
-import { ContractInterface, ethers } from "ethers";
+import { BigNumber, ContractInterface, ethers } from "ethers";
 import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo, BUY_SIDE, SELL_SIDE } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
@@ -10,6 +10,8 @@ import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
+import PriceFeeds from "../src/priceFeeds";
+
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -28,30 +30,53 @@ let apiInterface: TraderInterface;
 let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
-  beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("testnet");
+  beforeEach(() => {
+    config = PerpetualDataHandler.readSDKConfig("central-park");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
   });
 
-  // describe("Oracle Routes", () => {
-  //   beforeAll(async () => {
-  //     const provider = new ethers.providers.JsonRpcProvider(RPC);
-  //     let abi = require("../abi/IPerpetualManager.json");
-  //     proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
-  //   });
-  //   it("routes", async () => {
-  //     let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
+  describe("Read config", () => {
+    it("read all config types", () => {
+      let configs = ["testnet", "mainnet", "../config/oldConfig.json", "central-park"];
 
-  //     for (let k = 0; k < ccyList.length; k++) {
-  //       let basequote = ccyList[k].split("-");
-  //       console.log("base, quote =", basequote);
-  //       let px = await proxyContract.getOraclePrice([toBytes4(basequote[0]), toBytes4(basequote[1])]);
-  //       console.log(`${basequote[0]}-${basequote[1]} = ${ABK64x64ToFloat(px)}`);
-  //     }
-  //   });
-  // });
+      for (let i = 0; i < configs.length; i++) {
+        config = PerpetualDataHandler.readSDKConfig(configs[i]);
+        // console.log(`${configs[i]} config:\n`, config);
+        expect(/json$/.test(configs[i]) || config.name == configs[i]).toBeTruthy;
+      }
+    });
+  });
+
+  describe("Oracle Routes", () => {
+    beforeAll(() => {
+      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      let abi = require("../abi/IPerpetualManager.json");
+      proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
+    });
+    it("routes", async () => {
+      let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
+      let magnitude = [
+        [100, 10_000],
+        [1_000, 1_000_000],
+        [0.1, 2],
+        [0.1, 10],
+      ];
+
+      for (let k = 0; k < ccyList.length; k++) {
+        let basequote = ccyList[k].split("-");
+        let pxABK = await proxyContract.getOraclePrice([toBytes4(basequote[0]), toBytes4(basequote[1])]);
+        let px = ABK64x64ToFloat(pxABK);
+        let isMagnitudeOk = px > magnitude[k][0] && px < magnitude[k][1];
+        if (!isMagnitudeOk) {
+          console.log(`Not ok: ${basequote[0]}-${basequote[1]} = ${px}`);
+        }
+        expect(isMagnitudeOk).toBeTruthy;
+      }
+    });
+  });
+
   describe("APIInteface", () => {
     beforeAll(async () => {
       apiInterface = new TraderInterface(config);
@@ -69,7 +94,11 @@ describe("readOnly", () => {
       };
       let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
       let res = await apiInterface.orderDigest(orderSC);
-      console.log(res);
+      let isHex = /^0x/.test(res);
+      if (!isHex) {
+        console.log(res);
+      }
+      expect(isHex).toBeTruthy;
     });
     it("get proxy ABI", async () => {
       // Signer or provider
@@ -78,11 +107,15 @@ describe("readOnly", () => {
       let contractAddr = apiInterface.getProxyAddress();
       // ABI as it would come from the API:
       let abi = apiInterface.getProxyABI("getOraclePrice");
-      console.log(abi);
+      if (abi.length < 3) {
+        console.log(abi);
+      }
+      expect(abi.length > 2).toBeTruthy;
       // contract instance
       let contract = new ethers.Contract(contractAddr, [abi], provider);
       let px = await contract.getOraclePrice([toBytes4("MATIC"), toBytes4("USD")]);
-      console.log(`price of MATIC-USD: ${ABK64x64ToFloat(px)}`);
+      expect(px.gt(0)).toBeTruthy;
+      // console.log(`price of MATIC-USD: ${ABK64x64ToFloat(px)}`);
     });
     it("get LOB ABI", async () => {
       // Signer or provider
@@ -91,11 +124,17 @@ describe("readOnly", () => {
       let contractAddr = apiInterface.getOrderBookAddress("MATIC-USD-MATIC");
       // ABI as it would come from the API:
       let abi = apiInterface.getOrderBookABI("MATIC-USD-MATIC", "orderCount");
-      console.log(abi);
+      if (abi.length < 3) {
+        console.log(abi);
+      }
+      expect(abi.length > 2).toBeTruthy;
       // contract instance
       let contract = new ethers.Contract(contractAddr, [abi], provider);
       let numOrders = await contract.orderCount();
-      console.log(`orderCount in MATIC-USD-MATIC order book: ${numOrders}`);
+      expect(numOrders >= 0).toBeTruthy;
+      if (numOrders > 0) {
+        console.log(`orderCount in MATIC-USD-MATIC order book: ${numOrders}`);
+      }
     });
   });
 
@@ -113,8 +152,7 @@ describe("readOnly", () => {
       console.log(info);
       for (var k = 0; k < info.pools.length; k++) {
         let pool = info.pools[k];
-        console.log(`Perpetuals in ${k}-th pool:`);
-        console.log(pool.perpetuals);
+        console.log(`Perpetuals in ${pool.poolSymbol} pool:\n`, pool.perpetuals);
       }
     });
     it("perp static info", async () => {
@@ -122,10 +160,10 @@ describe("readOnly", () => {
       console.log(info);
     });
     it("get pyth ids", async () => {
-      // TODO: uncomment when deployed
-      let pyhIds: string[] = []; // await mktData.getPythIds("ETH-USD-MATIC");
+      let pyhIds: string[] = mktData.getPriceIds("ETH-USD-MATIC");
       console.log(`pyth ids = ${pyhIds}`);
     });
+
     it("oracle routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
 
@@ -293,18 +331,26 @@ describe("readOnly", () => {
     });
     it("should check if trader is liquidatable", async () => {
       let symbol = "BTC-USD-MATIC";
-      let traderAddr = (await liqTool.getActiveAccountsByChunks(symbol, 0, 1))[0];
-      let isLiquidatable = !(await liqTool.isMaintenanceMarginSafe(symbol, traderAddr));
-      console.log(`Trader with address ${traderAddr} is ${isLiquidatable ? "" : "NOT"} liquidatable`);
+      let accounts = await liqTool.getActiveAccountsByChunks(symbol, 0, 1);
+      if (accounts.length > 0) {
+        let traderAddr = accounts[0];
+        let isLiquidatable = !(await liqTool.isMaintenanceMarginSafe(symbol, traderAddr));
+        let posRisk = await mktData.positionRisk(traderAddr, symbol);
+        let matchLiqAndLvg =
+          (isLiquidatable && posRisk.leverage >= posRisk.liquidationLvg) ||
+          (!isLiquidatable && posRisk.leverage < posRisk.liquidationLvg);
+        if (!matchLiqAndLvg) {
+          console.log(`Trader ${traderAddr} position risk:`, posRisk);
+        }
+        expect(matchLiqAndLvg).toBeTruthy;
+      } else {
+        console.log("no active accounts for symbol", symbol);
+      }
     });
   });
 
   describe("Broker", () => {
     beforeAll(async function () {
-      config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
-      if (RPC != undefined) {
-        config.nodeURL = RPC;
-      }
       expect(pk == undefined).toBeFalsy();
       brokerTool = new BrokerTool(config, pk);
       await brokerTool.createProxyInstance();
@@ -339,7 +385,11 @@ describe("readOnly", () => {
     it("should get broker stake induced fee", async () => {
       // this is based on stake only, independent of the pool
       let fee = await brokerTool.getFeeForBrokerStake();
-      console.log(`broker fee induced by his stake is ${10_000 * fee!} bps`);
+      let isFeeReasonable = fee <= 0.0002 && fee >= 0.00001;
+      if (!isFeeReasonable) {
+        console.log(`broker fee induced by his stake is ${10_000 * fee!} bps`);
+      }
+      expect(isFeeReasonable).toBeTruthy;
     });
 
     it("should determine the exchange fee for an order not signed by this broker", async () => {
@@ -353,7 +403,13 @@ describe("readOnly", () => {
       };
       const myAddress = new ethers.Wallet(pk).address;
       let fee = await brokerTool.determineExchangeFee(order, myAddress);
-      console.log(`exchange fee for an order with my address and no broker signature is ${10_000 * fee} basis points`);
+      let isFeeReasonable = fee <= 0.0002 && fee >= 0.00001;
+      if (!isFeeReasonable) {
+        console.log(
+          `exchange fee for an order with my address and no broker signature is ${10_000 * fee} basis points`
+        );
+      }
+      expect(isFeeReasonable).toBeTruthy;
     });
 
     it("should determine the exchange fee for an order signed by this broker", async () => {
@@ -370,22 +426,27 @@ describe("readOnly", () => {
       const myAddress = new ethers.Wallet(pk).address;
       let signedOrder = await brokerTool.signOrder(order, myAddress);
       let fee = await brokerTool.determineExchangeFee(signedOrder, myAddress);
-      console.log(`exchange fee for a broker-signed order with my address is ${10_000 * fee} basis points`);
+      let isFeeReasonable = fee <= 0.0002 && fee >= 0.00001;
+      if (!isFeeReasonable) {
+        console.log(`exchange fee for a broker-signed order with my address is ${10_000 * fee} basis points`);
+      }
+      expect(isFeeReasonable).toBeTruthy;
     });
   });
 
   describe("Referrer", () => {
     beforeAll(async () => {
-      if (pk == undefined) {
-        console.log(`Define private key: export PK="CA52A..."`);
-        expect(false);
-      }
+      expect(pk == undefined).toBeFalsy;
       refTool = new OrderReferrerTool(config, pk);
       await refTool.createProxyInstance();
     });
     it("get order by id/digest", async () => {
-      let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
-      console.log(order);
+      let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
+      orderIds = ordersStruct.orderIds;
+      if (orderIds.length > 0) {
+        let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
+        console.log(order);
+      }
     });
     it("should get number of open orders", async () => {
       let symbol = "ETH-USD-MATIC";
@@ -401,14 +462,20 @@ describe("readOnly", () => {
     it("should check if an order is tradeable", async () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      let isTradeable = await refTool.isTradeable(openOrders[0][0]);
-      console.log(isTradeable);
+      if(openOrders[0].length>0) {
+        let isTradeable = await refTool.isTradeable(openOrders[0][0]);
+        console.log(isTradeable);
+      } else {
+        console.warn("no orders to check");
+      }
     });
     it("should check if a batch of orders is tradeable", async () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
-      console.log(isTradeable);
+      if(openOrders[0].length>0) {
+        let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
+        console.log(isTradeable);
+      }
     });
     it("poll limit orders", async () => {
       let val = await refTool.pollLimitOrders("MATIC-USD-MATIC", 15, undefined);

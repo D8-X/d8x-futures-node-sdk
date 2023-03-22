@@ -30,6 +30,24 @@ export function ABK64x64ToFloat(x: BigNumber | number): number {
 
 /**
  *
+ * @param {BigNumber} x BigNumber in Dec-N format
+ * @returns {number} x as a float (number)
+ */
+export function decNToFloat(x: BigNumber, numDec: number) {
+  //x: BigNumber in DecN format to float
+  const DECIMALS = BigNumber.from(10).pow(BigNumber.from(numDec));
+  let s = x.lt(0) ? -1 : 1;
+  x = x.mul(s);
+  let xInt = x.div(DECIMALS);
+  let xDec = x.sub(xInt.mul(DECIMALS));
+  let k = numDec - xDec.toString().length;
+  let sPad = "0".repeat(k);
+  let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
+  return parseFloat(NumberStr) * s;
+}
+
+/**
+ *
  * @param {BigNumber} x BigNumber in Dec18 format
  * @returns {number} x as a float (number)
  */

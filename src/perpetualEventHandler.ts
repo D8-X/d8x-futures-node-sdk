@@ -20,9 +20,6 @@ import {
  *  ordersInPerpetual: Map<number, OrderStruct> all open orders for the given trader
  *  positionInPerpetual: Map<number, MarginAccount> all open positions for the given trader
  *
- *  TODO:
- *    - update functions for midprice & index & collateral prices without event
- *    - testing
  *
  * Get data:
  *  - getPerpetualData(perp id (string) or symbol) : PerpetualState. This is a reference!
