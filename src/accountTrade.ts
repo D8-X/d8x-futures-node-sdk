@@ -359,23 +359,4 @@ export default class AccountTrade extends WriteAccessHandler {
       value: this.PRICE_UPDATE_FEE_GWEI * priceFeedData.priceFeedVaas.length,
     });
   }
-
-  public async swapForMockToken(symbol: string, amountToPay: string) {
-    if (this.signer == null) {
-      throw Error("no wallet initialized. Use createProxyInstance().");
-    }
-    let tokenAddress = this.getMarginTokenFromSymbol(symbol);
-    if (tokenAddress == undefined) {
-      throw Error("symbols not found");
-    }
-    let tokenToSwap = new Map<string, string>(Object.entries(require("../config/mockSwap.json")));
-    let swapAddress = tokenToSwap.get(tokenAddress);
-    if (swapAddress == undefined) {
-      throw Error("No swap contract found for symbol.");
-    }
-    let contract = new ethers.Contract(swapAddress, MOCK_TOKEN_SWAP_ABI, this.signer.provider);
-    return await contract.swapToMockToken({
-      value: ethers.utils.parseEther(amountToPay),
-    });
-  }
 }

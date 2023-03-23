@@ -37,23 +37,29 @@ describe("LP: write and spoil gas and tokens", () => {
   });
   describe("Liquidity Provider", () => {
     it("deposit", async () => {
-      let tx0 = await liqProvTool.setAllowance("USDC", 10);
+      let tx0 = await liqProvTool.setAllowance("MATIC", 1000);
       console.log("allowance tx hash=", tx0.hash);
-      let tx = await liqProvTool.addLiquidity("USDC", 10);
+      let tx = await liqProvTool.addLiquidity("MATIC", 1000);
       await tx.wait();
       console.log("deposit tx hash=", tx.hash);
     });
     it("getParticipationValue", async () => {
-      let val = await liqProvTool.getParticipationValue("USDC");
+      let val = await liqProvTool.getParticipationValue("MATIC");
       console.log("pool sharetoken value", val);
     });
-    it("remove", async () => {
-      let tx = await liqProvTool.removeLiquidity("USDC", 10);
+    it("initiate", async () => {
+      let tx = await liqProvTool.initiateLiquidityWithdrawal("MATIC", 100);
       await tx.wait();
-      console.log("withdraw tx hash=", tx.hash);
+      console.log("init withdraw tx hash=", tx.hash);
+    });
+    it("execute", async () => {
+      // OBS: this won't do much unless you let enough time pass since calling the initiate function above
+      let tx = await liqProvTool.executeLiquidityWithdrawal("MATIC");
+      await tx.wait();
+      console.log("exec withdraw tx hash=", tx.hash);
     });
     it("getParticipationValue", async () => {
-      let val = await liqProvTool.getParticipationValue("USDC");
+      let val = await liqProvTool.getParticipationValue("MATIC");
       console.log("pool sharetoken value", val);
     });
   });

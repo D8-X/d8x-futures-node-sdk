@@ -1,6 +1,6 @@
 import { BigNumber, ethers } from "ethers";
 import { floatToDec18 } from "./d8XMath";
-import { ERC20_ABI, MAX_UINT_256, NodeSDKConfig } from "./nodeSDKTypes";
+import { ERC20_ABI, MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 
 /**
@@ -92,5 +92,31 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    */
   public getAddress(): string {
     return this.traderAddr;
+  }
+
+  /**
+   * Converts a given amount of chain native currency (test MATIC)
+   * into a mock token used for trading on testnet, with a rate of 1:100_000
+   * @param symbol Pool margin token e.g. MATIC
+   * @param amountToPay Amount in chain currency, e.g. "0.1" for 0.1 MATIC
+   * @returns
+   */
+  public async swapForMockToken(symbol: string, amountToPay: string) {
+    if (this.signer == null) {
+      throw Error("no wallet initialized. Use createProxyInstance().");
+    }
+    let tokenAddress = this.getMarginTokenFromSymbol(symbol);
+    if (tokenAddress == undefined) {
+      throw Error("symbols not found");
+    }
+    let tokenToSwap = new Map<string, string>(Object.entries(require("../config/mockSwap.json")));
+    let swapAddress = tokenToSwap.get(tokenAddress);
+    if (swapAddress == undefined) {
+      throw Error("No swap contract found for symbol.");
+    }
+    let contract = new ethers.Contract(swapAddress, MOCK_TOKEN_SWAP_ABI, this.signer);
+    return await contract.swapToMockToken({
+      value: ethers.utils.parseEther(amountToPay),
+    });
   }
 }
