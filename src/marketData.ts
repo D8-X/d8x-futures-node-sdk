@@ -750,6 +750,46 @@ export default class MarketData extends PerpetualDataHandler {
     return balanceCC - initalMarginCC;
   }
 
+  /**
+   * Calculate a type of exchange loyality score based on trader volume
+   * @param traderAddr address of the trader
+   * @param brokerAddr address of the trader's broker or undefined
+   * @returns a loyality score (4 worst, 1 best)
+   */
+  public async getTraderLoyalityScore(traderAddr: string, brokerAddr?: string) : Promise<number> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    // loop over all pools and query volumes
+    let brokerProm : Array<Promise<BigNumber>>= [];
+    let traderProm : Array<Promise<BigNumber>>= [];
+    for(let k=0; k<this.poolStaticInfos.length; k++) {
+      if (brokerAddr!="" && brokerAddr!=undefined) {
+        let brkrVol = this.proxyContract.getCurrentBrokerVolume(this.poolStaticInfos[k].poolId, brokerAddr);
+        brokerProm.push(brkrVol);
+      }
+      let trdrVol = this.proxyContract.getCurrentTraderVolume(this.poolStaticInfos[k].poolId, traderAddr);
+      traderProm.push(trdrVol);
+    }
+    // sum
+    let totalBrokerVolume = 0;
+    let totalTraderVolume = 0;
+    let brkrVol = await Promise.all(brokerProm);
+    let trdrVol = await Promise.all(traderProm);
+    for(let k=0; k<this.poolStaticInfos.length; k++) {
+      if (brokerAddr!="" && brokerAddr!=undefined) {
+        totalBrokerVolume += ABK64x64ToFloat(brkrVol[k]);
+      }
+      totalTraderVolume += ABK64x64ToFloat(trdrVol[k]);
+    }
+    const volumeCap = 500_000;
+    let score = totalBrokerVolume==0 ? totalTraderVolume/volumeCap : totalBrokerVolume;
+    // 5 different equally spaced categories: (4 is best, 1 worst)
+    let rank4 = 1+Math.floor(Math.min(score,1-1e-15)*4);
+    // desired ranking starts at 4 (worst) and ends at 1 (best)
+    return 5-rank4;
+  }
+
   public static async _exchangeInfo(
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
