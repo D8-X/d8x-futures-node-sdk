@@ -212,11 +212,13 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
     let mgnAcct = await PerpetualDataHandler.getMarginAccount(
       traderAddr,
       symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      [obj.idxPrices[0], obj.idxPrices[1]]
     );
     return mgnAcct;
   }
@@ -727,17 +729,19 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let mgnAcct = await PerpetualDataHandler.getMarginAccount(
-      traderAddr,
-      symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract
-    );
+    
     if (indexPrices == undefined) {
       // fetch from API
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
+    let mgnAcct = await PerpetualDataHandler.getMarginAccount(
+      traderAddr,
+      symbol,
+      this.symbolToPerpStaticInfo,
+      this.proxyContract,
+      [indexPrices[0], indexPrices[1]]
+    );
     let S2 = indexPrices[0];
     let ccyType = this.getPerpetualStaticInfo(symbol).collateralCurrencyType;
     let S3 = ccyType == COLLATERAL_CURRENCY_QUANTO ? indexPrices[1] : ccyType == COLLATERAL_CURRENCY_QUOTE ? 1 : S2;
