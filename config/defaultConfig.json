@@ -23,12 +23,12 @@
   },
   {
     "name": "central-park",
-    "version": 3.0,
+    "version": 4.0,
     "proxyAddr": "0x4F1C7EE9E881Cc735f39Ca36c649ba9E930B4E4e",
     "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
     "priceFeedConfigNetwork": "testnet",
     "proxyABILocation": "../abi/central-park/IPerpetualManager.json",
-    "limitOrderBookFactoryAddr": "0xf8a4B731C3663A411F96b35a1989D4cD3C59912d",
+    "limitOrderBookFactoryAddr": "0xeC71488Ca228506C93CDaEd4C00Ef65ee7E6A4F1",
     "limitOrderBookFactoryABILocation": "../abi/central-park/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "../abi/central-park/LimitOrderBook.json",
     "symbolListLocation": "../config/symbolList.json"

@@ -3705,14 +3705,19 @@
                 "internalType": "address",
                 "name": "_traderAddress",
                 "type": "address"
+            },
+            {
+                "internalType": "int128[2]",
+                "name": "_fIndexPrice",
+                "type": "int128[2]"
             }
         ],
         "name": "getTraderState",
         "outputs": [
             {
-                "internalType": "int128[12]",
+                "internalType": "int128[11]",
                 "name": "",
-                "type": "int128[12]"
+                "type": "int128[11]"
             }
         ],
         "stateMutability": "view",
