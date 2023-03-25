@@ -227,48 +227,149 @@ export default class MarketData extends PerpetualDataHandler {
    * Estimates what the position risk will be if a given order is executed.
    * @param traderAddr Address of trader
    * @param order Order to be submitted
-   * @param currentPositionRisk Position risk before trade
+   * @param account Position risk before trade
+   * @param indexPriceInfo Index prices and market status (open/closed)
    * @returns {MarginAccount} Position risk after trade
    */
   public async positionRiskOnTrade(
     traderAddr: string,
     order: Order,
-    currentPositionRisk?: MarginAccount,
+    account?: MarginAccount,
     indexPriceInfo?: [number, number, boolean, boolean]
-  ): Promise<MarginAccount> {
+  ): Promise<{ newPositionRisk: MarginAccount; orderCost: number }> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    if (currentPositionRisk == undefined) {
-      currentPositionRisk = await this.positionRisk(traderAddr, order.symbol);
+    // fetch undefined data
+    if (account == undefined) {
+      account = await this.positionRisk(traderAddr, order.symbol);
     }
     if (indexPriceInfo == undefined) {
-      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(currentPositionRisk.symbol);
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(account.symbol);
       indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
-    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
-    // price for this order = limit price (conservative) if given, else the current perp price
-    let tradeAmount = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
-    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmount));
-    // total fee rate = exchange fee + broker fee
-    let feeRate =
-      ((await this.proxyContract.queryExchangeFee(poolId, traderAddr, order.brokerAddr ?? ZERO_ADDRESS)) +
-        (order.brokerFeeTbps ?? 0)) /
-      100_000;
-    let perpetualState = await this.getPerpetualState(order.symbol, indexPriceInfo);
 
-    return MarketData._positionRiskOnAccountAction(
-      order.symbol,
-      tradeAmount,
-      0,
-      order.leverage,
-      order.keepPositionLvg,
-      tradePrice,
-      feeRate,
-      perpetualState,
-      currentPositionRisk,
+    let lotSizeBC = MarketData._getLotSize(account.symbol, this.symbolToPerpStaticInfo);
+    // Too small, no change to account
+    if (Math.abs(order.quantity) < lotSizeBC) {
+      return { newPositionRisk: account, orderCost: 0 };
+    }
+
+    // Current state:
+    // perp (for FXs and such)
+    let perpetualState = await this.getPerpetualState(order.symbol, indexPriceInfo);
+    let [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
+    // cash in margin account: upon trading, unpaid funding will be realized
+    let currentMarginCashCC = account.collateralCC;
+    // signed position, still correct if side is closed (==0)
+    let currentPositionBC = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
+    // signed locked-in value
+    let currentLockedInQC = account.entryPrice * currentPositionBC;
+
+    // New trader state:
+    // signed trade amount
+    let tradeAmountBC = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
+    // signed position
+    let newPositionBC = currentPositionBC + tradeAmountBC;
+    if (Math.abs(newPositionBC) < 10 * lotSizeBC) {
+      // fully closed
+      tradeAmountBC = -currentPositionBC;
+      newPositionBC = 0;
+    }
+    let newSide = newPositionBC > 0 ? BUY_SIDE : newPositionBC < 0 ? SELL_SIDE : CLOSED_SIDE;
+
+    // price for this order = limit price (conservative) if given, else the current perp price
+    let tradePrice = order.limitPrice ?? (await this.getPerpetualPrice(order.symbol, tradeAmountBC));
+
+    // fees
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
+    let exchangeFeeTbps = await this.proxyContract.queryExchangeFee(
+      poolId,
+      traderAddr,
+      order.brokerAddr ?? ZERO_ADDRESS
+    );
+    let exchangeFeeCC = (Math.abs(tradeAmountBC) * exchangeFeeTbps * 1e-5 * S2) / S3;
+    let brokerFeeCC = (Math.abs(tradeAmountBC) * (order.brokerFeeTbps ?? 0) * 1e-5 * S2) / S3;
+
+    // Trade type:
+    let isClose = newPositionBC == 0 || newPositionBC * tradeAmountBC < 0;
+    let isOpen = newPositionBC != 0 && (currentPositionBC == 0 || newPositionBC * currentPositionBC > 0); // regular open, no flip
+    let isFlip = Math.abs(newPositionBC) > Math.abs(currentPositionBC) && !isOpen; // flip position sign, not fully closed
+    let keepPositionLvgOnClose = (order.keepPositionLvg ?? false) && !isOpen;
+
+    // Contract: _doMarginCollateralActions
+    // No collateral actions if
+    // 1) leverage is not set or
+    // 2) fully closed after trade or
+    // 3) is a partial closing, it doesn't flip, and keep lvg flag is not set
+    let traderDepositCC: number;
+    let targetLvg: number;
+    if (order.leverage == undefined || newPositionBC == 0 || (!isOpen && !isFlip && !keepPositionLvgOnClose)) {
+      traderDepositCC = 0;
+      targetLvg = 0;
+    } else {
+      // 1) opening and flipping trades need to specify a leverage: default to max if not given
+      // 2) for others it's ignored, set target to 0
+      let initialMarginRate = this.symbolToPerpStaticInfo.get(account.symbol)!.initialMarginRate;
+      targetLvg = isFlip || isOpen ? order.leverage ?? 1 / initialMarginRate : 0;
+      let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
+      traderDepositCC = getDepositAmountForLvgTrade(b0, pos0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
+      console.log("deposit for trget lvg:", traderDepositCC);
+      // fees are paid from wallet in this case
+      // referral rebate??
+      traderDepositCC += exchangeFeeCC + brokerFeeCC;
+    }
+
+    // Contract: _executeTrade
+    let deltaCashCC = (-tradeAmountBC * (tradePrice - S2)) / S3;
+    let deltaLockedQC = tradeAmountBC * S2;
+    if (isClose) {
+      let pnl = account.entryPrice * tradeAmountBC - deltaLockedQC;
+      deltaLockedQC += pnl;
+      deltaCashCC += pnl / S3;
+    }
+    // funding and fees
+    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - exchangeFeeCC - brokerFeeCC;
+
+    // New cash, locked-in, entry price & leverage after trade
+    let newLockedInValueQC = currentLockedInQC + deltaLockedQC;
+    let newMarginCashCC = currentMarginCashCC + deltaCashCC + traderDepositCC;
+    let newEntryPrice = newPositionBC == 0 ? 0 : Math.abs(newLockedInValueQC / newPositionBC);
+    let newMarginBalanceCC = newMarginCashCC + (newPositionBC * Sm - newLockedInValueQC) / S3;
+    let newLeverage =
+      newPositionBC == 0
+        ? 0
+        : newMarginBalanceCC <= 0
+        ? Infinity
+        : (Math.abs(newPositionBC) * Sm) / S3 / newMarginBalanceCC;
+
+    // Liquidation params
+    let [S2Liq, S3Liq, tau] = MarketData._getLiquidationParams(
+      account.symbol,
+      newLockedInValueQC,
+      newPositionBC,
+      newMarginCashCC,
+      Sm,
+      S3,
       this.symbolToPerpStaticInfo
     );
+
+    // New position risk
+    let newPositionRisk: MarginAccount = {
+      symbol: account.symbol,
+      positionNotionalBaseCCY: Math.abs(newPositionBC),
+      side: newSide,
+      entryPrice: newEntryPrice,
+      leverage: newLeverage,
+      markPrice: Sm,
+      unrealizedPnlQuoteCCY: newPositionBC * Sm - newLockedInValueQC,
+      unrealizedFundingCollateralCCY: 0,
+      collateralCC: newMarginCashCC,
+      collToQuoteConversion: S3,
+      liquidationPrice: [S2Liq, S3Liq],
+      liquidationLvg: 1 / tau,
+    };
+    return { newPositionRisk: newPositionRisk, orderCost: traderDepositCC };
   }
 
   /**
@@ -280,167 +381,121 @@ export default class MarketData extends PerpetualDataHandler {
    */
   public async positionRiskOnCollateralAction(
     deltaCollateral: number,
-    currentPositionRisk: MarginAccount,
+    account: MarginAccount,
     indexPriceInfo?: [number, number, boolean, boolean]
   ): Promise<MarginAccount> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    if (deltaCollateral + account.collateralCC + account.unrealizedFundingCollateralCCY < 0) {
+      throw Error("not enough margin to remove");
+    }
     if (indexPriceInfo == undefined) {
-      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(currentPositionRisk.symbol);
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(account.symbol);
       indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
-    let perpetualState = await this.getPerpetualState(currentPositionRisk.symbol, indexPriceInfo);
+    let perpetualState = await this.getPerpetualState(account.symbol, indexPriceInfo);
+    let [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
 
-    return MarketData._positionRiskOnAccountAction(
-      currentPositionRisk.symbol,
-      0,
-      deltaCollateral,
-      undefined,
-      false,
-      0,
-      0,
-      perpetualState,
-      currentPositionRisk,
+    // no position: just increase collateral and kill liquidation vars
+    if (account.positionNotionalBaseCCY == 0) {
+      return {
+        symbol: account.symbol,
+        positionNotionalBaseCCY: account.positionNotionalBaseCCY,
+        side: account.side,
+        entryPrice: account.entryPrice,
+        leverage: account.leverage,
+        markPrice: Sm,
+        unrealizedPnlQuoteCCY: account.unrealizedPnlQuoteCCY,
+        unrealizedFundingCollateralCCY: account.unrealizedFundingCollateralCCY,
+        collateralCC: account.collateralCC + deltaCollateral,
+        collToQuoteConversion: S3,
+        liquidationPrice: [0, undefined],
+        liquidationLvg: Infinity,
+      };
+    }
+
+    let positionBC = account.positionNotionalBaseCCY * (account.side == BUY_SIDE ? 1 : -1);
+    let lockedInQC = account.entryPrice * positionBC;
+    let newMarginCashCC = account.collateralCC + deltaCollateral;
+    let newMarginBalanceCC =
+      newMarginCashCC + account.unrealizedFundingCollateralCCY + (positionBC * Sm - lockedInQC) / S3;
+    if (newMarginBalanceCC <= 0) {
+      return {
+        symbol: account.symbol,
+        positionNotionalBaseCCY: account.positionNotionalBaseCCY,
+        side: account.side,
+        entryPrice: account.entryPrice,
+        leverage: Infinity,
+        markPrice: Sm,
+        unrealizedPnlQuoteCCY: account.unrealizedPnlQuoteCCY,
+        unrealizedFundingCollateralCCY: account.unrealizedFundingCollateralCCY,
+        collateralCC: newMarginCashCC,
+        collToQuoteConversion: S3,
+        liquidationPrice: [S2, S3],
+        liquidationLvg: 0,
+      };
+    }
+    let newLeverage = (Math.abs(positionBC) * Sm) / S3 / newMarginBalanceCC;
+
+    // Liquidation params
+    let [S2Liq, S3Liq, tau] = MarketData._getLiquidationParams(
+      account.symbol,
+      lockedInQC,
+      positionBC,
+      newMarginCashCC,
+      Sm,
+      S3,
       this.symbolToPerpStaticInfo
     );
-  }
 
-  protected static _positionRiskOnAccountAction(
-    symbol: string,
-    tradeAmount: number,
-    marginDeposit: number,
-    tradeLeverage: number | undefined,
-    keepPositionLvg: boolean | undefined,
-    tradePrice: number,
-    feeRate: number,
-    perpetualState: PerpetualState,
-    currentPositionRisk: MarginAccount,
-    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
-  ): MarginAccount {
-    let currentSide = currentPositionRisk.side;
-    let currentPosition = (currentSide == BUY_SIDE ? 1 : -1) * currentPositionRisk.positionNotionalBaseCCY;
-    let newPosition = currentPosition + tradeAmount;
-    let newSide = newPosition > 0 ? BUY_SIDE : newPosition < 0 ? SELL_SIDE : CLOSED_SIDE;
-    let lockedInValue = currentPositionRisk.entryPrice * currentPosition;
-    let newLockedInValue = lockedInValue + tradeAmount * tradePrice;
-    let newEntryPrice = newPosition == 0 ? 0 : Math.abs(newLockedInValue / newPosition);
-    if (tradeAmount == 0) {
-      keepPositionLvg = false;
-    }
-    let isOpen = newPosition != 0 && (tradeAmount == 0 || currentPosition == 0 || tradeAmount * currentPosition > 0);
-    let isFlip = Math.abs(tradeAmount) > Math.abs(currentPosition) && !isOpen;
-    let keepPositionLvgOnClose = keepPositionLvg && !isOpen;
-    // need these for leverage/margin calculations
-    let [markPrice, indexPriceS2, indexPriceS3] = [
-      perpetualState.markPrice,
-      perpetualState.indexPrice,
-      perpetualState.collToQuoteIndexPrice,
-    ];
-    let newCollateral: number;
-    let newLeverage: number;
-    if (keepPositionLvg) {
-      // we have a target leverage for the resulting position
-      // this gives us the total margin needed in the account so that it satisfies the leverage condition
-      newCollateral = getMarginRequiredForLeveragedTrade(
-        currentPositionRisk.leverage,
-        currentPosition,
-        lockedInValue,
-        tradeAmount,
-        markPrice,
-        indexPriceS2,
-        indexPriceS3,
-        tradePrice,
-        feeRate
-      );
-      // the new leverage follows from the updated margin and position
-      newLeverage = getNewPositionLeverage(
-        tradeAmount,
-        newCollateral,
-        currentPosition,
-        lockedInValue,
-        tradePrice,
-        indexPriceS3,
-        markPrice
-      );
-    } else if (tradeAmount != 0) {
-      let deltaCash: number;
-      if (!isOpen && !isFlip && !keepPositionLvgOnClose) {
-        // cash comes from realized pnl
-        deltaCash = (tradeAmount * (tradePrice - currentPositionRisk.entryPrice)) / indexPriceS3;
-        newLockedInValue = lockedInValue + currentPositionRisk.entryPrice * tradeAmount;
-      } else {
-        // target lvg will default current lvg if not specified
-        let targetLvg = isFlip || isOpen ? tradeLeverage ?? 0 : 0;
-        let b0, pos0;
-        [b0, pos0] = isOpen ? [0, 0] : [currentPositionRisk.collateralCC, currentPosition];
-        // cash comes from trader wallet
-        deltaCash = getDepositAmountForLvgTrade(b0, pos0, tradeAmount, targetLvg, tradePrice, indexPriceS3, markPrice);
-        // premium/instantaneous pnl
-        // deltaCash -= (tradeAmount * (tradePrice - indexPriceS2)) / indexPriceS3;
-        newLockedInValue = lockedInValue + tradeAmount * tradePrice;
-      }
-      newCollateral = currentPositionRisk.collateralCC + deltaCash; // - (feeRate * Math.abs(tradeAmount) * indexPriceS2) / indexPriceS3;
-      // the new leverage corresponds to increasing the position and collateral according to the order
-      newLeverage = getNewPositionLeverage(
-        0,
-        newCollateral,
-        newPosition,
-        newLockedInValue,
-        tradePrice,
-        indexPriceS3,
-        markPrice
-      );
-    } else {
-      // there is no order, adding/removing collateral
-      newCollateral = currentPositionRisk.collateralCC + marginDeposit;
-      newLeverage = getNewPositionLeverage(
-        0,
-        newCollateral,
-        currentPosition,
-        lockedInValue,
-        indexPriceS2,
-        indexPriceS3,
-        markPrice
-      );
-    }
-
-    // liquidation vars
-    let S2Liq: number, S3Liq: number | undefined;
-    let tau = symbolToPerpStaticInfo.get(symbol)!.maintenanceMarginRate;
-    let ccyType = symbolToPerpStaticInfo.get(symbol)!.collateralCurrencyType;
-    if (ccyType == CollaterlCCY.BASE) {
-      S2Liq = calculateLiquidationPriceCollateralBase(newLockedInValue, newPosition, newCollateral, tau);
-      S3Liq = S2Liq;
-    } else if (ccyType == CollaterlCCY.QUANTO) {
-      S3Liq = indexPriceS3;
-      S2Liq = calculateLiquidationPriceCollateralQuanto(
-        newLockedInValue,
-        newPosition,
-        newCollateral,
-        tau,
-        indexPriceS3,
-        markPrice
-      );
-    } else {
-      S2Liq = calculateLiquidationPriceCollateralQuote(newLockedInValue, newPosition, newCollateral, tau);
-    }
-
+    // New position risk
     let newPositionRisk: MarginAccount = {
-      symbol: currentPositionRisk.symbol,
-      positionNotionalBaseCCY: Math.abs(newPosition),
-      side: newSide,
-      entryPrice: newEntryPrice,
+      symbol: account.symbol,
+      positionNotionalBaseCCY: account.positionNotionalBaseCCY,
+      side: account.side,
+      entryPrice: account.entryPrice,
       leverage: newLeverage,
-      markPrice: markPrice,
-      unrealizedPnlQuoteCCY: newPosition * markPrice - newLockedInValue,
-      unrealizedFundingCollateralCCY: currentPositionRisk.unrealizedFundingCollateralCCY,
-      collateralCC: newCollateral,
-      collToQuoteConversion: indexPriceS3,
+      markPrice: Sm,
+      unrealizedPnlQuoteCCY: account.unrealizedPnlQuoteCCY,
+      unrealizedFundingCollateralCCY: account.unrealizedFundingCollateralCCY,
+      collateralCC: newMarginCashCC,
+      collToQuoteConversion: S3,
       liquidationPrice: [S2Liq, S3Liq],
       liquidationLvg: 1 / tau,
     };
     return newPositionRisk;
+  }
+
+  protected static _getLiquidationParams(
+    symbol: string,
+    lockedInQC: number,
+    signedPositionBC: number,
+    marginCashCC: number,
+    markPrice: number,
+    collToQuoteConversion: number,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): [number, number | undefined, number] {
+    let S2Liq: number, S3Liq: number | undefined;
+    let tau = symbolToPerpStaticInfo.get(symbol)!.maintenanceMarginRate;
+    let ccyType = symbolToPerpStaticInfo.get(symbol)!.collateralCurrencyType;
+    if (ccyType == CollaterlCCY.BASE) {
+      S2Liq = calculateLiquidationPriceCollateralBase(lockedInQC, signedPositionBC, marginCashCC, tau);
+      S3Liq = S2Liq;
+    } else if (ccyType == CollaterlCCY.QUANTO) {
+      S3Liq = collToQuoteConversion;
+      S2Liq = calculateLiquidationPriceCollateralQuanto(
+        lockedInQC,
+        signedPositionBC,
+        marginCashCC,
+        tau,
+        collToQuoteConversion,
+        markPrice
+      );
+    } else {
+      S2Liq = calculateLiquidationPriceCollateralQuote(lockedInQC, signedPositionBC, marginCashCC, tau);
+    }
+    return [S2Liq, S3Liq, tau];
   }
 
   /**
