@@ -290,7 +290,7 @@ export default class MarketData extends PerpetualDataHandler {
     );
     let exchangeFeeCC = (Math.abs(tradeAmountBC) * exchangeFeeTbps * 1e-5 * S2) / S3;
     let brokerFeeCC = (Math.abs(tradeAmountBC) * (order.brokerFeeTbps ?? 0) * 1e-5 * S2) / S3;
-
+    let referralFeeCC = this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
     // Trade type:
     let isClose = newPositionBC == 0 || newPositionBC * tradeAmountBC < 0;
     let isOpen = newPositionBC != 0 && (currentPositionBC == 0 || tradeAmountBC * currentPositionBC > 0); // regular open, no flip
@@ -314,10 +314,10 @@ export default class MarketData extends PerpetualDataHandler {
       targetLvg = isFlip || isOpen ? order.leverage ?? 1 / initialMarginRate : 0;
       let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
       traderDepositCC = getDepositAmountForLvgTrade(b0, pos0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
-      console.log("deposit for trget lvg:", traderDepositCC);
       // fees are paid from wallet in this case
       // referral rebate??
-      traderDepositCC += exchangeFeeCC + brokerFeeCC;
+      console.log("deposit for trget lvg:", traderDepositCC);
+      traderDepositCC += exchangeFeeCC + brokerFeeCC + referralFeeCC;
     }
 
     // Contract: _executeTrade
@@ -329,7 +329,7 @@ export default class MarketData extends PerpetualDataHandler {
       deltaCashCC += pnl / S3;
     }
     // funding and fees
-    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - exchangeFeeCC - brokerFeeCC;
+    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - exchangeFeeCC - brokerFeeCC - referralFeeCC;
 
     // New cash, locked-in, entry price & leverage after trade
     let newLockedInValueQC = currentLockedInQC + deltaLockedQC;
@@ -712,6 +712,7 @@ export default class MarketData extends PerpetualDataHandler {
       S2Symbol: perpInfo.S2Symbol,
       S3Symbol: perpInfo.S3Symbol,
       lotSizeBC: perpInfo.lotSizeBC,
+      referralRebate: perpInfo.referralRebate,
       priceIds: perpInfo.priceIds,
     };
     return res;

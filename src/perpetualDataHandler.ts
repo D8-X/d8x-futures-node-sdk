@@ -143,6 +143,7 @@ export default class PerpetualDataHandler {
       let initRate: number[] = [];
       let mgnRate: number[] = [];
       let lotSizes: number[] = [];
+      let refRebates: number[] = [];
 
       for (let k = 0; k < perpetualIDs.length; k++) {
         let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
@@ -163,6 +164,7 @@ export default class PerpetualDataHandler {
         initRate.push(ABK64x64ToFloat(perp.fInitialMarginRate));
         mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
         lotSizes.push(ABK64x64ToFloat(perp.fLotSizeBC));
+        refRebates.push(ABK64x64ToFloat(perp.fReferralRebateCC));
         // try to find a limit order book
         let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
         currentLimitOrderBookAddr.push(lobAddr);
@@ -200,7 +202,7 @@ export default class PerpetualDataHandler {
         // add price IDs
         let idsB32, isPyth;
         [idsB32, isPyth] = await proxyContract.getPriceInfo(perpetualIDs[k]);
-
+        console.log("ref reb", refRebates[k]);
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
@@ -210,6 +212,7 @@ export default class PerpetualDataHandler {
           S2Symbol: currentSymbols[k],
           S3Symbol: currentSymbolsS3[k],
           lotSizeBC: lotSizes[k],
+          referralRebate: refRebates[k],
           priceIds: idsB32,
         });
       }
@@ -364,7 +367,11 @@ export default class PerpetualDataHandler {
     const idx_mark_price = 8;
     const idx_lvg = 7;
     const idx_s3 = 9;
-    let traderState = await _proxyContract.getTraderState(perpId, traderAddr, _pxS2S3.map(x=>floatToABK64x64(x)));
+    let traderState = await _proxyContract.getTraderState(
+      perpId,
+      traderAddr,
+      _pxS2S3.map((x) => floatToABK64x64(x))
+    );
     let isEmpty = traderState[idx_notional] == 0;
     let cash = ABK64x64ToFloat(traderState[idx_cash]);
     let S2Liq = 0,
