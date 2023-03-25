@@ -293,7 +293,7 @@ export default class MarketData extends PerpetualDataHandler {
 
     // Trade type:
     let isClose = newPositionBC == 0 || newPositionBC * tradeAmountBC < 0;
-    let isOpen = newPositionBC != 0 && (currentPositionBC == 0 || newPositionBC * currentPositionBC > 0); // regular open, no flip
+    let isOpen = newPositionBC != 0 && (currentPositionBC == 0 || tradeAmountBC * currentPositionBC > 0); // regular open, no flip
     let isFlip = Math.abs(newPositionBC) > Math.abs(currentPositionBC) && !isOpen; // flip position sign, not fully closed
     let keepPositionLvgOnClose = (order.keepPositionLvg ?? false) && !isOpen;
 
@@ -784,7 +784,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    
+
     if (indexPrices == undefined) {
       // fetch from API
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
@@ -815,15 +815,15 @@ export default class MarketData extends PerpetualDataHandler {
    * @param brokerAddr address of the trader's broker or undefined
    * @returns a loyality score (4 worst, 1 best)
    */
-  public async getTraderLoyalityScore(traderAddr: string, brokerAddr?: string) : Promise<number> {
+  public async getTraderLoyalityScore(traderAddr: string, brokerAddr?: string): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     // loop over all pools and query volumes
-    let brokerProm : Array<Promise<BigNumber>>= [];
-    let traderProm : Array<Promise<BigNumber>>= [];
-    for(let k=0; k<this.poolStaticInfos.length; k++) {
-      if (brokerAddr!="" && brokerAddr!=undefined) {
+    let brokerProm: Array<Promise<BigNumber>> = [];
+    let traderProm: Array<Promise<BigNumber>> = [];
+    for (let k = 0; k < this.poolStaticInfos.length; k++) {
+      if (brokerAddr != "" && brokerAddr != undefined) {
         let brkrVol = this.proxyContract.getCurrentBrokerVolume(this.poolStaticInfos[k].poolId, brokerAddr);
         brokerProm.push(brkrVol);
       }
@@ -835,18 +835,18 @@ export default class MarketData extends PerpetualDataHandler {
     let totalTraderVolume = 0;
     let brkrVol = await Promise.all(brokerProm);
     let trdrVol = await Promise.all(traderProm);
-    for(let k=0; k<this.poolStaticInfos.length; k++) {
-      if (brokerAddr!="" && brokerAddr!=undefined) {
+    for (let k = 0; k < this.poolStaticInfos.length; k++) {
+      if (brokerAddr != "" && brokerAddr != undefined) {
         totalBrokerVolume += ABK64x64ToFloat(brkrVol[k]);
       }
       totalTraderVolume += ABK64x64ToFloat(trdrVol[k]);
     }
     const volumeCap = 500_000;
-    let score = totalBrokerVolume==0 ? totalTraderVolume/volumeCap : totalBrokerVolume;
+    let score = totalBrokerVolume == 0 ? totalTraderVolume / volumeCap : totalBrokerVolume;
     // 5 different equally spaced categories: (4 is best, 1 worst)
-    let rank4 = 1+Math.floor(Math.min(score,1-1e-15)*4);
+    let rank4 = 1 + Math.floor(Math.min(score, 1 - 1e-15) * 4);
     // desired ranking starts at 4 (worst) and ends at 1 (best)
-    return 5-rank4;
+    return 5 - rank4;
   }
 
   public static async _exchangeInfo(
