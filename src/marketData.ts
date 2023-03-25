@@ -314,10 +314,10 @@ export default class MarketData extends PerpetualDataHandler {
       targetLvg = isFlip || isOpen ? order.leverage ?? 1 / initialMarginRate : 0;
       let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
       traderDepositCC = getDepositAmountForLvgTrade(b0, pos0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
-      console.log("deposit for trget lvg:", traderDepositCC);
       // fees are paid from wallet in this case
       // referral rebate??
-      traderDepositCC += exchangeFeeCC + brokerFeeCC;
+      console.log("deposit for trget lvg:", traderDepositCC);
+      traderDepositCC += exchangeFeeCC + brokerFeeCC + this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
     }
 
     // Contract: _executeTrade
@@ -712,6 +712,7 @@ export default class MarketData extends PerpetualDataHandler {
       S2Symbol: perpInfo.S2Symbol,
       S3Symbol: perpInfo.S3Symbol,
       lotSizeBC: perpInfo.lotSizeBC,
+      referralRebate: perpInfo.referralRebate,
       priceIds: perpInfo.priceIds,
     };
     return res;

@@ -85,6 +85,7 @@ export interface PerpetualStaticInfo {
   S2Symbol: string;
   S3Symbol: string;
   lotSizeBC: number;
+  referralRebate: number;
   priceIds: string[];
 }
 
@@ -154,7 +155,7 @@ export interface OrderStruct {
 }
 
 export interface Order {
-  symbol: string;//symbol of the form ETH-USD-MATIC
+  symbol: string; //symbol of the form ETH-USD-MATIC
   side: string;
   type: string;
   quantity: number;
@@ -219,7 +220,7 @@ export interface PriceFeedConfig {
 
 export interface PriceFeedSubmission {
   symbols: string[];
-  priceFeedVaas: string[]; 
+  priceFeedVaas: string[];
   prices: number[];
   isMarketClosed: boolean[];
   timestamps: number[];
