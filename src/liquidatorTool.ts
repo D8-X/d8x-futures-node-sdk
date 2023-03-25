@@ -1,6 +1,7 @@
 import WriteAccessHandler from "./writeAccessHandler";
 import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import { ethers } from "ethers";
+import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 
 /**
  * Functions to liquidate traders. This class requires a private key
@@ -117,12 +118,23 @@ export default class LiquidatorTool extends WriteAccessHandler {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
-    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices);
+    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices.map(x=>floatToABK64x64(x)));
     if (traderState[idx_notional] == 0) {
       // trader does not have open position
-      return false;
+      return true;
     }
-    return await this.proxyContract.isTraderMaintenanceMarginSafe(perpID, traderAddr);
+    // calculate margin from traderstate
+    const idx_maintenanceMgnRate = 10;
+    const idx_marginAccountPositionBC = 4;
+    const idx_collateralToQuoteConversion = 9;
+    const idx_marginBalance = 0;
+    const maintMgnRate = ABK64x64ToFloat(traderState[idx_maintenanceMgnRate]);
+    const pos = ABK64x64ToFloat(traderState[idx_marginAccountPositionBC]);
+    const marginbalance = ABK64x64ToFloat(traderState[idx_marginBalance]);
+    const coll2quote = ABK64x64ToFloat(traderState[idx_collateralToQuoteConversion]);
+    const base2collateral = indexPrices[0]/coll2quote;
+    const threshold = Math.abs(pos * base2collateral * maintMgnRate)
+    return marginbalance>=threshold;
   }
 
   /**
