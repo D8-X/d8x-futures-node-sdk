@@ -234,7 +234,7 @@ export default class MarketData extends PerpetualDataHandler {
     order: Order,
     account?: MarginAccount,
     indexPriceInfo?: [number, number, boolean, boolean]
-  ): Promise<{ newPositionRisk: MarginAccount; depositAtExecution: number }> {
+  ): Promise<{ newPositionRisk: MarginAccount; orderCost: number }> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -250,7 +250,7 @@ export default class MarketData extends PerpetualDataHandler {
     let lotSizeBC = MarketData._getLotSize(account.symbol, this.symbolToPerpStaticInfo);
     // Too small, no change to account
     if (Math.abs(order.quantity) < lotSizeBC) {
-      return { newPositionRisk: account, depositAtExecution: 0 };
+      return { newPositionRisk: account, orderCost: 0 };
     }
 
     // Current state:
@@ -312,6 +312,7 @@ export default class MarketData extends PerpetualDataHandler {
       targetLvg = isFlip || isOpen ? order.leverage ?? 1 / initialMarginRate : 0;
       let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
       traderDepositCC = getDepositAmountForLvgTrade(b0, pos0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
+      console.log("deposit for trget lvg:", traderDepositCC);
       // fees are paid from wallet in this case
       // referral rebate??
       traderDepositCC += exchangeFeeCC + brokerFeeCC;
@@ -321,7 +322,7 @@ export default class MarketData extends PerpetualDataHandler {
     let deltaCashCC = (-tradeAmountBC * (tradePrice - S2)) / S3;
     let deltaLockedQC = tradeAmountBC * S2;
     if (isClose) {
-      let pnl = account.entryPrice * tradeAmountBC - currentLockedInQC;
+      let pnl = account.entryPrice * tradeAmountBC - deltaLockedQC;
       deltaLockedQC += pnl;
       deltaCashCC += pnl / S3;
     }
@@ -330,10 +331,15 @@ export default class MarketData extends PerpetualDataHandler {
 
     // New cash, locked-in, entry price & leverage after trade
     let newLockedInValueQC = currentLockedInQC + deltaLockedQC;
-    let newMarginCashCC = currentMarginCashCC + deltaCashCC;
+    let newMarginCashCC = currentMarginCashCC + deltaCashCC + traderDepositCC;
     let newEntryPrice = newPositionBC == 0 ? 0 : Math.abs(newLockedInValueQC / newPositionBC);
+    let newMarginBalanceCC = newMarginCashCC + (newPositionBC * Sm - newLockedInValueQC) / S3;
     let newLeverage =
-      (Math.abs(newPositionBC) * Sm) / S3 / (newMarginCashCC + (newPositionBC * Sm - newLockedInValueQC) / S3);
+      newPositionBC == 0
+        ? 0
+        : newMarginBalanceCC <= 0
+        ? Infinity
+        : (Math.abs(newPositionBC) * Sm) / S3 / newMarginBalanceCC;
 
     // Liquidation params
     let [S2Liq, S3Liq, tau] = MarketData._getLiquidationParams(
@@ -361,7 +367,7 @@ export default class MarketData extends PerpetualDataHandler {
       liquidationPrice: [S2Liq, S3Liq],
       liquidationLvg: 1 / tau,
     };
-    return { newPositionRisk: newPositionRisk, depositAtExecution: traderDepositCC };
+    return { newPositionRisk: newPositionRisk, orderCost: traderDepositCC };
   }
 
   /**
@@ -379,18 +385,55 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    if (deltaCollateral + account.collateralCC + account.unrealizedFundingCollateralCCY < 0) {
+      throw Error("not enough margin to remove");
+    }
     if (indexPriceInfo == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(account.symbol);
       indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
     let perpetualState = await this.getPerpetualState(account.symbol, indexPriceInfo);
-    let [S3, Sm] = [perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
+    let [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
+
+    // no position: just increase collateral and kill liquidation vars
+    if (account.positionNotionalBaseCCY == 0) {
+      return {
+        symbol: account.symbol,
+        positionNotionalBaseCCY: account.positionNotionalBaseCCY,
+        side: account.side,
+        entryPrice: account.entryPrice,
+        leverage: account.leverage,
+        markPrice: Sm,
+        unrealizedPnlQuoteCCY: account.unrealizedPnlQuoteCCY,
+        unrealizedFundingCollateralCCY: account.unrealizedFundingCollateralCCY,
+        collateralCC: account.collateralCC + deltaCollateral,
+        collToQuoteConversion: S3,
+        liquidationPrice: [0, undefined],
+        liquidationLvg: Infinity,
+      };
+    }
 
     let positionBC = account.positionNotionalBaseCCY * (account.side == BUY_SIDE ? 1 : -1);
     let lockedInQC = account.entryPrice * positionBC;
     let newMarginCashCC = account.collateralCC + deltaCollateral;
     let newMarginBalanceCC =
       newMarginCashCC + account.unrealizedFundingCollateralCCY + (positionBC * Sm - lockedInQC) / S3;
+    if (newMarginBalanceCC <= 0) {
+      return {
+        symbol: account.symbol,
+        positionNotionalBaseCCY: account.positionNotionalBaseCCY,
+        side: account.side,
+        entryPrice: account.entryPrice,
+        leverage: Infinity,
+        markPrice: Sm,
+        unrealizedPnlQuoteCCY: account.unrealizedPnlQuoteCCY,
+        unrealizedFundingCollateralCCY: account.unrealizedFundingCollateralCCY,
+        collateralCC: newMarginCashCC,
+        collToQuoteConversion: S3,
+        liquidationPrice: [S2, S3],
+        liquidationLvg: 0,
+      };
+    }
     let newLeverage = (Math.abs(positionBC) * Sm) / S3 / newMarginBalanceCC;
 
     // Liquidation params

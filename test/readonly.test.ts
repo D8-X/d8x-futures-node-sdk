@@ -52,7 +52,7 @@ describe("readOnly", () => {
   describe("Oracle Routes", () => {
     beforeAll(() => {
       const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
-      let abi = require("../abi/IPerpetualManager.json");
+      let abi = require("../abi/central-park/IPerpetualManager.json");
       proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
     });
     it("routes", async () => {
@@ -209,21 +209,35 @@ describe("readOnly", () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
       console.log("mgn=", mgn);
     });
-    it("get margin info if a trade was performed", async () => {
+
+    it("get margin info if an opening trade was performed", async () => {
       let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
       let order: Order = {
         symbol: "MATIC-USD-MATIC",
         side: "BUY",
         type: "MARKET",
         quantity: 200,
-        leverage: 1,
+        leverage: 2,
         timestamp: Date.now() / 1000,
       };
-      let mgnAfter = await mktData.positionRiskOnTrade(wallet.address, order);
-      let mgnAfter2 = await mktData.positionRiskOnTrade(wallet.address, order, mgnBefore);
-      console.log("mgnBefore:", mgnBefore);
-      console.log("mgnAfter :", mgnAfter);
-      console.log("mgnAfter2:", mgnAfter2);
+      let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
+      console.log("mgn before opening=", mgnBefore, "\norder=", order);
+      console.log("mgn after  opening=", newPositionRisk, "\ndeposit =", orderCost);
+    });
+
+    it("get margin info if a closing trade was performed", async () => {
+      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let order: Order = {
+        symbol: "MATIC-USD-MATIC",
+        side: "SELL",
+        type: "MARKET",
+        quantity: 50,
+        leverage: 5,
+        timestamp: Date.now() / 1000,
+      };
+      let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
+      console.log("mgn before closing=", mgnBefore, "\norder=", order);
+      console.log("mgn after  closing=", newPositionRisk, "\ndeposit =", orderCost);
     });
     it("get margin info if collateral is added", async () => {
       let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
@@ -234,7 +248,7 @@ describe("readOnly", () => {
     });
     it("get margin info if collateral is removed", async () => {
       let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
-      let deposit = -100;
+      let deposit = -2;
       let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
       console.log("mgnBefore:", mgnBefore);
       console.log("mgnAfter :", mgnAfter);
@@ -462,7 +476,7 @@ describe("readOnly", () => {
     it("should check if an order is tradeable", async () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      if(openOrders[0].length>0) {
+      if (openOrders[0].length > 0) {
         let isTradeable = await refTool.isTradeable(openOrders[0][0]);
         console.log(isTradeable);
       } else {
@@ -472,7 +486,7 @@ describe("readOnly", () => {
     it("should check if a batch of orders is tradeable", async () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
-      if(openOrders[0].length>0) {
+      if (openOrders[0].length > 0) {
         let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
         console.log(isTradeable);
       }
