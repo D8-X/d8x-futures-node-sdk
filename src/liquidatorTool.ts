@@ -121,7 +121,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices.map(x=>floatToABK64x64(x)));
     if (traderState[idx_notional] == 0) {
       // trader does not have open position
-      return false;
+      return true;
     }
     // calculate margin from traderstate
     const idx_maintenanceMgnRate = 10;
