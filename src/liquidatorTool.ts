@@ -86,6 +86,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * If not, the position can be liquidated.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader whose position you want to assess.
+   * @param {[number,number]} indexPrices optional, index price S2/S3 for which we test
    * @example
    * import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -105,13 +106,18 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @returns {boolean} True if the trader is maintenance margin safe in the perpetual.
    * False means that the trader's position can be liquidated.
    */
-  public async isMaintenanceMarginSafe(symbol: string, traderAddr: string): Promise<boolean> {
+  public async isMaintenanceMarginSafe(symbol: string, traderAddr: string, indexPrices?: [number, number]): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const idx_notional = 4;
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr);
+    if (indexPrices == undefined) {
+      // fetch from API
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
+    }
+    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices);
     if (traderState[idx_notional] == 0) {
       // trader does not have open position
       return false;

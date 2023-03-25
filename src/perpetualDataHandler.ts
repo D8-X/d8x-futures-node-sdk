@@ -364,7 +364,7 @@ export default class PerpetualDataHandler {
     const idx_mark_price = 8;
     const idx_lvg = 7;
     const idx_s3 = 9;
-    let traderState = await _proxyContract.getTraderState(perpId, traderAddr);
+    let traderState = await _proxyContract.getTraderState(perpId, traderAddr, _pxS2S3.map(x=>floatToABK64x64(x)));
     let isEmpty = traderState[idx_notional] == 0;
     let cash = ABK64x64ToFloat(traderState[idx_cash]);
     let S2Liq = 0,
@@ -379,6 +379,7 @@ export default class PerpetualDataHandler {
       [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
         symbol,
         traderState,
+        _pxS2S3[0],
         symbolToPerpStaticInfo
       );
       fLockedIn = traderState[idx_locked_in];
@@ -465,12 +466,14 @@ export default class PerpetualDataHandler {
    * Liquidation price
    * @param symbol symbol of the form BTC-USD-MATIC
    * @param traderState BigInt array according to smart contract
+   * @param S2 number, index price S2
    * @param symbolToPerpStaticInfo mapping symbol->PerpStaticInfo
    * @returns liquidation mark-price, corresponding collateral/quote conversion
    */
   protected static _calculateLiquidationPrice(
     symbol: string,
     traderState: BigNumber[],
+    S2: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): [number, number, number, number, number] {
     const idx_availableCashCC = 2;
@@ -497,7 +500,7 @@ export default class PerpetualDataHandler {
     if (perpInfo.collateralCurrencyType == CollaterlCCY.BASE) {
       S2Liq = calculateLiquidationPriceCollateralBase(lockedInValueQC, position, cashCC, tau);
       S3Liq = S2Liq;
-      unpaidFunding = unpaidFunding / ABK64x64ToFloat(traderState[idx_s2]);
+      unpaidFunding = unpaidFunding / S2;
     } else if (perpInfo.collateralCurrencyType == CollaterlCCY.QUANTO) {
       let S3 = S3Liq;
       S3Liq = S3;
