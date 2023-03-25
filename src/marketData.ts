@@ -780,6 +780,14 @@ export default class MarketData extends PerpetualDataHandler {
     return digests;
   }
 
+  /**
+   * Query the available margin conditional on the given (or current) index prices
+   * Result is in collateral currency
+   * @param traderAddr address of the trader
+   * @param symbol perpetual symbol of the form BTC-USD-MATIC
+   * @param indexPrices optional index prices, will otherwise fetch from REST API
+   * @returns available margin in collateral currency
+   */
   public async getAvailableMargin(traderAddr: string, symbol: string, indexPrices?: [number, number]): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -790,23 +798,11 @@ export default class MarketData extends PerpetualDataHandler {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
-    let mgnAcct = await PerpetualDataHandler.getMarginAccount(
-      traderAddr,
-      symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract,
-      [indexPrices[0], indexPrices[1]]
-    );
-    let S2 = indexPrices[0];
-    let ccyType = this.getPerpetualStaticInfo(symbol).collateralCurrencyType;
-    let S3 = ccyType == COLLATERAL_CURRENCY_QUANTO ? indexPrices[1] : ccyType == COLLATERAL_CURRENCY_QUOTE ? 1 : S2;
-    let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
-    let balanceCC = mgnAcct.collateralCC + mgnAcct.unrealizedPnlQuoteCCY / S3;
-    let initalMarginCC = Math.abs(
-      (perpInfo!.initialMarginRate * mgnAcct.positionNotionalBaseCCY * mgnAcct.markPrice) /
-        mgnAcct.collToQuoteConversion
-    );
-    return balanceCC - initalMarginCC;
+    let perpID = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices.map(x=>floatToABK64x64(x)));
+    const idx_availableMargin = 1;
+    let mgn = ABK64x64ToFloat(traderState[idx_availableMargin]);
+    return mgn;
   }
 
   /**

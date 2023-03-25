@@ -349,6 +349,17 @@ describe("readOnly", () => {
       console.log(`all active accounts for ${symbol}:`);
       console.log(allAccounts);
     });
+    it("check available margin", async () => {
+      let symbol = "BTC-USD-MATIC";
+      let accounts = await liqTool.getActiveAccountsByChunks(symbol, 0, 1);
+      if (accounts.length > 0) {
+        let traderAddr = accounts[0];
+        let mgn = await mktData.getAvailableMargin(traderAddr, symbol);
+        console.log("available mgn = ", mgn);
+        expect(mgn).toBeGreaterThanOrEqual(0);
+      }
+    });
+
     it("should check if trader is liquidatable", async () => {
       let symbol = "BTC-USD-MATIC";
       let accounts = await liqTool.getActiveAccountsByChunks(symbol, 0, 1);
