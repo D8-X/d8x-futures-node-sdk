@@ -290,7 +290,7 @@ export default class MarketData extends PerpetualDataHandler {
     );
     let exchangeFeeCC = (Math.abs(tradeAmountBC) * exchangeFeeTbps * 1e-5 * S2) / S3;
     let brokerFeeCC = (Math.abs(tradeAmountBC) * (order.brokerFeeTbps ?? 0) * 1e-5 * S2) / S3;
-
+    let referralFeeCC = this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
     // Trade type:
     let isClose = newPositionBC == 0 || newPositionBC * tradeAmountBC < 0;
     let isOpen = newPositionBC != 0 && (currentPositionBC == 0 || tradeAmountBC * currentPositionBC > 0); // regular open, no flip
@@ -317,7 +317,7 @@ export default class MarketData extends PerpetualDataHandler {
       // fees are paid from wallet in this case
       // referral rebate??
       console.log("deposit for trget lvg:", traderDepositCC);
-      traderDepositCC += exchangeFeeCC + brokerFeeCC + this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
+      traderDepositCC += exchangeFeeCC + brokerFeeCC + referralFeeCC;
     }
 
     // Contract: _executeTrade
@@ -329,7 +329,7 @@ export default class MarketData extends PerpetualDataHandler {
       deltaCashCC += pnl / S3;
     }
     // funding and fees
-    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - exchangeFeeCC - brokerFeeCC;
+    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - exchangeFeeCC - brokerFeeCC - referralFeeCC;
 
     // New cash, locked-in, entry price & leverage after trade
     let newLockedInValueQC = currentLockedInQC + deltaLockedQC;
