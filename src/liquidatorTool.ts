@@ -87,7 +87,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * If not, the position can be liquidated.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader whose position you want to assess.
-   * @param {[number,number]} indexPrices optional, index price S2/S3 for which we test
+   * @param {number[]} indexPrices optional, index price S2/S3 for which we test
    * @example
    * import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -107,7 +107,11 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @returns {boolean} True if the trader is maintenance margin safe in the perpetual.
    * False means that the trader's position can be liquidated.
    */
-  public async isMaintenanceMarginSafe(symbol: string, traderAddr: string, indexPrices?: [number, number]): Promise<boolean> {
+  public async isMaintenanceMarginSafe(
+    symbol: string,
+    traderAddr: string,
+    indexPrices?: [number, number]
+  ): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -118,7 +122,11 @@ export default class LiquidatorTool extends WriteAccessHandler {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
-    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices.map(x=>floatToABK64x64(x)));
+    let traderState = await this.proxyContract.getTraderState(
+      perpID,
+      traderAddr,
+      indexPrices.map((x) => floatToABK64x64(x))
+    );
     if (traderState[idx_notional] == 0) {
       // trader does not have open position
       return true;
@@ -132,9 +140,9 @@ export default class LiquidatorTool extends WriteAccessHandler {
     const pos = ABK64x64ToFloat(traderState[idx_marginAccountPositionBC]);
     const marginbalance = ABK64x64ToFloat(traderState[idx_marginBalance]);
     const coll2quote = ABK64x64ToFloat(traderState[idx_collateralToQuoteConversion]);
-    const base2collateral = indexPrices[0]/coll2quote;
-    const threshold = Math.abs(pos * base2collateral * maintMgnRate)
-    return marginbalance>=threshold;
+    const base2collateral = indexPrices[0] / coll2quote;
+    const threshold = Math.abs(pos * base2collateral * maintMgnRate);
+    return marginbalance >= threshold;
   }
 
   /**

@@ -1,8 +1,8 @@
-import {BigNumber} from "ethers";
+import { BigNumber } from "ethers";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
-import {PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat} from "./nodeSDKTypes"
-import {decNToFloat} from "./d8XMath";
+import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat } from "./nodeSDKTypes";
+import { decNToFloat } from "./d8XMath";
 
 /**
  * This class communicates with the REST API that provides price-data that is
@@ -12,19 +12,18 @@ import {decNToFloat} from "./d8XMath";
 export default class PriceFeeds {
   private config: PriceFeedConfig;
   private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
-  private feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-  private dataHandler : PerpetualDataHandler;
+  private feedInfo: Map<string, { symbol: string; endpointId: number }>; // priceFeedId -> symbol, endpointId
+  private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
-  private triangulations : Map<string, [string[], boolean[]]>; 
+  private triangulations: Map<string, [string[], boolean[]]>;
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
-    
     let configs = <PriceFeedConfig[]>require("../config/priceFeedConfig.json");
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config);
     this.dataHandler = dataHandler;
-    this.triangulations = new Map<string, [string[], boolean[]]>(); 
+    this.triangulations = new Map<string, [string[], boolean[]]>();
   }
 
   /**
@@ -33,10 +32,10 @@ export default class PriceFeeds {
    */
   public initializeTriangulations(symbols: Set<string>) {
     let feedSymbols = new Array<string>();
-    for(let [key, value] of this.feedInfo) {
+    for (let [key, value] of this.feedInfo) {
       feedSymbols.push(value.symbol);
     }
-    for(let symbol of symbols.values()) {
+    for (let symbol of symbols.values()) {
       let triangulation = Triangulator.triangulate(feedSymbols, symbol);
       this.triangulations.set(symbol, triangulation);
     }
@@ -48,35 +47,38 @@ export default class PriceFeeds {
    * @param symbol symbol of perpetual, e.g., BTC-USD-MATIC
    * @returns PriceFeedSubmission, index prices, market closed information
    */
-  public async fetchFeedPriceInfoAndIndicesForPerpetual(symbol: string) : 
-    Promise<{submission: PriceFeedSubmission, pxS2S3: [number,number], mktClosed: [boolean, boolean]}>
-  {
+  public async fetchFeedPriceInfoAndIndicesForPerpetual(
+    symbol: string
+  ): Promise<{ submission: PriceFeedSubmission; pxS2S3: [number, number]; mktClosed: [boolean, boolean] }> {
     let indexSymbols = this.dataHandler.getIndexSymbols(symbol);
     // fetch prices from required price-feeds (REST)
-    let submission : PriceFeedSubmission = await this.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    let submission: PriceFeedSubmission = await this.fetchLatestFeedPriceInfoForPerpetual(symbol);
     // calculate index-prices from price-feeds
-    let [_idxPrices, _mktClosed] = this.calculateTriangulatedPricesFromFeedInfo(indexSymbols.filter((x)=>x!=''), submission);
-    let idxPrices : [number, number]= [_idxPrices[0], 0];
-    let mktClosed: [boolean, boolean]=[_mktClosed[0], false];
-    if (idxPrices.length>1) {
+    let [_idxPrices, _mktClosed] = this.calculateTriangulatedPricesFromFeedInfo(
+      indexSymbols.filter((x) => x != ""),
+      submission
+    );
+    let idxPrices: [number, number] = [_idxPrices[0], 0];
+    let mktClosed: [boolean, boolean] = [_mktClosed[0], false];
+    if (idxPrices.length > 1) {
       idxPrices[1] = _idxPrices[1];
       mktClosed[1] = _mktClosed[1];
     }
-    return {submission : submission, pxS2S3: idxPrices, mktClosed: mktClosed};
+    return { submission: submission, pxS2S3: idxPrices, mktClosed: mktClosed };
   }
 
-   /**
-   * Get all prices/isMarketClosed for the provided symbols via 
+  /**
+   * Get all prices/isMarketClosed for the provided symbols via
    * "latest_price_feeds" and triangulation. Triangulation must be defined in config, unless
    * it is a direct price feed.
    * @returns map of feed-price symbol to price/isMarketClosed
    */
-  public async fetchPrices(symbols: string[]) : Promise<Map<string, [number, boolean]>> {
+  public async fetchPrices(symbols: string[]): Promise<Map<string, [number, boolean]>> {
     let feedPrices = await this.fetchAllFeedPrices();
     let [prices, mktClosed] = this.triangulatePricesFromFeedPrices(symbols, feedPrices);
-    let symMap = new Map<string, [number, boolean]>;
-    for(let k=0; k<symbols.length; k++) {
-      symMap.set(symbols[k], [prices[k], mktClosed[k]])
+    let symMap = new Map<string, [number, boolean]>();
+    for (let k = 0; k < symbols.length; k++) {
+      symMap.set(symbols[k], [prices[k], mktClosed[k]]);
     }
     return symMap;
   }
@@ -84,34 +86,34 @@ export default class PriceFeeds {
   /**
    * Get index prices and market closed information for the given perpetual
    * @param symbol perpetual symbol such as ETH-USD-MATIC
-   * @returns 
+   * @returns Index prices and market closed information
    */
-  public async fetchPricesForPerpetual(symbol: string) : Promise<{idxPrices: number[], mktClosed: boolean[]}> {
-      let indexSymbols = this.dataHandler.getIndexSymbols(symbol).filter(x=>x!="");
-      // determine relevant price feeds
-      let feedSymbols = new Array<string>();
-      for(let sym of indexSymbols) {
-        if(sym!="") {
-          let triang : [string[], boolean[]] | undefined = this.triangulations.get(sym);
-          if (triang==undefined) {
-            // no triangulation defined, so symbol must be a feed (unless misconfigured)
-            feedSymbols.push(sym);
-          } else {
-            // push all required feeds to array
-            triang[0].map((feedSym)=> feedSymbols.push(feedSym));
-          }
+  public async fetchPricesForPerpetual(symbol: string): Promise<{ idxPrices: number[]; mktClosed: boolean[] }> {
+    let indexSymbols = this.dataHandler.getIndexSymbols(symbol).filter((x) => x != "");
+    // determine relevant price feeds
+    let feedSymbols = new Array<string>();
+    for (let sym of indexSymbols) {
+      if (sym != "") {
+        let triang: [string[], boolean[]] | undefined = this.triangulations.get(sym);
+        if (triang == undefined) {
+          // no triangulation defined, so symbol must be a feed (unless misconfigured)
+          feedSymbols.push(sym);
+        } else {
+          // push all required feeds to array
+          triang[0].map((feedSym) => feedSymbols.push(feedSym));
         }
       }
-      // get all feed prices
-      let feedPrices = await this.fetchFeedPrices(feedSymbols);
-      // triangulate
-      let [prices, mktClosed] = this.triangulatePricesFromFeedPrices(indexSymbols, feedPrices);
-      // ensure we return an array of 2 in all cases
-      if (prices.length==1) {
-        prices.push(0);
-        mktClosed.push(false);
-      }
-      return {idxPrices: prices, mktClosed: mktClosed};
+    }
+    // get all feed prices
+    let feedPrices = await this.fetchFeedPrices(feedSymbols);
+    // triangulate
+    let [prices, mktClosed] = this.triangulatePricesFromFeedPrices(indexSymbols, feedPrices);
+    // ensure we return an array of 2 in all cases
+    if (prices.length == 1) {
+      prices.push(0);
+      mktClosed.push(false);
+    }
+    return { idxPrices: prices, mktClosed: mktClosed };
   }
 
   /**
@@ -124,16 +126,16 @@ export default class PriceFeeds {
   public async fetchFeedPrices(symbols?: string[]): Promise<Map<string, [number, boolean]>> {
     let queries = new Array<string>(this.feedEndpoints.length);
     let symbolsOfEndpoint: string[][] = [];
-    for(let j=0;j<queries.length;j++) {
+    for (let j = 0; j < queries.length; j++) {
       symbolsOfEndpoint.push([]);
     }
-    for(let k=0; k<this.config.ids.length; k++) {
+    for (let k = 0; k < this.config.ids.length; k++) {
       let currFeed = this.config.ids[k];
-      if(symbols!=undefined && !symbols.includes(currFeed.symbol)) {
+      if (symbols != undefined && !symbols.includes(currFeed.symbol)) {
         continue;
       }
       // feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-      let endpointId = this.feedInfo.get(currFeed.id)!.endpointId;  
+      let endpointId = this.feedInfo.get(currFeed.id)!.endpointId;
       symbolsOfEndpoint[endpointId].push(currFeed.symbol);
       if (queries[endpointId] == undefined) {
         // each id can have a different endpoint, but we cluster
@@ -143,30 +145,29 @@ export default class PriceFeeds {
       queries[endpointId] = queries[endpointId] + "ids[]=" + currFeed.id + "&";
     }
     let resultPrices = new Map<string, [number, boolean]>();
-    for(let k=0; k<queries.length; k++) {
-      if(queries[k]==undefined) {
+    for (let k = 0; k < queries.length; k++) {
+      if (queries[k] == undefined) {
         continue;
       }
-      let [id, pxInfo] : [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k]);
-      let tsSecNow = Math.round(Date.now()/1000);
-      for(let j=0; j<pxInfo.length; j++) {
+      let [id, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k]);
+      let tsSecNow = Math.round(Date.now() / 1000);
+      for (let j = 0; j < pxInfo.length; j++) {
         let price = decNToFloat(BigNumber.from(pxInfo[j].price), -pxInfo[j].expo);
         let isMarketClosed = tsSecNow - pxInfo[j].publish_time > this.THRESHOLD_MARKET_CLOSED_SEC;
         resultPrices.set(symbolsOfEndpoint[k][j], [price, isMarketClosed]);
       }
     }
     return resultPrices;
-
   }
 
   /**
    * Get all configured feed prices via "latest_price_feeds"
    * @returns map of feed-price symbol to price/isMarketClosed
    */
-  public async fetchAllFeedPrices() : Promise<Map<string, [number, boolean]>> {
+  public async fetchAllFeedPrices(): Promise<Map<string, [number, boolean]>> {
     return this.fetchFeedPrices();
   }
-  
+
   /**
    * Get the latest prices for a given perpetual from the offchain oracle
    * networks
@@ -174,7 +175,7 @@ export default class PriceFeeds {
    * @returns array of price feed updates that can be submitted to the smart contract
    * and corresponding price information
    */
-  public async fetchLatestFeedPriceInfoForPerpetual(symbol: string) : Promise<PriceFeedSubmission> {
+  public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
     let feedIds = this.dataHandler.getPriceIds(symbol);
     let queries = new Array<string>(this.feedEndpoints.length);
     // we need to preserve the order of the price feeds
@@ -215,10 +216,10 @@ export default class PriceFeeds {
     const prices = new Array<number>();
     const mktClosed = new Array<boolean>();
     const timestamps = new Array<number>();
-    const tsSecNow = Math.round(Date.now()/1000);
-    for(let k=0; k<orderEndpointNumber.length; k++) {
-      let endpointId = Math.floor(orderEndpointNumber[k]/100);
-      let idWithinEndpoint = orderEndpointNumber[k]-100*endpointId;
+    const tsSecNow = Math.round(Date.now() / 1000);
+    for (let k = 0; k < orderEndpointNumber.length; k++) {
+      let endpointId = Math.floor(orderEndpointNumber[k] / 100);
+      let idWithinEndpoint = orderEndpointNumber[k] - 100 * endpointId;
       priceFeedUpdates.push(data[endpointId][0][idWithinEndpoint]);
       let pxInfo: PriceFeedFormat = data[endpointId][1][idWithinEndpoint];
       let price = decNToFloat(BigNumber.from(pxInfo.price), -pxInfo.expo);
@@ -227,8 +228,14 @@ export default class PriceFeeds {
       prices.push(price);
       timestamps.push(pxInfo.publish_time);
     }
-    
-    return {"symbols": symbols, priceFeedVaas: priceFeedUpdates, prices: prices, isMarketClosed: mktClosed, timestamps: timestamps};
+
+    return {
+      symbols: symbols,
+      priceFeedVaas: priceFeedUpdates,
+      prices: prices,
+      isMarketClosed: mktClosed,
+      timestamps: timestamps,
+    };
   }
 
   /**
@@ -239,14 +246,14 @@ export default class PriceFeeds {
    * @param feeds data obtained via fetchLatestFeedPriceInfo or fetchLatestFeedPrices
    * @returns array of prices with same order as symbols
    */
-  public calculateTriangulatedPricesFromFeedInfo(symbols: string[], feeds: PriceFeedSubmission) : [number[], boolean[]] {
-    let priceMap = new Map<string, [number,boolean]>();
-    for(let j=0; j<feeds.prices.length; j++) {
+  public calculateTriangulatedPricesFromFeedInfo(symbols: string[], feeds: PriceFeedSubmission): [number[], boolean[]] {
+    let priceMap = new Map<string, [number, boolean]>();
+    for (let j = 0; j < feeds.prices.length; j++) {
       priceMap.set(feeds.symbols[j], [feeds.prices[j], feeds.isMarketClosed[j]]);
     }
     return this.triangulatePricesFromFeedPrices(symbols, priceMap);
   }
-   /**
+  /**
    * Extract pair-prices from underlying price feeds via triangulation
    * The function either needs a direct price feed or a defined triangulation to succesfully
    * return a triangulated price
@@ -254,22 +261,25 @@ export default class PriceFeeds {
    * @param feeds data obtained via fetchLatestFeedPriceInfo or fetchLatestFeedPrices
    * @returns array of prices with same order as symbols
    */
-   public triangulatePricesFromFeedPrices(symbols: string[], feedPriceMap: Map<string, [number, boolean]>) : [number[], boolean[]] {
+  public triangulatePricesFromFeedPrices(
+    symbols: string[],
+    feedPriceMap: Map<string, [number, boolean]>
+  ): [number[], boolean[]] {
     let prices = new Array<number>();
     let mktClosed = new Array<boolean>();
-    for(let k=0; k<symbols.length; k++) {
-      let triangulation : [string[], boolean[]] | undefined = this.triangulations.get(symbols[k]);
-      if(triangulation==undefined) {
+    for (let k = 0; k < symbols.length; k++) {
+      let triangulation: [string[], boolean[]] | undefined = this.triangulations.get(symbols[k]);
+      if (triangulation == undefined) {
         let feedPrice = feedPriceMap.get(symbols[k]);
-        if (feedPrice==undefined) {
+        if (feedPrice == undefined) {
           throw new Error(`PriceFeeds: no triangulation defined for ${symbols[k]}`);
         } else {
-          prices.push(feedPrice[0]);//price
-          mktClosed.push(feedPrice[1]);//market closed?
+          prices.push(feedPrice[0]); //price
+          mktClosed.push(feedPrice[1]); //market closed?
           continue;
         }
       }
-      let [px, isMktClosed] : [number, boolean]= Triangulator.calculateTriangulatedPrice(triangulation, feedPriceMap);
+      let [px, isMktClosed]: [number, boolean] = Triangulator.calculateTriangulatedPrice(triangulation, feedPriceMap);
       prices.push(px);
       mktClosed.push(isMktClosed);
     }
@@ -281,8 +291,8 @@ export default class PriceFeeds {
    * @param query query price-info from endpoint
    * @returns vaa and price info
    */
-  private async fetchVAAQuery(query: string) : Promise<[string[], PriceFeedFormat[]]> {
-    const headers = {headers: {'Content-Type': 'application/json'}};
+  private async fetchVAAQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
+    const headers = { headers: { "Content-Type": "application/json" } };
     let response = await fetch(query, headers);
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
@@ -302,8 +312,8 @@ export default class PriceFeeds {
    * @param query query price-info from endpoint
    * @returns vaa and price info
    */
-  public async fetchPriceQuery(query: string) : Promise<[string[], PriceFeedFormat[]]> {
-    const headers = {headers: {'Content-Type': 'application/json'}};
+  public async fetchPriceQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
+    const headers = { headers: { "Content-Type": "application/json" } };
     let response = await fetch(query, headers);
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
@@ -320,17 +330,17 @@ export default class PriceFeeds {
 
   /**
    * Searches for configuration for given network
-   * @param configs pricefeed configuration from json 
+   * @param configs pricefeed configuration from json
    * @param network e.g. testnet
    * @returns selected configuration
    */
-  static _selectConfig(configs: PriceFeedConfig[], network: string) : PriceFeedConfig {
-    let k=0;
-    while(k<configs.length) {
-      if (configs[k].network==network) {
+  static _selectConfig(configs: PriceFeedConfig[], network: string): PriceFeedConfig {
+    let k = 0;
+    while (k < configs.length) {
+      if (configs[k].network == network) {
         return configs[k];
       }
-      k=k+1;
+      k = k + 1;
     }
     throw new Error(`PriceFeeds: config not found for network ${network}`);
   }
@@ -340,32 +350,31 @@ export default class PriceFeeds {
    * @param config configuration for the selected network
    * @returns feedInfo-map and endPoints-array
    */
-  static _constructFeedInfo(config: PriceFeedConfig) : [Map<string, {symbol:string, endpointId: number}>, string[]]{
-    let feed = new Map<string, {symbol:string, endpointId: number}>();
+  static _constructFeedInfo(config: PriceFeedConfig): [Map<string, { symbol: string; endpointId: number }>, string[]] {
+    let feed = new Map<string, { symbol: string; endpointId: number }>();
     let endpointId = -1;
-    let type="";
+    let type = "";
     let feedEndpoints = new Array<string>();
-    for(let k=0; k<config.endpoints.length; k++) {
+    for (let k = 0; k < config.endpoints.length; k++) {
       feedEndpoints.push(config.endpoints[k].endpoint);
     }
-    for(let k=0; k<config.ids.length; k++) {
-      if (type!=config.ids[k].type) {
+    for (let k = 0; k < config.ids.length; k++) {
+      if (type != config.ids[k].type) {
         type = config.ids[k].type;
-        let j=0;
-        while(j<config.endpoints.length) {
-          if(config.endpoints[j].type == type) {
+        let j = 0;
+        while (j < config.endpoints.length) {
+          if (config.endpoints[j].type == type) {
             endpointId = j;
-            j=config.endpoints.length;
+            j = config.endpoints.length;
           }
           j++;
         }
-        if(config.endpoints[endpointId].type!=type) {
+        if (config.endpoints[endpointId].type != type) {
           throw new Error(`priceFeeds: no enpoint found for ${type} check priceFeedConfig`);
         }
       }
-      feed.set(config.ids[k].id, {symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });
+      feed.set(config.ids[k].id, { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });
     }
     return [feed, feedEndpoints];
   }
-
 }

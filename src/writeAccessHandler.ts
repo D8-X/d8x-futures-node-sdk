@@ -99,9 +99,9 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * into a mock token used for trading on testnet, with a rate of 1:100_000
    * @param symbol Pool margin token e.g. MATIC
    * @param amountToPay Amount in chain currency, e.g. "0.1" for 0.1 MATIC
-   * @returns
+   * @returns Transaction object
    */
-  public async swapForMockToken(symbol: string, amountToPay: string) {
+  public async swapForMockToken(symbol: string, amountToPay: string): Promise<ethers.ContractTransaction> {
     if (this.signer == null) {
       throw Error("no wallet initialized. Use createProxyInstance().");
     }

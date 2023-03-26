@@ -11,7 +11,8 @@ smart-contract interactions that require gas-payments.</p>
     * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
     * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
-    * [.removeLiquidity(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+removeLiquidity) ⇒
+    * [.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+initiateLiquidityWithdrawal) ⇒
+    * [.executeLiquidityWithdrawal(poolSymbolName)](#LiquidityProviderTool+executeLiquidityWithdrawal) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
 
@@ -98,10 +99,12 @@ async function main() {
 }
 main();
 ```
-<a name="LiquidityProviderTool+removeLiquidity"></a>
+<a name="LiquidityProviderTool+initiateLiquidityWithdrawal"></a>
 
-### liquidityProviderTool.removeLiquidity(poolSymbolName, amountPoolShares) ⇒
-<p>Remove liquidity from the pool. The address loses pool shares in return.</p>
+### liquidityProviderTool.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares) ⇒
+<p>Initiates a liquidity withdrawal from the pool
+It triggers a time-delayed unlocking of the given number of pool shares.
+The amount of pool shares to be unlocked is fixed by this call, but not their value in pool currency.</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Returns**: <p>Transaction object.</p>  
@@ -121,8 +124,37 @@ async function main() {
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
+  // initiate withdrawal
+  let respRemoveLiquidity = await lqudtProviderTool.initiateLiquidityWithdrawal("MATIC", 0.1);
+  console.log(respRemoveLiquidity);
+}
+main();
+```
+<a name="LiquidityProviderTool+executeLiquidityWithdrawal"></a>
+
+### liquidityProviderTool.executeLiquidityWithdrawal(poolSymbolName) ⇒
+<p>Withdraws as much liquidity as there is available after a call to initiateLiquidityWithdrawal.
+The address loses pool shares in return.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Returns**: <p>Transaction object.</p>  
+
+| Param |
+| --- |
+| poolSymbolName | 
+
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance();
   // remove liquidity
-  let respRemoveLiquidity = await lqudtProviderTool.removeLiquidity("MATIC", 0.1);
+  let respRemoveLiquidity = await lqudtProviderTool.executeLiquidityWithdrawal("MATIC", 0.1);
   console.log(respRemoveLiquidity);
 }
 main();

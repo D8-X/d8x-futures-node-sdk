@@ -10,7 +10,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 * [LiquidatorTool](#LiquidatorTool) ⇐ <code>WriteAccessHandler</code>
     * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData)](#LiquidatorTool+liquidateTrader) ⇒
-    * [.isMaintenanceMarginSafe(symbol, traderAddr)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
+    * [.isMaintenanceMarginSafe(symbol, traderAddr, indexPrices)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
     * [.getActiveAccountsByChunks(symbol, from, to)](#LiquidatorTool+getActiveAccountsByChunks) ⇒ <code>Array.&lt;string&gt;</code>
     * [.getAllActiveAccounts(symbol)](#LiquidatorTool+getAllActiveAccounts) ⇒ <code>Array.&lt;string&gt;</code>
@@ -75,7 +75,7 @@ main();
 ```
 <a name="LiquidatorTool+isMaintenanceMarginSafe"></a>
 
-### liquidatorTool.isMaintenanceMarginSafe(symbol, traderAddr) ⇒ <code>boolean</code>
+### liquidatorTool.isMaintenanceMarginSafe(symbol, traderAddr, indexPrices) ⇒ <code>boolean</code>
 <p>Check if the collateral of a trader is above the maintenance margin (&quot;maintenance margin safe&quot;).
 If not, the position can be liquidated.</p>
 
@@ -87,6 +87,7 @@ False means that the trader's position can be liquidated.</p>
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | traderAddr | <code>string</code> | <p>Address of the trader whose position you want to assess.</p> |
+| indexPrices | <code>Array.&lt;number&gt;</code> | <p>optional, index price S2/S3 for which we test</p> |
 
 **Example**  
 ```js

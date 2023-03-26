@@ -17,7 +17,7 @@ No gas required for the queries here.</p>
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
-    * [.positionRiskOnTrade(traderAddr, order, currentPositionRisk)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
     * [.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance)](#MarketData+maxOrderSizeForTrader) ⇒
@@ -27,6 +27,8 @@ No gas required for the queries here.</p>
     * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
     * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
+    * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
+    * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -188,7 +190,7 @@ main();
 ```
 <a name="MarketData+positionRiskOnTrade"></a>
 
-### marketData.positionRiskOnTrade(traderAddr, order, currentPositionRisk) ⇒ <code>MarginAccount</code>
+### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒ <code>MarginAccount</code>
 <p>Estimates what the position risk will be if a given order is executed.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -198,7 +200,8 @@ main();
 | --- | --- |
 | traderAddr | <p>Address of trader</p> |
 | order | <p>Order to be submitted</p> |
-| currentPositionRisk | <p>Position risk before trade</p> |
+| account | <p>Position risk before trade</p> |
+| indexPriceInfo | <p>Index prices and market status (open/closed)</p> |
 
 <a name="MarketData+positionRiskOnCollateralAction"></a>
 
@@ -378,3 +381,31 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getAvailableMargin"></a>
+
+### marketData.getAvailableMargin(traderAddr, symbol, indexPrices) ⇒
+<p>Query the available margin conditional on the given (or current) index prices
+Result is in collateral currency</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>available margin in collateral currency</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>address of the trader</p> |
+| symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+| indexPrices | <p>optional index prices, will otherwise fetch from REST API</p> |
+
+<a name="MarketData+getTraderLoyalityScore"></a>
+
+### marketData.getTraderLoyalityScore(traderAddr, brokerAddr) ⇒
+<p>Calculate a type of exchange loyality score based on trader volume</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>a loyality score (4 worst, 1 best)</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>address of the trader</p> |
+| brokerAddr | <p>address of the trader's broker or undefined</p> |
+
