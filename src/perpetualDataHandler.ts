@@ -516,6 +516,9 @@ export default class PerpetualDataHandler {
     } else {
       S2Liq = calculateLiquidationPriceCollateralQuote(lockedInValueQC, position, cashCC, tau);
     }
+    // floor at 0
+    S2Liq = S2Liq < 0 ? 0 : S2Liq;
+    S3Liq = S3Liq && S3Liq < 0 ? 0 : S3Liq;
     // account cash + pnl = avail cash + pos Sm - L = margin balance
     let pnl = position * Sm - lockedInValueQC + unpaidFunding;
     return [S2Liq, S3Liq, tau, pnl, unpaidFundingCC];

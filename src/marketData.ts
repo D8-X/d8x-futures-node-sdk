@@ -495,6 +495,9 @@ export default class MarketData extends PerpetualDataHandler {
     } else {
       S2Liq = calculateLiquidationPriceCollateralQuote(lockedInQC, signedPositionBC, marginCashCC, tau);
     }
+    // floor at 0
+    S2Liq = S2Liq < 0 ? 0 : S2Liq;
+    S3Liq = S3Liq && S3Liq < 0 ? 0 : S3Liq;
     return [S2Liq, S3Liq, tau];
   }
 
@@ -800,7 +803,11 @@ export default class MarketData extends PerpetualDataHandler {
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
     let perpID = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, indexPrices.map(x=>floatToABK64x64(x)));
+    let traderState = await this.proxyContract.getTraderState(
+      perpID,
+      traderAddr,
+      indexPrices.map((x) => floatToABK64x64(x))
+    );
     const idx_availableMargin = 1;
     let mgn = ABK64x64ToFloat(traderState[idx_availableMargin]);
     return mgn;
