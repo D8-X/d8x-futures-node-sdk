@@ -153,7 +153,6 @@ describe("readOnly", () => {
       for (var k = 0; k < info.pools.length; k++) {
         let pool = info.pools[k];
         console.log(`Perpetuals in ${pool.poolSymbol} pool:\n`, pool.perpetuals);
-        console.log(`max pos=`)
         console.log("Closed markets:")
         for(let j=0; j<pool.perpetuals.length; j++) {
           let perp = pool.perpetuals[j];
