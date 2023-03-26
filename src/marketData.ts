@@ -538,6 +538,20 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
+   * 
+   * @param side BUY_SIDE or SELL_SIDE
+   * @param symbol of the form ETH-USD-MATIC.
+   * @returns signed maximal position size in base currency
+   */
+  public async maxSignedPosition(side: string, symbol: string): Promise<number> {
+    let perpId = this.getPerpIdFromSymbol(symbol);
+    let isBuy = side == BUY_SIDE;
+    let maxSignedPos = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(perpId,BigNumber.from(0),isBuy)
+    return ABK64x64ToFloat(maxSignedPos);
+  }
+  
+
+  /**
    * Uses the Oracle(s) in the exchange to get the latest price of a given index in a given currency, if a route exists.
    * @param {string} base Index name, e.g. ETH.
    * @param {string} quote Quote currency, e.g. USD.
@@ -911,6 +925,10 @@ export default class MarketData extends PerpetualDataHandler {
         let markPremiumRate = ABK64x64ToFloat(perp.currentMarkPremiumRate.fPrice);
         let currentFundingRateBps = 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate);
         let state = PERP_STATE_STR[perp.state];
+        let isMktClosed = isS2MktClosed || isS3MktClosed;
+        if (state=="NORMAL" && isMktClosed) {
+          state = "CLOSED";
+        }
         let PerpetualState: PerpetualState = {
           id: perp.id,
           state: state,
@@ -923,7 +941,7 @@ export default class MarketData extends PerpetualDataHandler {
           currentFundingRateBps: currentFundingRateBps,
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
           maxPositionBC: Infinity,
-          isMarketClosed: isS2MktClosed || isS3MktClosed,
+          isMarketClosed: isMktClosed,
         };
         PoolState.perpetuals.push(PerpetualState);
       }

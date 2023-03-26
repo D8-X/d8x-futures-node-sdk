@@ -153,8 +153,22 @@ describe("readOnly", () => {
       for (var k = 0; k < info.pools.length; k++) {
         let pool = info.pools[k];
         console.log(`Perpetuals in ${pool.poolSymbol} pool:\n`, pool.perpetuals);
+        console.log(`max pos=`)
+        console.log("Closed markets:")
+        for(let j=0; j<pool.perpetuals.length; j++) {
+          let perp = pool.perpetuals[j];
+          if(perp.isMarketClosed) {
+            console.log(perp.baseCurrency+"-"+perp.quoteCurrency+":"+perp.state+" - "+perp.isMarketClosed);
+          }
+        }
       }
     });
+    it("perp static info", async () => {
+      let maxLong = await mktData.maxSignedPosition(BUY_SIDE, "MATIC-USD-MATIC");
+      let maxShort = await mktData.maxSignedPosition(SELL_SIDE, "MATIC-USD-MATIC");
+      console.log("max long="+maxLong+" max short="+maxShort);
+    });
+    
     it("perp static info", async () => {
       let info: PerpetualStaticInfo = await mktData.getPerpetualStaticInfo("MATIC-USD-MATIC");
       console.log(info);
