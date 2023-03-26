@@ -185,25 +185,14 @@ describe("readOnly", () => {
     });
     it("maxOrderSizeForTrader (long)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let bal = await mktData.getWalletBalance(wallet.address, "ETH-USD-MATIC");
-      let perpState = await mktData.getPerpetualState("ETH-USD-MATIC");
-      // without wallet
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos, perpState);
-      // with wallet
-      let maxTradeSize2 = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos, perpState, bal);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos);
       console.log(`max long trade size w/o   wallet: ${maxTradeSize}`);
-      console.log(`max long trade size w/   wallet: ${maxTradeSize2}`);
+      
     });
     it("maxOrderSizeForTrader (short)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let bal = await mktData.getWalletBalance(wallet.address, "ETH-USD-MATIC");
-      let perpState = await mktData.getPerpetualState("ETH-USD-MATIC");
-      // without wallet
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos, perpState);
-      // with wallet
-      let maxTradeSize2 = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos, perpState, bal);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos);
       console.log(`max short trade size w/o  wallet: ${maxTradeSize}`);
-      console.log(`max short trade size w/  wallet: ${maxTradeSize2}`);
     });
     it("openOrders", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");

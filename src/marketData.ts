@@ -516,43 +516,23 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Gets the maximal order size considering the existing position, state of the perpetual, and optionally any additional collateral to be posted.
+   * Gets the maximal order size to open positions (increase size),
+   * considering the existing position, state of the perpetual
+   * Ignores users wallet balance.
    * @param side BUY or SELL
    * @param positionRisk Current position risk (as seen in positionRisk)
-   * @param perpetualState Current perpetual state (as seen in exchangeInfo)
-   * @param walletBalance Optional wallet balance to consider in the calculation
    * @returns Maximal trade size, not signed
    */
   public async maxOrderSizeForTrader(
     side: string,
-    positionRisk: MarginAccount,
-    perpetualState: PerpetualState,
-    walletBalance?: number
+    positionRisk: MarginAccount
   ): Promise<number> {
-    if (walletBalance != undefined) {
-      positionRisk = await this.positionRiskOnCollateralAction(walletBalance, positionRisk);
-    }
-    let initialMarginRate = this.symbolToPerpStaticInfo.get(positionRisk.symbol)!.initialMarginRate;
-    // fees not considered here
-    let maxPosition = getMaxSignedPositionSize(
-      positionRisk.collateralCC,
-      positionRisk.positionNotionalBaseCCY,
-      positionRisk.entryPrice * positionRisk.positionNotionalBaseCCY,
-      side == BUY_SIDE ? 1 : -1,
-      perpetualState.markPrice,
-      initialMarginRate,
-      0,
-      perpetualState.markPrice,
-      perpetualState.indexPrice,
-      perpetualState.collToQuoteIndexPrice
-    );
     let curPosition = side == BUY_SIDE ? positionRisk.positionNotionalBaseCCY : -positionRisk.positionNotionalBaseCCY;
-    let tradeAmount = maxPosition - curPosition;
     let perpId = this.getPerpIdFromSymbol(positionRisk.symbol);
-    let perpMaxPositionABK = await this.proxyContract!.getMaxSignedTradeSizeForPos(
+    let perpMaxPositionABK = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(
       perpId,
       floatToABK64x64(curPosition),
-      floatToABK64x64(tradeAmount)
+      side == BUY_SIDE
     );
     return ABK64x64ToFloat(perpMaxPositionABK.abs());
   }
