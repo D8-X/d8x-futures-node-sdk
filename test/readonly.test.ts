@@ -163,7 +163,7 @@ describe("readOnly", () => {
         }
       }
     });
-    it("perp static info", async () => {
+    it("max positions", async () => {
       let maxLong = await mktData.maxSignedPosition(BUY_SIDE, "MATIC-USD-MATIC");
       let maxShort = await mktData.maxSignedPosition(SELL_SIDE, "MATIC-USD-MATIC");
       console.log("max long="+maxLong+" max short="+maxShort);
