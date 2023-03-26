@@ -452,7 +452,7 @@ export default class PerpetualDataHandler {
     }
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64));
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
-    let state = {
+    let state : PerpetualState = {
       id: perpId,
       state: PERP_STATE_STR[ammState[13]],
       baseCurrency: ccy[0],
@@ -463,7 +463,6 @@ export default class PerpetualDataHandler {
       midPrice: ABK64x64ToFloat(ammState[10]),
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
-      maxPositionBC: ABK64x64ToFloat(ammState[12]),
       isMarketClosed: indexPrices[2] || indexPrices[3],
     };
     return state;

@@ -181,7 +181,6 @@ export default class PerpetualEventHandler {
     perp.midPrice = perpState.midPrice;
     perp.currentFundingRateBps = perpState.currentFundingRateBps;
     perp.openInterestBC = perpState.openInterestBC;
-    perp.maxPositionBC = perpState.maxPositionBC;
     perp.indexPrice = perpState.indexPrice;
     perp.collToQuoteIndexPrice = perpState.collToQuoteIndexPrice;
   }

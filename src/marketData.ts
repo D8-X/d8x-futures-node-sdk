@@ -940,7 +940,6 @@ export default class MarketData extends PerpetualDataHandler {
           midPrice: ABK64x64ToFloat(fMidPrice),
           currentFundingRateBps: currentFundingRateBps,
           openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
-          maxPositionBC: Infinity,
           isMarketClosed: isMktClosed,
         };
         PoolState.perpetuals.push(PerpetualState);
