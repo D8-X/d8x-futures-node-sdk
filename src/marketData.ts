@@ -315,8 +315,6 @@ export default class MarketData extends PerpetualDataHandler {
       let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
       traderDepositCC = getDepositAmountForLvgTrade(b0, pos0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
       // fees are paid from wallet in this case
-      // referral rebate??
-      console.log("deposit for trget lvg:", traderDepositCC);
       traderDepositCC += exchangeFeeCC + brokerFeeCC + referralFeeCC;
     }
 

@@ -202,7 +202,6 @@ export default class PerpetualDataHandler {
         // add price IDs
         let idsB32, isPyth;
         [idsB32, isPyth] = await proxyContract.getPriceInfo(perpetualIDs[k]);
-        console.log("ref reb", refRebates[k]);
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
