@@ -71,7 +71,7 @@ export default class MarketData extends PerpetualDataHandler {
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
+  public async createProxyInstance(provider?: ethers.providers.Provider) {
     if (provider == undefined) {
       this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
     } else {
@@ -521,10 +521,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param positionRisk Current position risk (as seen in positionRisk)
    * @returns Maximal trade size, not signed
    */
-  public async maxOrderSizeForTrader(
-    side: string,
-    positionRisk: MarginAccount
-  ): Promise<number> {
+  public async maxOrderSizeForTrader(side: string, positionRisk: MarginAccount): Promise<number> {
     let curPosition = side == BUY_SIDE ? positionRisk.positionNotionalBaseCCY : -positionRisk.positionNotionalBaseCCY;
     let perpId = this.getPerpIdFromSymbol(positionRisk.symbol);
     let perpMaxPositionABK = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(
@@ -536,7 +533,7 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * 
+   *
    * @param side BUY_SIDE or SELL_SIDE
    * @param symbol of the form ETH-USD-MATIC.
    * @returns signed maximal position size in base currency
@@ -544,10 +541,9 @@ export default class MarketData extends PerpetualDataHandler {
   public async maxSignedPosition(side: string, symbol: string): Promise<number> {
     let perpId = this.getPerpIdFromSymbol(symbol);
     let isBuy = side == BUY_SIDE;
-    let maxSignedPos = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(perpId,BigNumber.from(0),isBuy)
+    let maxSignedPos = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(perpId, BigNumber.from(0), isBuy);
     return ABK64x64ToFloat(maxSignedPos);
   }
-  
 
   /**
    * Uses the Oracle(s) in the exchange to get the latest price of a given index in a given currency, if a route exists.
@@ -924,7 +920,7 @@ export default class MarketData extends PerpetualDataHandler {
         let currentFundingRateBps = 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate);
         let state = PERP_STATE_STR[perp.state];
         let isMktClosed = isS2MktClosed || isS3MktClosed;
-        if (state=="NORMAL" && isMktClosed) {
+        if (state == "NORMAL" && isMktClosed) {
           state = "CLOSED";
         }
         let PerpetualState: PerpetualState = {

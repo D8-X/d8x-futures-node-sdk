@@ -2,7 +2,6 @@ import { ethers } from "ethers";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import {
-  MOCK_TOKEN_SWAP_ABI,
   NodeSDKConfig,
   Order,
   OrderResponse,
@@ -14,6 +13,7 @@ import {
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
 import WriteAccessHandler from "./writeAccessHandler";
+import { Buffer } from "buffer";
 
 /**
  * Functions to create, submit and cancel orders on the exchange.

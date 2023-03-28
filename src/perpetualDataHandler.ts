@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from "ethers";
+import { ethers, BigNumber, ContractInterface } from "ethers";
 import {
   NodeSDKConfig,
   MAX_64x64,
@@ -30,6 +30,8 @@ import {
   DEFAULT_CONFIG,
   DEFAULT_CONFIG_MAINNET_NAME,
   PriceFeedSubmission,
+  loadABIs,
+  SYMBOL_LIST,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -74,7 +76,7 @@ export default class PerpetualDataHandler {
   protected lobFactoryAddr: string;
   protected lobABI: ethers.ContractInterface;
   protected nodeURL: string;
-  protected provider: ethers.providers.JsonRpcProvider | null = null;
+  protected provider: ethers.providers.Provider | null = null;
 
   private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
   protected priceFeedGetter: PriceFeeds;
@@ -92,16 +94,17 @@ export default class PerpetualDataHandler {
     this.proxyAddr = config.proxyAddr;
     this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
     this.nodeURL = config.nodeURL;
-    this.proxyABI = require(config.proxyABILocation);
-    this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
-    this.lobABI = require(config.limitOrderBookABILocation);
-    this.symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    this.proxyABI = config.proxyABI!;
+    this.lobFactoryABI = config.lobFactoryABI!;
+    this.lobABI = config.lobABI!;
+    this.symbolList = SYMBOL_LIST;
     this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
     this.signerOrProvider = signerOrProvider;
     this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
+    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
     this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr, this.lobFactoryABI, signerOrProvider);
     await this._fillSymbolMaps(this.proxyContract);
   }
@@ -349,29 +352,19 @@ export default class PerpetualDataHandler {
     return poolIds;
   }
 
-  public static async getMarginAccount(
-    traderAddr: string,
+  public static buildMarginAccountFromState(
     symbol: string,
+    traderState: ethers.BigNumber[],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract,
     _pxS2S3: [number, number]
-  ): Promise<MarginAccount> {
-    let perpId = Number(symbol);
-    if (isNaN(perpId)) {
-      perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    }
+  ): MarginAccount {
     const idx_cash = 3;
     const idx_notional = 4;
     const idx_locked_in = 5;
     const idx_mark_price = 8;
     const idx_lvg = 7;
     const idx_s3 = 9;
-    let traderState = await _proxyContract.getTraderState(
-      perpId,
-      traderAddr,
-      _pxS2S3.map((x) => floatToABK64x64(x))
-    );
-    let isEmpty = traderState[idx_notional] == 0;
+    let isEmpty = traderState[idx_notional].eq(0);
     let cash = ABK64x64ToFloat(traderState[idx_cash]);
     let S2Liq = 0,
       S3Liq = 0,
@@ -389,7 +382,7 @@ export default class PerpetualDataHandler {
         symbolToPerpStaticInfo
       );
       fLockedIn = traderState[idx_locked_in];
-      side = traderState[idx_locked_in] > 0 ? BUY_SIDE : SELL_SIDE;
+      side = traderState[idx_locked_in].gt(0) ? BUY_SIDE : SELL_SIDE;
       entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
     }
     let mgn: MarginAccount = {
@@ -407,6 +400,25 @@ export default class PerpetualDataHandler {
       collToQuoteConversion: ABK64x64ToFloat(traderState[idx_s3]),
     };
     return mgn;
+  }
+
+  public static async getMarginAccount(
+    traderAddr: string,
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract,
+    _pxS2S3: [number, number]
+  ): Promise<MarginAccount> {
+    let perpId = Number(symbol);
+    if (isNaN(perpId)) {
+      perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    }
+    let traderState = await _proxyContract.getTraderState(
+      perpId,
+      traderAddr,
+      _pxS2S3.map((x) => floatToABK64x64(x))
+    );
+    return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
   }
 
   protected static async _queryPerpetualPrice(
@@ -451,7 +463,7 @@ export default class PerpetualDataHandler {
     }
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64));
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
-    let state : PerpetualState = {
+    let state: PerpetualState = {
       id: perpId,
       state: PERP_STATE_STR[ammState[13]],
       baseCurrency: ccy[0],
@@ -771,20 +783,27 @@ export default class PerpetualDataHandler {
    * @param configNameOrfileLocation json-file with required variables for config, or name of a default known config
    * @returns NodeSDKConfig
    */
-  public static readSDKConfig(configNameOrFileLocation: string, version?: string): NodeSDKConfig {
+  public static readSDKConfig(configNameOrFileLocation: string, version?: number): NodeSDKConfig {
     let config;
     if (/\.json$/.test(configNameOrFileLocation)) {
-      // file path
+      // file path: this throws a warning during build - that's ok, it just won't work in react apps
       let configFile = require(configNameOrFileLocation);
       config = <NodeSDKConfig>configFile;
+      loadABIs(config);
+      // throw new Error("no dynamic imports");
     } else {
       // name
-      let configFile = require(DEFAULT_CONFIG);
+      let configFile = DEFAULT_CONFIG;
       configFile = configFile.filter((c: any) => c.name == configNameOrFileLocation);
       if (configFile.length == 0) {
         throw Error(`Config name ${configNameOrFileLocation} not found.`);
       } else if (configFile.length > 1) {
-        // TODO: pick one with highest version, unless version is given
+        if (version === undefined) {
+          configFile = configFile.sort((conf) => -conf.version);
+          config = configFile[0];
+        } else {
+          config = configFile.find((conf) => conf.version === version);
+        }
         throw Error(`Config name ${configNameOrFileLocation} not unique.`);
       }
       for (let configItem of configFile) {
@@ -842,6 +861,17 @@ export default class PerpetualDataHandler {
       k++;
     }
     return undefined;
+  }
+
+  public getABI(contract: string): ethers.ContractInterface | undefined {
+    switch (contract) {
+      case "proxy":
+        return this.proxyABI;
+      case "lob":
+        return this.lobABI;
+      default:
+        return undefined;
+    }
   }
 
   /**

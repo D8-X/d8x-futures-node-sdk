@@ -1,11 +1,8 @@
-import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction } from "ethers";
-import { NumberLiteralType } from "typescript";
-export const DEFAULT_CONFIG = "../config/defaultConfig.json";
-export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
-export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
+import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction, ContractInterface } from "ethers";
 
 export const ERC20_ABI = require("../abi/ERC20.json");
 export const MOCK_TOKEN_SWAP_ABI = require("../abi/MockTokenSwap.json");
+export const SYMBOL_LIST = new Map<string, string>(Object.entries(require(`../config/symbolList.json`)));
 export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;
 export const COLLATERAL_CURRENCY_QUANTO = 2;
@@ -45,6 +42,9 @@ export interface NodeSDKConfig {
   symbolListLocation: string;
   priceFeedConfigNetwork: string;
   gasLimit?: number | undefined;
+  proxyABI?: ContractInterface | undefined;
+  lobFactoryABI?: ContractInterface | undefined;
+  lobABI?: ContractInterface | undefined;
 }
 
 export interface MarginAccount {
@@ -231,3 +231,21 @@ export interface PriceFeedFormat {
   price: BigNumber;
   publish_time: number;
 }
+
+export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
+export const DEFAULT_CONFIG_TESTNET_NAME = "central-park";
+
+export async function loadABIs(config: NodeSDKConfig) {
+  if (config.proxyABILocation.length > 0) {
+    config.proxyABI = require(`../abi/${config.proxyABILocation}`);
+    config.lobFactoryABI = require(`../abi/${config.limitOrderBookFactoryABILocation}`);
+    config.lobABI = require(`../abi/${config.limitOrderBookABILocation}`);
+  }
+}
+
+const constConfig = require("../config/defaultConfig.json");
+for (let config of constConfig) {
+  loadABIs(config);
+}
+
+export const DEFAULT_CONFIG: NodeSDKConfig[] = constConfig;
