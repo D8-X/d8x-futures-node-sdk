@@ -30,6 +30,12 @@ module.exports = {
     },
     globalObject: "this",
   },
-
+  ignoreWarnings: [
+    {
+      // there is a dynamic import in perpetualDataHandler, useful in development, not a bug
+      module: /\.\/dist\/src\/perpetualDataHandler\.js$/,
+      message: /Critical dependency: the request of a dependency is an expression/,
+    },
+  ],
   devtool: "source-map",
 };

@@ -32,11 +32,11 @@ export const SELL_SIDE = "SELL";
 export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
   name: string | undefined;
+  chainId: number;
   version: number;
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;
-  limitOrderBookFactoryAddr: string;
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
   symbolListLocation: string;

@@ -39,12 +39,15 @@ describe("readOnly", () => {
 
   describe("Read config", () => {
     it("read all config types", () => {
-      let configs = ["testnet", "mainnet", "../config/oldConfig.json", "central-park"];
+      let configs = ["testnet", "mainnet", "../config/oldConfig.json", "central-park", 80001];
 
       for (let i = 0; i < configs.length; i++) {
         config = PerpetualDataHandler.readSDKConfig(configs[i]);
         // console.log(`${configs[i]} config:\n`, config);
-        expect(/json$/.test(configs[i]) || config.name == configs[i]).toBeTruthy;
+        expect(
+          (typeof configs[i] === "string" && (/json$/.test(configs[i] as string) || config.name == configs[i])) ||
+            (typeof configs[i] === "number" && config.chainId == configs[i])
+        ).toBeTruthy;
       }
     });
   });
@@ -153,11 +156,11 @@ describe("readOnly", () => {
       for (var k = 0; k < info.pools.length; k++) {
         let pool = info.pools[k];
         console.log(`Perpetuals in ${pool.poolSymbol} pool:\n`, pool.perpetuals);
-        console.log("Closed markets:")
-        for(let j=0; j<pool.perpetuals.length; j++) {
+        console.log("Closed markets:");
+        for (let j = 0; j < pool.perpetuals.length; j++) {
           let perp = pool.perpetuals[j];
-          if(perp.isMarketClosed) {
-            console.log(perp.baseCurrency+"-"+perp.quoteCurrency+":"+perp.state+" - "+perp.isMarketClosed);
+          if (perp.isMarketClosed) {
+            console.log(perp.baseCurrency + "-" + perp.quoteCurrency + ":" + perp.state + " - " + perp.isMarketClosed);
           }
         }
       }
@@ -165,9 +168,9 @@ describe("readOnly", () => {
     it("max positions", async () => {
       let maxLong = await mktData.maxSignedPosition(BUY_SIDE, "MATIC-USD-MATIC");
       let maxShort = await mktData.maxSignedPosition(SELL_SIDE, "MATIC-USD-MATIC");
-      console.log("max long="+maxLong+" max short="+maxShort);
+      console.log("max long=" + maxLong + " max short=" + maxShort);
     });
-    
+
     it("perp static info", async () => {
       let info: PerpetualStaticInfo = await mktData.getPerpetualStaticInfo("MATIC-USD-MATIC");
       console.log(info);
@@ -200,7 +203,6 @@ describe("readOnly", () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
       let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos);
       console.log(`max long trade size w/o   wallet: ${maxTradeSize}`);
-      
     });
     it("maxOrderSizeForTrader (short)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");

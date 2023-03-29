@@ -75,7 +75,7 @@ export default class PerpetualDataHandler {
   // limit order book
   protected lobFactoryContract: ethers.Contract | null = null;
   protected lobFactoryABI: ethers.ContractInterface;
-  protected lobFactoryAddr: string;
+  protected lobFactoryAddr: string | undefined;
   protected lobABI: ethers.ContractInterface;
   protected nodeURL: string;
   protected provider: ethers.providers.Provider | null = null;
@@ -94,7 +94,6 @@ export default class PerpetualDataHandler {
     this.symbolToTokenAddrMap = new Map<string, string>();
     this.nestedPerpetualIDs = new Array<Array<number>>();
     this.proxyAddr = config.proxyAddr;
-    this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
     this.nodeURL = config.nodeURL;
     this.proxyABI = config.proxyABI!;
     this.lobFactoryABI = config.lobFactoryABI!;
@@ -107,7 +106,7 @@ export default class PerpetualDataHandler {
     this.signerOrProvider = signerOrProvider;
     this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
     this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
-    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr, this.lobFactoryABI, signerOrProvider);
+    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr!, this.lobFactoryABI, signerOrProvider);
     await this._fillSymbolMaps(this.proxyContract);
   }
 
@@ -854,44 +853,91 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Read config file into NodeSDKConfig interface
-   * @param configNameOrfileLocation json-file with required variables for config, or name of a default known config
+   * Get NodeSDKConfig from a chain ID, known config name, or custom file location..
+   * @param configNameOrfileLocation Name of a known default config, or chain ID, or json-file with required variables for config
+   * @param version Config version number. Defaults to highest version if name or chain ID are not unique
    * @returns NodeSDKConfig
    */
-  public static readSDKConfig(configNameOrFileLocation: string, version?: number): NodeSDKConfig {
-    let config;
-    if (/\.json$/.test(configNameOrFileLocation)) {
-      // file path: this throws a warning during build - that's ok, it just won't work in react apps
-      let configFile = require(configNameOrFileLocation);
-      config = <NodeSDKConfig>configFile;
-      loadABIs(config);
-      // throw new Error("no dynamic imports");
+  public static readSDKConfig(configNameOrChainIdOrFileLocation: string | number, version?: number): NodeSDKConfig {
+    let config: NodeSDKConfig | undefined;
+    if (typeof configNameOrChainIdOrFileLocation === "number") {
+      // user entered a chain ID
+      config = this.getConfigByChainId(configNameOrChainIdOrFileLocation, version);
+    } else if (typeof configNameOrChainIdOrFileLocation === "string") {
+      if (/\.json$/.test(configNameOrChainIdOrFileLocation)) {
+        // user entered a string that ends in .json
+        config = this.getConfigByLocation(configNameOrChainIdOrFileLocation);
+      } else {
+        // user entered a name
+        config = this.getConfigByName(configNameOrChainIdOrFileLocation, version);
+      }
     } else {
-      // name
-      let configFile = DEFAULT_CONFIG;
-      configFile = configFile.filter((c: any) => c.name == configNameOrFileLocation);
-      if (configFile.length == 0) {
-        throw Error(`Config name ${configNameOrFileLocation} not found.`);
-      } else if (configFile.length > 1) {
-        if (version === undefined) {
-          configFile = configFile.sort((conf) => -conf.version);
-          config = configFile[0];
-        } else {
-          config = configFile.find((conf) => conf.version === version);
-        }
-        throw Error(`Config name ${configNameOrFileLocation} not unique.`);
-      }
-      for (let configItem of configFile) {
-        if (configItem.name == configNameOrFileLocation) {
-          config = <NodeSDKConfig>configItem;
-          break;
-        }
-      }
+      // error
+      throw Error(`Please specify a chain ID, config name, or custom file location.`);
     }
     if (config == undefined) {
-      throw Error(`Config file ${configNameOrFileLocation} not found.`);
+      throw Error(`Config ${configNameOrChainIdOrFileLocation} not found.`);
     }
     return config;
+  }
+
+  /**
+   * Get a NodeSDKConfig from its name
+   * @param name Name of the known config
+   * @param version Version of the config. Defaults to highest available.
+   * @returns NodeSDKConfig
+   */
+  protected static getConfigByName(name: string, version?: number): NodeSDKConfig | undefined {
+    let configFile = DEFAULT_CONFIG.filter((c: any) => c.name == name);
+    if (configFile.length == 0) {
+      throw Error(`No SDK config found with name ${name}.`);
+    }
+    if (configFile.length == 1) {
+      return configFile[0];
+    } else {
+      if (version === undefined) {
+        configFile = configFile.sort((conf) => -conf.version);
+        return configFile[0];
+      } else {
+        return configFile.find((conf) => conf.version === version);
+      }
+    }
+  }
+
+  /**
+   * Get a NodeSDKConfig from a json file.
+   * @param filename Location of the file
+   * @param version Version of the config. Defaults to highest available.
+   * @returns NodeSDKConfig
+   */
+  protected static getConfigByLocation(filename: string) {
+    // file path: this throws a warning during build - that's ok, it just won't work in react apps
+    let configFile = require(filename) as NodeSDKConfig;
+    loadABIs(configFile);
+    return configFile;
+  }
+
+  /**
+   * Get a NodeSDKConfig from its chain Id
+   * @param chainId Chain Id
+   * @param version Version of the config. Defaults to highest available.
+   * @returns NodeSDKConfig
+   */
+  protected static getConfigByChainId(chainId: number, version?: number) {
+    let configFile = DEFAULT_CONFIG.filter((c: any) => c.chainId == chainId);
+    if (configFile.length == 0) {
+      throw Error(`No SDK config found for chain ID ${chainId}.`);
+    }
+    if (configFile.length == 1) {
+      return configFile[0];
+    } else {
+      if (version === undefined) {
+        configFile = configFile.sort((conf) => -conf.version);
+        return configFile[0];
+      } else {
+        return configFile.find((conf) => conf.version === version);
+      }
+    }
   }
 
   /**
