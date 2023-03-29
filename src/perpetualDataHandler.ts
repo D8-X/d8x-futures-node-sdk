@@ -115,7 +115,7 @@ export default class PerpetualDataHandler {
       }
     } catch (error: any) {
       console.log(error);
-      throw new Error(`Unable to retrieve network from provider.`);
+      throw new Error(`Unable to connect to network.`);
     }
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);

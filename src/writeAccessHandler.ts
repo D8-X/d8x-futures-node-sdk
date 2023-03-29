@@ -11,9 +11,9 @@ import PerpetualDataHandler from "./perpetualDataHandler";
  * @extends PerpetualDataHandler
  */
 export default class WriteAccessHandler extends PerpetualDataHandler {
-  protected privateKey: string;
+  protected privateKey: string | undefined;
   protected traderAddr: string = "";
-  protected signer: ethers.Wallet | null = null;
+  protected signer: ethers.Signer | null = null;
   protected gasLimit: number = 15_000_000;
   protected chainId: number = 0;
   /**
@@ -21,9 +21,15 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @param {NodeSDKConfig} config configuration
    * @param {string} privateKey private key of account that trades
    */
-  public constructor(config: NodeSDKConfig, privateKey: string) {
+  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: ethers.Signer) {
     super(config);
-    this.privateKey = privateKey;
+    if (privateKey) {
+      this.privateKey = privateKey;
+    } else if (signer) {
+      this.signer = signer;
+    } else {
+      throw new Error("No private key nor signer provided.");
+    }
     if (config.gasLimit != undefined) {
       this.gasLimit = config.gasLimit;
     }
@@ -35,16 +41,18 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
+  public async createProxyInstance(provider?: ethers.providers.Provider) {
     if (provider == undefined) {
       this.provider = new ethers.providers.JsonRpcBatchProvider(this.nodeURL);
     } else {
       this.provider = provider;
     }
-    const wallet = new ethers.Wallet(this.privateKey);
-    this.signer = wallet.connect(this.provider);
+    if (!this.signer) {
+      const wallet = new ethers.Wallet(this.privateKey!);
+      this.signer = wallet.connect(this.provider);
+    }
     await this.initContractsAndData(this.signer);
-    this.traderAddr = wallet.address;
+    this.traderAddr = await this.signer.getAddress();
     this.chainId = (await this.provider.getNetwork()).chainId;
   }
 
@@ -66,7 +74,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     if (marginTokenAddr == undefined || this.signer == null) {
       throw Error("No margin token or signer defined, call createProxyInstance");
     }
-    let amountDec18;
+    let amountDec18: BigNumber;
     if (amount == undefined) {
       amountDec18 = MAX_UINT_256;
     } else {
@@ -78,12 +86,11 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
   protected static async _setAllowance(
     tokenAddr: string,
     proxyAddr: string,
-    signer: ethers.Wallet,
+    signer: ethers.Signer,
     amount: BigNumber
   ): Promise<ethers.ContractTransaction> {
     const marginToken: ethers.Contract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
-    let tx = await marginToken.approve(proxyAddr, amount);
-    return tx;
+    return await marginToken.approve(proxyAddr, amount);
   }
 
   /**

@@ -435,7 +435,7 @@ export default class BrokerTool extends WriteAccessHandler {
     brokerFeeTbps: number,
     traderAddr: string,
     iDeadline: BigNumber,
-    signer: ethers.Wallet,
+    signer: ethers.Signer,
     chainId: number,
     proxyAddress: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>

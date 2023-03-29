@@ -10,7 +10,6 @@ import { ABK64x64ToFloat } from "./d8XMath";
  * @extends MarketData
  */
 export default class TraderInterface extends MarketData {
-  protected chainId: number = 0;
   public digestTool: TraderDigests;
 
   // accTrade.order(order)
@@ -58,17 +57,6 @@ export default class TraderInterface extends MarketData {
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr);
     return ABK64x64ToFloat(volume);
-  }
-
-  /**
-   * Initialize the marketData-Class with this function
-   * to create instance of D8X perpetual contract and gather information
-   * about perpetual currencies
-   * @param provider optional provider
-   */
-  public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
-    await super.createProxyInstance(provider);
-    this.chainId = (await this.provider!.getNetwork()).chainId;
   }
 
   /**

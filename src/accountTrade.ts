@@ -284,7 +284,7 @@ export default class AccountTrade extends WriteAccessHandler {
     proxyContract: ethers.Contract,
     orderBookContract: ethers.Contract,
     chainId: number,
-    signer: ethers.Wallet,
+    signer: ethers.Signer,
     gasLimit: number,
     parentChildIds?: [string, string]
   ): Promise<OrderResponse> {
@@ -333,7 +333,7 @@ export default class AccountTrade extends WriteAccessHandler {
     order: SmartContractOrder,
     chainId: number,
     isNewOrder: boolean,
-    signer: ethers.Wallet,
+    signer: ethers.Signer,
     proxyAddress: string
   ): Promise<string[]> {
     let digest = await this.digestTool.createDigest(order, chainId, isNewOrder, proxyAddress);
