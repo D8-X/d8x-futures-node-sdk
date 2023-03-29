@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import MarketData from "./marketData";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import { NodeSDKConfig, SmartContractOrder, Order } from "./nodeSDKTypes";
+import { NodeSDKConfig, SmartContractOrder, Order, ClientOrder } from "./nodeSDKTypes";
 import TraderDigests from "./traderDigests";
 import { ABK64x64ToFloat } from "./d8XMath";
 /**
@@ -106,6 +106,17 @@ export default class TraderInterface extends MarketData {
    */
   public createSmartContractOrder(order: Order, traderAddr: string): SmartContractOrder {
     let scOrder = TraderInterface.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
+    return scOrder;
+  }
+
+  /**
+   * createClientOrder from user-friendly order
+   * @param order order struct
+   * @param traderAddr address of trader
+   * @returns LOB type order struct
+   */
+  public createClientOrder(order: Order, traderAddr: string, parentChildOrderIds?: [string, string]): ClientOrder {
+    let scOrder = TraderInterface.toClientOrder(order, traderAddr, this.symbolToPerpStaticInfo, parentChildOrderIds);
     return scOrder;
   }
 

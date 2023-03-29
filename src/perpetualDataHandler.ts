@@ -32,6 +32,8 @@ import {
   PriceFeedSubmission,
   loadABIs,
   SYMBOL_LIST,
+  ClientOrder,
+  ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -697,6 +699,79 @@ export default class PerpetualDataHandler {
       submittedBlock: 0,
     };
     return smOrder;
+  }
+
+  /**
+   * Converts a smart contract order to a client order
+   * @param scOrder Smart contract order
+   * @param parentChildIds Optional parent-child dependency
+   * @returns Client order that can be submitted to the corresponding LOB
+   */
+  public static fromSmartContratOrderToClientOrder(
+    scOrder: SmartContractOrder,
+    parentChildIds?: [string, string]
+  ): ClientOrder {
+    return {
+      flags: scOrder.flags,
+      iPerpetualId: scOrder.iPerpetualId,
+      brokerFeeTbps: scOrder.brokerFeeTbps,
+      traderAddr: scOrder.traderAddr,
+      brokerAddr: scOrder.brokerAddr,
+      referrerAddr: scOrder.referrerAddr,
+      brokerSignature: scOrder.brokerSignature,
+      fAmount: scOrder.fAmount,
+      fLimitPrice: scOrder.fLimitPrice,
+      fTriggerPrice: scOrder.fTriggerPrice,
+      fLeverage: scOrder.fLeverage,
+      iDeadline: scOrder.iDeadline,
+      createdTimestamp: scOrder.createdTimestamp,
+      parentChildDigest1: parentChildIds && parentChildIds[0] ? parentChildIds[0] : ZERO_ORDER_ID,
+      parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
+    };
+  }
+
+  /**
+   * Converts a user-friendly order to a client order
+   * @param order Order
+   * @param parentChildIds Optional parent-child dependency
+   * @returns Client order that can be submitted to the corresponding LOB
+   */
+  public static toClientOrder(
+    order: Order,
+    traderAddr: string,
+    perpStaticInfo: Map<string, PerpetualStaticInfo>,
+    parentChildIds?: [string, string]
+  ): ClientOrder {
+    const scOrder = PerpetualDataHandler.toSmartContractOrder(order, traderAddr, perpStaticInfo);
+    return PerpetualDataHandler.fromSmartContratOrderToClientOrder(scOrder, parentChildIds);
+  }
+
+  /**
+   * Converts an order as stored in the LOB smart contract into a user-friendly order type
+   * @param obOrder Order-book contract order type
+   * @returns User friendly order struct
+   */
+  public static fromClientOrder(obOrder: ClientOrder, perpStaticInfo: Map<string, PerpetualStaticInfo>): Order {
+    const scOrder = {
+      flags: obOrder.flags,
+      iPerpetualId: obOrder.iPerpetualId,
+      brokerFeeTbps: obOrder.brokerFeeTbps,
+      traderAddr: obOrder.traderAddr,
+      brokerAddr: obOrder.brokerAddr,
+      referrerAddr: obOrder.referrerAddr,
+      brokerSignature: obOrder.brokerSignature,
+      fAmount: obOrder.fAmount,
+      fLimitPrice: obOrder.fLimitPrice,
+      fTriggerPrice: obOrder.fTriggerPrice,
+      fLeverage: obOrder.fLeverage,
+      iDeadline: obOrder.iDeadline,
+      createdTimestamp: obOrder.createdTimestamp,
+    } as SmartContractOrder;
+    const order = PerpetualDataHandler.fromSmartContractOrder(scOrder, perpStaticInfo);
+    if (obOrder.parentChildDigest1 != ZERO_ORDER_ID || obOrder.parentChildDigest2 != ZERO_ORDER_ID) {
+      order.parentChildOrderIds = [obOrder.parentChildDigest1, obOrder.parentChildDigest2];
+    }
+    return order;
   }
 
   private static _flagToOrderType(order: SmartContractOrder): string {

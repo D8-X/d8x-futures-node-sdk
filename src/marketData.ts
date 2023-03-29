@@ -13,6 +13,7 @@ import {
 import "./nodeSDKTypes";
 import {
   BUY_SIDE,
+  ClientOrder,
   CLOSED_SIDE,
   COLLATERAL_CURRENCY_BASE,
   COLLATERAL_CURRENCY_QUANTO,
@@ -743,12 +744,12 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   protected async openOrdersOnOrderBook(traderAddr: string, orderBookContract: ethers.Contract): Promise<Order[]> {
-    let orders: SmartContractOrder[] = await orderBookContract.getOrders(traderAddr, 0, 15);
+    let orders: ClientOrder[] = await orderBookContract.getOrders(traderAddr, 0, 15);
     //eliminate empty orders and map to user friendly orders
     let userFriendlyOrders: Order[] = new Array<Order>();
     let k = 0;
     while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
-      userFriendlyOrders.push(PerpetualDataHandler.fromSmartContractOrder(orders[k], this.symbolToPerpStaticInfo));
+      userFriendlyOrders.push(PerpetualDataHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       k++;
     }
     return userFriendlyOrders;
