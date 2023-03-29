@@ -68,7 +68,7 @@ export default class PerpetualDataHandler {
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
-
+  protected chainId: number;
   protected proxyContract: ethers.Contract | null = null;
   protected proxyABI: ethers.ContractInterface;
   protected proxyAddr: string;
@@ -93,6 +93,7 @@ export default class PerpetualDataHandler {
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
     this.nestedPerpetualIDs = new Array<Array<number>>();
+    this.chainId = config.chainId;
     this.proxyAddr = config.proxyAddr;
     this.nodeURL = config.nodeURL;
     this.proxyABI = config.proxyABI!;
@@ -104,6 +105,21 @@ export default class PerpetualDataHandler {
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
     this.signerOrProvider = signerOrProvider;
+    // check network
+    let network: ethers.providers.Network;
+    try {
+      if (signerOrProvider instanceof ethers.Signer) {
+        network = await signerOrProvider.provider!.getNetwork();
+      } else {
+        network = await signerOrProvider.getNetwork();
+      }
+    } catch (error: any) {
+      console.log(error);
+      throw new Error(`Unable to retrieve network from provider.`);
+    }
+    if (network.chainId !== this.chainId) {
+      throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
+    }
     this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
     this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
     this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr!, this.lobFactoryABI, signerOrProvider);
