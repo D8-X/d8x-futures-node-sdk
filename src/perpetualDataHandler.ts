@@ -725,7 +725,7 @@ export default class PerpetualDataHandler {
       fLeverage: scOrder.fLeverage,
       iDeadline: scOrder.iDeadline,
       createdTimestamp: scOrder.createdTimestamp,
-      parentChildDigest1: parentChildIds && parentChildIds[0] ? parentChildIds[0] : ZERO_ORDER_ID,
+      parentChildDigest1: parentChildIds ? parentChildIds[0] : ZERO_ORDER_ID,
       parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
     };
   }

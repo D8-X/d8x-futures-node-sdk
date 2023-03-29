@@ -110,17 +110,6 @@ export default class TraderInterface extends MarketData {
   }
 
   /**
-   * createClientOrder from user-friendly order
-   * @param order order struct
-   * @param traderAddr address of trader
-   * @returns LOB type order struct
-   */
-  public createClientOrder(order: Order, traderAddr: string, parentChildOrderIds?: [string, string]): ClientOrder {
-    let scOrder = TraderInterface.toClientOrder(order, traderAddr, this.symbolToPerpStaticInfo, parentChildOrderIds);
-    return scOrder;
-  }
-
-  /**
    * Create smart contract order and digest that the trader signs.
    * await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
    * Order must contain broker fee and broker address if there is supposed to be a broker.
