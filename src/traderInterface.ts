@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import MarketData from "./marketData";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import { NodeSDKConfig, SmartContractOrder, Order, ClientOrder } from "./nodeSDKTypes";
+import { NodeSDKConfig, SmartContractOrder, Order } from "./nodeSDKTypes";
 import TraderDigests from "./traderDigests";
 import { ABK64x64ToFloat } from "./d8XMath";
 /**
