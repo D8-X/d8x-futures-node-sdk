@@ -5,13 +5,20 @@
     }
   },
   "compilerOptions": {
-    "target": "ES6",
+    "target": "es5",
     "module": "CommonJS",
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "downlevelIteration": true,
     "esModuleInterop": true,
     "declaration": true,
+    "jsx": "react",
     "outDir": "./dist",
-    "strict": true
+    "rootDir": ".",
+    "strict": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node"
   },
-  "include": ["src/**/*"],
+  "include": ["./src/**/*", "./abi/**/*", "./config/**/*"],
   "exclude": ["node_modules", "tests"]
 }

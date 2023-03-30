@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import MarketData from "./marketData";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import { NodeSDKConfig, SmartContractOrder, Order } from "./nodeSDKTypes";
+import { NodeSDKConfig, SmartContractOrder, Order, ClientOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
 import TraderDigests from "./traderDigests";
 import { ABK64x64ToFloat } from "./d8XMath";
 /**
@@ -10,7 +10,6 @@ import { ABK64x64ToFloat } from "./d8XMath";
  * @extends MarketData
  */
 export default class TraderInterface extends MarketData {
-  protected chainId: number = 0;
   public digestTool: TraderDigests;
 
   // accTrade.order(order)
@@ -58,17 +57,6 @@ export default class TraderInterface extends MarketData {
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr);
     return ABK64x64ToFloat(volume);
-  }
-
-  /**
-   * Initialize the marketData-Class with this function
-   * to create instance of D8X perpetual contract and gather information
-   * about perpetual currencies
-   * @param provider optional provider
-   */
-  public async createProxyInstance(provider?: ethers.providers.JsonRpcProvider) {
-    await super.createProxyInstance(provider);
-    this.chainId = (await this.provider!.getNetwork()).chainId;
   }
 
   /**
@@ -148,5 +136,24 @@ export default class TraderInterface extends MarketData {
     }
     let orderBookContract: ethers.Contract = this.getOrderBookContract(symbol);
     return PerpetualDataHandler._getABIFromContract(orderBookContract, method);
+  }
+
+  public static chainOrders(orders: SmartContractOrder[], ids: string[]): ClientOrder[] {
+    // add dependency
+    let obOrders: ClientOrder[] = new Array<ClientOrder>(orders.length);
+    if (orders.length == 1 || orders.length > 3) {
+      // nothing to add
+      obOrders = orders.map((o) => PerpetualDataHandler.fromSmartContratOrderToClientOrder(o));
+    } else if (orders.length == 2) {
+      // first order is parent, second a child
+      obOrders[0] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[0], [ids[1], ZERO_ORDER_ID]);
+      obOrders[1] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[1], [ZERO_ORDER_ID, ids[0]]);
+    } else {
+      // first order is parent, other two its children
+      obOrders[0] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[0], [ids[1], ids[2]]);
+      obOrders[1] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[1], [ZERO_ORDER_ID, ids[0]]);
+      obOrders[2] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[2], [ZERO_ORDER_ID, ids[0]]);
+    }
+    return obOrders;
   }
 }

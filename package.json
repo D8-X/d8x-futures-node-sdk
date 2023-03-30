@@ -2,11 +2,12 @@
   "dependencies": {
     "@ethersproject/bytes": "^5.7.0",
     "@ethersproject/strings": "^5.7.0",
+    "buffer": "^6.0.3",
     "ethers": "^5.7.2",
     "process": "^0.11.10"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp -r abi ./dist && cp -r config ./dist && webpack --stats-error-details",
     "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderReferrerTool.ts --configure ./jsdoc2md.json > ./doc/orderReferrerTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
     "test": "jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
@@ -28,14 +29,18 @@
     "json2md": "^2.0.0",
     "prettier": "^2.8.4",
     "ts-jest": "^29.0.3",
+    "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
-    "typescript": "^4.9.3"
+    "typescript": "^4.9.3",
+    "webpack": "^5.76.3",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^4.13.1"
   },
   "name": "@d8x/perpetuals-sdk",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
-  "version": "0.1.6",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "0.1.11",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "directories": {
     "test": "test"
   },
@@ -44,10 +49,11 @@
     "src/*.ts",
     "src/*.json",
     "src/*.md",
-    "dist/*.ts",
-    "dist/*.js",
-    "abi/**/*.json",
-    "config/*.json"
+    "dist/**/*.ts",
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "./abi/**/*.json",
+    "./config/*.json"
   ],
   "repository": {
     "type": "git",

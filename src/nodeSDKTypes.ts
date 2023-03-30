@@ -1,11 +1,8 @@
-import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction } from "ethers";
-import { NumberLiteralType } from "typescript";
-export const DEFAULT_CONFIG = "../config/defaultConfig.json";
-export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
-export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
+import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction, ContractInterface, Bytes } from "ethers";
 
 export const ERC20_ABI = require("../abi/ERC20.json");
 export const MOCK_TOKEN_SWAP_ABI = require("../abi/MockTokenSwap.json");
+export const SYMBOL_LIST = new Map<string, string>(Object.entries(require(`../config/symbolList.json`)));
 export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;
 export const COLLATERAL_CURRENCY_QUANTO = 2;
@@ -35,16 +32,19 @@ export const SELL_SIDE = "SELL";
 export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
   name: string | undefined;
+  chainId: number;
   version: number;
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;
-  limitOrderBookFactoryAddr: string;
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
   symbolListLocation: string;
   priceFeedConfigNetwork: string;
   gasLimit?: number | undefined;
+  proxyABI?: ContractInterface | undefined;
+  lobFactoryABI?: ContractInterface | undefined;
+  lobABI?: ContractInterface | undefined;
 }
 
 export interface MarginAccount {
@@ -169,6 +169,7 @@ export interface Order {
   deadline?: number | undefined;
   timestamp: number;
   submittedBlock?: number;
+  parentChildOrderIds?: [string, string];
 }
 
 export interface TradeEvent {
@@ -179,6 +180,24 @@ export interface TradeEvent {
   executionPrice: number;
 }
 
+/**
+ *     struct Order {
+        uint32 flags;
+        uint24 iPerpetualId;
+        uint16 brokerFeeTbps;
+        address traderAddr;
+        address brokerAddr;
+        address referrerAddr;
+        bytes brokerSignature;
+        int128 fAmount;
+        int128 fLimitPrice;
+        int128 fTriggerPrice;
+        int128 fLeverage; // 0 if deposit and trade separate
+        uint64 iDeadline;
+        uint64 createdTimestamp;
+        uint64 submittedBlock;
+    }
+ */
 export interface SmartContractOrder {
   flags: BigNumberish;
   iPerpetualId: BigNumberish;
@@ -195,8 +214,10 @@ export interface SmartContractOrder {
   createdTimestamp: BigNumberish;
   submittedBlock: BigNumberish;
 }
-/*
-        t32 flags;
+
+/**
+ *     struct ClientOrder {
+        uint32 flags;
         uint24 iPerpetualId;
         uint16 brokerFeeTbps;
         address traderAddr;
@@ -207,9 +228,30 @@ export interface SmartContractOrder {
         int128 fLimitPrice;
         int128 fTriggerPrice;
         int128 fLeverage; // 0 if deposit and trade separate
-        uint256 iDeadline;
-        uint256 createdTimestamp;
-        */
+        uint64 iDeadline;
+        uint64 createdTimestamp;
+        //uint64 submittedBlock <- will be set by LimitOrderBook
+        bytes32 parentChildDigest1;
+        bytes32 parentChildDigest2;
+    }
+ */
+export interface ClientOrder {
+  flags: BigNumberish;
+  iPerpetualId: BigNumberish;
+  brokerFeeTbps: BigNumberish;
+  traderAddr: string;
+  brokerAddr: string;
+  referrerAddr: string;
+  brokerSignature: BytesLike;
+  fAmount: BigNumberish;
+  fLimitPrice: BigNumberish;
+  fTriggerPrice: BigNumberish;
+  fLeverage: BigNumberish;
+  iDeadline: BigNumberish;
+  createdTimestamp: BigNumberish;
+  parentChildDigest1: string;
+  parentChildDigest2: string;
+}
 
 export interface PriceFeedConfig {
   network: string;
@@ -231,3 +273,21 @@ export interface PriceFeedFormat {
   price: BigNumber;
   publish_time: number;
 }
+
+export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
+export const DEFAULT_CONFIG_TESTNET_NAME = "central-park";
+
+export async function loadABIs(config: NodeSDKConfig) {
+  if (config.proxyABILocation.length > 0) {
+    config.proxyABI = require(`../abi/${config.proxyABILocation}`);
+    config.lobFactoryABI = require(`../abi/${config.limitOrderBookFactoryABILocation}`);
+    config.lobABI = require(`../abi/${config.limitOrderBookABILocation}`);
+  }
+}
+
+const constConfig = require("../config/defaultConfig.json");
+for (let config of constConfig) {
+  loadABIs(config);
+}
+
+export const DEFAULT_CONFIG: NodeSDKConfig[] = constConfig;

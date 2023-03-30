@@ -1,4 +1,6 @@
 import { BigNumber } from "ethers";
+import { Buffer } from "buffer";
+
 /**
  * @module utils
  */

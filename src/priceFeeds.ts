@@ -3,6 +3,7 @@ import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat } from "./nodeSDKTypes";
 import { decNToFloat } from "./d8XMath";
+import { Buffer } from "buffer";
 
 /**
  * This class communicates with the REST API that provides price-data that is

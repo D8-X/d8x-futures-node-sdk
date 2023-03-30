@@ -8,6 +8,8 @@ import {
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
   PriceFeedSubmission,
+  ClientOrder,
+  SmartContractOrder,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -186,7 +188,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    */
   public async getOrderById(symbol: string, id: string): Promise<Order | undefined> {
     let ob = await this.getOrderBookContract(symbol);
-    let smartContractOrder = await ob.orderOfDigest(id);
+    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id);
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
     }
@@ -225,12 +227,14 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
-    let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
+    let orders: ClientOrder[];
+    let orderIds: string[];
+    [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
     let userFriendlyOrders: Order[] = new Array<Order>();
     let orderIdsOut = [];
     let k = 0;
     while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
-      userFriendlyOrders.push(WriteAccessHandler.fromSmartContractOrder(orders[k], this.symbolToPerpStaticInfo));
+      userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
       k++;
     }

@@ -4,6 +4,7 @@ import PerpetualDataHandler from "./perpetualDataHandler";
 import { ABK64x64ToFloat } from "./d8XMath";
 import { BigNumber, ethers } from "ethers";
 import AccountTrade from "./accountTrade";
+import { Buffer } from "buffer";
 /**
  * Functions for brokers to determine fees, deposit lots, and sign-up traders.
  * This class requires a private key and executes smart-contract interactions that
@@ -434,7 +435,7 @@ export default class BrokerTool extends WriteAccessHandler {
     brokerFeeTbps: number,
     traderAddr: string,
     iDeadline: BigNumber,
-    signer: ethers.Wallet,
+    signer: ethers.Signer,
     chainId: number,
     proxyAddress: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>

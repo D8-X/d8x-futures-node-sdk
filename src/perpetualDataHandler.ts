@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from "ethers";
+import { ethers, BigNumber, ContractInterface } from "ethers";
 import {
   NodeSDKConfig,
   MAX_64x64,
@@ -30,6 +30,10 @@ import {
   DEFAULT_CONFIG,
   DEFAULT_CONFIG_MAINNET_NAME,
   PriceFeedSubmission,
+  loadABIs,
+  SYMBOL_LIST,
+  ClientOrder,
+  ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
 import {
   fromBytes4HexString,
@@ -64,17 +68,17 @@ export default class PerpetualDataHandler {
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
-
+  protected chainId: number;
   protected proxyContract: ethers.Contract | null = null;
   protected proxyABI: ethers.ContractInterface;
   protected proxyAddr: string;
   // limit order book
   protected lobFactoryContract: ethers.Contract | null = null;
   protected lobFactoryABI: ethers.ContractInterface;
-  protected lobFactoryAddr: string;
+  protected lobFactoryAddr: string | undefined;
   protected lobABI: ethers.ContractInterface;
   protected nodeURL: string;
-  protected provider: ethers.providers.JsonRpcProvider | null = null;
+  protected provider: ethers.providers.Provider | null = null;
 
   private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
   protected priceFeedGetter: PriceFeeds;
@@ -89,20 +93,36 @@ export default class PerpetualDataHandler {
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
     this.nestedPerpetualIDs = new Array<Array<number>>();
+    this.chainId = config.chainId;
     this.proxyAddr = config.proxyAddr;
-    this.lobFactoryAddr = config.limitOrderBookFactoryAddr;
     this.nodeURL = config.nodeURL;
-    this.proxyABI = require(config.proxyABILocation);
-    this.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
-    this.lobABI = require(config.limitOrderBookABILocation);
-    this.symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    this.proxyABI = config.proxyABI!;
+    this.lobFactoryABI = config.lobFactoryABI!;
+    this.lobABI = config.lobABI!;
+    this.symbolList = SYMBOL_LIST;
     this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
 
   protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
     this.signerOrProvider = signerOrProvider;
+    // check network
+    let network: ethers.providers.Network;
+    try {
+      if (signerOrProvider instanceof ethers.Signer) {
+        network = await signerOrProvider.provider!.getNetwork();
+      } else {
+        network = await signerOrProvider.getNetwork();
+      }
+    } catch (error: any) {
+      console.log(error);
+      throw new Error(`Unable to connect to network.`);
+    }
+    if (network.chainId !== this.chainId) {
+      throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
+    }
     this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
-    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr, this.lobFactoryABI, signerOrProvider);
+    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
+    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr!, this.lobFactoryABI, signerOrProvider);
     await this._fillSymbolMaps(this.proxyContract);
   }
 
@@ -349,29 +369,19 @@ export default class PerpetualDataHandler {
     return poolIds;
   }
 
-  public static async getMarginAccount(
-    traderAddr: string,
+  public static buildMarginAccountFromState(
     symbol: string,
+    traderState: ethers.BigNumber[],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract,
     _pxS2S3: [number, number]
-  ): Promise<MarginAccount> {
-    let perpId = Number(symbol);
-    if (isNaN(perpId)) {
-      perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    }
+  ): MarginAccount {
     const idx_cash = 3;
     const idx_notional = 4;
     const idx_locked_in = 5;
     const idx_mark_price = 8;
     const idx_lvg = 7;
     const idx_s3 = 9;
-    let traderState = await _proxyContract.getTraderState(
-      perpId,
-      traderAddr,
-      _pxS2S3.map((x) => floatToABK64x64(x))
-    );
-    let isEmpty = traderState[idx_notional] == 0;
+    let isEmpty = traderState[idx_notional].eq(0);
     let cash = ABK64x64ToFloat(traderState[idx_cash]);
     let S2Liq = 0,
       S3Liq = 0,
@@ -389,7 +399,7 @@ export default class PerpetualDataHandler {
         symbolToPerpStaticInfo
       );
       fLockedIn = traderState[idx_locked_in];
-      side = traderState[idx_locked_in] > 0 ? BUY_SIDE : SELL_SIDE;
+      side = traderState[idx_locked_in].gt(0) ? BUY_SIDE : SELL_SIDE;
       entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
     }
     let mgn: MarginAccount = {
@@ -407,6 +417,25 @@ export default class PerpetualDataHandler {
       collToQuoteConversion: ABK64x64ToFloat(traderState[idx_s3]),
     };
     return mgn;
+  }
+
+  public static async getMarginAccount(
+    traderAddr: string,
+    symbol: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _proxyContract: ethers.Contract,
+    _pxS2S3: [number, number]
+  ): Promise<MarginAccount> {
+    let perpId = Number(symbol);
+    if (isNaN(perpId)) {
+      perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    }
+    let traderState = await _proxyContract.getTraderState(
+      perpId,
+      traderAddr,
+      _pxS2S3.map((x) => floatToABK64x64(x))
+    );
+    return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
   }
 
   protected static async _queryPerpetualPrice(
@@ -451,7 +480,7 @@ export default class PerpetualDataHandler {
     }
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64));
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
-    let state : PerpetualState = {
+    let state: PerpetualState = {
       id: perpId,
       state: PERP_STATE_STR[ammState[13]],
       baseCurrency: ccy[0],
@@ -687,6 +716,79 @@ export default class PerpetualDataHandler {
     return smOrder;
   }
 
+  /**
+   * Converts a smart contract order to a client order
+   * @param scOrder Smart contract order
+   * @param parentChildIds Optional parent-child dependency
+   * @returns Client order that can be submitted to the corresponding LOB
+   */
+  public static fromSmartContratOrderToClientOrder(
+    scOrder: SmartContractOrder,
+    parentChildIds?: [string, string]
+  ): ClientOrder {
+    return {
+      flags: scOrder.flags,
+      iPerpetualId: scOrder.iPerpetualId,
+      brokerFeeTbps: scOrder.brokerFeeTbps,
+      traderAddr: scOrder.traderAddr,
+      brokerAddr: scOrder.brokerAddr,
+      referrerAddr: scOrder.referrerAddr,
+      brokerSignature: scOrder.brokerSignature,
+      fAmount: scOrder.fAmount,
+      fLimitPrice: scOrder.fLimitPrice,
+      fTriggerPrice: scOrder.fTriggerPrice,
+      fLeverage: scOrder.fLeverage,
+      iDeadline: scOrder.iDeadline,
+      createdTimestamp: scOrder.createdTimestamp,
+      parentChildDigest1: parentChildIds ? parentChildIds[0] : ZERO_ORDER_ID,
+      parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
+    };
+  }
+
+  /**
+   * Converts a user-friendly order to a client order
+   * @param order Order
+   * @param parentChildIds Optional parent-child dependency
+   * @returns Client order that can be submitted to the corresponding LOB
+   */
+  public static toClientOrder(
+    order: Order,
+    traderAddr: string,
+    perpStaticInfo: Map<string, PerpetualStaticInfo>,
+    parentChildIds?: [string, string]
+  ): ClientOrder {
+    const scOrder = PerpetualDataHandler.toSmartContractOrder(order, traderAddr, perpStaticInfo);
+    return PerpetualDataHandler.fromSmartContratOrderToClientOrder(scOrder, parentChildIds);
+  }
+
+  /**
+   * Converts an order as stored in the LOB smart contract into a user-friendly order type
+   * @param obOrder Order-book contract order type
+   * @returns User friendly order struct
+   */
+  public static fromClientOrder(obOrder: ClientOrder, perpStaticInfo: Map<string, PerpetualStaticInfo>): Order {
+    const scOrder = {
+      flags: obOrder.flags,
+      iPerpetualId: obOrder.iPerpetualId,
+      brokerFeeTbps: obOrder.brokerFeeTbps,
+      traderAddr: obOrder.traderAddr,
+      brokerAddr: obOrder.brokerAddr,
+      referrerAddr: obOrder.referrerAddr,
+      brokerSignature: obOrder.brokerSignature,
+      fAmount: obOrder.fAmount,
+      fLimitPrice: obOrder.fLimitPrice,
+      fTriggerPrice: obOrder.fTriggerPrice,
+      fLeverage: obOrder.fLeverage,
+      iDeadline: obOrder.iDeadline,
+      createdTimestamp: obOrder.createdTimestamp,
+    } as SmartContractOrder;
+    const order = PerpetualDataHandler.fromSmartContractOrder(scOrder, perpStaticInfo);
+    if (obOrder.parentChildDigest1 != ZERO_ORDER_ID || obOrder.parentChildDigest2 != ZERO_ORDER_ID) {
+      order.parentChildOrderIds = [obOrder.parentChildDigest1, obOrder.parentChildDigest2];
+    }
+    return order;
+  }
+
   private static _flagToOrderType(order: SmartContractOrder): string {
     let flag = BigNumber.from(order.flags);
     let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
@@ -767,37 +869,92 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Read config file into NodeSDKConfig interface
-   * @param configNameOrfileLocation json-file with required variables for config, or name of a default known config
+   * Get NodeSDKConfig from a chain ID, known config name, or custom file location..
+   * @param configNameOrfileLocation Name of a known default config, or chain ID, or json-file with required variables for config
+   * @param version Config version number. Defaults to highest version if name or chain ID are not unique
    * @returns NodeSDKConfig
    */
-  public static readSDKConfig(configNameOrFileLocation: string, version?: string): NodeSDKConfig {
-    let config;
-    if (/\.json$/.test(configNameOrFileLocation)) {
-      // file path
-      let configFile = require(configNameOrFileLocation);
-      config = <NodeSDKConfig>configFile;
+  public static readSDKConfig(configNameOrChainIdOrFileLocation: string | number, version?: number): NodeSDKConfig {
+    let config: NodeSDKConfig | undefined;
+    if (typeof configNameOrChainIdOrFileLocation === "number") {
+      // user entered a chain ID
+      config = this.getConfigByChainId(configNameOrChainIdOrFileLocation, version);
+    } else if (typeof configNameOrChainIdOrFileLocation === "string") {
+      if (/\.json$/.test(configNameOrChainIdOrFileLocation)) {
+        // user entered a string that ends in .json
+        config = this.getConfigByLocation(configNameOrChainIdOrFileLocation);
+      } else {
+        // user entered a name
+        config = this.getConfigByName(configNameOrChainIdOrFileLocation, version);
+      }
     } else {
-      // name
-      let configFile = require(DEFAULT_CONFIG);
-      configFile = configFile.filter((c: any) => c.name == configNameOrFileLocation);
-      if (configFile.length == 0) {
-        throw Error(`Config name ${configNameOrFileLocation} not found.`);
-      } else if (configFile.length > 1) {
-        // TODO: pick one with highest version, unless version is given
-        throw Error(`Config name ${configNameOrFileLocation} not unique.`);
-      }
-      for (let configItem of configFile) {
-        if (configItem.name == configNameOrFileLocation) {
-          config = <NodeSDKConfig>configItem;
-          break;
-        }
-      }
+      // error
+      throw Error(`Please specify a chain ID, config name, or custom file location.`);
     }
     if (config == undefined) {
-      throw Error(`Config file ${configNameOrFileLocation} not found.`);
+      throw Error(`Config ${configNameOrChainIdOrFileLocation} not found.`);
     }
     return config;
+  }
+
+  /**
+   * Get a NodeSDKConfig from its name
+   * @param name Name of the known config
+   * @param version Version of the config. Defaults to highest available.
+   * @returns NodeSDKConfig
+   */
+  protected static getConfigByName(name: string, version?: number): NodeSDKConfig | undefined {
+    let configFile = DEFAULT_CONFIG.filter((c: any) => c.name == name);
+    if (configFile.length == 0) {
+      throw Error(`No SDK config found with name ${name}.`);
+    }
+    if (configFile.length == 1) {
+      return configFile[0];
+    } else {
+      if (version === undefined) {
+        configFile = configFile.sort((conf) => -conf.version);
+        return configFile[0];
+      } else {
+        return configFile.find((conf) => conf.version === version);
+      }
+    }
+  }
+
+  /**
+   * Get a NodeSDKConfig from a json file.
+   * @param filename Location of the file
+   * @param version Version of the config. Defaults to highest available.
+   * @returns NodeSDKConfig
+   */
+  protected static getConfigByLocation(filename: string) {
+    // file path: this throws a warning during build - that's ok, it just won't work in react apps
+    // eslint-disable-next-line
+    let configFile = require(filename) as NodeSDKConfig;
+    loadABIs(configFile);
+    return configFile;
+  }
+
+  /**
+   * Get a NodeSDKConfig from its chain Id
+   * @param chainId Chain Id
+   * @param version Version of the config. Defaults to highest available.
+   * @returns NodeSDKConfig
+   */
+  protected static getConfigByChainId(chainId: number, version?: number) {
+    let configFile = DEFAULT_CONFIG.filter((c: any) => c.chainId == chainId);
+    if (configFile.length == 0) {
+      throw Error(`No SDK config found for chain ID ${chainId}.`);
+    }
+    if (configFile.length == 1) {
+      return configFile[0];
+    } else {
+      if (version === undefined) {
+        configFile = configFile.sort((conf) => -conf.version);
+        return configFile[0];
+      } else {
+        return configFile.find((conf) => conf.version === version);
+      }
+    }
   }
 
   /**
@@ -842,6 +999,17 @@ export default class PerpetualDataHandler {
       k++;
     }
     return undefined;
+  }
+
+  public getABI(contract: string): ethers.ContractInterface | undefined {
+    switch (contract) {
+      case "proxy":
+        return this.proxyABI;
+      case "lob":
+        return this.lobABI;
+      default:
+        return undefined;
+    }
   }
 
   /**
