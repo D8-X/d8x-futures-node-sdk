@@ -15,7 +15,6 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
   protected traderAddr: string = "";
   protected signer: ethers.Signer | null = null;
   protected gasLimit: number = 15_000_000;
-  protected chainId: number = 0;
   /**
    * Constructor
    * @param {NodeSDKConfig} config configuration
@@ -53,7 +52,6 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     }
     await this.initContractsAndData(this.signer);
     this.traderAddr = await this.signer.getAddress();
-    this.chainId = (await this.provider.getNetwork()).chainId;
   }
 
   /**
