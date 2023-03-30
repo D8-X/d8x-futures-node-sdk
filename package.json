@@ -38,7 +38,7 @@
   },
   "name": "@d8x/perpetuals-sdk",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "directories": {
