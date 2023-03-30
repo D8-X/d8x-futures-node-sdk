@@ -928,6 +928,7 @@ export default class PerpetualDataHandler {
    */
   protected static getConfigByLocation(filename: string) {
     // file path: this throws a warning during build - that's ok, it just won't work in react apps
+    // eslint-disable-next-line
     let configFile = require(filename) as NodeSDKConfig;
     loadABIs(configFile);
     return configFile;
