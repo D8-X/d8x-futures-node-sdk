@@ -161,6 +161,18 @@
                 "internalType": "int128",
                 "name": "newPositionSizeBC",
                 "type": "int128"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
+                "name": "fFeeCC",
+                "type": "int128"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
+                "name": "fPnlCC",
+                "type": "int128"
             }
         ],
         "name": "Liquidate",
@@ -381,37 +393,6 @@
             }
         ],
         "name": "PricingLiquidityUpdated",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint24",
-                "name": "perpetualId",
-                "type": "uint24"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "trader",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "bytes16",
-                "name": "positionId",
-                "type": "bytes16"
-            },
-            {
-                "indexed": false,
-                "internalType": "int128",
-                "name": "pnlCC",
-                "type": "int128"
-            }
-        ],
-        "name": "RealizedPnL",
         "type": "event"
     },
     {
@@ -945,6 +926,18 @@
                 "indexed": false,
                 "internalType": "int128",
                 "name": "price",
+                "type": "int128"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
+                "name": "fFeeCC",
+                "type": "int128"
+            },
+            {
+                "indexed": false,
+                "internalType": "int128",
+                "name": "fPnlCC",
                 "type": "int128"
             }
         ],

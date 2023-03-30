@@ -429,12 +429,17 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order[]",
+                "internalType": "struct IClientOrder.ClientOrder[]",
                 "name": "orders",
                 "type": "tuple[]"
             }
@@ -594,6 +599,30 @@
                 "internalType": "uint256",
                 "name": "",
                 "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
+        "name": "orderDependency",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "parentChildDigest1",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "parentChildDigest2",
+                "type": "bytes32"
             }
         ],
         "stateMutability": "view",
@@ -811,12 +840,17 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order[]",
+                "internalType": "struct IClientOrder.ClientOrder[]",
                 "name": "orders",
                 "type": "tuple[]"
             },
@@ -899,12 +933,17 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order",
+                "internalType": "struct IClientOrder.ClientOrder",
                 "name": "_order",
                 "type": "tuple"
             },
@@ -989,12 +1028,17 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order[]",
+                "internalType": "struct IClientOrder.ClientOrder[]",
                 "name": "_orders",
                 "type": "tuple[]"
             },

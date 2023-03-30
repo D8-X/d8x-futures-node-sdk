@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import MarketData from "./marketData";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import { NodeSDKConfig, SmartContractOrder, Order } from "./nodeSDKTypes";
+import { NodeSDKConfig, SmartContractOrder, Order, ClientOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
 import TraderDigests from "./traderDigests";
 import { ABK64x64ToFloat } from "./d8XMath";
 /**
@@ -136,5 +136,24 @@ export default class TraderInterface extends MarketData {
     }
     let orderBookContract: ethers.Contract = this.getOrderBookContract(symbol);
     return PerpetualDataHandler._getABIFromContract(orderBookContract, method);
+  }
+
+  public static chainOrders(orders: SmartContractOrder[], ids: string[]): ClientOrder[] {
+    // add dependency
+    let obOrders: ClientOrder[] = new Array<ClientOrder>(orders.length);
+    if (orders.length == 1 || orders.length > 3) {
+      // nothing to add
+      obOrders = orders.map((o) => PerpetualDataHandler.fromSmartContratOrderToClientOrder(o));
+    } else if (orders.length == 2) {
+      // first order is parent, second a child
+      obOrders[0] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[0], [ids[1], ZERO_ORDER_ID]);
+      obOrders[1] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[1], [ZERO_ORDER_ID, ids[0]]);
+    } else {
+      // first order is parent, other two its children
+      obOrders[0] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[0], [ids[1], ids[2]]);
+      obOrders[1] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[1], [ZERO_ORDER_ID, ids[0]]);
+      obOrders[2] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[2], [ZERO_ORDER_ID, ids[0]]);
+    }
+    return obOrders;
   }
 }
