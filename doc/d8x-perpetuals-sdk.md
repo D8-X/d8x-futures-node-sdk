@@ -2230,7 +2230,8 @@ No gas required for the queries here.</p>
     * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-    * [.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -2453,8 +2454,10 @@ main();
 
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
-### marketData.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance) ⇒
-<p>Gets the maximal order size considering the existing position, state of the perpetual, and optionally any additional collateral to be posted.</p>
+### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
+<p>Gets the maximal order size to open positions (increase size),
+considering the existing position, state of the perpetual
+Ignores users wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Maximal trade size, not signed</p>  
@@ -2463,8 +2466,17 @@ main();
 | --- | --- |
 | side | <p>BUY or SELL</p> |
 | positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
-| perpetualState | <p>Current perpetual state (as seen in exchangeInfo)</p> |
-| walletBalance | <p>Optional wallet balance to consider in the calculation</p> |
+
+<a name="MarketData+maxSignedPosition"></a>
+
+### marketData.maxSignedPosition(side, symbol) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>signed maximal position size in base currency</p>  
+
+| Param | Description |
+| --- | --- |
+| side | <p>BUY_SIDE or SELL_SIDE</p> |
+| symbol | <p>of the form ETH-USD-MATIC.</p> |
 
 <a name="MarketData+getOraclePrice"></a>
 
@@ -3251,8 +3263,14 @@ common data and chain operations.</p>
         * [.symbolToPerpetualId(symbol, symbolToPerpStaticInfo)](#PerpetualDataHandler.symbolToPerpetualId) ⇒
         * [.perpetualIdToSymbol(id, symbolToPerpStaticInfo)](#PerpetualDataHandler.perpetualIdToSymbol) ⇒
         * [.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap)](#PerpetualDataHandler.toSmartContractOrder) ⇒
+        * [.fromSmartContratOrderToClientOrder(scOrder, parentChildIds)](#PerpetualDataHandler.fromSmartContratOrderToClientOrder) ⇒
+        * [.toClientOrder(order, parentChildIds)](#PerpetualDataHandler.toClientOrder) ⇒
+        * [.fromClientOrder(obOrder)](#PerpetualDataHandler.fromClientOrder) ⇒
         * [._orderTypeToFlag(order)](#PerpetualDataHandler._orderTypeToFlag) ⇒
-        * [.readSDKConfig(configNameOrfileLocation)](#PerpetualDataHandler.readSDKConfig) ⇒
+        * [.readSDKConfig(configNameOrfileLocation, version)](#PerpetualDataHandler.readSDKConfig) ⇒
+        * [.getConfigByName(name, version)](#PerpetualDataHandler.getConfigByName) ⇒
+        * [.getConfigByLocation(filename, version)](#PerpetualDataHandler.getConfigByLocation) ⇒
+        * [.getConfigByChainId(chainId, version)](#PerpetualDataHandler.getConfigByChainId) ⇒
         * [._getABIFromContract(contract, functionName)](#PerpetualDataHandler._getABIFromContract) ⇒
         * [.checkOrder(order, traderAccount, perpStaticInfo)](#PerpetualDataHandler.checkOrder)
 
@@ -3442,6 +3460,44 @@ token names into bytes4 representation
 | traderAddr | <p>address of the trader</p> |
 | symbolToPerpetualMap | <p>mapping of symbol to perpetual Id</p> |
 
+<a name="PerpetualDataHandler.fromSmartContratOrderToClientOrder"></a>
+
+### PerpetualDataHandler.fromSmartContratOrderToClientOrder(scOrder, parentChildIds) ⇒
+<p>Converts a smart contract order to a client order</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Client order that can be submitted to the corresponding LOB</p>  
+
+| Param | Description |
+| --- | --- |
+| scOrder | <p>Smart contract order</p> |
+| parentChildIds | <p>Optional parent-child dependency</p> |
+
+<a name="PerpetualDataHandler.toClientOrder"></a>
+
+### PerpetualDataHandler.toClientOrder(order, parentChildIds) ⇒
+<p>Converts a user-friendly order to a client order</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Client order that can be submitted to the corresponding LOB</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>Order</p> |
+| parentChildIds | <p>Optional parent-child dependency</p> |
+
+<a name="PerpetualDataHandler.fromClientOrder"></a>
+
+### PerpetualDataHandler.fromClientOrder(obOrder) ⇒
+<p>Converts an order as stored in the LOB smart contract into a user-friendly order type</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>User friendly order struct</p>  
+
+| Param | Description |
+| --- | --- |
+| obOrder | <p>Order-book contract order type</p> |
+
 <a name="PerpetualDataHandler._orderTypeToFlag"></a>
 
 ### PerpetualDataHandler.\_orderTypeToFlag(order) ⇒
@@ -3457,15 +3513,55 @@ Checks for some misspecifications.</p>
 
 <a name="PerpetualDataHandler.readSDKConfig"></a>
 
-### PerpetualDataHandler.readSDKConfig(configNameOrfileLocation) ⇒
-<p>Read config file into NodeSDKConfig interface</p>
+### PerpetualDataHandler.readSDKConfig(configNameOrfileLocation, version) ⇒
+<p>Get NodeSDKConfig from a chain ID, known config name, or custom file location..</p>
 
 **Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 **Returns**: <p>NodeSDKConfig</p>  
 
 | Param | Description |
 | --- | --- |
-| configNameOrfileLocation | <p>json-file with required variables for config, or name of a default known config</p> |
+| configNameOrfileLocation | <p>Name of a known default config, or chain ID, or json-file with required variables for config</p> |
+| version | <p>Config version number. Defaults to highest version if name or chain ID are not unique</p> |
+
+<a name="PerpetualDataHandler.getConfigByName"></a>
+
+### PerpetualDataHandler.getConfigByName(name, version) ⇒
+<p>Get a NodeSDKConfig from its name</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>NodeSDKConfig</p>  
+
+| Param | Description |
+| --- | --- |
+| name | <p>Name of the known config</p> |
+| version | <p>Version of the config. Defaults to highest available.</p> |
+
+<a name="PerpetualDataHandler.getConfigByLocation"></a>
+
+### PerpetualDataHandler.getConfigByLocation(filename, version) ⇒
+<p>Get a NodeSDKConfig from a json file.</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>NodeSDKConfig</p>  
+
+| Param | Description |
+| --- | --- |
+| filename | <p>Location of the file</p> |
+| version | <p>Version of the config. Defaults to highest available.</p> |
+
+<a name="PerpetualDataHandler.getConfigByChainId"></a>
+
+### PerpetualDataHandler.getConfigByChainId(chainId, version) ⇒
+<p>Get a NodeSDKConfig from its chain Id</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>NodeSDKConfig</p>  
+
+| Param | Description |
+| --- | --- |
+| chainId | <p>Chain Id</p> |
+| version | <p>Version of the config. Defaults to highest available.</p> |
 
 <a name="PerpetualDataHandler._getABIFromContract"></a>
 
@@ -3972,13 +4068,13 @@ so that signatures can be handled in frontend via wallet</p>
     * [new TraderInterface(config)](#new_TraderInterface_new)
     * [.queryExchangeFee(poolSymbolName, traderAddr, brokerAddr)](#TraderInterface+queryExchangeFee) ⇒
     * [.getCurrentTraderVolume(poolSymbolName, traderAddr)](#TraderInterface+getCurrentTraderVolume) ⇒
-    * [.createProxyInstance(provider)](#TraderInterface+createProxyInstance)
     * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
     * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
     * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
     * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
     * [.getProxyABI(method)](#TraderInterface+getProxyABI) ⇒
     * [.getOrderBookABI(symbol, method)](#TraderInterface+getOrderBookABI) ⇒
+    * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
     * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
@@ -3988,7 +4084,8 @@ so that signatures can be handled in frontend via wallet</p>
     * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-    * [.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -4044,20 +4141,6 @@ without broker fee</p>
 | --- | --- |
 | poolSymbolName | <p>pool symbol, e.g. MATIC</p> |
 | traderAddr | <p>address of the trader</p> |
-
-<a name="TraderInterface+createProxyInstance"></a>
-
-### traderInterface.createProxyInstance(provider)
-<p>Initialize the marketData-Class with this function
-to create instance of D8X perpetual contract and gather information
-about perpetual currencies</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>createProxyInstance</code>](#MarketData+createProxyInstance)  
-
-| Param | Description |
-| --- | --- |
-| provider | <p>optional provider</p> |
 
 <a name="TraderInterface+cancelOrderDigest"></a>
 
@@ -4136,6 +4219,20 @@ Order must contain broker fee and broker address if there is supposed to be a br
 | --- | --- |
 | symbol | <p>Symbol of the form MATIC-USD-MATIC</p> |
 | method | <p>Name of the method</p> |
+
+<a name="MarketData+createProxyInstance"></a>
+
+### traderInterface.createProxyInstance(provider)
+<p>Initialize the marketData-Class with this function
+to create instance of D8X perpetual contract and gather information
+about perpetual currencies</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>createProxyInstance</code>](#MarketData+createProxyInstance)  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>optional provider</p> |
 
 <a name="MarketData+getProxyAddress"></a>
 
@@ -4311,8 +4408,10 @@ main();
 
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
-### traderInterface.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance) ⇒
-<p>Gets the maximal order size considering the existing position, state of the perpetual, and optionally any additional collateral to be posted.</p>
+### traderInterface.maxOrderSizeForTrader(side, positionRisk) ⇒
+<p>Gets the maximal order size to open positions (increase size),
+considering the existing position, state of the perpetual
+Ignores users wallet balance.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>maxOrderSizeForTrader</code>](#MarketData+maxOrderSizeForTrader)  
@@ -4322,8 +4421,18 @@ main();
 | --- | --- |
 | side | <p>BUY or SELL</p> |
 | positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
-| perpetualState | <p>Current perpetual state (as seen in exchangeInfo)</p> |
-| walletBalance | <p>Optional wallet balance to consider in the calculation</p> |
+
+<a name="MarketData+maxSignedPosition"></a>
+
+### traderInterface.maxSignedPosition(side, symbol) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>maxSignedPosition</code>](#MarketData+maxSignedPosition)  
+**Returns**: <p>signed maximal position size in base currency</p>  
+
+| Param | Description |
+| --- | --- |
+| side | <p>BUY_SIDE or SELL_SIDE</p> |
+| symbol | <p>of the form ETH-USD-MATIC.</p> |
 
 <a name="MarketData+getOraclePrice"></a>
 

@@ -20,7 +20,8 @@ No gas required for the queries here.</p>
     * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-    * [.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
@@ -232,8 +233,10 @@ main();
 
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
-### marketData.maxOrderSizeForTrader(side, positionRisk, perpetualState, walletBalance) ⇒
-<p>Gets the maximal order size considering the existing position, state of the perpetual, and optionally any additional collateral to be posted.</p>
+### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
+<p>Gets the maximal order size to open positions (increase size),
+considering the existing position, state of the perpetual
+Ignores users wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Maximal trade size, not signed</p>  
@@ -242,8 +245,17 @@ main();
 | --- | --- |
 | side | <p>BUY or SELL</p> |
 | positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
-| perpetualState | <p>Current perpetual state (as seen in exchangeInfo)</p> |
-| walletBalance | <p>Optional wallet balance to consider in the calculation</p> |
+
+<a name="MarketData+maxSignedPosition"></a>
+
+### marketData.maxSignedPosition(side, symbol) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>signed maximal position size in base currency</p>  
+
+| Param | Description |
+| --- | --- |
+| side | <p>BUY_SIDE or SELL_SIDE</p> |
+| symbol | <p>of the form ETH-USD-MATIC.</p> |
 
 <a name="MarketData+getOraclePrice"></a>
 
