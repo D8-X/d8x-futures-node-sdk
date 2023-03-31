@@ -149,6 +149,7 @@ export default class PerpetualDataHandler {
     if (proxyContract == null || this.lobFactoryContract == null) {
       throw Error("proxy or limit order book not defined");
     }
+    let oracleFactoryAddr = await proxyContract.getOracleFactory();
     this.nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(proxyContract);
     let requiredPairs = new Set<string>();
     for (let j = 0; j < this.nestedPerpetualIDs.length; j++) {
@@ -207,7 +208,7 @@ export default class PerpetualDataHandler {
       if (perpetualIDs.length == 0) {
         continue;
       }
-      let oracleFactoryAddr = await proxyContract.getOracleFactory();
+
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: poolCCY!,
