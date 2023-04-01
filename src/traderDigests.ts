@@ -1,8 +1,7 @@
-import { toUtf8Bytes } from "@ethersproject/strings";
-import { concat } from "@ethersproject/bytes";
 import { ethers } from "ethers";
 import { SmartContractOrder } from "./nodeSDKTypes";
 import { Buffer } from "buffer";
+import { concat, toUtf8Bytes } from "ethers/lib/utils";
 
 export default class TraderDigests {
   /**

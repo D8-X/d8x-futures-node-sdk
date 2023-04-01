@@ -11,7 +11,7 @@
     "limitOrderBookABILocation": "testnet/LimitOrderBook.json"
   },
   {
-    "name": "Polygon Mainnet",
+    "name": "mainnet",
     "chainId": 137,
     "version": 0,
     "proxyAddr": "",

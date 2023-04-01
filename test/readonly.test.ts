@@ -1,16 +1,15 @@
-import { BigNumber, ContractInterface, ethers } from "ethers";
+import { ethers } from "ethers";
 import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo, BUY_SIDE, SELL_SIDE } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
-import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
+import { toBytes4 } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
-import PriceFeeds from "../src/priceFeeds";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -39,7 +38,7 @@ describe("readOnly", () => {
 
   describe("Read config", () => {
     it("read all config types", () => {
-      let configs = ["testnet", "mainnet", "../config/oldConfig.json", "central-park", 80001];
+      let configs = ["testnet", "mainnet", "central-park", 80001];
 
       for (let i = 0; i < configs.length; i++) {
         config = PerpetualDataHandler.readSDKConfig(configs[i]);
@@ -55,7 +54,7 @@ describe("readOnly", () => {
   describe("Oracle Routes", () => {
     beforeAll(() => {
       const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
-      let abi = require("../abi/central-park/IPerpetualManager.json");
+      let abi = require("./src/abi/central-park/IPerpetualManager.json");
       proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
     });
     it("routes", async () => {
@@ -272,7 +271,7 @@ describe("readOnly", () => {
     });
 
     it("get readonly instance", async () => {
-      let proxy = await mktData.getReadOnlyProxyInstance();
+      await mktData.getReadOnlyProxyInstance();
     });
 
     it("get price", async () => {
