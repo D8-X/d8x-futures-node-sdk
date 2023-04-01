@@ -9,8 +9,6 @@ import {
   SmartContractOrder,
   ZERO_ADDRESS,
   PriceFeedSubmission,
-  ClientOrder,
-  ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
@@ -313,7 +311,7 @@ export default class AccountTrade extends WriteAccessHandler {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
     let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
-    let [signature, digest] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
+    let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
     return await orderBookContract.cancelOrder(orderId, signature, submission.priceFeedVaas, submission.timestamps, {
       value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
     });

@@ -12,6 +12,7 @@ import {
   MASK_CLOSE_ONLY,
   MASK_MARKET_ORDER,
   MAX_64x64,
+  SYMBOL_LIST,
 } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
@@ -152,7 +153,7 @@ describe("utils", () => {
   });
 
   it("symbol <-> contract symbol", async () => {
-    let symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    let symbolList = new Map(SYMBOL_LIST);
     // add fake ccy with clash
     symbolList.set("MXTC", "MATUC");
     // add actual liquid staked matic

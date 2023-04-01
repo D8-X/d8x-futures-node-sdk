@@ -298,8 +298,8 @@ export default class PerpetualEventHandler {
   public onPerpetualLimitOrderCreated(
     perpetualId: number,
     trader: string,
-    referrerAddr: string,
-    brokerAddr: string,
+    _referrerAddr: string,
+    _brokerAddr: string,
     Order: SmartContractOrder,
     digest: string
   ): void {
@@ -332,11 +332,11 @@ export default class PerpetualEventHandler {
   public async onUpdateMarginAccount(
     perpetualId: number,
     trader: string,
-    positionId: string,
-    fPositionBC: BigNumber,
-    fCashCC: BigNumber,
-    fLockedInValueQC: BigNumber,
-    fFundingPaymentCC: BigNumber,
+    _positionId: string,
+    _fPositionBC: BigNumber,
+    _fCashCC: BigNumber,
+    _fLockedInValueQC: BigNumber,
+    _fFundingPaymentCC: BigNumber,
     fOpenInterestBC: BigNumber
   ): Promise<void> {
     let perpetual = this.getPerpetualData(perpetualId.toString());
@@ -366,12 +366,12 @@ export default class PerpetualEventHandler {
    */
   public onTrade(
     perpetualId: number,
-    trader: string,
+    _trader: string,
     positionId: string,
-    order: SmartContractOrder,
+    _order: SmartContractOrder,
     orderDigest: string,
     newPositionSizeBC: BigNumber,
-    price: BigNumber
+    _price: BigNumber
   ): TradeEvent {
     // remove order digest from open orders
     let orderStructs = this.ordersInPerpetual.get(perpetualId);

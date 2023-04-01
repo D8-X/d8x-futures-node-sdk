@@ -20,7 +20,7 @@ export default class PriceFeeds {
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
-    let configs = <PriceFeedConfig[]>require("../config/priceFeedConfig.json");
+    let configs = <PriceFeedConfig[]>require("./config/priceFeedConfig.json");
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config);
     this.dataHandler = dataHandler;
@@ -33,7 +33,7 @@ export default class PriceFeeds {
    */
   public initializeTriangulations(symbols: Set<string>) {
     let feedSymbols = new Array<string>();
-    for (let [key, value] of this.feedInfo) {
+    for (let [, value] of this.feedInfo) {
       feedSymbols.push(value.symbol);
     }
     for (let symbol of symbols.values()) {
@@ -150,7 +150,7 @@ export default class PriceFeeds {
       if (queries[k] == undefined) {
         continue;
       }
-      let [id, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k]);
+      let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
       for (let j = 0; j < pxInfo.length; j++) {
         let price = decNToFloat(BigNumber.from(pxInfo[j].price), -pxInfo[j].expo);

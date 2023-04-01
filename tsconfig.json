@@ -6,19 +6,31 @@
   },
   "compilerOptions": {
     "target": "es5",
-    "module": "CommonJS",
+    "module": "ESNext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "importHelpers": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
+    "noImplicitThis": true,
     "sourceMap": true,
     "downlevelIteration": true,
     "esModuleInterop": true,
     "declaration": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "moduleResolution": "node",
     "jsx": "react",
-    "outDir": "./dist",
-    "rootDir": ".",
+    "outDir": "./dist/esm",
+    "rootDir": "./src",
     "strict": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
-    "moduleResolution": "node"
+    "forceConsistentCasingInFileNames": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["./src/**/*", "./abi/**/*", "./config/**/*"],
-  "exclude": ["node_modules", "tests"]
+  "include": ["src", "src/**/*.json"],
+  "exclude": ["dist", "node_modules", "tests"]
 }

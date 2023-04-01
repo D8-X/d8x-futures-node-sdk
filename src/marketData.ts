@@ -6,9 +6,6 @@ import {
   calculateLiquidationPriceCollateralQuote,
   floatToABK64x64,
   getDepositAmountForLvgTrade,
-  getMarginRequiredForLeveragedTrade,
-  getMaxSignedPositionSize,
-  getNewPositionLeverage,
 } from "./d8XMath";
 import "./nodeSDKTypes";
 import {
@@ -17,7 +14,6 @@ import {
   CLOSED_SIDE,
   COLLATERAL_CURRENCY_BASE,
   COLLATERAL_CURRENCY_QUANTO,
-  COLLATERAL_CURRENCY_QUOTE,
   CollaterlCCY,
   ERC20_ABI,
   ExchangeInfo,
@@ -881,7 +877,7 @@ export default class MarketData extends PerpetualDataHandler {
         brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
         perpetuals: [],
       };
-      let poolSymbol = PoolState.poolSymbol;
+      // let poolSymbol = PoolState.poolSymbol;
       for (var k = 0; k < perpetualIDs.length; k++) {
         let perp = await _proxyContract.getPerpetual(perpetualIDs[k]);
         let symS2 =
@@ -892,7 +888,7 @@ export default class MarketData extends PerpetualDataHandler {
           contractSymbolToSymbol(perp.S3BaseCCY, _symbolList) +
           "-" +
           contractSymbolToSymbol(perp.S3QuoteCCY, _symbolList);
-        let perpSymbol = symS2 + "-" + poolSymbol;
+        // let perpSymbol = symS2 + "-" + poolSymbol;
         //console.log("perpsymbol=",perpSymbol);
         let res = idxPriceMap.get(symS2);
         if (res == undefined) {

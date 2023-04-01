@@ -114,7 +114,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     if (tokenAddress == undefined) {
       throw Error("symbols not found");
     }
-    let tokenToSwap = new Map<string, string>(Object.entries(require("../config/mockSwap.json")));
+    let tokenToSwap = new Map<string, string>(Object.entries(require("./config/mockSwap.json")));
     let swapAddress = tokenToSwap.get(tokenAddress);
     if (swapAddress == undefined) {
       throw Error("No swap contract found for symbol.");

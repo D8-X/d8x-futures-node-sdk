@@ -311,7 +311,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     }
     if (indexPrices[2] || indexPrices[3]) {
       // market closed
-      return orders.map((o) => false);
+      return orders.map(() => false);
     }
 
     let orderPrice = await Promise.all(

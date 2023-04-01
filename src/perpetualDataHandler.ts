@@ -1,4 +1,4 @@
-import { ethers, BigNumber, ContractInterface } from "ethers";
+import { ethers, BigNumber } from "ethers";
 import {
   NodeSDKConfig,
   MAX_64x64,
@@ -28,21 +28,13 @@ import {
   PERP_STATE_STR,
   PerpetualState,
   DEFAULT_CONFIG,
-  DEFAULT_CONFIG_MAINNET_NAME,
   PriceFeedSubmission,
   loadABIs,
   SYMBOL_LIST,
   ClientOrder,
   ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
-import {
-  fromBytes4HexString,
-  to4Chars,
-  combineFlags,
-  containsFlag,
-  contractSymbolToSymbol,
-  symbol4BToLongSymbol,
-} from "./utils";
+import { to4Chars, combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol } from "./utils";
 import {
   ABK64x64ToFloat,
   floatToABK64x64,
@@ -89,6 +81,7 @@ export default class PerpetualDataHandler {
   protected nestedPerpetualIDs: number[][];
 
   public constructor(config: NodeSDKConfig) {
+    console.log("local sdk");
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
@@ -120,9 +113,9 @@ export default class PerpetualDataHandler {
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
-    this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI, signerOrProvider);
+    this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI!, signerOrProvider);
     this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
-    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr!, this.lobFactoryABI, signerOrProvider);
+    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr!, this.lobFactoryABI!, signerOrProvider);
     await this._fillSymbolMaps(this.proxyContract);
   }
 
@@ -221,8 +214,7 @@ export default class PerpetualDataHandler {
       // push into map
       for (let k = 0; k < perpetualIDs.length; k++) {
         // add price IDs
-        let idsB32, isPyth;
-        [idsB32, isPyth] = await proxyContract.getPriceInfo(perpetualIDs[k]);
+        let [idsB32] = await proxyContract.getPriceInfo(perpetualIDs[k]);
         this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
           id: perpetualIDs[k],
           limitOrderBookAddr: currentLimitOrderBookAddr[k],
@@ -517,7 +509,7 @@ export default class PerpetualDataHandler {
     const idx_locked_in = 5;
     const idx_mark_price = 8;
     const idx_s3 = 9;
-    const idx_s2 = 10;
+    // const idx_s2 = 10;
     let S2Liq: number;
     let S3Liq: number = ABK64x64ToFloat(traderState[idx_s3]);
     let perpInfo: PerpetualStaticInfo | undefined = symbolToPerpStaticInfo.get(symbol);
@@ -1025,7 +1017,7 @@ export default class PerpetualDataHandler {
     perpStaticInfo: Map<string, PerpetualStaticInfo>
   ) {
     // this throws error if not found
-    let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
+    // let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
 
     // check side
     if (order.side != BUY_SIDE && order.side != SELL_SIDE) {
