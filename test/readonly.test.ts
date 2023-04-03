@@ -30,7 +30,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeEach(() => {
-    config = PerpetualDataHandler.readSDKConfig("central-park");
+    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -38,7 +38,7 @@ describe("readOnly", () => {
 
   describe("Read config", () => {
     it("read all config types", () => {
-      let configs = ["testnet", "mainnet", "central-park", 80001];
+      let configs = ["testnet", "mainnet", "central-park", 80001, "zkevmTestnet", 1442];
 
       for (let i = 0; i < configs.length; i++) {
         config = PerpetualDataHandler.readSDKConfig(configs[i]);

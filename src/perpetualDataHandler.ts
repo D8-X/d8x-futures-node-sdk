@@ -81,7 +81,6 @@ export default class PerpetualDataHandler {
   protected nestedPerpetualIDs: number[][];
 
   public constructor(config: NodeSDKConfig) {
-    console.log("local sdk");
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();

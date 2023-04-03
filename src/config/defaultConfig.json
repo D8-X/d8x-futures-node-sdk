@@ -34,14 +34,14 @@
     "limitOrderBookABILocation": "central-park/LimitOrderBook.json"
   },
   {
-    "name": "Polygon zkEVM Testnet",
+    "name": "zkevmTestnet",
     "chainId": 1442,
     "version": 0,
-    "proxyAddr": "",
+    "proxyAddr": "0xb56b81e40e1cDB77bb5Db6C0283e25C27DAE1Be6",
     "nodeURL": "https://rpc.public.zkevm-test.net ",
     "priceFeedConfigNetwork": "testnet",
-    "proxyABILocation": "",
-    "limitOrderBookFactoryABILocation": "",
-    "limitOrderBookABILocation": ""
+    "proxyABILocation": "zkevmTestnet/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "zkevmTestnet/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "zkevmTestnet/LimitOrderBook.json"
   }
 ]
