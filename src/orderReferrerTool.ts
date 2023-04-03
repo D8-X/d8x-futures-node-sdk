@@ -21,7 +21,7 @@ import WriteAccessHandler from "./writeAccessHandler";
  * @extends WriteAccessHandler
  */
 export default class OrderReferrerTool extends WriteAccessHandler {
-  static BLOCK_DELAY = 2;
+  static TRADE_DELAY = 5;
   /**
    * Constructor.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
@@ -263,7 +263,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * main();
    * @returns true if order can be executed for the current state of the perpetuals
    */
-  public async isTradeable(order: Order, indexPrices?: [number, number]): Promise<boolean> {
+  public async isTradeable(order: Order, blockTimestamp?: number, indexPrices?: [number, number]): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -284,8 +284,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       this.proxyContract,
       indexPrices
     );
-    let block = await this.provider!.getBlockNumber();
-    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, block, this.symbolToPerpStaticInfo);
+    if (blockTimestamp == undefined) {
+      const currentBlock = await this.provider!.getBlockNumber();
+      blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
+    }
+    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, blockTimestamp, this.symbolToPerpStaticInfo);
   }
 
   /**
@@ -295,7 +298,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * if not defined.
    * @returns array of tradeable boolean
    */
-  public async isTradeableBatch(orders: Order[], indexPrices?: [number, number, boolean, boolean]): Promise<boolean[]> {
+  public async isTradeableBatch(
+    orders: Order[],
+    blockTimestamp?: number,
+    indexPrices?: [number, number, boolean, boolean]
+  ): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
     }
@@ -331,9 +338,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       this.proxyContract,
       [indexPrices![0], indexPrices![1]]
     );
-    let block = await this.provider!.getBlockNumber();
+    if (blockTimestamp == undefined) {
+      const currentBlock = await this.provider!.getBlockNumber();
+      blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
+    }
     return orders.map((o, idx) =>
-      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, block, this.symbolToPerpStaticInfo)
+      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo)
     );
   }
 
@@ -341,7 +351,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     order: Order,
     tradePrice: number,
     markPrice: number,
-    block: number,
+    blockTimestamp: number,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): boolean {
     // check expiration date
@@ -349,7 +359,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       return false;
     }
 
-    if (order.submittedBlock == undefined || order.submittedBlock + this.BLOCK_DELAY > block) {
+    if (order.submittedTimestamp != undefined && order.submittedTimestamp + this.TRADE_DELAY < blockTimestamp) {
       return false;
     }
 
@@ -378,6 +388,15 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     }
     // all checks passed -> order is tradeable
     return true;
+  }
+
+  /**
+   * Wrapper of static method to use after mappings have been loaded into memory.
+   * @param scOrder Perpetual order as received in the proxy events.
+   * @returns A user-friendly order struct.
+   */
+  public smartContractOrderToOrder(scOrder: SmartContractOrder): Order {
+    return PerpetualDataHandler.fromSmartContractOrder(scOrder, this.symbolToPerpStaticInfo);
   }
 
   public async getTransactionCount(blockTag?: ethers.providers.BlockTag): Promise<number> {

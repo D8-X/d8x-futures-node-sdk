@@ -13,7 +13,7 @@
             },
             {
                 "internalType": "uint8",
-                "name": "_iCancelBlockDelay",
+                "name": "_iCancelDelaySec",
                 "type": "uint8"
             },
             {
@@ -152,7 +152,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -225,11 +225,21 @@
                 "internalType": "bytes",
                 "name": "_signature",
                 "type": "bytes"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_updateData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "_publishTimes",
+                "type": "uint64[]"
             }
         ],
         "name": "cancelOrder",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -267,11 +277,49 @@
                 "internalType": "address",
                 "name": "_referrerAddr",
                 "type": "address"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_updateData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "_publishTimes",
+                "type": "uint64[]"
             }
         ],
         "name": "executeOrder",
         "outputs": [],
-        "stateMutability": "nonpayable",
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32[]",
+                "name": "_digests",
+                "type": "bytes32[]"
+            },
+            {
+                "internalType": "address",
+                "name": "_referrerAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_updateData",
+                "type": "bytes[]"
+            },
+            {
+                "internalType": "uint64[]",
+                "name": "_publishTimes",
+                "type": "uint64[]"
+            }
+        ],
+        "name": "executeOrders",
+        "outputs": [],
+        "stateMutability": "payable",
         "type": "function"
     },
     {
@@ -381,12 +429,17 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order[]",
+                "internalType": "struct IClientOrder.ClientOrder[]",
                 "name": "orders",
                 "type": "tuple[]"
             }
@@ -559,6 +612,30 @@
                 "type": "bytes32"
             }
         ],
+        "name": "orderDependency",
+        "outputs": [
+            {
+                "internalType": "bytes32",
+                "name": "parentChildDigest1",
+                "type": "bytes32"
+            },
+            {
+                "internalType": "bytes32",
+                "name": "parentChildDigest2",
+                "type": "bytes32"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "bytes32",
+                "name": "",
+                "type": "bytes32"
+            }
+        ],
         "name": "orderOfDigest",
         "outputs": [
             {
@@ -628,7 +705,7 @@
             },
             {
                 "internalType": "uint64",
-                "name": "submittedBlock",
+                "name": "submittedTimestamp",
                 "type": "uint64"
             }
         ],
@@ -763,12 +840,17 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order[]",
+                "internalType": "struct IClientOrder.ClientOrder[]",
                 "name": "orders",
                 "type": "tuple[]"
             },
@@ -851,22 +933,122 @@
                         "type": "uint64"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "submittedBlock",
-                        "type": "uint64"
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
                     }
                 ],
-                "internalType": "struct IPerpetualOrder.Order",
+                "internalType": "struct IClientOrder.ClientOrder",
                 "name": "_order",
                 "type": "tuple"
             },
             {
                 "internalType": "bytes",
-                "name": "signature",
+                "name": "_signature",
                 "type": "bytes"
             }
         ],
         "name": "postOrder",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "brokerFeeTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "traderAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "brokerAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "referrerAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fAmount",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLimitPrice",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTriggerPrice",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLeverage",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iDeadline",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "createdTimestamp",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest1",
+                        "type": "bytes32"
+                    },
+                    {
+                        "internalType": "bytes32",
+                        "name": "parentChildDigest2",
+                        "type": "bytes32"
+                    }
+                ],
+                "internalType": "struct IClientOrder.ClientOrder[]",
+                "name": "_orders",
+                "type": "tuple[]"
+            },
+            {
+                "internalType": "bytes[]",
+                "name": "_signatures",
+                "type": "bytes[]"
+            }
+        ],
+        "name": "postOrders",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"

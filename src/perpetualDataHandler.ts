@@ -647,7 +647,7 @@ export default class PerpetualDataHandler {
       leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
       deadline: Number(order.iDeadline),
       timestamp: Number(order.createdTimestamp),
-      submittedBlock: Number(order.submittedBlock),
+      submittedTimestamp: Number(order.submittedTimestamp),
     };
     return userOrder;
   }
@@ -663,8 +663,10 @@ export default class PerpetualDataHandler {
     traderAddr: string,
     perpStaticInfo: Map<string, PerpetualStaticInfo>
   ): SmartContractOrder {
+    // this revers if order is invalid
+    PerpetualDataHandler.checkOrder(order, perpStaticInfo);
+    // translate order
     let flags = PerpetualDataHandler._orderTypeToFlag(order);
-
     let brokerSig = order.brokerSignature == undefined ? [] : order.brokerSignature;
     let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
     let fAmount: BigNumber;
@@ -703,7 +705,7 @@ export default class PerpetualDataHandler {
       fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
       iDeadline: BigNumber.from(Math.round(iDeadline)),
       createdTimestamp: BigNumber.from(Math.round(order.timestamp)),
-      submittedBlock: 0,
+      submittedTimestamp: 0,
     };
     return smOrder;
   }
@@ -1012,12 +1014,9 @@ export default class PerpetualDataHandler {
    */
   protected static checkOrder(
     order: Order,
-    traderAccount: MarginAccount,
+    // traderAccount: MarginAccount,
     perpStaticInfo: Map<string, PerpetualStaticInfo>
   ) {
-    // this throws error if not found
-    // let perpetualId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, perpStaticInfo);
-
     // check side
     if (order.side != BUY_SIDE && order.side != SELL_SIDE) {
       throw Error(`order side must be ${BUY_SIDE} or ${SELL_SIDE}`);
@@ -1025,12 +1024,13 @@ export default class PerpetualDataHandler {
 
     // check amount
     let lotSize = perpStaticInfo.get(order.symbol)!.lotSizeBC;
-    let curPos =
-      traderAccount.side == CLOSED_SIDE
-        ? 0
-        : (traderAccount.side == BUY_SIDE ? 1 : -1) * traderAccount.positionNotionalBaseCCY;
-    let newPos = curPos + (order.side == BUY_SIDE ? 1 : -1) * order.quantity;
-    if (Math.abs(order.quantity) < lotSize || (Math.abs(newPos) >= lotSize && Math.abs(newPos) < 10 * lotSize)) {
+    // let curPos =
+    //   traderAccount.side == CLOSED_SIDE
+    //     ? 0
+    //     : (traderAccount.side == BUY_SIDE ? 1 : -1) * traderAccount.positionNotionalBaseCCY;
+    // let newPos = curPos + (order.side == BUY_SIDE ? 1 : -1) * order.quantity;
+    // if (Math.abs(order.quantity) < lotSize || (Math.abs(newPos) >= lotSize && Math.abs(newPos) < 10 * lotSize)) {
+    if (Math.abs(order.quantity) < lotSize) {
       throw Error(`trade amount too small: ${order.quantity} ${perpStaticInfo.get(order.symbol)!.S2Symbol}`);
     }
 
