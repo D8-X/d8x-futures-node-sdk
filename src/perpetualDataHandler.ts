@@ -906,7 +906,7 @@ export default class PerpetualDataHandler {
       return configFile[0];
     } else {
       if (version === undefined) {
-        configFile = configFile.sort((conf) => -conf.version);
+        configFile = configFile.sort((conf) => conf.version);
         return configFile[0];
       } else {
         return configFile.find((conf) => conf.version === version);
@@ -943,7 +943,7 @@ export default class PerpetualDataHandler {
       return configFile[0];
     } else {
       if (version === undefined) {
-        configFile = configFile.sort((conf) => -conf.version);
+        configFile = configFile.sort((conf) => conf.version);
         return configFile[0];
       } else {
         return configFile.find((conf) => conf.version === version);

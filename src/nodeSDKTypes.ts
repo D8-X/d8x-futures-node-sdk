@@ -285,7 +285,7 @@ export function loadABIs(config: NodeSDKConfig) {
   }
 }
 
-const constConfig = require("./config/defaultConfig.json") as NodeSDKConfig[];
+let constConfig = require("./config/defaultConfig.json") as NodeSDKConfig[];
 for (let config of constConfig) {
   loadABIs(config);
 }

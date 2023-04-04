@@ -387,6 +387,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   ): boolean {
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
+      console.log("order expired");
       return false;
     }
 
@@ -395,19 +396,26 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       order.submittedTimestamp != undefined &&
       order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY < blockTimestamp - 1
     ) {
+      console.log(
+        `on hold for ${blockTimestamp - 1 - order.submittedTimestamp - OrderReferrerTool.TRADE_DELAY} seconds`
+      );
       return false;
     }
 
     // check order size
-    if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap)) {
+    const lotSize = PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap);
+    if (order.quantity < lotSize) {
+      console.log(`order size too small: ${order.quantity} < ${lotSize}`);
       return false;
     }
     // check limit price: fromSmartContractOrder will set it to undefined when not tradeable
     if (order.limitPrice == undefined) {
+      console.log("limit price undefined");
       return false;
     }
     let limitPrice = order.limitPrice!;
     if ((order.side == BUY_SIDE && tradePrice > limitPrice) || (order.side == SELL_SIDE && tradePrice < limitPrice)) {
+      console.log(`limit price not met: ${limitPrice} ${order.side} @ ${tradePrice}`);
       return false;
     }
     // check stop price
@@ -416,6 +424,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       ((order.side == BUY_SIDE && markPrice < order.stopPrice) ||
         (order.side == SELL_SIDE && markPrice > order.stopPrice))
     ) {
+      console.log("stop price not met");
       return false;
     }
     //check dependency
@@ -428,6 +437,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       const orderBookContract = this.getOrderBookContract(order.symbol);
       return orderBookContract.getOrderStatus(order.parentChildOrderIds[1]).then((status: number) => {
         if (status == 2 || status == 3) {
+          console.log("parent not executed/cancelled");
           // parent is open or unknown
           return false;
         }
