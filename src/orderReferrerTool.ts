@@ -110,6 +110,37 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     );
   }
 
+  public async executeOrders(
+    symbol: string,
+    orderIds: string[],
+    referrerAddr?: string,
+    nonce?: number,
+    submission?: PriceFeedSubmission
+  ): Promise<ethers.ContractTransaction> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    const orderBookSC = this.getOrderBookContract(symbol);
+    if (typeof referrerAddr == "undefined") {
+      referrerAddr = this.traderAddr;
+    }
+    if (submission == undefined) {
+      submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    }
+    const options = {
+      gasLimit: this.gasLimit,
+      nonce: nonce,
+      value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
+    };
+    return await orderBookSC.executeOrders(
+      orderIds,
+      referrerAddr,
+      submission?.priceFeedVaas,
+      submission?.timestamps,
+      options
+    );
+  }
+
   /**
    * All the orders in the order book for a given symbol that are currently open.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
@@ -288,7 +319,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       const currentBlock = await this.provider!.getBlockNumber();
       blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
     }
-    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, blockTimestamp, this.symbolToPerpStaticInfo);
+    return await this._isTradeable(order, orderPrice, markPrice, blockTimestamp, this.symbolToPerpStaticInfo);
   }
 
   /**
@@ -342,12 +373,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       const currentBlock = await this.provider!.getBlockNumber();
       blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
     }
-    return orders.map((o, idx) =>
-      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo)
+    return await orders.map((o, idx) =>
+      this._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo)
     );
   }
 
-  public static _isTradeable(
+  protected _isTradeable(
     order: Order,
     tradePrice: number,
     markPrice: number,
@@ -359,7 +390,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       return false;
     }
 
-    if (order.submittedTimestamp != undefined && order.submittedTimestamp + this.TRADE_DELAY < blockTimestamp) {
+    // -1 because order is executed on the next block (+1)
+    if (
+      order.submittedTimestamp != undefined &&
+      order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY < blockTimestamp - 1
+    ) {
       return false;
     }
 
@@ -375,16 +410,29 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if ((order.side == BUY_SIDE && tradePrice > limitPrice) || (order.side == SELL_SIDE && tradePrice < limitPrice)) {
       return false;
     }
-    // do we need to check trigger/stop?
-    if (order.stopPrice == undefined) {
-      // nothing to check, order is tradeable
-      return true;
-    }
+    // check stop price
     if (
-      (order.side == BUY_SIDE && markPrice < order.stopPrice) ||
-      (order.side == SELL_SIDE && markPrice > order.stopPrice)
+      order.stopPrice != undefined &&
+      ((order.side == BUY_SIDE && markPrice < order.stopPrice) ||
+        (order.side == SELL_SIDE && markPrice > order.stopPrice))
     ) {
       return false;
+    }
+    //check dependency
+    if (
+      order.parentChildOrderIds != undefined &&
+      order.parentChildOrderIds[0] == ethers.constants.HashZero &&
+      order.parentChildOrderIds[1] != ethers.constants.HashZero
+    ) {
+      // order has a parent
+      const orderBookContract = this.getOrderBookContract(order.symbol);
+      return orderBookContract.getOrderStatus(order.parentChildOrderIds[1]).then((status: number) => {
+        if (status == 2 || status == 3) {
+          // parent is open or unknown
+          return false;
+        }
+        return true;
+      });
     }
     // all checks passed -> order is tradeable
     return true;
