@@ -43,6 +43,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
     super(config, privateKey);
+    // override parent's gas limit with a lower number
+    this.gasLimit = 3_000_000;
   }
 
   /**
@@ -405,17 +407,17 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     // check order size
     const lotSize = PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap);
     if (order.quantity < lotSize) {
-      console.log(`order size too small: ${order.quantity} < ${lotSize}`);
+      // console.log(`order size too small: ${order.quantity} < ${lotSize}`);
       return false;
     }
     // check limit price: fromSmartContractOrder will set it to undefined when not tradeable
     if (order.limitPrice == undefined) {
-      console.log("limit price undefined");
+      // console.log("limit price undefined");
       return false;
     }
     let limitPrice = order.limitPrice!;
     if ((order.side == BUY_SIDE && tradePrice > limitPrice) || (order.side == SELL_SIDE && tradePrice < limitPrice)) {
-      console.log(`limit price not met: ${limitPrice} ${order.side} @ ${tradePrice}`);
+      // console.log(`limit price not met: ${limitPrice} ${order.side} @ ${tradePrice}`);
       return false;
     }
     // check stop price
@@ -424,7 +426,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       ((order.side == BUY_SIDE && markPrice < order.stopPrice) ||
         (order.side == SELL_SIDE && markPrice > order.stopPrice))
     ) {
-      console.log("stop price not met");
+      // console.log("stop price not met");
       return false;
     }
     //check dependency
@@ -437,7 +439,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       const orderBookContract = this.getOrderBookContract(order.symbol);
       return orderBookContract.getOrderStatus(order.parentChildOrderIds[1]).then((status: number) => {
         if (status == 2 || status == 3) {
-          console.log("parent not executed/cancelled");
+          // console.log("parent not executed/cancelled");
           // parent is open or unknown
           return false;
         }
