@@ -168,7 +168,7 @@ export interface Order {
   leverage?: number | undefined;
   deadline?: number | undefined;
   timestamp: number;
-  submittedBlock?: number;
+  submittedTimestamp?: number;
   parentChildOrderIds?: [string, string];
 }
 
@@ -195,7 +195,7 @@ export interface TradeEvent {
         int128 fLeverage; // 0 if deposit and trade separate
         uint64 iDeadline;
         uint64 createdTimestamp;
-        uint64 submittedBlock;
+        uint64 submittedTimestamp;
     }
  */
 export interface SmartContractOrder {
@@ -212,7 +212,7 @@ export interface SmartContractOrder {
   fLeverage: BigNumberish;
   iDeadline: BigNumberish;
   createdTimestamp: BigNumberish;
-  submittedBlock: BigNumberish;
+  submittedTimestamp: BigNumberish;
 }
 
 /**
@@ -230,7 +230,7 @@ export interface SmartContractOrder {
         int128 fLeverage; // 0 if deposit and trade separate
         uint64 iDeadline;
         uint64 createdTimestamp;
-        //uint64 submittedBlock <- will be set by LimitOrderBook
+        //uint64 submittedTimestamp <- will be set by LimitOrderBook
         bytes32 parentChildDigest1;
         bytes32 parentChildDigest2;
     }
@@ -285,7 +285,7 @@ export function loadABIs(config: NodeSDKConfig) {
   }
 }
 
-const constConfig = require("./config/defaultConfig.json") as NodeSDKConfig[];
+let constConfig = require("./config/defaultConfig.json") as NodeSDKConfig[];
 for (let config of constConfig) {
   loadABIs(config);
 }

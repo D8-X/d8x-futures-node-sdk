@@ -42,7 +42,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    */
   public async createProxyInstance(provider?: ethers.providers.Provider) {
     if (provider == undefined) {
-      this.provider = new ethers.providers.JsonRpcBatchProvider(this.nodeURL);
+      this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
     } else {
       this.provider = provider;
     }

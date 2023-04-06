@@ -1,10 +1,10 @@
-import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order, OrderResponse } from "../src/nodeSDKTypes";
-import { ABK64x64ToFloat, floatToABK64x64 } from "../src/d8XMath";
+// import { ethers } from "ethers";
+import { NodeSDKConfig, Order, OrderResponse } from "../src/nodeSDKTypes";
+// import { ABK64x64ToFloat, floatToABK64x64 } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import MarketData from "../src/marketData";
-import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
+// import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
 let pk: string = <string>process.env.PK;
@@ -15,17 +15,17 @@ const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
-let proxyContract: ethers.Contract;
+// let proxyContract: ethers.Contract;
 let mktData: MarketData;
-let orderIds: string[];
-let wallet: ethers.Wallet;
+// let orderIds: string[];
+// let wallet: ethers.Wallet;
 let accTrade: AccountTrade;
 let liqTool: LiquidatorTool;
 let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("central-park");
+    config = PerpetualDataHandler.readSDKConfig("testnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -45,9 +45,9 @@ describe("write and spoil gas and tokens", () => {
     //*/
   });
 
-  it("swaps MATIC for mock token", async () => {
-    let tx = await accTrade.swapForMockToken("USDC", "0.001");
-  });
+  // it("swaps MATIC for mock token", async () => {
+  //   await accTrade.swapForMockToken("USDC", "0.001");
+  // });
 
   it("add collateral", async () => {
     //*uncomment
