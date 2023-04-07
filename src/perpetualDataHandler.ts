@@ -504,7 +504,7 @@ export default class PerpetualDataHandler {
     if (symbol == undefined) {
       throw Error(`Perpetual id ${order.iPerpetualId} not found. Check with marketData.exchangeInfo().`);
     }
-    let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
+    let side = order.fAmount>BigNumber.from(0) ? BUY_SIDE : SELL_SIDE;
     let limitPrice, stopPrice;
     let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
     if (fLimitPrice.eq(0)) {
