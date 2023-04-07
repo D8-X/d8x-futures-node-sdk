@@ -75,6 +75,39 @@ This class requires a private key and executes smart-contract interaction that
 require gas-payments.</p></dd>
 </dl>
 
+## Members
+
+<dl>
+<dt><a href="#CollaterlCCY">CollaterlCCY</a></dt>
+<dd><p>struct ClientOrder {
+uint32 flags;
+uint24 iPerpetualId;
+uint16 brokerFeeTbps;
+address traderAddr;
+address brokerAddr;
+address referrerAddr;
+bytes brokerSignature;
+int128 fAmount;
+int128 fLimitPrice;
+int128 fTriggerPrice;
+int128 fLeverage; // 0 if deposit and trade separate
+uint64 iDeadline;
+uint64 createdTimestamp;
+//uint64 submittedTimestamp &lt;- will be set by LimitOrderBook
+bytes32 parentChildDigest1;
+bytes32 parentChildDigest2;
+}</p></dd>
+</dl>
+
+## Typedefs
+
+<dl>
+<dt><a href="#ExchangeInfo">ExchangeInfo</a> : <code>Object</code></dt>
+<dd></dd>
+<dt><a href="#PoolState">PoolState</a> : <code>Object</code></dt>
+<dd></dd>
+</dl>
+
 <a name="module_d8xMath"></a>
 
 ## d8xMath
@@ -85,6 +118,8 @@ require gas-payments.</p></dd>
     * [~dec18ToFloat(x)](#module_d8xMath..dec18ToFloat) ⇒ <code>number</code>
     * [~floatToABK64x64(x)](#module_d8xMath..floatToABK64x64) ⇒ <code>BigNumber</code>
     * [~floatToDec18(x)](#module_d8xMath..floatToDec18) ⇒ <code>BigNumber</code>
+    * [~countDecimalsOf(x, precision)](#module_d8xMath..countDecimalsOf) ⇒
+    * [~roundToLotString(x, lot, precision)](#module_d8xMath..roundToLotString) ⇒
     * [~mul64x64(x, y)](#module_d8xMath..mul64x64) ⇒ <code>BigNumber</code>
     * [~div64x64(x, y)](#module_d8xMath..div64x64) ⇒ <code>BigNumber</code>
     * [~calculateLiquidationPriceCollateralBase(LockedInValueQC, position, cash_cc, maintenance_margin_rate, S3)](#module_d8xMath..calculateLiquidationPriceCollateralBase) ⇒ <code>number</code>
@@ -148,6 +183,34 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>number</code> | <p>number (float)</p> |
+
+<a name="module_d8xMath..countDecimalsOf"></a>
+
+### d8xMath~countDecimalsOf(x, precision) ⇒
+<p>9 are rounded up regardless of precision, e.g, 0.1899000 at precision 6 results in 3</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>number of decimals</p>  
+
+| Param |
+| --- |
+| x | 
+| precision | 
+
+<a name="module_d8xMath..roundToLotString"></a>
+
+### d8xMath~roundToLotString(x, lot, precision) ⇒
+<p>Round a number to a given lot size and return a string formated
+to for this lot-size</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>formated number string</p>  
+
+| Param | Default | Description |
+| --- | --- | --- |
+| x |  | <p>number to round</p> |
+| lot |  | <p>lot size (could be 'uneven' such as 0.019999999 instead of 0.02)</p> |
+| precision | <code>7</code> | <p>optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)</p> |
 
 <a name="module_d8xMath..mul64x64"></a>
 
@@ -2224,7 +2287,7 @@ No gas required for the queries here.</p>
     * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
+    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
@@ -2332,11 +2395,11 @@ main();
 ```
 <a name="MarketData+exchangeInfo"></a>
 
-### marketData.exchangeInfo() ⇒ <code>ExchangeInfo</code>
+### marketData.exchangeInfo() ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
 <p>Information about the products traded in the exchange.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>ExchangeInfo</code> - <p>Array of static data for all the pools and perpetuals in the system.</p>  
+**Returns**: [<code>ExchangeInfo</code>](#ExchangeInfo) - <p>Array of static data for all the pools and perpetuals in the system.</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -2801,6 +2864,7 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
+    * [.smartContractOrderToOrder(scOrder)](#OrderReferrerTool+smartContractOrderToOrder) ⇒
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -3045,6 +3109,18 @@ main();
 | --- | --- |
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
+
+<a name="OrderReferrerTool+smartContractOrderToOrder"></a>
+
+### orderReferrerTool.smartContractOrderToOrder(scOrder) ⇒
+<p>Wrapper of static method to use after mappings have been loaded into memory.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>A user-friendly order struct.</p>  
+
+| Param | Description |
+| --- | --- |
+| scOrder | <p>Perpetual order as received in the proxy events.</p> |
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
@@ -4078,7 +4154,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
+    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
     * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
@@ -4280,12 +4356,12 @@ main();
 ```
 <a name="MarketData+exchangeInfo"></a>
 
-### traderInterface.exchangeInfo() ⇒ <code>ExchangeInfo</code>
+### traderInterface.exchangeInfo() ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
 <p>Information about the products traded in the exchange.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>exchangeInfo</code>](#MarketData+exchangeInfo)  
-**Returns**: <code>ExchangeInfo</code> - <p>Array of static data for all the pools and perpetuals in the system.</p>  
+**Returns**: [<code>ExchangeInfo</code>](#ExchangeInfo) - <p>Array of static data for all the pools and perpetuals in the system.</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -4972,4 +5048,56 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="CollaterlCCY"></a>
+
+## CollaterlCCY
+<p>struct ClientOrder {
+uint32 flags;
+uint24 iPerpetualId;
+uint16 brokerFeeTbps;
+address traderAddr;
+address brokerAddr;
+address referrerAddr;
+bytes brokerSignature;
+int128 fAmount;
+int128 fLimitPrice;
+int128 fTriggerPrice;
+int128 fLeverage; // 0 if deposit and trade separate
+uint64 iDeadline;
+uint64 createdTimestamp;
+//uint64 submittedTimestamp &lt;- will be set by LimitOrderBook
+bytes32 parentChildDigest1;
+bytes32 parentChildDigest2;
+}</p>
+
+**Kind**: global variable  
+<a name="ExchangeInfo"></a>
+
+## ExchangeInfo : <code>Object</code>
+**Kind**: global typedef  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| pools | [<code>Array.&lt;PoolState&gt;</code>](#PoolState) | <p>Array of state objects for all pools in the exchange.</p> |
+| oracleFactoryAddr | <code>string</code> | <p>Address of the oracle factory used by the pools in the exchange.</p> |
+
+<a name="PoolState"></a>
+
+## PoolState : <code>Object</code>
+**Kind**: global typedef  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| isRunning | <code>boolean</code> | <p>True if the pool is running.</p> |
+| marginTokenAddr | <code>string</code> | <p>Address of the token used by the pool. This is the token used for margin deposits, liquidity provision, and trading fees.</p> |
+| poolShareTokenAddr | <code>string</code> | <p>Address of the pool share token. This is the token issued to external liquidity providers.</p> |
+| defaultFundCashCC | <code>number</code> | <p>Amount of cash in the default fund of this pool, denominated in margin tokens.</p> |
+| pnlParticipantCashCC | <code>number</code> | <p>Amount of cash in the PnL participation pool, i.e. cash deposited by external liquidity providers.</p> |
+| totalAMMFundCashCC | <code>number</code> | <p>Amount of cash aggregated across all perpetual AMM funds in this pool.</p> |
+| totalTargetAMMFundSizeCC | <code>number</code> | <p>Target AMM funds aggregated across all perpetuals in this pool.</p> |
+| brokerCollateralLotSize | <code>number</code> | <p>Price of one lot for brokers who wish to participate in this pool. Denominated in margin tokens.</p> |
+| perpetuals | <code>Array.&lt;PerpetualState&gt;</code> | <p>Array of all perpetuals in this pool.</p> |
 

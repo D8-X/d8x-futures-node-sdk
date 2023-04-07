@@ -17,6 +17,7 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
+    * [.smartContractOrderToOrder(scOrder)](#OrderReferrerTool+smartContractOrderToOrder) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -246,4 +247,16 @@ main();
 | --- | --- |
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
+
+<a name="OrderReferrerTool+smartContractOrderToOrder"></a>
+
+### orderReferrerTool.smartContractOrderToOrder(scOrder) ⇒
+<p>Wrapper of static method to use after mappings have been loaded into memory.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>A user-friendly order struct.</p>  
+
+| Param | Description |
+| --- | --- |
+| scOrder | <p>Perpetual order as received in the proxy events.</p> |
 
