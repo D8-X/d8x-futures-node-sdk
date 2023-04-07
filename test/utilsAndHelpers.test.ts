@@ -1,7 +1,6 @@
 import {
   NodeSDKConfig,
   Order,
-  SmartContractOrder,
   ORDER_TYPE_STOP_LIMIT,
   ORDER_TYPE_LIMIT,
   ORDER_TYPE_MARKET,
@@ -11,11 +10,9 @@ import {
   MASK_KEEP_POS_LEVERAGE,
   MASK_CLOSE_ONLY,
   MASK_MARKET_ORDER,
-  MAX_64x64,
   SYMBOL_LIST,
 } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
-import AccountTrade from "../src/accountTrade";
 import {
   to4Chars,
   symbol4BToLongSymbol,
@@ -28,11 +25,9 @@ import {
   contractSymbolToSymbol,
 } from "../src/utils";
 import { roundToLotString, countDecimalsOf } from "../src/d8XMath";
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "ethers";
 
-let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
-const myAddress = new ethers.Wallet(pk).address;
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
@@ -212,24 +207,6 @@ describe("utils", () => {
       expect(isEqual).toBeTruthy();
     }
   });
-
-  function flagToOrderTypeCOPY(order: SmartContractOrder): string {
-    let flag = BigNumber.from(order.flags);
-    let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
-    let hasLimit = !BigNumber.from(order.fLimitPrice).eq(0) || !BigNumber.from(order.fLimitPrice).eq(MAX_64x64);
-    let isStop = containsFlag(flag, MASK_STOP_ORDER);
-
-    if (isStop && hasLimit) {
-      return ORDER_TYPE_STOP_LIMIT;
-    } else if (isStop && !hasLimit) {
-      return ORDER_TYPE_STOP_MARKET;
-    } else if (isLimit && !isStop) {
-      return ORDER_TYPE_LIMIT;
-    } else {
-      return ORDER_TYPE_MARKET;
-    }
-  }
-
   function toHexString(byteArray: Buffer): string {
     return (
       "0x" +
