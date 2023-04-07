@@ -17,8 +17,6 @@
     "downlevelIteration": true,
     "esModuleInterop": true,
     "declaration": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
     "moduleResolution": "node",
     "jsx": "react",
     "outDir": "./dist/esm",
