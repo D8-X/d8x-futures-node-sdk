@@ -26,6 +26,7 @@ import {
   symbolToContractSymbol,
   contractSymbolToSymbol,
 } from "../src/utils";
+import { roundToLotString, countDecimalsOf } from "../src/d8XMath";
 import { BigNumber, ethers } from "ethers";
 
 let pk: string = <string>process.env.PK;
@@ -36,6 +37,42 @@ jest.setTimeout(150000);
 let config: NodeSDKConfig;
 
 describe("utils", () => {
+  it("countDecimalsOf", async function () {
+    let x = [0.12349999, 52.1999999999999, 0.123212, 52.100000001111111, 0.12349999];
+    let resExp = [4, 1, 6, 1];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = countDecimalsOf(x[k], 7);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+
+  it("round to lot (small lot)", async function () {
+    let lot = 0.01999999;
+    let x = [52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["52.12", "52.10", "52.14"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+  it("round to lot (small lot 2)", async function () {
+    let lot = 0.0199;
+    let x = [52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["52.12", "52.10", "52.14"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+  it("round to lot (large lot)", async function () {
+    let lot = 26;
+    let x = [52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["52", "52", "52"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
   it("read config", async function () {
     config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
     if (RPC != undefined) {
