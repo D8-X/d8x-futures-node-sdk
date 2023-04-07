@@ -38,7 +38,9 @@ let config: NodeSDKConfig;
 
 describe("utils", () => {
   it("read config", async function () {
-    config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    // get config by chain id (latest version)
+    const chainId = 80001;
+    config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }

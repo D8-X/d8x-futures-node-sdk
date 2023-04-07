@@ -41,7 +41,8 @@ const flushPromises = () => {
 
 describe("Front-end-like functionality", () => {
   beforeAll(async () => {
-    config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    const chainId = 80001;
+    config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }

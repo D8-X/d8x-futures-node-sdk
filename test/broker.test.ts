@@ -22,7 +22,8 @@ let lotSize: number;
 let lotsDeposit: number;
 describe("broker tools that spend gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    const chainId = 80001;
+    config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
