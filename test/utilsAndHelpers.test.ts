@@ -27,7 +27,7 @@ import {
   symbolToContractSymbol,
   contractSymbolToSymbol,
 } from "../src/utils";
-import { roundToLotString, countDecimalsOf} from "../src/d8XMath";
+import { roundToLotString, countDecimalsOf } from "../src/d8XMath";
 import { BigNumber, ethers } from "ethers";
 
 let pk: string = <string>process.env.PK;
@@ -171,7 +171,7 @@ describe("utils", () => {
   });
 
   it("symbol4BToLongSymbol", async () => {
-    let symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    let symbolList = SYMBOL_LIST;
     // add fake ccy with clash
     symbolList.set("MXTC", "MATUC");
     // add actual liquid staked matic
