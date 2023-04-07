@@ -46,51 +46,6 @@ export function dec18ToFloat(x: BigNumber): number {
 }
 
 /**
- * 9 are rounded up regardless of precision, e.g, 0.1899000 at precision 6 results in 3
- * @param x
- * @param precision
- * @returns
- */
-export function countDecimalsOf(x: number, precision: number): number {
-  let decimalPart = x - Math.floor(x);
-  if (decimalPart == 0) {
-    return 0;
-  }
-  let decimalPartStr = decimalPart.toFixed(precision);
-  // remove trailing zeros
-  let c = decimalPartStr.charAt(decimalPartStr.length - 1);
-  while (c == "0") {
-    decimalPartStr = decimalPartStr.substring(0, decimalPartStr.length - 1);
-    c = decimalPartStr.charAt(decimalPartStr.length - 1);
-  }
-  // remove trailing 9
-  c = decimalPartStr.charAt(decimalPartStr.length - 1);
-  while (c == "9") {
-    decimalPartStr = decimalPartStr.substring(0, decimalPartStr.length - 1);
-    c = decimalPartStr.charAt(decimalPartStr.length - 1);
-  }
-
-  return decimalPartStr.length > 2 ? decimalPartStr.length - 2 : 0;
-}
-
-/**
- * Round a number to a given lot size and return a string formated
- * to for this lot-size
- * @param x number to round
- * @param lot lot size (could be 'uneven' such as 0.019999999 instead of 0.02)
- * @param precision optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)
- */
-export function roundToLotString(x: number, lot: number, precision: number = 7): string {
-  // round lot to precision
-  let lotRounded = Math.round(lot / 10 ** -precision) * 10 ** -precision;
-  let v = Math.round(x / lotRounded) * lotRounded;
-
-  // number of digits of rounded lot
-  let numDig = countDecimalsOf(lotRounded, precision);
-  return v.toFixed(numDig);
-}
-
-/**
  * Converts x into ABDK64x64 format
  * @param {number} x   number (float)
  * @returns {BigNumber} x^64 in big number format
