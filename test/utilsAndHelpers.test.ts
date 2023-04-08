@@ -44,8 +44,17 @@ describe("utils", () => {
 
   it("round to lot (small lot)", async function () {
     let lot = 0.01999999;
-    let x = [52.123212, 52.100000001111111, 52.1360000990000001];
-    let resExp = ["52.12", "52.10", "52.14"];
+    let x = [99.99, 52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["100.00", "52.12", "52.10", "52.14"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+  it("round to lot (small lot)", async function () {
+    let lot = 0.00999999;
+    let x = [99.99, 52.123212, 52.100000001111111, 52.1340000990000001];
+    let resExp = ["99.99", "52.12", "52.10", "52.13"];
     for (let k = 0; k < resExp.length; k++) {
       let res = roundToLotString(x[k], lot);
       expect(res).toEqual(resExp[k]);
