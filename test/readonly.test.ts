@@ -30,7 +30,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeEach(() => {
-    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    config = PerpetualDataHandler.readSDKConfig("testnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -38,10 +38,10 @@ describe("readOnly", () => {
 
   describe("Read config", () => {
     it("read all config types", () => {
-      let configs = ["testnet", "mainnet", "central-park", 80001, "zkevmTestnet", 1442];
+      let configs = ["testnet", "mainnet", 80001, "zkevmTestnet", 1442];
 
       for (let i = 0; i < configs.length; i++) {
-        config = PerpetualDataHandler.readSDKConfig(configs[i]);
+        let config = PerpetualDataHandler.readSDKConfig(configs[i]);
         // console.log(`${configs[i]} config:\n`, config);
         expect(
           (typeof configs[i] === "string" && (/json$/.test(configs[i] as string) || config.name == configs[i])) ||
@@ -54,7 +54,7 @@ describe("readOnly", () => {
   describe("Oracle Routes", () => {
     beforeAll(() => {
       const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
-      let abi = require("./src/abi/central-park/IPerpetualManager.json");
+      let abi = require("../src/abi/testnet/IPerpetualManager.json");
       proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
     });
     it("routes", async () => {
@@ -79,8 +79,17 @@ describe("readOnly", () => {
     });
   });
 
-  describe("APIInteface", () => {
+  describe("APIInterface", () => {
     beforeAll(async () => {
+      config = PerpetualDataHandler.readSDKConfig("testnet");
+      if (RPC != undefined) {
+        config.nodeURL = RPC;
+      }
+      if (pk == undefined) {
+        console.log(`Define private key: export PK="CA52A..."`);
+        expect(false);
+        return;
+      }
       apiInterface = new TraderInterface(config);
       await apiInterface.createProxyInstance();
       wallet = new ethers.Wallet(pk);
@@ -145,6 +154,7 @@ describe("readOnly", () => {
       if (pk == undefined) {
         console.log(`Define private key: export PK="CA52A..."`);
         expect(false);
+        return;
       }
       mktData = new MarketData(config);
       await mktData.createProxyInstance();

@@ -148,6 +148,7 @@ export default class MarketData extends PerpetualDataHandler {
       this.proxyContract,
       this.poolStaticInfos,
       this.symbolToPerpStaticInfo,
+      this.nestedPerpetualIDs,
       this.symbolList,
       this.priceFeedGetter
     );
@@ -693,10 +694,12 @@ export default class MarketData extends PerpetualDataHandler {
     // return new copy, not a reference
     let res: PerpetualStaticInfo = {
       id: perpInfo.id,
+      poolId: perpInfo.poolId,
       limitOrderBookAddr: perpInfo.limitOrderBookAddr,
       initialMarginRate: perpInfo.initialMarginRate,
       maintenanceMarginRate: perpInfo.maintenanceMarginRate,
       collateralCurrencyType: perpInfo.collateralCurrencyType,
+      perpetualOnChainState: perpInfo.perpetualOnChainState,
       S2Symbol: perpInfo.S2Symbol,
       S3Symbol: perpInfo.S3Symbol,
       lotSizeBC: perpInfo.lotSizeBC,
@@ -842,13 +845,13 @@ export default class MarketData extends PerpetualDataHandler {
     _proxyContract: ethers.Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _nestedPerpetualIDs: Array<Array<number>>,
     _symbolList: Map<string, string>,
     _priceFeedGetter: PriceFeeds
   ): Promise<ExchangeInfo> {
-    let nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(_proxyContract);
     let factory = await _proxyContract.getOracleFactory();
     let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
-    const numPools = nestedPerpetualIDs.length;
+    const numPools = _nestedPerpetualIDs.length;
 
     // get all prices
     let allSym = new Set<string>();
@@ -863,7 +866,7 @@ export default class MarketData extends PerpetualDataHandler {
     let idxPriceMap: Map<string, [number, boolean]> = await _priceFeedGetter.fetchPrices(allSymArr);
 
     for (var j = 0; j < numPools; j++) {
-      let perpetualIDs = nestedPerpetualIDs[j];
+      let perpetualIDs = _nestedPerpetualIDs[j];
       let pool = await _proxyContract.getLiquidityPool(j + 1);
       let PoolState: PoolState = {
         isRunning: pool.isRunning,

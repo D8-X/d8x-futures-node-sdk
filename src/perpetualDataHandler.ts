@@ -141,10 +141,65 @@ export default class PerpetualDataHandler {
     if (proxyContract == null || this.lobFactoryContract == null) {
       throw Error("proxy or limit order book not defined");
     }
-    let oracleFactoryAddr = await proxyContract.getOracleFactory();
-    this.nestedPerpetualIDs = await PerpetualDataHandler.getNestedPerpetualIds(proxyContract);
+    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(proxyContract);
+
+    this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
+
+    for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
+      let info: PoolStaticInfo = {
+        poolId: j + 1,
+        poolMarginSymbol: "", //fill later
+        poolMarginTokenAddr: poolInfo.poolMarginTokenAddr[j],
+        shareTokenAddr: poolInfo.poolShareTokenAddr[j],
+        oracleFactoryAddr: poolInfo.oracleFactory,
+        isRunning: poolInfo.poolShareTokenAddr[j] != ethers.constants.AddressZero,
+      };
+      this.poolStaticInfos.push(info);
+    }
+    let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
+      proxyContract,
+      this.nestedPerpetualIDs,
+      this.symbolList
+    );
+
     let requiredPairs = new Set<string>();
-    for (let j = 0; j < this.nestedPerpetualIDs.length; j++) {
+    // 1) determine pool currency based on its perpetuals
+    // 2) determine which triangulations we need
+    // 3) fill mapping this.symbolToPerpStaticInf
+    for (let j = 0; j < perpStaticInfos.length; j++) {
+      const perp = perpStaticInfos[j];
+      requiredPairs.add(perp.S2Symbol);
+      if (perp.S3Symbol != "") {
+        requiredPairs.add(perp.S3Symbol);
+      }
+      let poolCCY = this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol;
+      if (poolCCY == "") {
+        //not already filled
+        const [base, quote] = perp.S2Symbol.split("-");
+        const base3 = perp.S3Symbol.split("-")[0];
+        // we find out the pool currency by looking at all perpetuals
+        // from the perpetual.
+        if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
+          poolCCY = base;
+        } else if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_QUOTE) {
+          poolCCY = quote;
+        } else {
+          poolCCY = base3;
+        }
+        // set pool currency
+        this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = poolCCY;
+        // push pool margin token address into map
+        this.symbolToTokenAddrMap.set(poolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
+      }
+      let currentSymbol3 = perp.S2Symbol + "-" + poolCCY;
+      this.symbolToPerpStaticInfo.set(currentSymbol3, perpStaticInfos[j]);
+    }
+    // pre-calculate all triangulation paths so we can easily get from
+    // the prices of price-feeds to the index price required, e.g.
+    // BTC-USDC : BTC-USD / USDC-USD
+    this.priceFeedGetter.initializeTriangulations(requiredPairs);
+    /*
+    for (let j = 0; j < perpStaticInfos.length; j++) {
       let pool = await proxyContract.getLiquidityPool(j + 1);
       let poolMarginTokenAddr = pool.marginTokenAddress;
       let perpetualIDs = this.nestedPerpetualIDs[j];
@@ -234,6 +289,7 @@ export default class PerpetualDataHandler {
     // the prices of price-feeds to the index price required, e.g.
     // BTC-USDC : BTC-USD / USDC-USD
     this.priceFeedGetter.initializeTriangulations(requiredPairs);
+    */
   }
 
   /**
@@ -347,18 +403,109 @@ export default class PerpetualDataHandler {
     return j + 1;
   }
 
-  public static async getNestedPerpetualIds(_proxyContract: ethers.Contract): Promise<number[][]> {
-    let poolCount = await _proxyContract.getPoolCount();
-    let poolIds: number[][] = new Array(poolCount);
-    for (let i = 1; i < poolCount + 1; i++) {
-      let perpetualCount = await _proxyContract.getPerpetualCountInPool(i);
-      poolIds[i - 1] = new Array(perpetualCount);
-      for (let j = 0; j < perpetualCount; j++) {
-        let id = await _proxyContract.getPerpetualId(i, j);
-        poolIds[i - 1][j] = id;
+  public getNestedPerpetualIds(_proxyContract: ethers.Contract): number[][] {
+    return this.nestedPerpetualIDs;
+  }
+
+  /**
+   * Collect all perpetuals static info
+   * @param {ethers.Contract} _proxyContract perpetuals contract with getter
+   * @param {Array<Array<number>>} nestedPerpetualIDs perpetual id-array for each pool
+   * @param {Map<string, string>} symbolList mapping of symbols to convert long-format <-> blockchain-format
+   * @returns array with PerpetualStaticInfo for each perpetual
+   */
+  public static async getPerpetualStaticInfo(
+    _proxyContract: ethers.Contract,
+    nestedPerpetualIDs: Array<Array<number>>,
+    symbolList: Map<string, string>
+  ): Promise<Array<PerpetualStaticInfo>> {
+    // flatten perpetual ids into chunks
+    const chunkSize = 10;
+    let ids = PerpetualDataHandler.nestedIDsToChunks(chunkSize, nestedPerpetualIDs);
+    // query blockchain in chunks
+    const infoArr = new Array<PerpetualStaticInfo>();
+    for (let k = 0; k < ids.length; k++) {
+      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k]);
+      for (let j = 0; j < perpInfos.length; j++) {
+        let base = contractSymbolToSymbol(perpInfos[j].S2BaseCCY, symbolList);
+        let quote = contractSymbolToSymbol(perpInfos[j].S2QuoteCCY, symbolList);
+        let base3 = contractSymbolToSymbol(perpInfos[j].S3BaseCCY, symbolList);
+        let quote3 = contractSymbolToSymbol(perpInfos[j].S3QuoteCCY, symbolList);
+        let sym2 = base + "-" + quote;
+        let sym3 = base3 + "-" + quote3;
+        let info: PerpetualStaticInfo = {
+          id: perpInfos[j].id,
+          poolId: Math.floor(perpInfos[j].id / 100_000), //uint24(_iPoolId) * 100_000 + iPerpetualIndex;
+          perpetualOnChainState: perpInfos[j].perpetualState,
+          limitOrderBookAddr: perpInfos[j].limitOrderBookAddr,
+          initialMarginRate: ABK64x64ToFloat(perpInfos[j].fInitialMarginRate),
+          maintenanceMarginRate: ABK64x64ToFloat(perpInfos[j].fMaintenanceMarginRate),
+          collateralCurrencyType: perpInfos[j].collCurrencyType,
+          S2Symbol: sym2,
+          S3Symbol: sym3,
+          lotSizeBC: ABK64x64ToFloat(perpInfos[j].fLotSizeBC),
+          referralRebate: ABK64x64ToFloat(perpInfos[j].fReferralRebateCC),
+          priceIds: perpInfos[j].priceIds,
+        };
+        infoArr.push(info);
       }
     }
-    return poolIds;
+    return infoArr;
+  }
+
+  /**
+   * Breaks up an array of nested arrays into chunks of a specified size.
+   * @param {number} chunkSize The size of each chunk.
+   * @param {number[][]} nestedIDs The array of nested arrays to chunk.
+   * @returns {number[][]} An array of subarrays, each containing `chunkSize` or fewer elements from `nestedIDs`.
+   */
+  public static nestedIDsToChunks(chunkSize: number, nestedIDs: Array<Array<number>>): Array<Array<number>> {
+    const chunkIDs: number[][] = [];
+    let currentChunk: number[] = [];
+    for (let k = 0; k < nestedIDs.length; k++) {
+      const currentPoolIds = nestedIDs[k];
+      for (let j = 0; j < currentPoolIds.length; j++) {
+        currentChunk.push(currentPoolIds[j]);
+        if (currentChunk.length === chunkSize) {
+          chunkIDs.push(currentChunk);
+          currentChunk = [];
+        }
+      }
+    }
+    if (currentChunk.length > 0) {
+      chunkIDs.push(currentChunk);
+    }
+    return chunkIDs;
+  }
+
+  public static async getPoolStaticInfo(_proxyContract: ethers.Contract): Promise<{
+    nestedPerpetualIDs: Array<Array<number>>;
+    poolShareTokenAddr: Array<string>;
+    poolMarginTokenAddr: Array<string>;
+    oracleFactory: string;
+  }> {
+    let idxFrom = 1;
+    const len = 10;
+    let lenReceived = 10;
+    let nestedPerpetualIDs: Array<Array<number>> = [];
+    let poolShareTokenAddr: Array<string> = [];
+    let poolMarginTokenAddr: Array<string> = [];
+    let oracleFactory: string = "";
+    while (lenReceived == len) {
+      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1);
+      lenReceived = res.length;
+      nestedPerpetualIDs = nestedPerpetualIDs.concat(res[0]);
+      poolShareTokenAddr = res[1];
+      poolMarginTokenAddr = res[2];
+      oracleFactory = res[3];
+      idxFrom = idxFrom + len;
+    }
+    return {
+      nestedPerpetualIDs: nestedPerpetualIDs,
+      poolShareTokenAddr: poolShareTokenAddr,
+      poolMarginTokenAddr: poolMarginTokenAddr,
+      oracleFactory: oracleFactory,
+    };
   }
 
   public static buildMarginAccountFromState(

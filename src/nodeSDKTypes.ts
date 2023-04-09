@@ -68,16 +68,27 @@ export enum CollaterlCCY {
   QUANTO,
 }
 
+export enum PerpetualOnChainState {
+  INVALID = 0,
+  INITIALIZING,
+  NORMAL,
+  EMERGENCY,
+  CLEARED,
+}
+
 export interface PoolStaticInfo {
   poolId: number;
   poolMarginSymbol: string;
   poolMarginTokenAddr: string;
   shareTokenAddr: string;
   oracleFactoryAddr: string;
+  isRunning: boolean;
 }
 
 export interface PerpetualStaticInfo {
   id: number;
+  poolId: number;
+  perpetualOnChainState: PerpetualOnChainState;
   limitOrderBookAddr: string;
   initialMarginRate: number;
   maintenanceMarginRate: number;
@@ -88,6 +99,25 @@ export interface PerpetualStaticInfo {
   referralRebate: number;
   priceIds: string[];
 }
+
+/*
+PerpetualStaticInfo {
+  uint24 id;
+  address limitOrderBookAddr;
+  int128 fInitialMarginRate;
+  int128 fMaintenanceMarginRate;
+  uint8 perpetualState;
+  AMMPerpLogic.CollateralCurrency collCurrencyType;
+  bytes4 S2BaseCCY; //base currency of S2
+  bytes4 S2QuoteCCY; //quote currency of S2
+  bytes4 S3BaseCCY; //base currency of S3
+  bytes4 S3QuoteCCY; //quote currency of S3
+  int128 fLotSizeBC;
+  int128 fReferralRebateCC;
+  bytes32[] priceIds;
+  bool[] isPyth;
+}
+*/
 
 /**
  * @global
@@ -275,7 +305,7 @@ export interface PriceFeedFormat {
 }
 
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
-export const DEFAULT_CONFIG_TESTNET_NAME = "central-park";
+export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 
 export function loadABIs(config: NodeSDKConfig) {
   if (config.proxyABILocation.length > 0) {
