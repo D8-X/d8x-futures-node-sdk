@@ -68,14 +68,6 @@ export enum CollaterlCCY {
   QUANTO,
 }
 
-export enum PerpetualOnChainState {
-  INVALID = 0,
-  INITIALIZING,
-  NORMAL,
-  EMERGENCY,
-  CLEARED,
-}
-
 export interface PoolStaticInfo {
   poolId: number;
   poolMarginSymbol: string;
@@ -88,7 +80,6 @@ export interface PoolStaticInfo {
 export interface PerpetualStaticInfo {
   id: number;
   poolId: number;
-  perpetualOnChainState: PerpetualOnChainState;
   limitOrderBookAddr: string;
   initialMarginRate: number;
   maintenanceMarginRate: number;

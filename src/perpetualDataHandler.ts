@@ -198,98 +198,6 @@ export default class PerpetualDataHandler {
     // the prices of price-feeds to the index price required, e.g.
     // BTC-USDC : BTC-USD / USDC-USD
     this.priceFeedGetter.initializeTriangulations(requiredPairs);
-    /*
-    for (let j = 0; j < perpStaticInfos.length; j++) {
-      let pool = await proxyContract.getLiquidityPool(j + 1);
-      let poolMarginTokenAddr = pool.marginTokenAddress;
-      let perpetualIDs = this.nestedPerpetualIDs[j];
-      let poolCCY: string | undefined = undefined;
-      let currentSymbols: string[] = [];
-      let currentSymbolsS3: string[] = [];
-      let currentLimitOrderBookAddr: string[] = [];
-      let ccy: CollaterlCCY[] = [];
-      let initRate: number[] = [];
-      let mgnRate: number[] = [];
-      let lotSizes: number[] = [];
-      let refRebates: number[] = [];
-
-      for (let k = 0; k < perpetualIDs.length; k++) {
-        let perp = await proxyContract.getPerpetual(perpetualIDs[k]);
-        let base = contractSymbolToSymbol(perp.S2BaseCCY, this.symbolList);
-        let quote = contractSymbolToSymbol(perp.S2QuoteCCY, this.symbolList);
-        let base3 = contractSymbolToSymbol(perp.S3BaseCCY, this.symbolList);
-        let quote3 = contractSymbolToSymbol(perp.S3QuoteCCY, this.symbolList);
-        let sym = base + "-" + quote;
-        let sym3 = base3 + "-" + quote3;
-        requiredPairs.add(sym);
-        if (sym3 != "-") {
-          requiredPairs.add(sym3);
-        } else {
-          sym3 = "";
-        }
-        currentSymbols.push(sym);
-        currentSymbolsS3.push(sym3);
-        initRate.push(ABK64x64ToFloat(perp.fInitialMarginRate));
-        mgnRate.push(ABK64x64ToFloat(perp.fMaintenanceMarginRate));
-        lotSizes.push(ABK64x64ToFloat(perp.fLotSizeBC));
-        refRebates.push(ABK64x64ToFloat(perp.fReferralRebateCC));
-        // try to find a limit order book
-        let lobAddr = await this.lobFactoryContract.getOrderBookAddress(perpetualIDs[k]);
-        currentLimitOrderBookAddr.push(lobAddr);
-
-        // we find out the pool currency by looking at all perpetuals
-        // unless for quanto perpetuals, we know the pool currency
-        // from the perpetual. This fails if we have a pool with only
-        // quanto perpetuals
-        if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-          poolCCY = poolCCY ?? base;
-          ccy.push(CollaterlCCY.BASE);
-        } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUOTE) {
-          poolCCY = poolCCY ?? quote;
-          ccy.push(CollaterlCCY.QUOTE);
-        } else {
-          poolCCY = poolCCY ?? base3;
-          ccy.push(CollaterlCCY.QUANTO);
-        }
-      }
-      if (perpetualIDs.length == 0) {
-        continue;
-      }
-
-      let info: PoolStaticInfo = {
-        poolId: j + 1,
-        poolMarginSymbol: poolCCY!,
-        poolMarginTokenAddr: poolMarginTokenAddr,
-        shareTokenAddr: pool.shareTokenAddress,
-        oracleFactoryAddr: oracleFactoryAddr,
-      };
-      this.poolStaticInfos.push(info);
-      let currentSymbols3 = currentSymbols.map((x) => x + "-" + poolCCY);
-      // push into map
-      for (let k = 0; k < perpetualIDs.length; k++) {
-        // add price IDs
-        let [idsB32] = await proxyContract.getPriceInfo(perpetualIDs[k]);
-        this.symbolToPerpStaticInfo.set(currentSymbols3[k], {
-          id: perpetualIDs[k],
-          limitOrderBookAddr: currentLimitOrderBookAddr[k],
-          initialMarginRate: initRate[k],
-          maintenanceMarginRate: mgnRate[k],
-          collateralCurrencyType: ccy[k],
-          S2Symbol: currentSymbols[k],
-          S3Symbol: currentSymbolsS3[k],
-          lotSizeBC: lotSizes[k],
-          referralRebate: refRebates[k],
-          priceIds: idsB32,
-        });
-      }
-      // push margin token address into map
-      this.symbolToTokenAddrMap.set(poolCCY!, poolMarginTokenAddr);
-    }
-    // pre-calculate all triangulation paths so we can easily get from
-    // the prices of price-feeds to the index price required, e.g.
-    // BTC-USDC : BTC-USD / USDC-USD
-    this.priceFeedGetter.initializeTriangulations(requiredPairs);
-    */
   }
 
   /**
@@ -436,7 +344,6 @@ export default class PerpetualDataHandler {
         let info: PerpetualStaticInfo = {
           id: perpInfos[j].id,
           poolId: Math.floor(perpInfos[j].id / 100_000), //uint24(_iPoolId) * 100_000 + iPerpetualIndex;
-          perpetualOnChainState: perpInfos[j].perpetualState,
           limitOrderBookAddr: perpInfos[j].limitOrderBookAddr,
           initialMarginRate: ABK64x64ToFloat(perpInfos[j].fInitialMarginRate),
           maintenanceMarginRate: ABK64x64ToFloat(perpInfos[j].fMaintenanceMarginRate),

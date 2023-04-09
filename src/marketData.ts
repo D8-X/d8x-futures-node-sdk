@@ -699,7 +699,6 @@ export default class MarketData extends PerpetualDataHandler {
       initialMarginRate: perpInfo.initialMarginRate,
       maintenanceMarginRate: perpInfo.maintenanceMarginRate,
       collateralCurrencyType: perpInfo.collateralCurrencyType,
-      perpetualOnChainState: perpInfo.perpetualOnChainState,
       S2Symbol: perpInfo.S2Symbol,
       S3Symbol: perpInfo.S3Symbol,
       lotSizeBC: perpInfo.lotSizeBC,
