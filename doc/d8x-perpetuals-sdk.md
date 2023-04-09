@@ -3335,6 +3335,8 @@ common data and chain operations.</p>
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
     * _static_
+        * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
+        * [.nestedIDsToChunks(chunkSize, nestedIDs)](#PerpetualDataHandler.nestedIDsToChunks) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
         * [._calculateLiquidationPrice(symbol, traderState, S2, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
         * [.symbolToPerpetualId(symbol, symbolToPerpStaticInfo)](#PerpetualDataHandler.symbolToPerpetualId) ⇒
         * [.perpetualIdToSymbol(id, symbolToPerpStaticInfo)](#PerpetualDataHandler.perpetualIdToSymbol) ⇒
@@ -3478,6 +3480,33 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler.getPerpetualStaticInfo"></a>
+
+### PerpetualDataHandler.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList) ⇒
+<p>Collect all perpetuals static info</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array with PerpetualStaticInfo for each perpetual</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| _proxyContract | <code>ethers.Contract</code> | <p>perpetuals contract with getter</p> |
+| nestedPerpetualIDs | <code>Array.&lt;Array.&lt;number&gt;&gt;</code> | <p>perpetual id-array for each pool</p> |
+| symbolList | <code>Map.&lt;string, string&gt;</code> | <p>mapping of symbols to convert long-format &lt;-&gt; blockchain-format</p> |
+
+<a name="PerpetualDataHandler.nestedIDsToChunks"></a>
+
+### PerpetualDataHandler.nestedIDsToChunks(chunkSize, nestedIDs) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
+<p>Breaks up an array of nested arrays into chunks of a specified size.</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>Array.&lt;Array.&lt;number&gt;&gt;</code> - <p>An array of subarrays, each containing <code>chunkSize</code> or fewer elements from <code>nestedIDs</code>.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| chunkSize | <code>number</code> | <p>The size of each chunk.</p> |
+| nestedIDs | <code>Array.&lt;Array.&lt;number&gt;&gt;</code> | <p>The array of nested arrays to chunk.</p> |
 
 <a name="PerpetualDataHandler._calculateLiquidationPrice"></a>
 
