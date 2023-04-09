@@ -23,17 +23,6 @@
     "limitOrderBookABILocation": ""
   },
   {
-    "name": "central-park",
-    "chainId": 80001,
-    "version": 5.1,
-    "proxyAddr": "0x4F1C7EE9E881Cc735f39Ca36c649ba9E930B4E4e",
-    "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
-    "priceFeedConfigNetwork": "testnet",
-    "proxyABILocation": "central-park/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "central-park/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "central-park/LimitOrderBook.json"
-  },
-  {
     "name": "zkevmTestnet",
     "chainId": 1442,
     "version": 0,
