@@ -901,7 +901,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -1837,7 +1837,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -2079,7 +2079,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -2188,7 +2188,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -2279,7 +2279,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -2965,7 +2965,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "iLastOpenBlock",
+                        "name": "iLastOpenTimestamp",
                         "type": "uint64"
                     },
                     {
@@ -3129,7 +3129,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "iLastSettlementPriceUpdateBlock",
+                        "name": "iLastSettlementPriceUpdateTimestamp",
                         "type": "uint64"
                     },
                     {
@@ -3321,7 +3321,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "iLastPriceJumpBlock",
+                        "name": "iLastPriceJumpTimestamp",
                         "type": "uint64"
                     },
                     {
@@ -3412,6 +3412,97 @@
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "uint24[]",
+                "name": "perpetualIds",
+                "type": "uint24[]"
+            }
+        ],
+        "name": "getPerpetualStaticInfo",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint24",
+                        "name": "id",
+                        "type": "uint24"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "limitOrderBookAddr",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fInitialMarginRate",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fMaintenanceMarginRate",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "perpetualState",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "enum AMMPerpLogic.CollateralCurrency",
+                        "name": "collCurrencyType",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S2BaseCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S2QuoteCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S3BaseCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S3QuoteCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLotSizeBC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fReferralRebateCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "bytes32[]",
+                        "name": "priceIds",
+                        "type": "bytes32[]"
+                    },
+                    {
+                        "internalType": "bool[]",
+                        "name": "isPyth",
+                        "type": "bool[]"
+                    }
+                ],
+                "internalType": "struct IPerpetualGetter.PerpetualStaticInfo[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "getPoolCount",
         "outputs": [
@@ -3438,6 +3529,45 @@
                 "internalType": "uint8",
                 "name": "",
                 "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_poolFromIdx",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint8",
+                "name": "_poolToIdx",
+                "type": "uint8"
+            }
+        ],
+        "name": "getPoolStaticInfo",
+        "outputs": [
+            {
+                "internalType": "uint24[][]",
+                "name": "",
+                "type": "uint24[][]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
+            },
+            {
+                "internalType": "address",
+                "name": "_oracleFactoryAddress",
+                "type": "address"
             }
         ],
         "stateMutability": "view",
@@ -4015,7 +4145,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -4182,7 +4312,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -4817,7 +4947,7 @@
                     },
                     {
                         "internalType": "uint64",
-                        "name": "submittedBlock",
+                        "name": "submittedTimestamp",
                         "type": "uint64"
                     }
                 ],
@@ -5008,7 +5138,7 @@
             },
             {
                 "internalType": "uint256",
-                "name": "_blockAge",
+                "name": "_maxAcceptableFeedAge",
                 "type": "uint256"
             }
         ],
