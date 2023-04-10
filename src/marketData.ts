@@ -148,6 +148,7 @@ export default class MarketData extends PerpetualDataHandler {
       this.proxyContract,
       this.poolStaticInfos,
       this.symbolToPerpStaticInfo,
+      this.perpetualIdToSymbol,
       this.nestedPerpetualIDs,
       this.symbolList,
       this.priceFeedGetter
@@ -840,19 +841,17 @@ export default class MarketData extends PerpetualDataHandler {
     return 5 - rank4;
   }
 
-  public static async _exchangeInfo(
-    _proxyContract: ethers.Contract,
-    _poolStaticInfos: Array<PoolStaticInfo>,
+  /**
+   * Get all off-chain prices
+   * @param _symbolToPerpStaticInfo mapping: PerpetualStaticInfo for each perpetual
+   * @param _priceFeedGetter priceFeed class from which we can get offchain price data
+   * @returns mapping of symbol-pair (e.g. BTC-USD) to price/isMarketClosed
+   */
+  private static async _getAllIndexPrices(
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _nestedPerpetualIDs: Array<Array<number>>,
-    _symbolList: Map<string, string>,
     _priceFeedGetter: PriceFeeds
-  ): Promise<ExchangeInfo> {
-    let factory = await _proxyContract.getOracleFactory();
-    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
-    const numPools = _nestedPerpetualIDs.length;
-
-    // get all prices
+  ): Promise<Map<string, [number, boolean]>> {
+    // get all prices from off-chain price-sources
     let allSym = new Set<string>();
     for (let perpSymbol of _symbolToPerpStaticInfo.keys()) {
       let sInfo: PerpetualStaticInfo | undefined = _symbolToPerpStaticInfo.get(perpSymbol);
@@ -863,82 +862,176 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let allSymArr = Array.from(allSym.values());
     let idxPriceMap: Map<string, [number, boolean]> = await _priceFeedGetter.fetchPrices(allSymArr);
+    return idxPriceMap;
+  }
 
-    for (var j = 0; j < numPools; j++) {
-      let perpetualIDs = _nestedPerpetualIDs[j];
-      let pool = await _proxyContract.getLiquidityPool(j + 1);
-      let PoolState: PoolState = {
-        isRunning: pool.isRunning,
-        poolSymbol: _poolStaticInfos[j].poolMarginSymbol,
-        marginTokenAddr: pool.marginTokenAddress,
-        poolShareTokenAddr: pool.shareTokenAddress,
-        defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC),
-        pnlParticipantCashCC: ABK64x64ToFloat(pool.fPnLparticipantsCashCC),
-        totalAMMFundCashCC: ABK64x64ToFloat(pool.fAMMFundCashCC),
-        totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize),
-        brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
-        perpetuals: [],
-      };
-      // let poolSymbol = PoolState.poolSymbol;
-      for (var k = 0; k < perpetualIDs.length; k++) {
-        let perp = await _proxyContract.getPerpetual(perpetualIDs[k]);
-        let symS2 =
-          contractSymbolToSymbol(perp.S2BaseCCY, _symbolList) +
-          "-" +
-          contractSymbolToSymbol(perp.S2QuoteCCY, _symbolList);
-        let symS3 =
-          contractSymbolToSymbol(perp.S3BaseCCY, _symbolList) +
-          "-" +
-          contractSymbolToSymbol(perp.S3QuoteCCY, _symbolList);
-        // let perpSymbol = symS2 + "-" + poolSymbol;
-        //console.log("perpsymbol=",perpSymbol);
-        let res = idxPriceMap.get(symS2);
-        if (res == undefined) {
-          throw new Error(`Price for index ${symS2} could not be fetched - config issue`);
-        }
-        let [indexS2, isS2MktClosed]: [number, boolean] = [res[0], res[1]];
-        let indexS3 = 1;
-        let isS3MktClosed = false;
-        if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_BASE) {
-          indexS3 = indexS2;
-        } else if (perp.eCollateralCurrency == COLLATERAL_CURRENCY_QUANTO) {
-          res = idxPriceMap.get(symS3);
-          if (res == undefined) {
-            throw new Error(`Price for index ${symS3} could not be fetched - config issue`);
-          } else {
-            indexS3 = res[0];
-            isS3MktClosed = res[1];
-          }
-        }
-        let fMidPrice = await _proxyContract.queryPerpetualPrice(perpetualIDs[k], BigNumber.from(0), [
-          floatToABK64x64(indexS2),
-          floatToABK64x64(indexS3),
-        ]);
+  /**
+   * Collect all mid-prices
+   * @param _proxyContract contract instance
+   * @param _nestedPerpetualIDs contains all perpetual ids for each pool
+   * @param _symbolToPerpStaticInfo maps symbol to static info
+   * @param _perpetualIdToSymbol maps perpetual id to symbol of the form BTC-USD-MATIC
+   * @param _idxPriceMap symbol to price/market closed
+   * @returns perpetual symbol to mid-prices mapping
+   */
+  private static async _queryMidPrices(
+    _proxyContract: ethers.Contract,
+    _nestedPerpetualIDs: Array<Array<number>>,
+    _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _perpetualIdToSymbol: Map<number, string>,
+    _idxPriceMap: Map<string, [number, boolean]>
+  ): Promise<Map<string, number>> {
+    // what is the maximal number of queries at once?
+    const chunkSize = 10;
+    let perpetualIDChunks: Array<Array<number>> = PerpetualDataHandler.nestedIDsToChunks(
+      chunkSize,
+      _nestedPerpetualIDs
+    );
 
-        let markPremiumRate = ABK64x64ToFloat(perp.currentMarkPremiumRate.fPrice);
-        let currentFundingRateBps = 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate);
-        let state = PERP_STATE_STR[perp.state];
-        let isMktClosed = isS2MktClosed || isS3MktClosed;
-        if (state == "NORMAL" && isMktClosed) {
-          state = "CLOSED";
+    let midPriceMap = new Map<string, number>();
+    for (let k = 0; k < perpetualIDChunks.length; k++) {
+      let indexPrices: BigNumber[] = [];
+      // collect/order all index prices
+      for (let j = 0; j < perpetualIDChunks[k].length; j++) {
+        let id = perpetualIDChunks[k][j];
+        let symbol3s = _perpetualIdToSymbol.get(id);
+        let info = _symbolToPerpStaticInfo.get(symbol3s!);
+        let S2 = floatToABK64x64(_idxPriceMap.get(info!.S2Symbol)![0]);
+        let S3 = BigNumber.from(0);
+        if (info!.S3Symbol != "") {
+          S3 = floatToABK64x64(_idxPriceMap.get(info!.S3Symbol)![0]);
         }
-        let PerpetualState: PerpetualState = {
-          id: perp.id,
-          state: state,
-          baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY, _symbolList)!,
-          quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY, _symbolList)!,
-          indexPrice: indexS2,
-          collToQuoteIndexPrice: indexS3,
-          markPrice: indexS2 * (1 + markPremiumRate),
-          midPrice: ABK64x64ToFloat(fMidPrice),
-          currentFundingRateBps: currentFundingRateBps,
-          openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
-          isMarketClosed: isMktClosed,
-        };
-        PoolState.perpetuals.push(PerpetualState);
+        indexPrices.push(S2);
+        indexPrices.push(S3);
       }
-      info.pools.push(PoolState);
+      let fMidPrice = await _proxyContract.queryMidPrices(perpetualIDChunks[k], indexPrices);
+      for (let j = 0; j < fMidPrice.length; j++) {
+        let id = perpetualIDChunks[k][j];
+        let symbol3s = _perpetualIdToSymbol.get(id);
+        midPriceMap.set(symbol3s!, ABK64x64ToFloat(fMidPrice[j]));
+      }
     }
+    return midPriceMap;
+  }
+
+  private static async _queryPoolStates(
+    _proxyContract: ethers.Contract,
+    _poolStaticInfos: PoolStaticInfo[],
+    _numPools: number
+  ): Promise<Array<PoolState>> {
+    const chunkSize = 5;
+    let iFrom = 1;
+    let poolStates: Array<PoolState> = [];
+    while (iFrom <= _numPools) {
+      let pools = await _proxyContract.getLiquidityPools(iFrom, iFrom + chunkSize);
+      for (let k = 0; k < pools.length; k++) {
+        let poolSymbol = _poolStaticInfos[iFrom + k - 1].poolMarginSymbol;
+        let poolState: PoolState = {
+          isRunning: pools[k].isRunning,
+          poolSymbol: poolSymbol,
+          marginTokenAddr: pools[k].marginTokenAddress,
+          poolShareTokenAddr: pools[k].shareTokenAddress,
+          defaultFundCashCC: ABK64x64ToFloat(pools[k].fDefaultFundCashCC),
+          pnlParticipantCashCC: ABK64x64ToFloat(pools[k].fPnLparticipantsCashCC),
+          totalAMMFundCashCC: ABK64x64ToFloat(pools[k].fAMMFundCashCC),
+          totalTargetAMMFundSizeCC: ABK64x64ToFloat(pools[k].fTargetAMMFundSize),
+          brokerCollateralLotSize: ABK64x64ToFloat(pools[k].fBrokerCollateralLotSize),
+          perpetuals: [],
+        };
+        poolStates.push(poolState);
+      }
+      iFrom = iFrom + chunkSize + 1;
+    }
+    return poolStates;
+  }
+
+  private static async _queryPerpetualStates(
+    _proxyContract: ethers.Contract,
+    _nestedPerpetualIDs: Array<Array<number>>,
+    _symbolList: Map<string, string>
+  ) {
+    // what is the maximal number of queries at once?
+    const chunkSize = 10;
+    let perpetualIDChunks: Array<Array<number>> = PerpetualDataHandler.nestedIDsToChunks(
+      chunkSize,
+      _nestedPerpetualIDs
+    );
+    let perpStateInfos = new Array<PerpetualState>();
+    for (let k = 0; k < perpetualIDChunks.length; k++) {
+      let perps = await _proxyContract.getPerpetuals(perpetualIDChunks[k]);
+      for (let j = 0; j < perps.length; j++) {
+        let PerpetualState: PerpetualState = {
+          id: perps[j].id,
+          state: PERP_STATE_STR[perps[j].state],
+          baseCurrency: contractSymbolToSymbol(perps[j].S2BaseCCY, _symbolList)!,
+          quoteCurrency: contractSymbolToSymbol(perps[j].S2QuoteCCY, _symbolList)!,
+          indexPrice: 0, //fill later
+          collToQuoteIndexPrice: 0, //fill later
+          markPrice: ABK64x64ToFloat(perps[j].currentMarkPremiumRate.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
+          midPrice: 0, // fill later
+          currentFundingRateBps: 1e4 * ABK64x64ToFloat(perps[j].fCurrentFundingRate),
+          openInterestBC: ABK64x64ToFloat(perps[j].fOpenInterest),
+          isMarketClosed: false, //fill later
+        };
+        perpStateInfos.push(PerpetualState);
+      }
+    }
+    return perpStateInfos;
+  }
+
+  public static async _exchangeInfo(
+    _proxyContract: ethers.Contract,
+    _poolStaticInfos: Array<PoolStaticInfo>,
+    _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _perpetualIdToSymbol: Map<number, string>,
+    _nestedPerpetualIDs: Array<Array<number>>,
+    _symbolList: Map<string, string>,
+    _priceFeedGetter: PriceFeeds
+  ): Promise<ExchangeInfo> {
+    // get the factory address (shared among all pools)
+    let factory = _poolStaticInfos[0].oracleFactoryAddr;
+    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
+    const numPools = _nestedPerpetualIDs.length;
+
+    // get all prices from off-chain price-sources
+    let idxPriceMap = await MarketData._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter);
+    // query mid-prices from on-chain conditional on the off-chain prices
+    let midPriceMap: Map<string, number> = await MarketData._queryMidPrices(
+      _proxyContract,
+      _nestedPerpetualIDs,
+      _symbolToPerpStaticInfo,
+      _perpetualIdToSymbol,
+      idxPriceMap
+    );
+    let poolStateInfos = await MarketData._queryPoolStates(_proxyContract, _poolStaticInfos, numPools);
+    let perpStateInfos = await MarketData._queryPerpetualStates(_proxyContract, _nestedPerpetualIDs, _symbolList);
+    // put together all info
+    for (let k = 0; k < perpStateInfos.length; k++) {
+      const perp = perpStateInfos[k];
+      let symbol3s = _perpetualIdToSymbol.get(perp.id);
+      let info = _symbolToPerpStaticInfo.get(symbol3s!);
+      const idxPriceS2Pair = idxPriceMap.get(info!.S2Symbol);
+      let idxPriceS3Pair: [number, boolean] = [0, false];
+      perp.isMarketClosed = idxPriceS2Pair![1];
+      if (info!.S3Symbol != "") {
+        idxPriceS3Pair = idxPriceMap.get(info!.S3Symbol)!;
+        perp.isMarketClosed = perp.isMarketClosed || idxPriceS3Pair![1];
+      }
+      perp.indexPrice = idxPriceS2Pair![0];
+      perp.markPrice = idxPriceS2Pair![0] * (1 + perp.markPrice); // currently filled with mark premium rate
+      let indexS3 = 1;
+      if (info!.collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
+        indexS3 = idxPriceS2Pair![0];
+      } else if (info!.collateralCurrencyType == COLLATERAL_CURRENCY_QUANTO) {
+        indexS3 = idxPriceS3Pair[0];
+      }
+      perp.collToQuoteIndexPrice = indexS3;
+      perp.midPrice = midPriceMap.get(symbol3s!)!;
+      // which pool?
+      const poolId = info!.poolId;
+      poolStateInfos[poolId - 1].perpetuals.push(perp);
+    }
+    info.pools = poolStateInfos;
     return info;
   }
 }

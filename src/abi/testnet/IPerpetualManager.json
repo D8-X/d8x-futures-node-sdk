@@ -2929,6 +2929,127 @@
     {
         "inputs": [
             {
+                "internalType": "uint8",
+                "name": "_poolIdFrom",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint8",
+                "name": "_poolIdTo",
+                "type": "uint8"
+            }
+        ],
+        "name": "getLiquidityPools",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "bool",
+                        "name": "isRunning",
+                        "type": "bool"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "iPerpetualCount",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint8",
+                        "name": "id",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "iTargetPoolSizeUpdateTime",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "marginTokenAddress",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fFundAllocationNormalizationCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fDefaultFundCashCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "prevAnchor",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fRedemptionRate",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "shareTokenAddress",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fPnLparticipantsCashCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fAMMFundCashCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTargetAMMFundSize",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTargetDFSize",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fMaxTransferPerConvergencePeriod",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fBrokerCollateralLotSize",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint128",
+                        "name": "prevTokenAmount",
+                        "type": "uint128"
+                    },
+                    {
+                        "internalType": "uint128",
+                        "name": "nextTokenAmount",
+                        "type": "uint128"
+                    },
+                    {
+                        "internalType": "uint128",
+                        "name": "totalSupplyShareToken",
+                        "type": "uint128"
+                    }
+                ],
+                "internalType": "struct PerpStorage.LiquidityPoolData[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint24",
                 "name": "_perpetualId",
                 "type": "uint24"
@@ -3495,6 +3616,289 @@
                     }
                 ],
                 "internalType": "struct IPerpetualGetter.PerpetualStaticInfo[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24[]",
+                "name": "perpetualIds",
+                "type": "uint24[]"
+            }
+        ],
+        "name": "getPerpetuals",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "uint8",
+                        "name": "poolId",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint24",
+                        "name": "id",
+                        "type": "uint24"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fInitialMarginRate",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fMaintenanceMarginRate",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fSigma2",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iLastFundingTime",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iLastSettlementPriceUpdateTimestamp",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "enum PerpStorage.PerpetualState",
+                        "name": "state",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "enum AMMPerpLogic.CollateralCurrency",
+                        "name": "eCollateralCurrency",
+                        "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "minimalSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "incentiveSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "jumpSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "liquidationPenaltyRateTbps",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fSigma3",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S2BaseCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S2QuoteCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S3BaseCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "internalType": "bytes4",
+                        "name": "S3QuoteCCY",
+                        "type": "bytes4"
+                    },
+                    {
+                        "components": [
+                            {
+                                "internalType": "int128",
+                                "name": "fPrice",
+                                "type": "int128"
+                            },
+                            {
+                                "internalType": "uint64",
+                                "name": "time",
+                                "type": "uint64"
+                            }
+                        ],
+                        "internalType": "struct PerpStorage.OraclePriceData",
+                        "name": "currentMarkPremiumRate",
+                        "type": "tuple"
+                    },
+                    {
+                        "internalType": "int128[2]",
+                        "name": "fDFLambda",
+                        "type": "int128[2]"
+                    },
+                    {
+                        "internalType": "int128[2]",
+                        "name": "fCurrentAMMExposureEMA",
+                        "type": "int128[2]"
+                    },
+                    {
+                        "internalType": "int128[2]",
+                        "name": "fAMMTargetDD",
+                        "type": "int128[2]"
+                    },
+                    {
+                        "internalType": "int128[2]",
+                        "name": "fStressReturnS2",
+                        "type": "int128[2]"
+                    },
+                    {
+                        "internalType": "int128[2]",
+                        "name": "fStressReturnS3",
+                        "type": "int128[2]"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "premiumRatesEMA",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTargetDFSize",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fFundAllocationWeightCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fOpenInterest",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTargetAMMFundSize",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fCurrentTraderExposureEMA",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fCurrentFundingRate",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fUnitAccumulatedFunding",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fLotSizeBC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fkStar",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fAMMFundCashCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fAMMMinSizeCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fMinimalTraderExposureEMA",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fMinimalAMMExposureEMA",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fTotalMarginBalance",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fSettlementS3PriceData",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fReferralRebateCC",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "int128",
+                        "name": "fSettlementS2PriceData",
+                        "type": "int128"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iLastPriceJumpTimestamp",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iLastDefaultFundTransfer",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "iLastTargetPoolSizeTime",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fMarkPriceEMALambda",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fFundingRateClamp",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fMaximalTradeSizeBumpUp",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fRho23",
+                        "type": "int32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fDFCoverNRate",
+                        "type": "int32"
+                    }
+                ],
+                "internalType": "struct PerpStorage.PerpetualData[]",
                 "name": "",
                 "type": "tuple[]"
             }
@@ -4194,6 +4598,30 @@
                 "internalType": "uint16",
                 "name": "",
                 "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24[]",
+                "name": "perpetualIds",
+                "type": "uint24[]"
+            },
+            {
+                "internalType": "int128[]",
+                "name": "idxPriceDataPairs",
+                "type": "int128[]"
+            }
+        ],
+        "name": "queryMidPrices",
+        "outputs": [
+            {
+                "internalType": "int128[]",
+                "name": "",
+                "type": "int128[]"
             }
         ],
         "stateMutability": "view",
