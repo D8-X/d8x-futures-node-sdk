@@ -2283,37 +2283,41 @@ No gas required for the queries here.</p>
 
 * [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
-    * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
-    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
-    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
-    * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
-    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
-    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
-    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
-    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
-    * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-    * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
-    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
-    * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
-    * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
-    * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
-    * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
-    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
-    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
-    * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-    * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
-    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
-    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
-    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
-    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
-    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
-    * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
-    * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
-    * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
-    * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * _instance_
+        * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
+        * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
+        * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
+        * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
+        * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
+        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
+        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
+        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+        * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
+        * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+        * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
+        * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+        * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
+        * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
+        * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
+        * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
+        * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
+        * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
+        * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+        * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+        * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+        * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+        * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+        * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+        * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
+        * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
+        * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+        * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+        * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * _static_
+        * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
+        * [._queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap)](#MarketData._queryMidPrices) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -2845,6 +2849,35 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="MarketData._getAllIndexPrices"></a>
+
+### MarketData.\_getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter) ⇒
+<p>Get all off-chain prices</p>
+
+**Kind**: static method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>mapping of symbol-pair (e.g. BTC-USD) to price/isMarketClosed</p>  
+
+| Param | Description |
+| --- | --- |
+| _symbolToPerpStaticInfo | <p>mapping: PerpetualStaticInfo for each perpetual</p> |
+| _priceFeedGetter | <p>priceFeed class from which we can get offchain price data</p> |
+
+<a name="MarketData._queryMidPrices"></a>
+
+### MarketData.\_queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap) ⇒
+<p>Collect all mid-prices</p>
+
+**Kind**: static method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>perpetual symbol to mid-prices mapping</p>  
+
+| Param | Description |
+| --- | --- |
+| _proxyContract | <p>contract instance</p> |
+| _nestedPerpetualIDs | <p>contains all perpetual ids for each pool</p> |
+| _symbolToPerpStaticInfo | <p>maps symbol to static info</p> |
+| _perpetualIdToSymbol | <p>maps perpetual id to symbol of the form BTC-USD-MATIC</p> |
+| _idxPriceMap | <p>symbol to price/market closed</p> |
+
 <a name="OrderReferrerTool"></a>
 
 ## OrderReferrerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -3339,7 +3372,6 @@ common data and chain operations.</p>
         * [.nestedIDsToChunks(chunkSize, nestedIDs)](#PerpetualDataHandler.nestedIDsToChunks) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
         * [._calculateLiquidationPrice(symbol, traderState, S2, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
         * [.symbolToPerpetualId(symbol, symbolToPerpStaticInfo)](#PerpetualDataHandler.symbolToPerpetualId) ⇒
-        * [.perpetualIdToSymbol(id, symbolToPerpStaticInfo)](#PerpetualDataHandler.perpetualIdToSymbol) ⇒
         * [.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap)](#PerpetualDataHandler.toSmartContractOrder) ⇒
         * [.fromSmartContratOrderToClientOrder(scOrder, parentChildIds)](#PerpetualDataHandler.fromSmartContratOrderToClientOrder) ⇒
         * [.toClientOrder(order, parentChildIds)](#PerpetualDataHandler.toClientOrder) ⇒
@@ -3537,19 +3569,6 @@ token names into bytes4 representation
 | --- | --- |
 | symbol | <p>symbol (e.g., BTC-USD-MATC)</p> |
 | symbolToPerpStaticInfo | <p>map that contains the bytes4-symbol to PerpetualStaticInfo including id mapping</p> |
-
-<a name="PerpetualDataHandler.perpetualIdToSymbol"></a>
-
-### PerpetualDataHandler.perpetualIdToSymbol(id, symbolToPerpStaticInfo) ⇒
-<p>Find the long symbol (&quot;ETH-USD-MATIC&quot;) of the given perpetual id</p>
-
-**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
-**Returns**: <p>symbol string or undefined</p>  
-
-| Param | Description |
-| --- | --- |
-| id | <p>perpetual id</p> |
-| symbolToPerpStaticInfo | <p>map that contains the bytes4-symbol to PerpetualStaticInfo</p> |
 
 <a name="PerpetualDataHandler.toSmartContractOrder"></a>
 
