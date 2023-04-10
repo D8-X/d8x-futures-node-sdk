@@ -53,9 +53,10 @@ export default class PerpetualDataHandler {
   PRICE_UPDATE_FEE_GWEI = 1;
   //map symbol of the form ETH-USD-MATIC into perpetual ID and other static info
   //this is initialized in the createProxyInstance function
-  protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>;
+  protected symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>; // maps symbol of the form BTC-USD-MATIC to static info
+  protected perpetualIdToSymbol: Map<number, string>; // maps unique perpetual id to symbol of the form BTC-USD-MATIC
   protected poolStaticInfos: Array<PoolStaticInfo>;
-  protected symbolList: Map<string, string>;
+  protected symbolList: Map<string, string>; //mapping 4-digit symbol <-> long format
 
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
@@ -84,6 +85,7 @@ export default class PerpetualDataHandler {
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
+    this.perpetualIdToSymbol = new Map<number, string>();
     this.nestedPerpetualIDs = new Array<Array<number>>();
     this.chainId = config.chainId;
     this.proxyAddr = config.proxyAddr;
@@ -198,6 +200,11 @@ export default class PerpetualDataHandler {
     // the prices of price-feeds to the index price required, e.g.
     // BTC-USDC : BTC-USD / USDC-USD
     this.priceFeedGetter.initializeTriangulations(requiredPairs);
+
+    // fill this.perpetualIdToSymbol
+    for (let [key, info] of this.symbolToPerpStaticInfo) {
+      this.perpetualIdToSymbol.set(info.id, key);
+    }
   }
 
   /**
@@ -232,7 +239,7 @@ export default class PerpetualDataHandler {
    * @param perpId perpetual id
    */
   public getSymbolFromPerpId(perpId: number): string | undefined {
-    return PerpetualDataHandler.perpetualIdToSymbol(perpId, this.symbolToPerpStaticInfo);
+    return this.perpetualIdToSymbol.get(perpId);
   }
 
   public symbol4BToLongSymbol(sym: string): string {
@@ -340,7 +347,7 @@ export default class PerpetualDataHandler {
         let base3 = contractSymbolToSymbol(perpInfos[j].S3BaseCCY, symbolList);
         let quote3 = contractSymbolToSymbol(perpInfos[j].S3QuoteCCY, symbolList);
         let sym2 = base + "-" + quote;
-        let sym3 = base3 + "-" + quote3;
+        let sym3 = base3 == "" ? "" : base3 + "-" + quote3;
         let info: PerpetualStaticInfo = {
           id: perpInfos[j].id,
           poolId: Math.floor(perpInfos[j].id / 100_000), //uint24(_iPoolId) * 100_000 + iPerpetualIndex;
@@ -615,25 +622,6 @@ export default class PerpetualDataHandler {
       throw Error(`No perpetual found for symbol ${symbol}`);
     }
     return id;
-  }
-
-  /**
-   * Find the long symbol ("ETH-USD-MATIC") of the given perpetual id
-   * @param id perpetual id
-   * @param symbolToPerpStaticInfo map that contains the bytes4-symbol to PerpetualStaticInfo
-   * @returns symbol string or undefined
-   */
-  protected static perpetualIdToSymbol(
-    id: number,
-    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
-  ): string | undefined {
-    let symbol;
-    for (symbol of symbolToPerpStaticInfo.keys()) {
-      if (symbolToPerpStaticInfo.get(symbol)?.id == id) {
-        return symbol;
-      }
-    }
-    return undefined;
   }
 
   protected static symbolToBytes4Symbol(symbol: string): string {
