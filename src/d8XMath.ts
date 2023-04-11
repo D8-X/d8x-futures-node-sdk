@@ -6,6 +6,17 @@ import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
  */
 
 /**
+ * Convert ABK64x64/2^35 bigint-format to float.
+ * Divide by 2^64 to get a float, but it's already "divided" by 2^35,
+ * so there's only 2^29 left
+ * @param  {BigNumber|number} x number in ABDK-format/2^35
+ * @returns {number} x/2^64 in number-format (float)
+ */
+export function ABDK29ToFloat(x: BigNumber | number): number {
+  return Number(x) / 2 ** 29;
+}
+
+/**
  * Convert ABK64x64 bigint-format to float.
  * Result = x/2^64 if big number, x/2^29 if number
  * @param  {BigNumber|number} x number in ABDK-format or 2^29

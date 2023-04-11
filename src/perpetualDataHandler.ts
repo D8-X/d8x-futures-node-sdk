@@ -37,6 +37,7 @@ import {
 import { to4Chars, combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol } from "./utils";
 import {
   ABK64x64ToFloat,
+  ABDK29ToFloat,
   floatToABK64x64,
   div64x64,
   calculateLiquidationPriceCollateralQuanto,
@@ -352,8 +353,8 @@ export default class PerpetualDataHandler {
           id: perpInfos[j].id,
           poolId: Math.floor(perpInfos[j].id / 100_000), //uint24(_iPoolId) * 100_000 + iPerpetualIndex;
           limitOrderBookAddr: perpInfos[j].limitOrderBookAddr,
-          initialMarginRate: ABK64x64ToFloat(perpInfos[j].fInitialMarginRate),
-          maintenanceMarginRate: ABK64x64ToFloat(perpInfos[j].fMaintenanceMarginRate),
+          initialMarginRate: ABDK29ToFloat(perpInfos[j].fInitialMarginRate),
+          maintenanceMarginRate: ABDK29ToFloat(perpInfos[j].fMaintenanceMarginRate),
           collateralCurrencyType: perpInfos[j].collCurrencyType,
           S2Symbol: sym2,
           S3Symbol: sym3,
