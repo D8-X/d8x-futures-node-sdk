@@ -7,6 +7,9 @@ import {
   SELL_SIDE,
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
+  PriceFeedSubmission,
+  ClientOrder,
+  SmartContractOrder,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -18,7 +21,7 @@ import WriteAccessHandler from "./writeAccessHandler";
  * @extends WriteAccessHandler
  */
 export default class OrderReferrerTool extends WriteAccessHandler {
-  static BLOCK_DELAY = 2;
+  static TRADE_DELAY = 5;
   /**
    * Constructor.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
@@ -40,14 +43,17 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    */
   public constructor(config: NodeSDKConfig, privateKey: string) {
     super(config, privateKey);
+    // override parent's gas limit with a lower number
+    this.gasLimit = 3_000_000;
   }
 
   /**
    * Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
-   * @param {string=} referrerAddr Address of the wallet to be credited for executing the order,
-   * if different from the one submitting this transaction.
+   * @param {string=} referrerAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {number=} nonce optional nonce
+   * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
    * @example
    * import { OrderReferrerTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
    * async function main() {
@@ -79,7 +85,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     symbol: string,
     orderId: string,
     referrerAddr?: string,
-    nonce?: number
+    nonce?: number,
+    submission?: PriceFeedSubmission
   ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -88,8 +95,52 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof referrerAddr == "undefined") {
       referrerAddr = this.traderAddr;
     }
-    const options = { gasLimit: this.gasLimit, nonce: nonce };
-    return await orderBookSC.executeOrder(orderId, referrerAddr, options);
+    if (submission == undefined) {
+      submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    }
+    const options = {
+      gasLimit: this.gasLimit,
+      nonce: nonce,
+      value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
+    };
+    return await orderBookSC.executeOrder(
+      orderId,
+      referrerAddr,
+      submission?.priceFeedVaas,
+      submission?.timestamps,
+      options
+    );
+  }
+
+  public async executeOrders(
+    symbol: string,
+    orderIds: string[],
+    referrerAddr?: string,
+    nonce?: number,
+    submission?: PriceFeedSubmission
+  ): Promise<ethers.ContractTransaction> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    const orderBookSC = this.getOrderBookContract(symbol);
+    if (typeof referrerAddr == "undefined") {
+      referrerAddr = this.traderAddr;
+    }
+    if (submission == undefined) {
+      submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    }
+    const options = {
+      gasLimit: this.gasLimit,
+      nonce: nonce,
+      value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
+    };
+    return await orderBookSC.executeOrders(
+      orderIds,
+      referrerAddr,
+      submission?.priceFeedVaas,
+      submission?.timestamps,
+      options
+    );
   }
 
   /**
@@ -170,7 +221,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    */
   public async getOrderById(symbol: string, id: string): Promise<Order | undefined> {
     let ob = await this.getOrderBookContract(symbol);
-    let smartContractOrder = await ob.orderOfDigest(id);
+    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id);
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
     }
@@ -209,12 +260,14 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
-    let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
+    let orders: ClientOrder[];
+    let orderIds: string[];
+    [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
     let userFriendlyOrders: Order[] = new Array<Order>();
     let orderIdsOut = [];
     let k = 0;
     while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
-      userFriendlyOrders.push(WriteAccessHandler.fromSmartContractOrder(orders[k], this.symbolToPerpStaticInfo));
+      userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
       k++;
     }
@@ -224,6 +277,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   /**
    * Check if a conditional order can be executed
    * @param order order structure
+   * @param indexPrices pair of index prices S2 and S3. S3 set to zero if not required. If undefined
+   * the function will fetch the latest prices from the REST API
    * @example
    * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -241,26 +296,46 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * main();
    * @returns true if order can be executed for the current state of the perpetuals
    */
-  public async isTradeable(order: Order): Promise<boolean> {
+  public async isTradeable(order: Order, blockTimestamp?: number, indexPrices?: [number, number]): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    if (indexPrices == undefined) {
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
     let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
       order.symbol,
       order.quantity,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
     let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
       order.symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      indexPrices
     );
-    let block = await this.provider!.getBlockNumber();
-    return OrderReferrerTool._isTradeable(order, orderPrice, markPrice, block, this.symbolToPerpStaticInfo);
+    if (blockTimestamp == undefined) {
+      const currentBlock = await this.provider!.getBlockNumber();
+      blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
+    }
+    return await this._isTradeable(order, orderPrice, markPrice, blockTimestamp, this.symbolToPerpStaticInfo);
   }
 
-  public async isTradeableBatch(orders: Order[]): Promise<boolean[]> {
+  /**
+   * Check for a batch of orders on the same perpetual whether they can be traded
+   * @param orders orders belonging to 1 perpetual
+   * @param indexPrice S2,S3-index prices for the given perpetual. Will fetch prices from REST API
+   * if not defined.
+   * @returns array of tradeable boolean
+   */
+  public async isTradeableBatch(
+    orders: Order[],
+    blockTimestamp?: number,
+    indexPrices?: [number, number, boolean, boolean]
+  ): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
     }
@@ -270,68 +345,118 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (orders.filter((o) => o.symbol == orders[0].symbol).length < orders.length) {
       throw Error("all orders in a batch must have the same symbol");
     }
+    if (indexPrices == undefined) {
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(orders[0].symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
+    }
+    if (indexPrices[2] || indexPrices[3]) {
+      // market closed
+      return orders.map(() => false);
+    }
+
     let orderPrice = await Promise.all(
       orders.map((o) =>
         PerpetualDataHandler._queryPerpetualPrice(
           o.symbol,
           o.quantity,
           this.symbolToPerpStaticInfo,
-          this.proxyContract!
+          this.proxyContract!,
+          [indexPrices![0], indexPrices![1]]
         )
       )
     );
     let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
       orders[0].symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract
+      this.proxyContract,
+      [indexPrices![0], indexPrices![1]]
     );
-    let block = await this.provider!.getBlockNumber();
-    return orders.map((o, idx) =>
-      OrderReferrerTool._isTradeable(o, orderPrice[idx], markPrice, block, this.symbolToPerpStaticInfo)
+    if (blockTimestamp == undefined) {
+      const currentBlock = await this.provider!.getBlockNumber();
+      blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
+    }
+    return await orders.map((o, idx) =>
+      this._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo)
     );
   }
 
-  public static _isTradeable(
+  protected _isTradeable(
     order: Order,
-    orderPrice: number,
+    tradePrice: number,
     markPrice: number,
-    block: number,
+    blockTimestamp: number,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): boolean {
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
+      console.log("order expired");
       return false;
     }
 
-    if (order.submittedBlock == undefined || order.submittedBlock + this.BLOCK_DELAY > block) {
+    // -1 because order is executed on the next block (+1)
+    if (
+      order.submittedTimestamp != undefined &&
+      order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY < blockTimestamp - 1
+    ) {
+      console.log(
+        `on hold for ${blockTimestamp - 1 - order.submittedTimestamp - OrderReferrerTool.TRADE_DELAY} seconds`
+      );
       return false;
     }
 
     // check order size
-    if (order.quantity < PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap)) {
+    const lotSize = PerpetualDataHandler._getLotSize(order.symbol, symbolToPerpInfoMap);
+    if (order.quantity < lotSize) {
+      // console.log(`order size too small: ${order.quantity} < ${lotSize}`);
       return false;
     }
     // check limit price: fromSmartContractOrder will set it to undefined when not tradeable
     if (order.limitPrice == undefined) {
+      // console.log("limit price undefined");
       return false;
     }
     let limitPrice = order.limitPrice!;
-    if ((order.side == BUY_SIDE && orderPrice > limitPrice) || (order.side == SELL_SIDE && orderPrice < limitPrice)) {
+    if ((order.side == BUY_SIDE && tradePrice > limitPrice) || (order.side == SELL_SIDE && tradePrice < limitPrice)) {
+      // console.log(`limit price not met: ${limitPrice} ${order.side} @ ${tradePrice}`);
       return false;
     }
-    // do we need to check trigger/stop?
-    if (order.stopPrice == undefined) {
-      // nothing to check, order is tradeable
-      return true;
-    }
+    // check stop price
     if (
-      (order.side == BUY_SIDE && markPrice < order.stopPrice) ||
-      (order.side == SELL_SIDE && markPrice > order.stopPrice)
+      order.stopPrice != undefined &&
+      ((order.side == BUY_SIDE && markPrice < order.stopPrice) ||
+        (order.side == SELL_SIDE && markPrice > order.stopPrice))
     ) {
+      // console.log("stop price not met");
       return false;
+    }
+    //check dependency
+    if (
+      order.parentChildOrderIds != undefined &&
+      order.parentChildOrderIds[0] == ethers.constants.HashZero &&
+      order.parentChildOrderIds[1] != ethers.constants.HashZero
+    ) {
+      // order has a parent
+      const orderBookContract = this.getOrderBookContract(order.symbol);
+      return orderBookContract.getOrderStatus(order.parentChildOrderIds[1]).then((status: number) => {
+        if (status == 2 || status == 3) {
+          // console.log("parent not executed/cancelled");
+          // parent is open or unknown
+          return false;
+        }
+        return true;
+      });
     }
     // all checks passed -> order is tradeable
     return true;
+  }
+
+  /**
+   * Wrapper of static method to use after mappings have been loaded into memory.
+   * @param scOrder Perpetual order as received in the proxy events.
+   * @returns A user-friendly order struct.
+   */
+  public smartContractOrderToOrder(scOrder: SmartContractOrder): Order {
+    return PerpetualDataHandler.fromSmartContractOrder(scOrder, this.symbolToPerpStaticInfo);
   }
 
   public async getTransactionCount(blockTag?: ethers.providers.BlockTag): Promise<number> {

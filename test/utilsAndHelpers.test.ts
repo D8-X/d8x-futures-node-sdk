@@ -1,7 +1,6 @@
 import {
   NodeSDKConfig,
   Order,
-  SmartContractOrder,
   ORDER_TYPE_STOP_LIMIT,
   ORDER_TYPE_LIMIT,
   ORDER_TYPE_MARKET,
@@ -11,10 +10,9 @@ import {
   MASK_KEEP_POS_LEVERAGE,
   MASK_CLOSE_ONLY,
   MASK_MARKET_ORDER,
-  MAX_64x64,
+  SYMBOL_LIST,
 } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
-import AccountTrade from "../src/accountTrade";
 import {
   to4Chars,
   symbol4BToLongSymbol,
@@ -26,18 +24,64 @@ import {
   symbolToContractSymbol,
   contractSymbolToSymbol,
 } from "../src/utils";
-import { BigNumber, ethers } from "ethers";
+import { roundToLotString, countDecimalsOf } from "../src/d8XMath";
+import { BigNumber } from "ethers";
 
-let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
-const myAddress = new ethers.Wallet(pk).address;
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
 
 describe("utils", () => {
+  it("countDecimalsOf", async function () {
+    let x = [0.12349999, 52.1999999999999, 0.123212, 52.100000001111111, 0.12349999];
+    let resExp = [4, 1, 6, 1];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = countDecimalsOf(x[k], 7);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+
+  it("round to lot (small lot)", async function () {
+    let lot = 0.01999999;
+    let x = [99.99, 52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["100.00", "52.12", "52.10", "52.14"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+  it("round to lot (small lot)", async function () {
+    let lot = 0.00999999;
+    let x = [99.99, 52.123212, 52.100000001111111, 52.1340000990000001];
+    let resExp = ["99.99", "52.12", "52.10", "52.13"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+  it("round to lot (small lot 2)", async function () {
+    let lot = 0.0199;
+    let x = [52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["52.12", "52.10", "52.14"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
+  it("round to lot (large lot)", async function () {
+    let lot = 26;
+    let x = [52.123212, 52.100000001111111, 52.1360000990000001];
+    let resExp = ["52", "52", "52"];
+    for (let k = 0; k < resExp.length; k++) {
+      let res = roundToLotString(x[k], lot);
+      expect(res).toEqual(resExp[k]);
+    }
+  });
   it("read config", async function () {
-    config = PerpetualDataHandler.readSDKConfig("../config/defaultConfig.json");
+    // get config by chain id (latest version)
+    const chainId = 80001;
+    config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -131,7 +175,7 @@ describe("utils", () => {
   });
 
   it("symbol4BToLongSymbol", async () => {
-    let symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    let symbolList = SYMBOL_LIST;
     // add fake ccy with clash
     symbolList.set("MXTC", "MATUC");
     // add actual liquid staked matic
@@ -152,7 +196,7 @@ describe("utils", () => {
   });
 
   it("symbol <-> contract symbol", async () => {
-    let symbolList = new Map<string, string>(Object.entries(require(config.symbolListLocation)));
+    let symbolList = new Map(SYMBOL_LIST);
     // add fake ccy with clash
     symbolList.set("MXTC", "MATUC");
     // add actual liquid staked matic
@@ -172,24 +216,6 @@ describe("utils", () => {
       expect(isEqual).toBeTruthy();
     }
   });
-
-  function flagToOrderTypeCOPY(order: SmartContractOrder): string {
-    let flag = BigNumber.from(order.flags);
-    let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
-    let hasLimit = !BigNumber.from(order.fLimitPrice).eq(0) || !BigNumber.from(order.fLimitPrice).eq(MAX_64x64);
-    let isStop = containsFlag(flag, MASK_STOP_ORDER);
-
-    if (isStop && hasLimit) {
-      return ORDER_TYPE_STOP_LIMIT;
-    } else if (isStop && !hasLimit) {
-      return ORDER_TYPE_STOP_MARKET;
-    } else if (isLimit && !isStop) {
-      return ORDER_TYPE_LIMIT;
-    } else {
-      return ORDER_TYPE_MARKET;
-    }
-  }
-
   function toHexString(byteArray: Buffer): string {
     return (
       "0x" +

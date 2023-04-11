@@ -8,10 +8,12 @@ import {
   PerpetualStaticInfo,
   SmartContractOrder,
   ZERO_ADDRESS,
+  PriceFeedSubmission,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
 import WriteAccessHandler from "./writeAccessHandler";
+import { Buffer } from "buffer";
 
 /**
  * Functions to create, submit and cancel orders on the exchange.
@@ -68,21 +70,22 @@ export default class AccountTrade extends WriteAccessHandler {
    *  main();
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
-  public async cancelOrder(symbol: string, orderId: string): Promise<ethers.ContractTransaction> {
+  public async cancelOrder(
+    symbol: string,
+    orderId: string,
+    submission?: PriceFeedSubmission
+  ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    if (submission == undefined) {
+      submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
     let orderBookContract: ethers.Contract | null = null;
     orderBookContract = this.getOrderBookContract(symbol);
 
-    return await this._cancelOrder(symbol, orderId, orderBookContract);
+    return await this._cancelOrder(symbol, orderId, orderBookContract, submission);
   }
-
-  /*
-    TODO: -deposit (margin into account)
-          -withdraw margin withdraw(uint24 _iPerpetualId, int128 _fAmount)
-
-  */
 
   /**
    * Submits an order to the exchange.
@@ -142,7 +145,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
-  public async order(order: Order): Promise<OrderResponse> {
+  public async order(order: Order, parentChildIds?: [string, string]): Promise<OrderResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -159,7 +162,8 @@ export default class AccountTrade extends WriteAccessHandler {
       orderBookContract,
       this.chainId,
       this.signer,
-      this.gasLimit
+      this.gasLimit,
+      parentChildIds
     );
     return res;
   }
@@ -278,16 +282,18 @@ export default class AccountTrade extends WriteAccessHandler {
     proxyContract: ethers.Contract,
     orderBookContract: ethers.Contract,
     chainId: number,
-    signer: ethers.Wallet,
-    gasLimit: number
+    signer: ethers.Signer,
+    gasLimit: number,
+    parentChildIds?: [string, string]
   ): Promise<OrderResponse> {
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap);
+    let clientOrder = AccountTrade.fromSmartContratOrderToClientOrder(scOrder, parentChildIds);
     // if we are here, we have a clean order
     // decide whether to send order to Limit Order Book or AMM based on order type
     let tx: ethers.ContractTransaction;
     // all orders are sent to the order-book
     let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-    tx = await orderBookContract.postOrder(scOrder, signature, { gasLimit: gasLimit });
+    tx = await orderBookContract.postOrder(clientOrder, signature, { gasLimit: gasLimit });
     let id = await this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };
   }
@@ -295,14 +301,20 @@ export default class AccountTrade extends WriteAccessHandler {
   protected async _cancelOrder(
     symbol: string,
     orderId: string,
-    orderBookContract: ethers.Contract | null
+    orderBookContract: ethers.Contract | null,
+    submission?: PriceFeedSubmission
   ): Promise<ethers.ContractTransaction> {
     if (orderBookContract == null || this.signer == null) {
       throw Error(`Order Book contract for symbol ${symbol} or signer not defined`);
     }
+    if (submission == undefined) {
+      submission = await this.fetchLatestFeedPriceInfo(symbol);
+    }
     let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
-    let [signature, digest] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
-    return await orderBookContract.cancelOrder(orderId, signature);
+    let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
+    return await orderBookContract.cancelOrder(orderId, signature, submission.priceFeedVaas, submission.timestamps, {
+      value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+    });
   }
 
   /**
@@ -319,7 +331,7 @@ export default class AccountTrade extends WriteAccessHandler {
     order: SmartContractOrder,
     chainId: number,
     isNewOrder: boolean,
-    signer: ethers.Wallet,
+    signer: ethers.Signer,
     proxyAddress: string
   ): Promise<string[]> {
     let digest = await this.digestTool.createDigest(order, chainId, isNewOrder, proxyAddress);
@@ -333,13 +345,23 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} amount How much collateral to add, in units of collateral currency, e.g. MATIC
    */
-  public async addCollateral(symbol: string, amount: number): Promise<ethers.ContractTransaction> {
+  public async addCollateral(
+    symbol: string,
+    amount: number,
+    submission?: PriceFeedSubmission
+  ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    return await this.proxyContract.deposit(perpId, fAmountCC);
+    if (submission == undefined) {
+      submission = await this.fetchLatestFeedPriceInfo(symbol);
+    }
+    return await this.proxyContract.deposit(perpId, fAmountCC, submission.priceFeedVaas, submission.timestamps, {
+      gasLimit: this.gasLimit,
+      value: this.PRICE_UPDATE_FEE_GWEI * submission.priceFeedVaas.length,
+    });
   }
 
   /**
@@ -347,12 +369,22 @@ export default class AccountTrade extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} amount How much collateral to remove, in units of collateral currency, e.g. MATIC
    */
-  public async removeCollateral(symbol: string, amount: number): Promise<ethers.ContractTransaction> {
+  public async removeCollateral(
+    symbol: string,
+    amount: number,
+    submission?: PriceFeedSubmission
+  ): Promise<ethers.ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let perpId = this.getPerpIdFromSymbol(symbol);
     let fAmountCC = floatToABK64x64(amount);
-    return await this.proxyContract.withdraw(perpId, fAmountCC);
+    if (submission == undefined) {
+      submission = await this.fetchLatestFeedPriceInfo(symbol);
+    }
+    return await this.proxyContract.withdraw(perpId, fAmountCC, submission.priceFeedVaas, submission.timestamps, {
+      gasLimit: this.gasLimit,
+      value: this.PRICE_UPDATE_FEE_GWEI * submission.priceFeedVaas.length,
+    });
   }
 }

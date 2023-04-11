@@ -116,7 +116,9 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   }
 
   /**
-   * Remove liquidity from the pool. The address loses pool shares in return.
+   * Initiates a liquidity withdrawal from the pool
+   * It triggers a time-delayed unlocking of the given number of pool shares.
+   * The amount of pool shares to be unlocked is fixed by this call, but not their value in pool currency.
    * @param {string} poolSymbolName Name of pool symbol (e.g. MATIC).
    * @param {string} amountPoolShares Amount in pool-shares, removes everything if > available amount.
    * @example
@@ -128,15 +130,15 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
    *   await lqudtProviderTool.createProxyInstance();
-   *   // remove liquidity
-   *   let respRemoveLiquidity = await lqudtProviderTool.removeLiquidity("MATIC", 0.1);
+   *   // initiate withdrawal
+   *   let respRemoveLiquidity = await lqudtProviderTool.initiateLiquidityWithdrawal("MATIC", 0.1);
    *   console.log(respRemoveLiquidity);
    * }
    * main();
    *
    * @return Transaction object.
    */
-  public async removeLiquidity(
+  public async initiateLiquidityWithdrawal(
     poolSymbolName: string,
     amountPoolShares: number
   ): Promise<ethers.providers.TransactionResponse> {
@@ -144,7 +146,39 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.removeLiquidity(poolId, floatToDec18(amountPoolShares), {
+    let tx = await this.proxyContract.withdrawLiquidity(poolId, floatToDec18(amountPoolShares), {
+      gasLimit: this.gasLimit,
+    });
+    return tx;
+  }
+
+  /**
+   * Withdraws as much liquidity as there is available after a call to initiateLiquidityWithdrawal.
+   * The address loses pool shares in return.
+   * @param poolSymbolName
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance();
+   *   // remove liquidity
+   *   let respRemoveLiquidity = await lqudtProviderTool.executeLiquidityWithdrawal("MATIC", 0.1);
+   *   console.log(respRemoveLiquidity);
+   * }
+   * main();
+   *
+   * @returns Transaction object.
+   */
+  public async executeLiquidityWithdrawal(poolSymbolName: string): Promise<ethers.providers.TransactionResponse> {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let tx = await this.proxyContract.executeLiquidityWithdrawal(poolId, {
       gasLimit: this.gasLimit,
     });
     return tx;

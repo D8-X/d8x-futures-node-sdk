@@ -1,0 +1,36 @@
+[
+  {
+    "name": "testnet",
+    "chainId": 80001,
+    "version": 6,
+    "proxyAddr": "0xDEDf0dd46757cE93E0D9439F78382c0c68cF76C2",
+    "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
+    "priceFeedConfigNetwork": "testnet",
+    "proxyABILocation": "testnet/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "testnet/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "testnet/LimitOrderBook.json"
+  },
+  {
+    "name": "mainnet",
+    "chainId": 137,
+    "version": 0,
+    "proxyAddr": "",
+    "nodeURL": "",
+    "priceFeedConfigNetwork": "mainnet",
+    "proxyABILocation": "",
+    "limitOrderBookFactoryAddr": "",
+    "limitOrderBookFactoryABILocation": "",
+    "limitOrderBookABILocation": ""
+  },
+  {
+    "name": "zkevmTestnet",
+    "chainId": 1442,
+    "version": 0,
+    "proxyAddr": "0xb56b81e40e1cDB77bb5Db6C0283e25C27DAE1Be6",
+    "nodeURL": "https://rpc.public.zkevm-test.net ",
+    "priceFeedConfigNetwork": "testnet",
+    "proxyABILocation": "zkevmTestnet/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "zkevmTestnet/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "zkevmTestnet/LimitOrderBook.json"
+  }
+]

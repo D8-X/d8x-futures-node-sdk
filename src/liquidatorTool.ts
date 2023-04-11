@@ -1,6 +1,7 @@
 import WriteAccessHandler from "./writeAccessHandler";
-import { NodeSDKConfig } from "./nodeSDKTypes";
+import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import { ethers } from "ethers";
+import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 
 /**
  * Functions to liquidate traders. This class requires a private key
@@ -37,6 +38,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader to be liquidated.
    * @param {string=} liquidatorAddr Address to be credited if the liquidation succeeds.
+   * @param {PriceFeedSubmission} priceFeedData optional. VAA and timestamps for oracle. If not provided will query from REST API.
    * Defaults to the wallet used to execute the liquidation.
    * @example
    * import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -59,7 +61,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
   public async liquidateTrader(
     symbol: string,
     traderAddr: string,
-    liquidatorAddr: string = ""
+    liquidatorAddr: string = "",
+    priceFeedData?: PriceFeedSubmission
   ): Promise<ethers.ContractTransaction> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
@@ -70,7 +73,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
       liquidatorAddr = this.traderAddr;
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, this.gasLimit);
+    if (priceFeedData == undefined) {
+      priceFeedData = await this.fetchLatestFeedPriceInfo(symbol);
+    }
+    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, {
+      gasLimit: this.gasLimit,
+      value: this.PRICE_UPDATE_FEE_GWEI * priceFeedData.priceFeedVaas.length,
+    });
   }
 
   /**
@@ -78,6 +87,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * If not, the position can be liquidated.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} traderAddr Address of the trader whose position you want to assess.
+   * @param {number[]} indexPrices optional, index price S2/S3 for which we test
    * @example
    * import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -97,18 +107,42 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @returns {boolean} True if the trader is maintenance margin safe in the perpetual.
    * False means that the trader's position can be liquidated.
    */
-  public async isMaintenanceMarginSafe(symbol: string, traderAddr: string): Promise<boolean> {
+  public async isMaintenanceMarginSafe(
+    symbol: string,
+    traderAddr: string,
+    indexPrices?: [number, number]
+  ): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const idx_notional = 4;
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr);
+    if (indexPrices == undefined) {
+      // fetch from API
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
+    }
+    let traderState = await this.proxyContract.getTraderState(
+      perpID,
+      traderAddr,
+      indexPrices.map((x) => floatToABK64x64(x))
+    );
     if (traderState[idx_notional] == 0) {
       // trader does not have open position
-      return false;
+      return true;
     }
-    return await this.proxyContract.isTraderMaintenanceMarginSafe(perpID, traderAddr);
+    // calculate margin from traderstate
+    const idx_maintenanceMgnRate = 10;
+    const idx_marginAccountPositionBC = 4;
+    const idx_collateralToQuoteConversion = 9;
+    const idx_marginBalance = 0;
+    const maintMgnRate = ABK64x64ToFloat(traderState[idx_maintenanceMgnRate]);
+    const pos = ABK64x64ToFloat(traderState[idx_marginAccountPositionBC]);
+    const marginbalance = ABK64x64ToFloat(traderState[idx_marginBalance]);
+    const coll2quote = ABK64x64ToFloat(traderState[idx_collateralToQuoteConversion]);
+    const base2collateral = indexPrices[0] / coll2quote;
+    const threshold = Math.abs(pos * base2collateral * maintMgnRate);
+    return marginbalance >= threshold;
   }
 
   /**
@@ -116,13 +150,25 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param perpetualId Perpetual id.
    * @param liquidatorAddr Address to be credited for the liquidation.
    * @param traderAddr Address of the trader to be liquidated.
-   * @param gasLimit Gas limit.
+   * @param priceFeedData contains VAA and timestamps required
+   * @param options E.g., Gas limit, fee.
    * @ignore
    */
-  public async _liquidateByAMM(perpetualId: number, liquidatorAddr: string, traderAddr: string, gasLimit: number) {
-    return await this.proxyContract!.liquidateByAMM(perpetualId, liquidatorAddr, traderAddr, {
-      gasLimit: gasLimit,
-    });
+  public async _liquidateByAMM(
+    perpetualId: number,
+    liquidatorAddr: string,
+    traderAddr: string,
+    priceFeedData: PriceFeedSubmission,
+    options: object
+  ) {
+    return await this.proxyContract!.liquidateByAMM(
+      perpetualId,
+      liquidatorAddr,
+      traderAddr,
+      priceFeedData.priceFeedVaas,
+      priceFeedData.timestamps,
+      options
+    );
   }
 
   /**

@@ -20,9 +20,6 @@ import {
  *  ordersInPerpetual: Map<number, OrderStruct> all open orders for the given trader
  *  positionInPerpetual: Map<number, MarginAccount> all open positions for the given trader
  *
- *  TODO:
- *    - update functions for midprice & index & collateral prices without event
- *    - testing
  *
  * Get data:
  *  - getPerpetualData(perp id (string) or symbol) : PerpetualState. This is a reference!
@@ -184,7 +181,6 @@ export default class PerpetualEventHandler {
     perp.midPrice = perpState.midPrice;
     perp.currentFundingRateBps = perpState.currentFundingRateBps;
     perp.openInterestBC = perpState.openInterestBC;
-    perp.maxPositionBC = perpState.maxPositionBC;
     perp.indexPrice = perpState.indexPrice;
     perp.collToQuoteIndexPrice = perpState.collToQuoteIndexPrice;
   }
@@ -302,8 +298,8 @@ export default class PerpetualEventHandler {
   public onPerpetualLimitOrderCreated(
     perpetualId: number,
     trader: string,
-    referrerAddr: string,
-    brokerAddr: string,
+    _referrerAddr: string,
+    _brokerAddr: string,
     Order: SmartContractOrder,
     digest: string
   ): void {
@@ -336,11 +332,11 @@ export default class PerpetualEventHandler {
   public async onUpdateMarginAccount(
     perpetualId: number,
     trader: string,
-    positionId: string,
-    fPositionBC: BigNumber,
-    fCashCC: BigNumber,
-    fLockedInValueQC: BigNumber,
-    fFundingPaymentCC: BigNumber,
+    _positionId: string,
+    _fPositionBC: BigNumber,
+    _fCashCC: BigNumber,
+    _fLockedInValueQC: BigNumber,
+    _fFundingPaymentCC: BigNumber,
     fOpenInterestBC: BigNumber
   ): Promise<void> {
     let perpetual = this.getPerpetualData(perpetualId.toString());
@@ -370,12 +366,12 @@ export default class PerpetualEventHandler {
    */
   public onTrade(
     perpetualId: number,
-    trader: string,
+    _trader: string,
     positionId: string,
-    order: SmartContractOrder,
+    _order: SmartContractOrder,
     orderDigest: string,
     newPositionSizeBC: BigNumber,
-    price: BigNumber
+    _price: BigNumber
   ): TradeEvent {
     // remove order digest from open orders
     let orderStructs = this.ordersInPerpetual.get(perpetualId);

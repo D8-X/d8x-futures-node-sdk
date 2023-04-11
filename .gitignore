@@ -4,3 +4,4 @@ artifacts
 cache
 yarn-error.log
 dist
+src/version.ts

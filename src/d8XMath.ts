@@ -30,6 +30,24 @@ export function ABK64x64ToFloat(x: BigNumber | number): number {
 
 /**
  *
+ * @param {BigNumber} x BigNumber in Dec-N format
+ * @returns {number} x as a float (number)
+ */
+export function decNToFloat(x: BigNumber, numDec: number) {
+  //x: BigNumber in DecN format to float
+  const DECIMALS = BigNumber.from(10).pow(BigNumber.from(numDec));
+  let s = x.lt(0) ? -1 : 1;
+  x = x.mul(s);
+  let xInt = x.div(DECIMALS);
+  let xDec = x.sub(xInt.mul(DECIMALS));
+  let k = numDec - xDec.toString().length;
+  let sPad = "0".repeat(k);
+  let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
+  return parseFloat(NumberStr) * s;
+}
+
+/**
+ *
  * @param {BigNumber} x BigNumber in Dec18 format
  * @returns {number} x as a float (number)
  */
@@ -86,6 +104,52 @@ export function floatToDec18(x: number): BigNumber {
   let xDec = BigNumber.from(arrX[1]);
   let xIntBig = xInt.mul(DECIMALS);
   return xIntBig.add(xDec).mul(sg);
+}
+
+/**
+ * 9 are rounded up regardless of precision, e.g, 0.1899000 at precision 6 results in 3
+ * @param x
+ * @param precision
+ * @returns number of decimals
+ */
+export function countDecimalsOf(x: number, precision: number): number {
+  let decimalPart = x - Math.floor(x);
+  if (decimalPart == 0) {
+    return 0;
+  }
+  let decimalPartStr = decimalPart.toFixed(precision);
+  // remove trailing zeros
+  let c = decimalPartStr.charAt(decimalPartStr.length - 1);
+  while (c == "0") {
+    decimalPartStr = decimalPartStr.substring(0, decimalPartStr.length - 1);
+    c = decimalPartStr.charAt(decimalPartStr.length - 1);
+  }
+  // remove trailing 9
+  c = decimalPartStr.charAt(decimalPartStr.length - 1);
+  while (c == "9") {
+    decimalPartStr = decimalPartStr.substring(0, decimalPartStr.length - 1);
+    c = decimalPartStr.charAt(decimalPartStr.length - 1);
+  }
+
+  return decimalPartStr.length > 2 ? decimalPartStr.length - 2 : 0;
+}
+
+/**
+ * Round a number to a given lot size and return a string formated
+ * to for this lot-size
+ * @param x number to round
+ * @param lot lot size (could be 'uneven' such as 0.019999999 instead of 0.02)
+ * @param precision optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)
+ * @returns formated number string
+ */
+export function roundToLotString(x: number, lot: number, precision: number = 7): string {
+  // round lot to precision
+  let lotRounded = Math.round(lot / 10 ** -precision) * 10 ** -precision;
+  let v = Math.round(x / lotRounded) * lotRounded;
+
+  // number of digits of rounded lot
+  let numDig = countDecimalsOf(lotRounded, precision);
+  return v.toFixed(numDig);
 }
 
 /**
@@ -247,14 +311,12 @@ export function getMaxSignedPositionSize(
 /**
  * Compute the leverage resulting from a trade
  * @param tradeAmount Amount to trade, in base currency, signed
- * @param marginCollateral Amount of cash in the margin account, after the trade, in collateral currency
+ * @param marginCollateral Amount of cash in the margin account, in collateral currency
  * @param currentPosition Position size before the trade
  * @param currentLockedInValue Locked-in value before the trade
- * @param indexPriceS2 Spot price of the index when the trade happens
+ * @param price Price charged to trade tradeAmount
  * @param indexPriceS3 Spot price of the collateral currency when the trade happens
  * @param markPrice Mark price of the index when the trade happens
- * @param limitPrice Price charged to trade tradeAmount
- * @param feeRate Trading fee rate applicable to this trade
  * @returns Leverage of the resulting position
  */
 export function getNewPositionLeverage(
@@ -262,39 +324,42 @@ export function getNewPositionLeverage(
   marginCollateral: number,
   currentPosition: number,
   currentLockedInValue: number,
-  indexPriceS2: number,
+  price: number,
   indexPriceS3: number,
-  markPrice: number,
-  limitPrice: number,
-  feeRate: number
+  markPrice: number
 ): number {
   let newPosition = tradeAmount + currentPosition;
-  let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - limitPrice);
-  return (
-    (Math.abs(newPosition) * indexPriceS2) / (marginCollateral * indexPriceS3 + pnlQC - feeRate * Math.abs(tradeAmount))
-  );
+  let pnlQC = currentPosition * markPrice - currentLockedInValue + tradeAmount * (markPrice - price);
+  return (Math.abs(newPosition) * markPrice) / (marginCollateral * indexPriceS3 + pnlQC);
 }
 
-export function getMaxCollateralToRemove(
-  currentPosition: number,
-  currentLockedInValue: number,
-  currentAvailableCash: number,
-  markPrice: number,
-  indexPriceS2: number,
-  indexPriceS3: number,
-  initialMarginRate: number
-): number {
-  return (
-    getMarginRequiredForLeveragedTrade(
-      1 / initialMarginRate,
-      currentPosition,
-      currentLockedInValue,
-      0,
-      markPrice,
-      indexPriceS2,
-      indexPriceS3,
-      indexPriceS2,
-      0
-    ) - currentAvailableCash
-  );
+/**
+ * Determine amount to be deposited into margin account so that the given leverage
+ * is obtained when trading a position pos (trade amount = position)
+ * Does NOT include fees
+ * Smart contract equivalent: calcMarginForTargetLeverage(..., _ignorePosBalance = false & balance = b0)
+ * @param {number} pos0 - current position
+ * @param {number} b0 - current balance
+ * @param {number} tradeAmnt - amount to trade
+ * @param {number} targetLvg - target leverage
+ * @param {number} price - price to trade amount 'tradeAmnt'
+ * @param {number} S3 - collateral to quote conversion (=S2 if base-collateral, =1 if quote collateral, = index S3 if quanto)
+ * @param {number} S2Mark - mark price
+ * @returns {number} Amount to be deposited to have the given leverage when trading into position pos before fees
+ */
+export function getDepositAmountForLvgTrade(
+  pos0: number,
+  b0: number,
+  tradeAmnt: number,
+  targetLvg: number,
+  price: number,
+  S3: number,
+  S2Mark: number
+) {
+  let pnl = (tradeAmnt * (S2Mark - price)) / S3;
+  if (targetLvg == 0) {
+    targetLvg = (Math.abs(pos0) * S2Mark) / S3 / b0;
+  }
+  let b = (Math.abs(pos0 + tradeAmnt) * S2Mark) / S3 / targetLvg;
+  return -(b0 + pnl - b);
 }

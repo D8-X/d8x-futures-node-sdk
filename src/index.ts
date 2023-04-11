@@ -1,3 +1,7 @@
+export * from "./nodeSDKTypes";
+export * from "./utils";
+export * from "./d8XMath";
+
 import AccountTrade from "./accountTrade";
 import BrokerTool from "./brokerTool";
 import LiquidityProviderTool from "./liquidityProviderTool";
@@ -8,10 +12,6 @@ import WriteAccessHandler from "./writeAccessHandler";
 import LiquidatorTool from "./liquidatorTool";
 import TraderInterface from "./traderInterface";
 import PerpetualEventHandler from "./perpetualEventHandler";
-
-export * from "./nodeSDKTypes";
-export * from "./utils";
-export * from "./d8XMath";
 
 export {
   AccountTrade,
@@ -25,3 +25,5 @@ export {
   TraderInterface,
   PerpetualEventHandler,
 };
+
+export * from "./version";
