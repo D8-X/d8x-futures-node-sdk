@@ -8,7 +8,6 @@ import LiquidatorTool from "../src/liquidatorTool";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
-
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
@@ -25,7 +24,7 @@ let orderId: string;
  */
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("central-park");
+    config = PerpetualDataHandler.readSDKConfig("testnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -52,5 +51,4 @@ describe("write and spoil gas and tokens", () => {
     console.log(`remove margin tx hash = ${tx.hash}`);
     //*/
   });
-
 });
