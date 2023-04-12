@@ -21,7 +21,7 @@ import WriteAccessHandler from "./writeAccessHandler";
  * @extends WriteAccessHandler
  */
 export default class OrderReferrerTool extends WriteAccessHandler {
-  static TRADE_DELAY = 5;
+  static TRADE_DELAY = 4;
   /**
    * Constructor.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
@@ -393,13 +393,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       return false;
     }
 
-    // -1 because order is executed on the next block (+1)
+    // next block should be in ~2 seconds, so + 2
     if (
       order.submittedTimestamp != undefined &&
-      order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY < blockTimestamp - 1
+      blockTimestamp + 2 < order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY
     ) {
       console.log(
-        `on hold for ${blockTimestamp - 1 - order.submittedTimestamp - OrderReferrerTool.TRADE_DELAY} seconds`
+        `on hold for ${OrderReferrerTool.TRADE_DELAY + order.submittedTimestamp - blockTimestamp - 2} more seconds`
       );
       return false;
     }
