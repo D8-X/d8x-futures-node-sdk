@@ -113,6 +113,7 @@ bytes32 parentChildDigest2;
 ## d8xMath
 
 * [d8xMath](#module_d8xMath)
+    * [~ABDK29ToFloat(x)](#module_d8xMath..ABDK29ToFloat) ⇒ <code>number</code>
     * [~ABK64x64ToFloat(x)](#module_d8xMath..ABK64x64ToFloat) ⇒ <code>number</code>
     * [~decNToFloat(x)](#module_d8xMath..decNToFloat) ⇒ <code>number</code>
     * [~dec18ToFloat(x)](#module_d8xMath..dec18ToFloat) ⇒ <code>number</code>
@@ -128,6 +129,20 @@ bytes32 parentChildDigest2;
     * [~getMarginRequiredForLeveragedTrade(targetLeverage, currentPosition, currentLockedInValue, tradeAmount, markPrice, indexPriceS2, indexPriceS3, tradePrice, feeRate)](#module_d8xMath..getMarginRequiredForLeveragedTrade) ⇒ <code>number</code>
     * [~getNewPositionLeverage(tradeAmount, marginCollateral, currentPosition, currentLockedInValue, price, indexPriceS3, markPrice)](#module_d8xMath..getNewPositionLeverage) ⇒
     * [~getDepositAmountForLvgTrade(pos0, b0, tradeAmnt, targetLvg, price, S3, S2Mark)](#module_d8xMath..getDepositAmountForLvgTrade) ⇒ <code>number</code>
+
+<a name="module_d8xMath..ABDK29ToFloat"></a>
+
+### d8xMath~ABDK29ToFloat(x) ⇒ <code>number</code>
+<p>Convert ABK64x64/2^35 bigint-format to float.
+Divide by 2^64 to get a float, but it's already &quot;divided&quot; by 2^35,
+so there's only 2^29 left</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <code>number</code> - <p>x/2^64 in number-format (float)</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>BigNumber</code> \| <code>number</code> | <p>number in ABDK-format/2^35</p> |
 
 <a name="module_d8xMath..ABK64x64ToFloat"></a>
 

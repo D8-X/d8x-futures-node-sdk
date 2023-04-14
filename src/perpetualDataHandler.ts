@@ -37,6 +37,7 @@ import {
 import { to4Chars, combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol } from "./utils";
 import {
   ABK64x64ToFloat,
+  ABDK29ToFloat,
   floatToABK64x64,
   div64x64,
   calculateLiquidationPriceCollateralQuanto,
@@ -352,8 +353,8 @@ export default class PerpetualDataHandler {
           id: perpInfos[j].id,
           poolId: Math.floor(perpInfos[j].id / 100_000), //uint24(_iPoolId) * 100_000 + iPerpetualIndex;
           limitOrderBookAddr: perpInfos[j].limitOrderBookAddr,
-          initialMarginRate: ABK64x64ToFloat(perpInfos[j].fInitialMarginRate),
-          maintenanceMarginRate: ABK64x64ToFloat(perpInfos[j].fMaintenanceMarginRate),
+          initialMarginRate: ABDK29ToFloat(perpInfos[j].fInitialMarginRate),
+          maintenanceMarginRate: ABDK29ToFloat(perpInfos[j].fMaintenanceMarginRate),
           collateralCurrencyType: perpInfos[j].collCurrencyType,
           S2Symbol: sym2,
           S3Symbol: sym3,
@@ -513,7 +514,8 @@ export default class PerpetualDataHandler {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
-    return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
+    // ammState[6] == S2 == indexPrices[0] up to rounding errors (indexPrices is most accurate)
+    return indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
   }
 
   protected static async _queryPerpetualState(

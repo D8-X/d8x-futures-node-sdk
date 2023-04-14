@@ -174,6 +174,18 @@ describe("readOnly", () => {
         }
       }
     });
+    it("mark price", async () => {
+      // base, quote, quanto
+      for (let symbol of ["MATIC-USD-MATIC", "MATIC-USDC-USDC", "ETH-USD-MATIC"]) {
+        let markPrice1 = await mktData.getMarkPrice(symbol);
+        let markPrice2 = (await mktData.getPerpetualState(symbol)).markPrice;
+        let success = Math.abs((markPrice1 - markPrice2) / markPrice1) < 1e-6;
+        if (!success) {
+          console.log(`markPrice direct: ${markPrice1}, markPrice from state: ${markPrice2}`);
+        }
+        expect(success).toBeTruthy;
+      }
+    });
     it("max positions", async () => {
       let maxLong = await mktData.maxSignedPosition(BUY_SIDE, "MATIC-USD-MATIC");
       let maxShort = await mktData.maxSignedPosition(SELL_SIDE, "MATIC-USD-MATIC");
