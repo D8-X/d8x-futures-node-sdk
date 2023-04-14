@@ -514,7 +514,8 @@ export default class PerpetualDataHandler {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
-    return ABK64x64ToFloat(ammState[6].mul(ONE_64x64.add(ammState[8])).div(ONE_64x64));
+    // ammState[6] == S2 == indexPrices[0] up to rounding errors (indexPrices is most accurate)
+    return indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
   }
 
   protected static async _queryPerpetualState(
