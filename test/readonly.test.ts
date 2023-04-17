@@ -168,9 +168,12 @@ describe("readOnly", () => {
         console.log("Closed markets:");
         for (let j = 0; j < pool.perpetuals.length; j++) {
           let perp = pool.perpetuals[j];
+          const symbol = perp.baseCurrency + "-" + perp.quoteCurrency + "-" + pool.poolSymbol;
           if (perp.isMarketClosed) {
             console.log(perp.baseCurrency + "-" + perp.quoteCurrency + ":" + perp.state + " - " + perp.isMarketClosed);
           }
+          let isClosedDirect = await mktData.isMarketClosed(symbol);
+          expect(isClosedDirect).toEqual(perp.isMarketClosed);
         }
       }
     });
