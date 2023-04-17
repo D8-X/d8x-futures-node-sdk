@@ -865,6 +865,11 @@ export default class MarketData extends PerpetualDataHandler {
     return idxPriceMap;
   }
 
+  /**
+   * Get market open/closed status
+   * @param symbol Perpetual symbol of the form ETH-USD-MATIC
+   * @returns True if the market is closed
+   */
   public async isMarketClosed(symbol: string): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");

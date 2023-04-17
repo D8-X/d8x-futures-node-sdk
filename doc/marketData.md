@@ -31,6 +31,7 @@ No gas required for the queries here.</p>
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
         * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
     * _static_
         * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
         * [._queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap)](#MarketData._queryMidPrices) ⇒
@@ -424,6 +425,18 @@ Result is in collateral currency</p>
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
 | brokerAddr | <p>address of the trader's broker or undefined</p> |
+
+<a name="MarketData+isMarketClosed"></a>
+
+### marketData.isMarketClosed(symbol) ⇒
+<p>Get market open/closed status</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>True if the market is closed</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData._getAllIndexPrices"></a>
 
