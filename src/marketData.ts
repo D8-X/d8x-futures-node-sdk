@@ -865,6 +865,33 @@ export default class MarketData extends PerpetualDataHandler {
     return idxPriceMap;
   }
 
+  public async isMarketClosed(symbol: string): Promise<boolean> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    return await MarketData._isMarketClosed(symbol, this.symbolToPerpStaticInfo, this.priceFeedGetter);
+  }
+
+  private static async _isMarketClosed(
+    symbol: string,
+    _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _priceFeedGetter: PriceFeeds
+  ): Promise<boolean> {
+    const sInfo: PerpetualStaticInfo | undefined = _symbolToPerpStaticInfo.get(symbol);
+    let priceSymbols: string[] = [];
+    if (sInfo?.S2Symbol != undefined && sInfo.S2Symbol != "") {
+      priceSymbols.push(sInfo.S2Symbol);
+    }
+    if (sInfo?.S3Symbol != undefined && sInfo.S3Symbol != "") {
+      priceSymbols.push(sInfo.S3Symbol);
+    }
+    if (priceSymbols.length == 0) {
+      throw new Error("symbol not found");
+    }
+    const priceInfos = await _priceFeedGetter.fetchPrices(priceSymbols);
+    return [...priceInfos.values()].some((p) => p[1]);
+  }
+
   /**
    * Collect all mid-prices
    * @param _proxyContract contract instance
