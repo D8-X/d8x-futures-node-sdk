@@ -2319,6 +2319,7 @@ No gas required for the queries here.</p>
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
         * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -2723,6 +2724,18 @@ Result is in collateral currency</p>
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
 | brokerAddr | <p>address of the trader's broker or undefined</p> |
+
+<a name="MarketData+isMarketClosed"></a>
+
+### marketData.isMarketClosed(symbol) ⇒
+<p>Get market open/closed status</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>True if the market is closed</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
@@ -4233,6 +4246,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
     * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
     * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+    * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -4744,6 +4758,19 @@ Result is in collateral currency</p>
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
 | brokerAddr | <p>address of the trader's broker or undefined</p> |
+
+<a name="MarketData+isMarketClosed"></a>
+
+### traderInterface.isMarketClosed(symbol) ⇒
+<p>Get market open/closed status</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>isMarketClosed</code>](#MarketData+isMarketClosed)  
+**Returns**: <p>True if the market is closed</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
