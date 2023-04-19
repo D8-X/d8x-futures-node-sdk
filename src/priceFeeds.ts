@@ -1,7 +1,7 @@
 import { BigNumber } from "ethers";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
-import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat } from "./nodeSDKTypes";
+import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat, PythLatestPriceFeed } from "./nodeSDKTypes";
 import { decNToFloat } from "./d8XMath";
 import { Buffer } from "buffer";
 
@@ -194,7 +194,7 @@ export default class PriceFeeds {
       if (queries[id] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id] + "/latest_vaas_px?";
+        queries[id] = this.feedEndpoints[id] + "/latest_price_feeds?target_chain=default&";
         idCountPriceFeeds[id] = 0;
       }
       queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";
@@ -298,12 +298,13 @@ export default class PriceFeeds {
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
     }
-    let values = (await response.json()) as Array<[string, PriceFeedFormat]>;
+    let values = (await response.json()) as Array<PythLatestPriceFeed>;
     const priceFeedUpdates = new Array<string>();
     const px = new Array<PriceFeedFormat>();
     for (let k = 0; k < values.length; k++) {
-      priceFeedUpdates.push("0x" + Buffer.from(values[k][0], "base64").toString("hex"));
-      px.push(values[k][1]);
+      const vaa = values[k].vaa;
+      priceFeedUpdates.push("0x" + Buffer.from(vaa, "base64").toString("hex"));
+      px.push(values[k].price);
     }
     return [priceFeedUpdates, px];
   }

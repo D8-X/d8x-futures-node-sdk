@@ -295,6 +295,18 @@ export interface PriceFeedFormat {
   publish_time: number;
 }
 
+export interface PythLatestPriceFeed {
+  ema_price:{
+    conf: string,
+    expo: number,
+    price: string,
+    publish_time: number
+    },
+  id:string,
+  price: PriceFeedFormat,
+  vaa: string
+}
+
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 

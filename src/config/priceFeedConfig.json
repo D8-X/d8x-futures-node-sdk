@@ -57,7 +57,7 @@
         "origin": "FX.USD/JPY"
       }
     ],
-    "endpoints": [{ "type": "pyth", "endpoint": "https://pyth.testnet.quantena.tech/api" }]
+    "endpoints": [{ "type": "pyth", "endpoint": "https://xc-testnet.pyth.network/api" }]
   },
   {
     "network": "mainnet",
@@ -99,6 +99,6 @@
         "origin": "Metal.XAU/USD"
       }
     ],
-    "endpoints": [{ "type": "pyth", "endpoint": "" }]
+    "endpoints": [{ "type": "pyth", "endpoint": "https://xc-mainnet.pyth.network/api" }]
   }
 ]
