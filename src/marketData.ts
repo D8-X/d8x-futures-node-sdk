@@ -1,4 +1,6 @@
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { Contract } from "@ethersproject/contracts";
+import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import {
   ABK64x64ToFloat,
   calculateLiquidationPriceCollateralBase,
@@ -7,7 +9,6 @@ import {
   floatToABK64x64,
   getDepositAmountForLvgTrade,
 } from "./d8XMath";
-import "./nodeSDKTypes";
 import {
   BUY_SIDE,
   ClientOrder,
@@ -68,9 +69,9 @@ export default class MarketData extends PerpetualDataHandler {
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: ethers.providers.Provider) {
+  public async createProxyInstance(provider?: Provider) {
     if (provider == undefined) {
-      this.provider = new ethers.providers.JsonRpcProvider(this.nodeURL);
+      this.provider = new StaticJsonRpcProvider(this.nodeURL);
     } else {
       this.provider = provider;
     }
@@ -115,7 +116,7 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns read-only proxy instance
    */
-  public getReadOnlyProxyInstance(): ethers.Contract {
+  public getReadOnlyProxyInstance(): Contract {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -507,7 +508,7 @@ export default class MarketData extends PerpetualDataHandler {
   public async getWalletBalance(address: string, symbol: string): Promise<number> {
     let poolIdx = this.getPoolIndexFromSymbol(symbol);
     let marginTokenAddr = this.poolStaticInfos[poolIdx].poolMarginTokenAddr;
-    let token = new ethers.Contract(marginTokenAddr, ERC20_ABI, this.provider!);
+    let token = new Contract(marginTokenAddr, ERC20_ABI, this.provider!);
     let walletBalanceDec18 = await token.balanceOf(address);
     return walletBalanceDec18 / 10 ** 18;
   }
@@ -576,7 +577,7 @@ export default class MarketData extends PerpetualDataHandler {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let orderBookContract: ethers.Contract | null = null;
+    let orderBookContract: Contract | null = null;
     orderBookContract = this.getOrderBookContract(symbol);
     let status = await orderBookContract.getOrderStatus(orderId);
     return status;
@@ -742,7 +743,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns {Order[]} Array of user friendly order struct.
    * @ignore
    */
-  protected async openOrdersOnOrderBook(traderAddr: string, orderBookContract: ethers.Contract): Promise<Order[]> {
+  protected async openOrdersOnOrderBook(traderAddr: string, orderBookContract: Contract): Promise<Order[]> {
     let orders: ClientOrder[] = await orderBookContract.getOrders(traderAddr, 0, 15);
     //eliminate empty orders and map to user friendly orders
     let userFriendlyOrders: Order[] = new Array<Order>();
@@ -761,7 +762,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns Array of order-id's
    * @ignore
    */
-  public static async orderIdsOfTrader(traderAddr: string, orderBookContract: ethers.Contract): Promise<string[]> {
+  public static async orderIdsOfTrader(traderAddr: string, orderBookContract: Contract): Promise<string[]> {
     let digestsRaw: string[] = await orderBookContract.limitDigestsOfTrader(traderAddr, 0, 15);
     let k: number = 0;
     let digests: string[] = [];
@@ -907,7 +908,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns perpetual symbol to mid-prices mapping
    */
   private static async _queryMidPrices(
-    _proxyContract: ethers.Contract,
+    _proxyContract: Contract,
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _perpetualIdToSymbol: Map<number, string>,
@@ -947,7 +948,7 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   private static async _queryPoolStates(
-    _proxyContract: ethers.Contract,
+    _proxyContract: Contract,
     _poolStaticInfos: PoolStaticInfo[],
     _numPools: number
   ): Promise<Array<PoolState>> {
@@ -978,7 +979,7 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   private static async _queryPerpetualStates(
-    _proxyContract: ethers.Contract,
+    _proxyContract: Contract,
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolList: Map<string, string>
   ) {
@@ -1012,7 +1013,7 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   public static async _exchangeInfo(
-    _proxyContract: ethers.Contract,
+    _proxyContract: Contract,
     _poolStaticInfos: Array<PoolStaticInfo>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _perpetualIdToSymbol: Map<number, string>,

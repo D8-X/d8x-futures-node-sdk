@@ -1,10 +1,15 @@
-import WriteAccessHandler from "./writeAccessHandler";
+import { defaultAbiCoder } from "@ethersproject/abi";
+import { Signer } from "@ethersproject/abstract-signer";
+import { BigNumber } from "@ethersproject/bignumber";
+import { ContractTransaction } from "@ethersproject/contracts";
+import { keccak256 } from "@ethersproject/keccak256";
+import { ABK64x64ToFloat } from "./d8XMath";
 import { NodeSDKConfig, Order, PerpetualStaticInfo } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
-import { ABK64x64ToFloat } from "./d8XMath";
-import { BigNumber, ethers } from "ethers";
-import AccountTrade from "./accountTrade";
+import WriteAccessHandler from "./writeAccessHandler";
+
 import { Buffer } from "buffer";
+import AccountTrade from "./accountTrade";
 /**
  * Functions for brokers to determine fees, deposit lots, and sign-up traders.
  * This class requires a private key and executes smart-contract interactions that
@@ -334,9 +339,9 @@ export default class BrokerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @returns {ethers.ContractTransaction} ContractTransaction object.
+   * @returns {ContractTransaction} ContractTransaction object.
    */
-  public async brokerDepositToDefaultFund(poolSymbolName: string, lots: number): Promise<ethers.ContractTransaction> {
+  public async brokerDepositToDefaultFund(poolSymbolName: string, lots: number): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -435,35 +440,35 @@ export default class BrokerTool extends WriteAccessHandler {
     brokerFeeTbps: number,
     traderAddr: string,
     iDeadline: BigNumber,
-    signer: ethers.Signer,
+    signer: Signer,
     chainId: number,
     proxyAddress: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): Promise<string> {
     const NAME = "Perpetual Trade Manager";
-    const DOMAIN_TYPEHASH = ethers.utils.keccak256(
+    const DOMAIN_TYPEHASH = keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
     );
-    let abiCoder = ethers.utils.defaultAbiCoder;
-    let domainSeparator = ethers.utils.keccak256(
+    let abiCoder = defaultAbiCoder;
+    let domainSeparator = keccak256(
       abiCoder.encode(
         ["bytes32", "bytes32", "uint256", "address"],
-        [DOMAIN_TYPEHASH, ethers.utils.keccak256(Buffer.from(NAME)), chainId, proxyAddress]
+        [DOMAIN_TYPEHASH, keccak256(Buffer.from(NAME)), chainId, proxyAddress]
       )
     );
     //
-    const TRADE_BROKER_TYPEHASH = ethers.utils.keccak256(
+    const TRADE_BROKER_TYPEHASH = keccak256(
       Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint64 iDeadline)")
     );
     let iPerpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let structHash = ethers.utils.keccak256(
+    let structHash = keccak256(
       abiCoder.encode(
         ["bytes32", "uint24", "uint16", "address", "uint64"],
         [TRADE_BROKER_TYPEHASH, iPerpetualId, brokerFeeTbps, traderAddr, iDeadline]
       )
     );
 
-    let digest = ethers.utils.keccak256(abiCoder.encode(["bytes32", "bytes32"], [domainSeparator, structHash]));
+    let digest = keccak256(abiCoder.encode(["bytes32", "bytes32"], [domainSeparator, structHash]));
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     return await signer.signMessage(digestBuffer);
   }
@@ -491,12 +496,9 @@ export default class BrokerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @returns {ethers.providers.TransactionResponse} ethers transaction object
+   * @returns {ContractTransaction} ethers transaction object
    */
-  public async transferOwnership(
-    poolSymbolName: string,
-    newAddress: string
-  ): Promise<ethers.providers.TransactionResponse> {
+  public async transferOwnership(poolSymbolName: string, newAddress: string): Promise<ContractTransaction> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

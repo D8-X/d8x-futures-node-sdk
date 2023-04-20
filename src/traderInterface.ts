@@ -1,9 +1,9 @@
-import { ethers } from "ethers";
-import MarketData from "./marketData";
-import PerpetualDataHandler from "./perpetualDataHandler";
-import { NodeSDKConfig, SmartContractOrder, Order, ClientOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
-import TraderDigests from "./traderDigests";
+import { Contract } from "@ethersproject/contracts";
 import { ABK64x64ToFloat } from "./d8XMath";
+import MarketData from "./marketData";
+import { ClientOrder, NodeSDKConfig, Order, SmartContractOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
+import PerpetualDataHandler from "./perpetualDataHandler";
+import TraderDigests from "./traderDigests";
 /**
  * Interface that can be used by front-end that wraps all private functions
  * so that signatures can be handled in frontend via wallet
@@ -82,7 +82,7 @@ export default class TraderInterface extends MarketData {
    * @returns order book address for the perpetual
    */
   public getOrderBookAddress(symbol: string): string {
-    let orderBookContract: ethers.Contract = this.getOrderBookContract(symbol);
+    let orderBookContract: Contract = this.getOrderBookContract(symbol);
     return orderBookContract.address;
   }
 
@@ -134,7 +134,7 @@ export default class TraderInterface extends MarketData {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let orderBookContract: ethers.Contract = this.getOrderBookContract(symbol);
+    let orderBookContract: Contract = this.getOrderBookContract(symbol);
     return PerpetualDataHandler._getABIFromContract(orderBookContract, method);
   }
 

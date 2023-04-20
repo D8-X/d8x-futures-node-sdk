@@ -1,7 +1,9 @@
-import { ethers } from "ethers";
-import { SmartContractOrder } from "./nodeSDKTypes";
+import { defaultAbiCoder } from "@ethersproject/abi";
+import { concat } from "@ethersproject/bytes";
+import { keccak256 } from "@ethersproject/keccak256";
+import { toUtf8Bytes } from "@ethersproject/strings";
 import { Buffer } from "buffer";
-import { concat, toUtf8Bytes } from "ethers/lib/utils";
+import { SmartContractOrder } from "./nodeSDKTypes";
 
 export default class TraderDigests {
   /**
@@ -15,7 +17,7 @@ export default class TraderDigests {
     const messagePrefix = "\x19Ethereum Signed Message:\n";
     let tmp = concat([toUtf8Bytes(messagePrefix), toUtf8Bytes(String(digestBuffer.length)), digestBuffer]);
     // see: https://github.com/ethers-io/ethers.js/blob/c80fcddf50a9023486e9f9acb1848aba4c19f7b6/packages/hash/src.ts/message.ts#L7
-    return ethers.utils.keccak256(tmp);
+    return keccak256(tmp);
   }
 
   /**
@@ -35,23 +37,22 @@ export default class TraderDigests {
     proxyAddress: string
   ): Promise<string> {
     const NAME = "Perpetual Trade Manager";
-    const DOMAIN_TYPEHASH = ethers.utils.keccak256(
+    const DOMAIN_TYPEHASH = keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
     );
-    let abiCoder = ethers.utils.defaultAbiCoder;
-    let domainSeparator = ethers.utils.keccak256(
-      abiCoder.encode(
+    let domainSeparator = keccak256(
+      defaultAbiCoder.encode(
         ["bytes32", "bytes32", "uint256", "address"],
-        [DOMAIN_TYPEHASH, ethers.utils.keccak256(Buffer.from(NAME)), chainId, proxyAddress]
+        [DOMAIN_TYPEHASH, keccak256(Buffer.from(NAME)), chainId, proxyAddress]
       )
     );
-    const TRADE_ORDER_TYPEHASH = ethers.utils.keccak256(
+    const TRADE_ORDER_TYPEHASH = keccak256(
       Buffer.from(
         "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint64 iDeadline,uint32 flags,int128 fLeverage,uint64 createdTimestamp)"
       )
     );
-    let structHash = ethers.utils.keccak256(
-      abiCoder.encode(
+    let structHash = keccak256(
+      defaultAbiCoder.encode(
         [
           "bytes32",
           "uint24",
@@ -82,8 +83,8 @@ export default class TraderDigests {
         ]
       )
     );
-    let digest = ethers.utils.keccak256(
-      abiCoder.encode(["bytes32", "bytes32", "bool"], [domainSeparator, structHash, isNewOrder])
+    let digest = keccak256(
+      defaultAbiCoder.encode(["bytes32", "bytes32", "bool"], [domainSeparator, structHash, isNewOrder])
     );
     return digest;
   }

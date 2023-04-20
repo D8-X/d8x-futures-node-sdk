@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { Contract, ContractTransaction } from "@ethersproject/contracts";
 import { dec18ToFloat, floatToDec18 } from "./d8XMath";
 import { ERC20_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -68,7 +68,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
 
     let shareTokenAddr = this.poolStaticInfos[poolId - 1].shareTokenAddr;
-    let shareToken = new ethers.Contract(shareTokenAddr, ERC20_ABI, this.signer);
+    let shareToken = new Contract(shareTokenAddr, ERC20_ABI, this.signer);
     let dShareTokenBalanceOfAddr = await shareToken.balanceOf(this.traderAddr);
 
     let valueCCDec18 = await this.proxyContract.getTokenAmountToReturn(poolId, dShareTokenBalanceOfAddr);
@@ -104,7 +104,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *
    * @return Transaction object
    */
-  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ethers.ContractTransaction> {
+  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -141,7 +141,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
   public async initiateLiquidityWithdrawal(
     poolSymbolName: string,
     amountPoolShares: number
-  ): Promise<ethers.providers.TransactionResponse> {
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -173,7 +173,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *
    * @returns Transaction object.
    */
-  public async executeLiquidityWithdrawal(poolSymbolName: string): Promise<ethers.providers.TransactionResponse> {
+  public async executeLiquidityWithdrawal(poolSymbolName: string): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

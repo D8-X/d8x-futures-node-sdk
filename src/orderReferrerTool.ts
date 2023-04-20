@@ -1,15 +1,18 @@
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
+import { HashZero } from "@ethersproject/constants";
+import { ContractTransaction } from "@ethersproject/contracts";
+import { BlockTag } from "@ethersproject/providers";
 import {
   BUY_SIDE,
+  ClientOrder,
   NodeSDKConfig,
   Order,
   PerpetualStaticInfo,
+  PriceFeedSubmission,
   SELL_SIDE,
+  SmartContractOrder,
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
-  PriceFeedSubmission,
-  ClientOrder,
-  SmartContractOrder,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -87,7 +90,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     referrerAddr?: string,
     nonce?: number,
     submission?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -118,7 +121,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     referrerAddr?: string,
     nonce?: number,
     submission?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -432,8 +435,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     //check dependency
     if (
       order.parentChildOrderIds != undefined &&
-      order.parentChildOrderIds[0] == ethers.constants.HashZero &&
-      order.parentChildOrderIds[1] != ethers.constants.HashZero
+      order.parentChildOrderIds[0] == HashZero &&
+      order.parentChildOrderIds[1] != HashZero
     ) {
       // order has a parent
       const orderBookContract = this.getOrderBookContract(order.symbol);
@@ -459,7 +462,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     return PerpetualDataHandler.fromSmartContractOrder(scOrder, this.symbolToPerpStaticInfo);
   }
 
-  public async getTransactionCount(blockTag?: ethers.providers.BlockTag): Promise<number> {
+  public async getTransactionCount(blockTag?: BlockTag): Promise<number> {
     if (this.signer == null) {
       throw Error("no wallet initialized. Use createProxyInstance().");
     }

@@ -38,8 +38,17 @@
     "doc"
   ],
   "dependencies": {
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/abstract-signer": "^5.7.0",
+    "@ethersproject/bignumber": "^5.7.0",
+    "@ethersproject/bytes": "^5.7.0",
+    "@ethersproject/contracts": "^5.7.0",
+    "@ethersproject/keccak256": "^5.7.0",
+    "@ethersproject/providers": "^5.7.2",
+    "@ethersproject/strings": "^5.7.0",
+    "@ethersproject/units": "^5.7.0",
+    "@ethersproject/wallet": "^5.7.0",
     "buffer": "^6.0.3",
-    "ethers": "^5.7.2",
     "process": "^0.11.10"
   },
   "devDependencies": {
@@ -51,6 +60,7 @@
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
     "babel-jest": "^29.3.1",
+    "ethers": "5.7.0",
     "jest": "^29.3.1",
     "jsdoc-babel": "^0.5.0",
     "jsdoc-to-markdown": "^7.1.1",

@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat, PythLatestPriceFeed } from "./nodeSDKTypes";

@@ -933,9 +933,9 @@ require gas-payments.</p>
     * [.getCurrentBrokerVolume(poolSymbolName)](#BrokerTool+getCurrentBrokerVolume) ⇒ <code>number</code>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
-    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
+    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ContractTransaction</code>
     * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
-    * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
+    * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ContractTransaction</code>
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -1229,11 +1229,11 @@ main();
 ```
 <a name="BrokerTool+brokerDepositToDefaultFund"></a>
 
-### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.ContractTransaction</code>
+### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ContractTransaction</code>
 <p>Deposit lots to the default fund of a given pool.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ethers.ContractTransaction</code> - <p>ContractTransaction object.</p>  
+**Returns**: <code>ContractTransaction</code> - <p>ContractTransaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1299,13 +1299,13 @@ main();
 ```
 <a name="BrokerTool+transferOwnership"></a>
 
-### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ethers.providers.TransactionResponse</code>
+### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ContractTransaction</code>
 <p>Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
 (i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
 his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ethers.providers.TransactionResponse</code> - <p>ethers transaction object</p>  
+**Returns**: <code>ContractTransaction</code> - <p>ethers transaction object</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |

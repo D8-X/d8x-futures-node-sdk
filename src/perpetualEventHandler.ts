@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 import { emitWarning } from "process";
 import { ABK64x64ToFloat, mul64x64 } from "./d8XMath";
 import MarketData from "./marketData";

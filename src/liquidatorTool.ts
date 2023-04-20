@@ -1,7 +1,7 @@
-import WriteAccessHandler from "./writeAccessHandler";
-import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
-import { ethers } from "ethers";
+import { ContractTransaction } from "@ethersproject/contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
+import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
+import WriteAccessHandler from "./writeAccessHandler";
 
 /**
  * Functions to liquidate traders. This class requires a private key
@@ -63,7 +63,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     traderAddr: string,
     liquidatorAddr: string = "",
     priceFeedData?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+  ): Promise<ContractTransaction> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");

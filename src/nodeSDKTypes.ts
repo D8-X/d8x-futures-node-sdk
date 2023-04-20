@@ -1,4 +1,7 @@
-import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction, ContractInterface } from "ethers";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
+import { BytesLike } from "@ethersproject/bytes";
+import { AddressZero, HashZero } from "@ethersproject/constants";
+import { ContractInterface, ContractTransaction } from "@ethersproject/contracts";
 
 export const ERC20_ABI = require("./abi/ERC20.json");
 export const MOCK_TOKEN_SWAP_ABI = require("./abi/MockTokenSwap.json");
@@ -7,8 +10,8 @@ export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;
 export const COLLATERAL_CURRENCY_QUANTO = 2;
 export const PERP_STATE_STR = ["INVALID", "INITIALIZING", "NORMAL", "EMERGENCY", "CLEARED"];
-export const ZERO_ADDRESS = constants.AddressZero;
-export const ZERO_ORDER_ID = constants.HashZero;
+export const ZERO_ADDRESS = AddressZero;
+export const ZERO_ORDER_ID = HashZero;
 
 export const ONE_64x64 = BigNumber.from("0x010000000000000000");
 export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
@@ -296,15 +299,15 @@ export interface PriceFeedFormat {
 }
 
 export interface PythLatestPriceFeed {
-  ema_price:{
-    conf: string,
-    expo: number,
-    price: string,
-    publish_time: number
-    },
-  id:string,
-  price: PriceFeedFormat,
-  vaa: string
+  ema_price: {
+    conf: string;
+    expo: number;
+    price: string;
+    publish_time: number;
+  };
+  id: string;
+  price: PriceFeedFormat;
+  vaa: string;
 }
 
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
