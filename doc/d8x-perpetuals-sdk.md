@@ -80,22 +80,22 @@ require gas-payments.</p></dd>
 <dl>
 <dt><a href="#CollaterlCCY">CollaterlCCY</a></dt>
 <dd><p>struct ClientOrder {
-uint32 flags;
-uint24 iPerpetualId;
-uint16 brokerFeeTbps;
-address traderAddr;
-address brokerAddr;
-address referrerAddr;
-bytes brokerSignature;
-int128 fAmount;
-int128 fLimitPrice;
-int128 fTriggerPrice;
-int128 fLeverage; // 0 if deposit and trade separate
-uint64 iDeadline;
-uint64 createdTimestamp;
-//uint64 submittedTimestamp &lt;- will be set by LimitOrderBook
-bytes32 parentChildDigest1;
-bytes32 parentChildDigest2;
+uint24 iPerpetualId; // unique id of the perpetual
+int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
+uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -&gt; 1234)
+uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
+uint32 flags; // Order-flags are specified in OrderFlags.sol
+uint32 iDeadline; // order will not be executed after this deadline
+address brokerAddr; // can be empty, address of the broker
+int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
+int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
+bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
+address traderAddr; // address of the trader
+bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
+uint16 brokerFeeTbps; // broker fee in tenth of a basis point
+bytes brokerSignature; // signature, can be empty if no brokerAddr provided
+//address referrerAddr; &lt;- will be set by LimitOrderBook
+//uint64 submittedBlock &lt;- will be set by LimitOrderBook
 }</p></dd>
 </dl>
 
@@ -580,7 +580,7 @@ async function main() {
        type: "MARKET",
        quantity: 100,
        leverage: 2,
-       timestamp: Date.now()/1000,
+       executionTimestamp: Date.now()/1000,
    };
    let orderTransaction = await accTrade.order(order);
    console.log(orderTransaction);
@@ -607,7 +607,7 @@ async function main() {
       limitPrice: 1,
       quantity: 5,
       leverage: 2,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
       deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
    };
    let orderTransaction = await accTrade.order(order);
@@ -1132,7 +1132,7 @@ async function main() {
       side: "BUY",
       type: "MARKET",
       quantity: 100,
-      timestamp: Date.now()
+      executionTimestamp: Date.now()/1000
   };
    let exchFee = await brokTool.determineExchangeFee(order,
        "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
@@ -1286,7 +1286,7 @@ async function main() {
       side: "BUY",
       type: "MARKET",
       quantity: 1,
-      timestamp: Date.now()
+      executionTimestamp: Date.now()/1000
    };
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
@@ -2925,6 +2925,7 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
+    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderReferrerTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderReferrerTool+smartContractOrderToOrder) ⇒
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
@@ -3170,6 +3171,22 @@ main();
 | --- | --- |
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
+
+<a name="OrderReferrerTool+_isTradeable"></a>
+
+### orderReferrerTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
+<p>Can the order be executed?</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>true if trading conditions met, false otherwise</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>order struct</p> |
+| tradePrice | <p>&quot;preview&quot; price of this order</p> |
+| markPrice | <p>current mark price</p> |
+| blockTimestamp | <p>last observed block timestamp (hence already in past)</p> |
+| symbolToPerpInfoMap | <p>metadata</p> |
 
 <a name="OrderReferrerTool+smartContractOrderToOrder"></a>
 
@@ -5143,22 +5160,22 @@ and corresponding price information</p>
 
 ## CollaterlCCY
 <p>struct ClientOrder {
-uint32 flags;
-uint24 iPerpetualId;
-uint16 brokerFeeTbps;
-address traderAddr;
-address brokerAddr;
-address referrerAddr;
-bytes brokerSignature;
-int128 fAmount;
-int128 fLimitPrice;
-int128 fTriggerPrice;
-int128 fLeverage; // 0 if deposit and trade separate
-uint64 iDeadline;
-uint64 createdTimestamp;
-//uint64 submittedTimestamp &lt;- will be set by LimitOrderBook
-bytes32 parentChildDigest1;
-bytes32 parentChildDigest2;
+uint24 iPerpetualId; // unique id of the perpetual
+int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
+uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -&gt; 1234)
+uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
+uint32 flags; // Order-flags are specified in OrderFlags.sol
+uint32 iDeadline; // order will not be executed after this deadline
+address brokerAddr; // can be empty, address of the broker
+int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
+int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
+bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
+address traderAddr; // address of the trader
+bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
+uint16 brokerFeeTbps; // broker fee in tenth of a basis point
+bytes brokerSignature; // signature, can be empty if no brokerAddr provided
+//address referrerAddr; &lt;- will be set by LimitOrderBook
+//uint64 submittedBlock &lt;- will be set by LimitOrderBook
 }</p>
 
 **Kind**: global variable  
