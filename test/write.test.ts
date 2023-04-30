@@ -1,4 +1,4 @@
-// import { ethers } from "ethers";
+import { ethers } from "ethers";
 import { NodeSDKConfig, Order, OrderResponse } from "../src/nodeSDKTypes";
 // import { ABK64x64ToFloat, floatToABK64x64 } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
@@ -7,6 +7,7 @@ import MarketData from "../src/marketData";
 // import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
+import { Wallet } from "ethers";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -18,7 +19,7 @@ let config: NodeSDKConfig;
 // let proxyContract: ethers.Contract;
 let mktData: MarketData;
 // let orderIds: string[];
-// let wallet: ethers.Wallet;
+let wallet: ethers.Wallet;
 let accTrade: AccountTrade;
 let liqTool: LiquidatorTool;
 let orderId: string;
@@ -114,6 +115,12 @@ describe("write and spoil gas and tokens", () => {
     await delay(4000);
     let tx = await refTool.executeOrder("ETH-USD-MATIC", resp.orderId);
     console.log("tx hash = ", tx.hash);
+    wallet = new ethers.Wallet(pk);
+    let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
+    if (Math.abs(pos.leverage - 10) > 0.1) {
+      console.log(`Leverage expected ${10}, leverage realized ${pos.leverage}`);
+    }
+    expect(pos.leverage).toBeCloseTo(10, 0);
   });
   // it("post limit order", async () => {
   //   let order: Order = {
