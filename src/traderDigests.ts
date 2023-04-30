@@ -48,7 +48,7 @@ export default class TraderDigests {
     );
     const TRADE_ORDER_TYPEHASH = keccak256(
       Buffer.from(
-        "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint64 iDeadline,uint32 flags,int128 fLeverage,uint64 createdTimestamp)"
+        "Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,address brokerAddr,int128 fAmount,int128 fLimitPrice,int128 fTriggerPrice,uint32 iDeadline,uint32 flags,uint16 leverageTDR,uint32 executionTimestamp)"
       )
     );
     let structHash = keccak256(
@@ -64,7 +64,7 @@ export default class TraderDigests {
           "int128",
           "uint64",
           "uint32",
-          "int128",
+          "uint16",
           "uint64",
         ],
         [
@@ -78,8 +78,8 @@ export default class TraderDigests {
           order.fTriggerPrice,
           order.iDeadline,
           order.flags,
-          order.fLeverage,
-          order.createdTimestamp,
+          order.leverageTDR,
+          order.executionTimestamp,
         ]
       )
     );

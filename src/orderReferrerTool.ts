@@ -383,6 +383,15 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     );
   }
 
+  /**
+   * Can the order be executed?
+   * @param order order struct
+   * @param tradePrice "preview" price of this order
+   * @param markPrice current mark price
+   * @param blockTimestamp last observed block timestamp (hence already in past)
+   * @param symbolToPerpInfoMap metadata
+   * @returns true if trading conditions met, false otherwise
+   */
   protected _isTradeable(
     order: Order,
     tradePrice: number,
@@ -395,12 +404,16 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       console.log("order expired");
       return false;
     }
-
-    // next block should be in ~2 seconds, so + 2
+    // TODO: replace 2 by a chain-dependent constant - 1 for zkEVM
+    if (blockTimestamp + 2 < order.executionTimestamp) {
+      console.log(`execution deferred to ${order.executionTimestamp - blockTimestamp - 2} more seconds`);
+      return false;
+    }
     if (
       order.submittedTimestamp != undefined &&
       blockTimestamp + 2 < order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY
     ) {
+      // next block should be in ~2 seconds, so + 2
       console.log(
         `on hold for ${OrderReferrerTool.TRADE_DELAY + order.submittedTimestamp - blockTimestamp - 2} more seconds`
       );

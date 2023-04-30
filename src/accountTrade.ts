@@ -110,7 +110,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *        type: "MARKET",
    *        quantity: 100,
    *        leverage: 2,
-   *        timestamp: Date.now()/1000,
+   *        executionTimestamp: Date.now()/1000,
    *    };
    *    let orderTransaction = await accTrade.order(order);
    *    console.log(orderTransaction);
@@ -136,7 +136,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *       limitPrice: 1,
    *       quantity: 5,
    *       leverage: 2,
-   *       timestamp: Date.now() / 1000,
+   *       executionTimestamp: Date.now() / 1000,
    *       deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
    *    };
    *    let orderTransaction = await accTrade.order(order);

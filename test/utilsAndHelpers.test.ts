@@ -147,7 +147,7 @@ describe("utils", () => {
       limitPrice: 4,
       quantity: 10,
       leverage: 2,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     let flag = orderTypeToFlagCOPY(order);
     expect(containsFlag(flag, MASK_STOP_ORDER)).toBeTruthy;
@@ -165,7 +165,7 @@ describe("utils", () => {
       stopPrice: 4.1,
       quantity: 10,
       leverage: 2,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     let flag = orderTypeToFlagCOPY(order);
     expect(containsFlag(flag, MASK_STOP_ORDER)).toBeFalsy;
