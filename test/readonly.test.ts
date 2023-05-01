@@ -101,7 +101,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: -0.05,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
       let res = await apiInterface.orderDigest(orderSC);
@@ -252,7 +252,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 200,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
       console.log("mgn before opening=", mgnBefore, "\norder=", order);
@@ -267,7 +267,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 50,
         leverage: 5,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
       console.log("mgn before closing=", mgnBefore, "\norder=", order);
@@ -458,7 +458,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 5,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       const myAddress = new ethers.Wallet(pk).address;
       let fee = await brokerTool.determineExchangeFee(order, myAddress);
@@ -478,7 +478,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 0.5,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
         brokerFeeTbps: 500,
         deadline: Math.round(Date.now() / 1000) + 10000,
       };

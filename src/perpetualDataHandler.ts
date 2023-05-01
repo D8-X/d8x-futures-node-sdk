@@ -664,7 +664,7 @@ export default class PerpetualDataHandler {
     if (symbol == undefined) {
       throw Error(`Perpetual id ${order.iPerpetualId} not found. Check with marketData.exchangeInfo().`);
     }
-    let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
+    let side = order.fAmount > BigNumber.from(0) ? BUY_SIDE : SELL_SIDE;
     let limitPrice, stopPrice;
     let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
     if (fLimitPrice.eq(0)) {
@@ -692,9 +692,9 @@ export default class PerpetualDataHandler {
       brokerAddr: order.brokerAddr == ZERO_ADDRESS ? undefined : order.brokerAddr,
       brokerSignature: order.brokerSignature == "0x" ? undefined : order.brokerSignature,
       stopPrice: stopPrice,
-      leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
+      leverage: Number(order.leverageTDR) / 100,
       deadline: Number(order.iDeadline),
-      timestamp: Number(order.createdTimestamp),
+      executionTimestamp: Number(order.executionTimestamp),
       submittedTimestamp: Number(order.submittedTimestamp),
     };
     return userOrder;
@@ -750,9 +750,9 @@ export default class PerpetualDataHandler {
       fAmount: fAmount,
       fLimitPrice: fLimitPrice,
       fTriggerPrice: fTriggerPrice,
-      fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
+      leverageTDR: order.leverage == undefined ? BigNumber.from(0) : Math.round(100 * order.leverage),
       iDeadline: BigNumber.from(Math.round(iDeadline)),
-      createdTimestamp: BigNumber.from(Math.round(order.timestamp)),
+      executionTimestamp: BigNumber.from(Math.round(order.executionTimestamp)),
       submittedTimestamp: 0,
     };
     return smOrder;
@@ -779,9 +779,9 @@ export default class PerpetualDataHandler {
       fAmount: scOrder.fAmount,
       fLimitPrice: scOrder.fLimitPrice,
       fTriggerPrice: scOrder.fTriggerPrice,
-      fLeverage: scOrder.fLeverage,
+      leverageTDR: scOrder.leverageTDR,
       iDeadline: scOrder.iDeadline,
-      createdTimestamp: scOrder.createdTimestamp,
+      executionTimestamp: scOrder.executionTimestamp,
       parentChildDigest1: parentChildIds ? parentChildIds[0] : ZERO_ORDER_ID,
       parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
     };
@@ -820,9 +820,9 @@ export default class PerpetualDataHandler {
       fAmount: obOrder.fAmount,
       fLimitPrice: obOrder.fLimitPrice,
       fTriggerPrice: obOrder.fTriggerPrice,
-      fLeverage: obOrder.fLeverage,
+      leverageTDR: obOrder.leverageTDR,
       iDeadline: obOrder.iDeadline,
-      createdTimestamp: obOrder.createdTimestamp,
+      executionTimestamp: obOrder.executionTimestamp,
     } as SmartContractOrder;
     const order = PerpetualDataHandler.fromSmartContractOrder(scOrder, perpStaticInfo);
     if (obOrder.parentChildDigest1 != ZERO_ORDER_ID || obOrder.parentChildDigest2 != ZERO_ORDER_ID) {

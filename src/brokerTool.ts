@@ -205,7 +205,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *       side: "BUY",
    *       type: "MARKET",
    *       quantity: 100,
-   *       timestamp: Date.now()
+   *       executionTimestamp: Date.now()/1000
    *   };
    *    let exchFee = await brokTool.determineExchangeFee(order,
    *        "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
@@ -371,7 +371,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *       side: "BUY",
    *       type: "MARKET",
    *       quantity: 1,
-   *       timestamp: Date.now()
+   *       executionTimestamp: Date.now()/1000
    *    };
    *    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
    *        0.0001, 1669723339);

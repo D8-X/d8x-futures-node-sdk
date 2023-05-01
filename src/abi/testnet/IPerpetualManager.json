@@ -256,6 +256,25 @@
         "anonymous": false,
         "inputs": [
             {
+                "indexed": false,
+                "internalType": "bool",
+                "name": "pauseOn",
+                "type": "bool"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "poolId",
+                "type": "uint8"
+            }
+        ],
+        "name": "LiquidityProvisionPaused",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
                 "indexed": true,
                 "internalType": "uint64",
                 "name": "poolId",
@@ -368,31 +387,6 @@
             }
         ],
         "name": "PerpetualLimitOrderCancelled",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint64",
-                "name": "poolId",
-                "type": "uint64"
-            },
-            {
-                "indexed": false,
-                "internalType": "int128",
-                "name": "pricingLiquidity",
-                "type": "int128"
-            },
-            {
-                "indexed": false,
-                "internalType": "int128",
-                "name": "totalLiquidity",
-                "type": "int128"
-            }
-        ],
-        "name": "PricingLiquidityUpdated",
         "type": "event"
     },
     {
@@ -769,6 +763,19 @@
                 "internalType": "uint24",
                 "name": "perpetualId",
                 "type": "uint24"
+            }
+        ],
+        "name": "SettleState",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint24",
+                "name": "perpetualId",
+                "type": "uint24"
             },
             {
                 "indexed": true,
@@ -835,14 +842,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -850,9 +852,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -860,14 +872,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -885,24 +907,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "indexed": false,
@@ -1450,6 +1457,29 @@
     {
         "inputs": [
             {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fSettlementS2",
+                "type": "int128"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fSettlementS3",
+                "type": "int128"
+            }
+        ],
+        "name": "adjustSettlementPrice",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint8",
                 "name": "_poolId",
                 "type": "uint8"
@@ -1771,14 +1801,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -1786,9 +1811,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -1796,14 +1831,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -1821,24 +1866,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2013,14 +2043,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -2028,9 +2053,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -2038,14 +2073,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -2063,24 +2108,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2122,14 +2152,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -2137,9 +2162,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -2147,14 +2182,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -2172,24 +2217,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2213,14 +2243,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -2228,9 +2253,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -2238,14 +2273,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -2263,24 +2308,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -2336,35 +2366,6 @@
     {
         "inputs": [
             {
-                "internalType": "int128",
-                "name": "_fEMA",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fCurrentObs",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fLambda",
-                "type": "int128"
-            }
-        ],
-        "name": "ema",
-        "outputs": [
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "uint24",
                 "name": "_perpetualId",
                 "type": "uint24"
@@ -2386,6 +2387,11 @@
                 "internalType": "uint8",
                 "name": "_poolId",
                 "type": "uint8"
+            },
+            {
+                "internalType": "address",
+                "name": "_lpAddr",
+                "type": "address"
             }
         ],
         "name": "executeLiquidityWithdrawal",
@@ -2813,6 +2819,30 @@
     {
         "inputs": [
             {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "int128[2]",
+                "name": "_fIndexPrice",
+                "type": "int128[2]"
+            }
+        ],
+        "name": "getLiquidatableAccounts",
+        "outputs": [
+            {
+                "internalType": "address[]",
+                "name": "unsafeAccounts",
+                "type": "address[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint8",
                 "name": "_poolId",
                 "type": "uint8"
@@ -3143,6 +3173,30 @@
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "int128[2]",
+                "name": "_fIndexPrice",
+                "type": "int128[2]"
+            }
+        ],
+        "name": "getNextLiquidatableTrader",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "traderAddr",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "getOracleFactory",
         "outputs": [
@@ -3244,14 +3298,24 @@
                         "type": "int32"
                     },
                     {
-                        "internalType": "uint64",
+                        "internalType": "uint32",
                         "name": "iLastFundingTime",
-                        "type": "uint64"
+                        "type": "uint32"
                     },
                     {
-                        "internalType": "uint64",
+                        "internalType": "uint32",
                         "name": "iLastSettlementPriceUpdateTimestamp",
-                        "type": "uint64"
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iLastPriceJumpTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iLastDefaultFundTransfer",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "enum PerpStorage.PerpetualState",
@@ -3269,29 +3333,14 @@
                         "type": "uint16"
                     },
                     {
-                        "internalType": "uint16",
-                        "name": "incentiveSpreadTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "jumpSpreadTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "liquidationPenaltyRateTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "int32",
-                        "name": "fSigma3",
-                        "type": "int32"
-                    },
-                    {
                         "internalType": "bytes4",
                         "name": "S2BaseCCY",
                         "type": "bytes4"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "incentiveSpreadTbps",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "bytes4",
@@ -3299,14 +3348,29 @@
                         "type": "bytes4"
                     },
                     {
+                        "internalType": "uint16",
+                        "name": "jumpSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
                         "internalType": "bytes4",
                         "name": "S3BaseCCY",
                         "type": "bytes4"
                     },
                     {
+                        "internalType": "uint16",
+                        "name": "liquidationPenaltyRateTbps",
+                        "type": "uint16"
+                    },
+                    {
                         "internalType": "bytes4",
                         "name": "S3QuoteCCY",
                         "type": "bytes4"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fSigma3",
+                        "type": "int32"
                     },
                     {
                         "components": [
@@ -3321,7 +3385,7 @@
                                 "type": "uint64"
                             }
                         ],
-                        "internalType": "struct PerpStorage.OraclePriceData",
+                        "internalType": "struct PerpStorage.PriceTimeData",
                         "name": "currentMarkPremiumRate",
                         "type": "tuple"
                     },
@@ -3441,19 +3505,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "iLastPriceJumpTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iLastDefaultFundTransfer",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
+                        "internalType": "uint32",
                         "name": "iLastTargetPoolSizeTime",
-                        "type": "uint64"
+                        "type": "uint32"
                     },
                     {
                         "internalType": "int32",
@@ -3555,14 +3609,14 @@
                         "type": "address"
                     },
                     {
-                        "internalType": "int128",
+                        "internalType": "int32",
                         "name": "fInitialMarginRate",
-                        "type": "int128"
+                        "type": "int32"
                     },
                     {
-                        "internalType": "int128",
+                        "internalType": "int32",
                         "name": "fMaintenanceMarginRate",
-                        "type": "int128"
+                        "type": "int32"
                     },
                     {
                         "internalType": "uint8",
@@ -3661,14 +3715,24 @@
                         "type": "int32"
                     },
                     {
-                        "internalType": "uint64",
+                        "internalType": "uint32",
                         "name": "iLastFundingTime",
-                        "type": "uint64"
+                        "type": "uint32"
                     },
                     {
-                        "internalType": "uint64",
+                        "internalType": "uint32",
                         "name": "iLastSettlementPriceUpdateTimestamp",
-                        "type": "uint64"
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iLastPriceJumpTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iLastDefaultFundTransfer",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "enum PerpStorage.PerpetualState",
@@ -3686,29 +3750,14 @@
                         "type": "uint16"
                     },
                     {
-                        "internalType": "uint16",
-                        "name": "incentiveSpreadTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "jumpSpreadTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "uint16",
-                        "name": "liquidationPenaltyRateTbps",
-                        "type": "uint16"
-                    },
-                    {
-                        "internalType": "int32",
-                        "name": "fSigma3",
-                        "type": "int32"
-                    },
-                    {
                         "internalType": "bytes4",
                         "name": "S2BaseCCY",
                         "type": "bytes4"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "incentiveSpreadTbps",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "bytes4",
@@ -3716,14 +3765,29 @@
                         "type": "bytes4"
                     },
                     {
+                        "internalType": "uint16",
+                        "name": "jumpSpreadTbps",
+                        "type": "uint16"
+                    },
+                    {
                         "internalType": "bytes4",
                         "name": "S3BaseCCY",
                         "type": "bytes4"
                     },
                     {
+                        "internalType": "uint16",
+                        "name": "liquidationPenaltyRateTbps",
+                        "type": "uint16"
+                    },
+                    {
                         "internalType": "bytes4",
                         "name": "S3QuoteCCY",
                         "type": "bytes4"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fSigma3",
+                        "type": "int32"
                     },
                     {
                         "components": [
@@ -3738,7 +3802,7 @@
                                 "type": "uint64"
                             }
                         ],
-                        "internalType": "struct PerpStorage.OraclePriceData",
+                        "internalType": "struct PerpStorage.PriceTimeData",
                         "name": "currentMarkPremiumRate",
                         "type": "tuple"
                     },
@@ -3858,19 +3922,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "uint64",
-                        "name": "iLastPriceJumpTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iLastDefaultFundTransfer",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
+                        "internalType": "uint32",
                         "name": "iLastTargetPoolSizeTime",
-                        "type": "uint64"
+                        "type": "uint32"
                     },
                     {
                         "internalType": "int32",
@@ -4009,6 +4063,25 @@
                 "internalType": "contract IShareTokenFactory",
                 "name": "",
                 "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            }
+        ],
+        "name": "getShareTokenPriceD18",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -4266,6 +4339,52 @@
     {
         "inputs": [
             {
+                "internalType": "uint8",
+                "name": "poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_fromIdx",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "numRequests",
+                "type": "uint256"
+            }
+        ],
+        "name": "getWithdrawRequests",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "address",
+                        "name": "lp",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "shareTokens",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "withdrawTimestamp",
+                        "type": "uint64"
+                    }
+                ],
+                "internalType": "struct IPerpetualTreasury.WithdrawRequest[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint256",
                 "name": "_numBlockSinceLastOpen",
                 "type": "uint256"
@@ -4476,6 +4595,24 @@
     {
         "inputs": [
             {
+                "internalType": "uint8",
+                "name": "_poolId",
+                "type": "uint8"
+            },
+            {
+                "internalType": "bool",
+                "name": "_pauseOn",
+                "type": "bool"
+            }
+        ],
+        "name": "pauseLiquidityProvision",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint24",
                 "name": "_iPerpetualId",
                 "type": "uint24"
@@ -4483,14 +4620,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -4498,9 +4630,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -4508,14 +4650,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -4533,24 +4685,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -4674,14 +4811,9 @@
             {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -4689,9 +4821,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -4699,14 +4841,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -4724,24 +4876,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -5012,7 +5149,7 @@
                 "type": "address"
             }
         ],
-        "name": "setOracleForPerpetual",
+        "name": "setOracleFactoryForPerpetual",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -5307,16 +5444,24 @@
     {
         "inputs": [
             {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            }
+        ],
+        "name": "togglePerpEmergencyState",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "components": [
                     {
-                        "internalType": "uint32",
-                        "name": "flags",
-                        "type": "uint32"
-                    },
-                    {
-                        "internalType": "uint24",
-                        "name": "iPerpetualId",
-                        "type": "uint24"
+                        "internalType": "uint16",
+                        "name": "leverageTDR",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "uint16",
@@ -5324,9 +5469,19 @@
                         "type": "uint16"
                     },
                     {
+                        "internalType": "uint24",
+                        "name": "iPerpetualId",
+                        "type": "uint24"
+                    },
+                    {
                         "internalType": "address",
                         "name": "traderAddr",
                         "type": "address"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "executionTimestamp",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "address",
@@ -5334,14 +5489,24 @@
                         "type": "address"
                     },
                     {
+                        "internalType": "uint32",
+                        "name": "submittedTimestamp",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "flags",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "iDeadline",
+                        "type": "uint32"
+                    },
+                    {
                         "internalType": "address",
                         "name": "referrerAddr",
                         "type": "address"
-                    },
-                    {
-                        "internalType": "bytes",
-                        "name": "brokerSignature",
-                        "type": "bytes"
                     },
                     {
                         "internalType": "int128",
@@ -5359,24 +5524,9 @@
                         "type": "int128"
                     },
                     {
-                        "internalType": "int128",
-                        "name": "fLeverage",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "iDeadline",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "createdTimestamp",
-                        "type": "uint64"
-                    },
-                    {
-                        "internalType": "uint64",
-                        "name": "submittedTimestamp",
-                        "type": "uint64"
+                        "internalType": "bytes",
+                        "name": "brokerSignature",
+                        "type": "bytes"
                     }
                 ],
                 "internalType": "struct IPerpetualOrder.Order",
@@ -5735,11 +5885,6 @@
                 "internalType": "uint8",
                 "name": "_poolId",
                 "type": "uint8"
-            },
-            {
-                "internalType": "address",
-                "name": "_receiver",
-                "type": "address"
             },
             {
                 "internalType": "int128",
