@@ -222,7 +222,7 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Get pool Id given a pool symbol.
+   * Get pool Id given a pool symbol. Pool IDs start at 1.
    * @param {string} symbol Pool symbol.
    * @returns {number} Pool Id.
    */
@@ -1010,11 +1010,11 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Gets the pool index (in exchangeInfo) corresponding to a given symbol.
+   * Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.
    * @param symbol Symbol of the form ETH-USD-MATIC
    * @returns Pool index
    */
-  public getPoolIndexFromSymbol(symbol: string): number {
+  public getPoolStaticInfoIndexFromSymbol(symbol: string): number {
     let pools = this.poolStaticInfos!;
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
     let k = 0;

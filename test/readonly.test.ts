@@ -345,7 +345,7 @@ describe("readOnly", () => {
       await liqProvTool.createProxyInstance();
     });
     it("getParticipationValue", async () => {
-      let val = await liqProvTool.getParticipationValue("MATIC");
+      let val = await mktData.getParticipationValue(wallet.address, "MATIC");
       console.log("pool sharetoken value", val.value);
     });
   });
