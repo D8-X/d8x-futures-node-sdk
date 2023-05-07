@@ -12,18 +12,6 @@ Node TypeScript SDK for D8X Perpetual Futures
 - clone this repo
 - open directory of repo and type `yarn` to install packages
 
-#### Optional
-
-- Pyth recommends to run your own Pyth-price service
-  - Follow the instructions on [Wormhole Spy](https://github.com/pyth-network/pyth-crosschain/tree/main/price_service/server), specifically
-    - Copy `.env.example` into `.env` and edit as described in the Readme
-    - To run the price service, you need to build the image as described in the last [paragraph of the Readme here](https://github.com/pyth-network/pyth-crosschain/tree/main/price_service/server).
-      Ensure your own price server is enabled in docker-compose:
-      ```
-      # image: public.ecr.aws/pyth-network/xc-server:v3.0.0
-      image: pyth_price_server
-      ```
-
 ### Test
 
 `yarn test`
