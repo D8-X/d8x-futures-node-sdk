@@ -560,7 +560,6 @@ export default class MarketData extends PerpetualDataHandler {
    *   console.log(MarketData);
    *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;
    *   let md = new MarketData(config);
    *   await md.createProxyInstance();
    *   // get value of pool share token
@@ -568,7 +567,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   console.log(shareToken);
    * }
    * main();
-   * @returns the value (in collateral tokens) of the pool share
+   * @returns the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress
    */
   public async getParticipationValue(
     address: string,

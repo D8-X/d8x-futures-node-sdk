@@ -2553,7 +2553,7 @@ main();
 in poolSymbol-currency (e.g. MATIC, USDC).</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>the value (in collateral tokens) of the pool share</p>  
+**Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
 
 | Param | Description |
 | --- | --- |
@@ -2567,7 +2567,6 @@ async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
@@ -4669,7 +4668,7 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getParticipationValue</code>](#MarketData+getParticipationValue)  
-**Returns**: <p>the value (in collateral tokens) of the pool share</p>  
+**Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
 
 | Param | Description |
 | --- | --- |
@@ -4683,7 +4682,6 @@ async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
