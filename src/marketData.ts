@@ -8,6 +8,7 @@ import {
   calculateLiquidationPriceCollateralQuote,
   floatToABK64x64,
   getDepositAmountForLvgTrade,
+  dec18ToFloat,
 } from "./d8XMath";
 import {
   BUY_SIDE,
@@ -506,11 +507,96 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns Balance
    */
   public async getWalletBalance(address: string, symbol: string): Promise<number> {
-    let poolIdx = this.getPoolIndexFromSymbol(symbol);
+    let poolIdx = this.getPoolStaticInfoIndexFromSymbol(symbol);
     let marginTokenAddr = this.poolStaticInfos[poolIdx].poolMarginTokenAddr;
     let token = new Contract(marginTokenAddr, ERC20_ABI, this.provider!);
     let walletBalanceDec18 = await token.balanceOf(address);
     return walletBalanceDec18 / 10 ** 18;
+  }
+
+  /**
+   * Get the address' balance of the pool share token
+   * @param address address of the liquidity provider
+   * @param symbolOrId Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id
+   */
+  public async getPoolShareTokenBalance(address: string, symbolOrId: string | number): Promise<number> {
+    let poolId = this._poolSymbolOrIdToPoolId(symbolOrId);
+    return this._getPoolShareTokenBalanceFromId(address, poolId);
+  }
+
+  /**
+   * Query the pool share token holdings of address
+   * @param address address of token holder
+   * @param poolId pool id
+   * @returns pool share token balance of address
+   */
+  private async _getPoolShareTokenBalanceFromId(address: string, poolId: number): Promise<number> {
+    let shareTokenAddr = this.poolStaticInfos[poolId - 1].shareTokenAddr;
+    let shareToken = new Contract(shareTokenAddr, ERC20_ABI, this.provider!);
+    let d18ShareTokenBalanceOfAddr = await shareToken.balanceOf(address);
+    return dec18ToFloat(d18ShareTokenBalanceOfAddr);
+  }
+
+  /**
+   * Value of pool token in collateral currency
+   * @param symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
+   * @returns current pool share token price in collateral currency
+   */
+  public async getShareTokenPrice(symbolOrId: string | number): Promise<number> {
+    let poolId = this._poolSymbolOrIdToPoolId(symbolOrId);
+    const priceDec18 = await this.proxyContract!.getShareTokenPriceD18(poolId);
+    const price = dec18ToFloat(priceDec18);
+    return price;
+  }
+
+  /**
+   * Value of the pool share tokens for this liquidity provider
+   * in poolSymbol-currency (e.g. MATIC, USDC).
+   * @param address address of liquidity provider
+   * @param symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
+   * @example
+   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(MarketData);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   let md = new MarketData(config);
+   *   await md.createProxyInstance();
+   *   // get value of pool share token
+   *   let shareToken = await md.getParticipationValue(myaddress, "MATIC");
+   *   console.log(shareToken);
+   * }
+   * main();
+   * @returns the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress
+   */
+  public async getParticipationValue(
+    address: string,
+    symbolOrId: string | number
+  ): Promise<{ value: number; shareTokenBalance: number; poolShareToken: string }> {
+    let poolId = this._poolSymbolOrIdToPoolId(symbolOrId);
+    const shareTokens = await this._getPoolShareTokenBalanceFromId(address, poolId);
+    const priceDec18 = await this.proxyContract!.getShareTokenPriceD18(poolId);
+    const price = dec18ToFloat(priceDec18);
+    const value = price * shareTokens;
+    const shareTokenAddr = this.poolStaticInfos[poolId - 1].shareTokenAddr;
+    return {
+      value: value,
+      shareTokenBalance: shareTokens,
+      poolShareToken: shareTokenAddr,
+    };
+  }
+
+  private _poolSymbolOrIdToPoolId(poolSymbolOrId: string | number): number {
+    if (this.proxyContract == null || this.poolStaticInfos.length == 0) {
+      throw Error("no proxy contract or wallet or data initialized. Use createProxyInstance().");
+    }
+    let poolId: number;
+    if (isNaN(Number(poolSymbolOrId))) {
+      poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolOrId as string, this.poolStaticInfos);
+    } else {
+      poolId = Number(poolSymbolOrId);
+    }
+    return poolId;
   }
 
   /**

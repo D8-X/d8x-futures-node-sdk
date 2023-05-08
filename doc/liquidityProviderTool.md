@@ -9,7 +9,6 @@ smart-contract interactions that require gas-payments.</p>
 
 * [LiquidityProviderTool](#LiquidityProviderTool) ⇐ <code>WriteAccessHandler</code>
     * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
-    * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+initiateLiquidityWithdrawal) ⇒
     * [.executeLiquidityWithdrawal(poolSymbolName)](#LiquidityProviderTool+executeLiquidityWithdrawal) ⇒
@@ -37,35 +36,6 @@ async function main() {
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   // Create a proxy instance to access the blockchain
   await lqudtProviderTool.createProxyInstance();
-}
-main();
-```
-<a name="LiquidityProviderTool+getParticipationValue"></a>
-
-### liquidityProviderTool.getParticipationValue(poolSymbolName) ⇒
-<p>Value of the pool share tokens for this liquidity provider
-in poolSymbol-currency (e.g. MATIC, USDC).</p>
-
-**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
-**Returns**: <p>Value in poolSymbol-currency (e.g. MATIC, USDC), balance of pool share tokens, and share token symbol.</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC).</p> |
-
-**Example**  
-```js
-import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(LiquidityProviderTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance();
-  // get value of pool share token
-  let shareToken = await lqudtProviderTool.getParticipationValue("MATIC");
-  console.log(shareToken);
 }
 main();
 ```

@@ -21,6 +21,10 @@ No gas required for the queries here.</p>
         * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
         * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
         * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+        * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance)
+        * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
+        * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
+        * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
@@ -236,6 +240,72 @@ main();
 | address | <p>Address to check</p> |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+<a name="MarketData+getPoolShareTokenBalance"></a>
+
+### marketData.getPoolShareTokenBalance(address, symbolOrId)
+<p>Get the address' balance of the pool share token</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of the liquidity provider</p> |
+| symbolOrId | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
+
+<a name="MarketData+_getPoolShareTokenBalanceFromId"></a>
+
+### marketData.\_getPoolShareTokenBalanceFromId(address, poolId) ⇒
+<p>Query the pool share token holdings of address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>pool share token balance of address</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of token holder</p> |
+| poolId | <p>pool id</p> |
+
+<a name="MarketData+getShareTokenPrice"></a>
+
+### marketData.getShareTokenPrice(symbolOrId) ⇒
+<p>Value of pool token in collateral currency</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>current pool share token price in collateral currency</p>  
+
+| Param | Description |
+| --- | --- |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+<a name="MarketData+getParticipationValue"></a>
+
+### marketData.getParticipationValue(address, symbolOrId) ⇒
+<p>Value of the pool share tokens for this liquidity provider
+in poolSymbol-currency (e.g. MATIC, USDC).</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of liquidity provider</p> |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get value of pool share token
+  let shareToken = await md.getParticipationValue(myaddress, "MATIC");
+  console.log(shareToken);
+}
+main();
+```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
 ### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
