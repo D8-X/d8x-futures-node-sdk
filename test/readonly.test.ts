@@ -94,6 +94,11 @@ describe("readOnly", () => {
       await apiInterface.createProxyInstance();
       wallet = new ethers.Wallet(pk);
     });
+    it("Read ABI", () => {
+      let proxyABI = apiInterface.getABI("sharetoken") as string;
+      expect(proxyABI.length > 0).toBeTruthy;
+    });
+
     it("order digest", async () => {
       let order: Order = {
         symbol: "BTC-USD-MATIC",

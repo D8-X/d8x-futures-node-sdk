@@ -40,6 +40,7 @@ export interface NodeSDKConfig {
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;
+  shareTokenABILocation: string;
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
   symbolListLocation: string;
@@ -48,6 +49,7 @@ export interface NodeSDKConfig {
   proxyABI?: ContractInterface | undefined;
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
+  shareTokenABI?: ContractInterface | undefined;
 }
 
 export interface MarginAccount {
@@ -318,6 +320,7 @@ export function loadABIs(config: NodeSDKConfig) {
     config.proxyABI = require(`./abi/${config.proxyABILocation}`);
     config.lobFactoryABI = require(`./abi/${config.limitOrderBookFactoryABILocation}`);
     config.lobABI = require(`./abi/${config.limitOrderBookABILocation}`);
+    config.shareTokenABI = require(`./abi/${config.shareTokenABILocation}`);
   }
 }
 

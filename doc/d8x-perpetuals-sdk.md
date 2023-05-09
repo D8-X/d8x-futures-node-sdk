@@ -492,6 +492,7 @@ require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_AccountTrade_new"></a>
 
@@ -913,6 +914,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### accountTrade.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="BrokerTool"></a>
 
 ## BrokerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -951,6 +965,7 @@ require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_BrokerTool_new"></a>
 
@@ -1519,6 +1534,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### brokerTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="LiquidatorTool"></a>
 
 ## LiquidatorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1550,6 +1578,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidatorTool_new"></a>
 
@@ -1919,6 +1948,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### liquidatorTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="LiquidityProviderTool"></a>
 
 ## LiquidityProviderTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -1948,6 +1990,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
 
@@ -2256,6 +2299,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### liquidityProviderTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="MarketData"></a>
 
 ## MarketData ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
@@ -2305,6 +2361,7 @@ No gas required for the queries here.</p>
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
         * [._queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap)](#MarketData._queryMidPrices) ⇒
@@ -2917,6 +2974,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### marketData.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="MarketData._getAllIndexPrices"></a>
 
 ### MarketData.\_getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter) ⇒
@@ -2982,6 +3052,7 @@ gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
@@ -3431,6 +3502,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### orderReferrerTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="PerpetualDataHandler"></a>
 
 ## PerpetualDataHandler
@@ -3452,6 +3536,7 @@ common data and chain operations.</p>
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
         * [.nestedIDsToChunks(chunkSize, nestedIDs)](#PerpetualDataHandler.nestedIDsToChunks) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
@@ -3597,6 +3682,18 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### perpetualDataHandler.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="PerpetualDataHandler.getPerpetualStaticInfo"></a>
 
@@ -4319,6 +4416,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_TraderInterface_new"></a>
 
@@ -5043,6 +5141,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### traderInterface.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="WriteAccessHandler"></a>
 
 ## WriteAccessHandler ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
@@ -5071,6 +5182,7 @@ require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_WriteAccessHandler_new"></a>
 
@@ -5269,6 +5381,19 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### writeAccessHandler.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="CollaterlCCY"></a>
 
