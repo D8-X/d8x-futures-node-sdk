@@ -7,6 +7,7 @@
     "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
     "priceFeedConfigNetwork": "testnet",
     "proxyABILocation": "testnet/IPerpetualManager.json",
+    "shareTokenABILocation": "testnet/ShareToken.json",
     "limitOrderBookFactoryABILocation": "testnet/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "testnet/LimitOrderBook.json"
   },
@@ -30,6 +31,7 @@
     "nodeURL": "https://rpc.public.zkevm-test.net ",
     "priceFeedConfigNetwork": "testnet",
     "proxyABILocation": "zkevmTestnet/IPerpetualManager.json",
+    "shareTokenABILocation": "zkevmTestnet/ShareToken.json",
     "limitOrderBookFactoryABILocation": "zkevmTestnet/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "zkevmTestnet/LimitOrderBook.json"
   }

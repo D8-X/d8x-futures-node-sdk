@@ -75,6 +75,7 @@ export default class PerpetualDataHandler {
   protected lobFactoryABI: ContractInterface;
   protected lobFactoryAddr: string | undefined;
   protected lobABI: ContractInterface;
+  protected shareTokenABI: ContractInterface;
   protected nodeURL: string;
   protected provider: Provider | null = null;
 
@@ -98,6 +99,7 @@ export default class PerpetualDataHandler {
     this.proxyABI = config.proxyABI!;
     this.lobFactoryABI = config.lobFactoryABI!;
     this.lobABI = config.lobABI!;
+    this.shareTokenABI = config.shareTokenABI!;
     this.symbolList = SYMBOL_LIST;
     this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
@@ -1042,12 +1044,19 @@ export default class PerpetualDataHandler {
     return undefined;
   }
 
+  /**
+   * Get ABI for LimitOrderBook, Proxy, or Share Pool Token
+   * @param contract name of contract: proxy|lob|sharetoken
+   * @returns ABI for the requested contract
+   */
   public getABI(contract: string): ContractInterface | undefined {
     switch (contract) {
       case "proxy":
         return this.proxyABI;
       case "lob":
         return this.lobABI;
+      case "sharetoken":
+        return this.shareTokenABI;
       default:
         return undefined;
     }
