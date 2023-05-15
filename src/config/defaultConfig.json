@@ -6,10 +6,22 @@
     "proxyAddr": "0x7Fb76c91e4950bD48Ed1C812EdE98A5Db96cb4e7",
     "nodeURL": "https://polygon-mumbai.blockpi.network/v1/rpc/public",
     "priceFeedConfigNetwork": "testnet",
-    "proxyABILocation": "testnet/IPerpetualManager.json",
-    "shareTokenABILocation": "testnet/ShareToken.json",
-    "limitOrderBookFactoryABILocation": "testnet/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "testnet/LimitOrderBook.json"
+    "shareTokenABILocation": "testnet/v7/ShareToken.json",
+    "proxyABILocation": "testnet/v7/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "testnet/v7/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "testnet/v7/LimitOrderBook.json"
+  },
+  {
+    "name": "testnet",
+    "chainId": 80001,
+    "version": 8,
+    "proxyAddr": "0x947A868705Ef30419b4E961d862Aeb88DA2f220E",
+    "nodeURL": "https://matic-mumbai.chainstacklabs.com",
+    "priceFeedConfigNetwork": "testnet",
+    "proxyABILocation": "testnet/v8/IPerpetualManager.json",
+    "shareTokenABILocation": "testnet/v8/ShareToken.json",
+    "limitOrderBookFactoryABILocation": "testnet/v8/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "testnet/v8/LimitOrderBook.json"
   },
   {
     "name": "mainnet",
@@ -28,11 +40,22 @@
     "chainId": 1442,
     "version": 0,
     "proxyAddr": "0xb56b81e40e1cDB77bb5Db6C0283e25C27DAE1Be6",
-    "nodeURL": "https://rpc.public.zkevm-test.net ",
+    "nodeURL": "https://rpc.public.zkevm-test.net",
     "priceFeedConfigNetwork": "testnet",
     "proxyABILocation": "zkevmTestnet/IPerpetualManager.json",
     "shareTokenABILocation": "zkevmTestnet/ShareToken.json",
     "limitOrderBookFactoryABILocation": "zkevmTestnet/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "zkevmTestnet/LimitOrderBook.json"
+  },
+  {
+    "name": "zkevm",
+    "chainId": 1101,
+    "version": 0,
+    "proxyAddr": "",
+    "nodeURL": "https://zkevm-rpc.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "proxyABILocation": "",
+    "limitOrderBookFactoryABILocation": "",
+    "limitOrderBookABILocation": ""
   }
 ]
