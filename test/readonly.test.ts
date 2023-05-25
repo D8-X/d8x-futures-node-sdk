@@ -243,11 +243,15 @@ describe("readOnly", () => {
       let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos);
       console.log(`max short trade size w/o  wallet: ${maxTradeSize}`);
     });
-    it("openOrders", async () => {
+    it("openOrders in perpetual", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
-      console.log("order ids=", ordersStruct.orderIds);
-      console.log("orders   =", ordersStruct.orders);
-      orderIds = ordersStruct.orderIds;
+      console.log("order ids=", ordersStruct[0].orderIds);
+      console.log("orders   =", ordersStruct[0].orders);
+      orderIds = ordersStruct[0].orderIds;
+    });
+    it("openOrders in pool", async () => {
+      let ordersStruct = await mktData.openOrders(wallet.address, "MATIC");
+      console.log("order =", ordersStruct);
     });
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
@@ -511,7 +515,7 @@ describe("readOnly", () => {
     });
     it("get order by id/digest", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
-      orderIds = ordersStruct.orderIds;
+      orderIds = ordersStruct[0].orderIds;
       if (orderIds.length > 0) {
         let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
         console.log(order);

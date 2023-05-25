@@ -160,7 +160,7 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * All open orders for a trader-address and a symbol.
    * @param {string} traderAddr Address of the trader for which we get the open orders.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC or a pool symbol.
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -176,9 +176,38 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns {Array<Array<Order>, Array<string>>} Array of open orders and corresponding order-ids.
+   * @returns Promise<{ orders: Order[]; orderIds: string[] }[]> For each perpetual an
+   * array of open orders and corresponding order-ids.
    */
-  public async openOrders(traderAddr: string, symbol: string): Promise<{ orders: Order[]; orderIds: string[] }> {
+  public async openOrders(traderAddr: string, symbol: string): Promise<{ orders: Order[]; orderIds: string[] }[]> {
+    // open orders requested only for given symbol
+    let resArray: Array<{ orders: Order[]; orderIds: string[] }> = [];
+    if (symbol.split("-").length == 1) {
+      // pool symbol
+      const symbols = this.getPerpetualSymbolsInPool(symbol);
+      let prom: Array<Promise<{ orders: Order[]; orderIds: string[] }>> = [];
+      for (let k = 0; k < symbols.length; k++) {
+        let p = this._openOrdersOfPerpetual(traderAddr, symbols[k]);
+        prom.push(p);
+      }
+      resArray = await Promise.all(prom);
+    } else {
+      let res = await this._openOrdersOfPerpetual(traderAddr, symbol);
+      resArray.push(res!);
+    }
+    return resArray;
+  }
+
+  /**
+   * All open orders for a trader-address and a given perpetual symbol.
+   * @param {string} traderAddr Address of the trader for which we get the open orders.
+   * @param {string} symbol perpetual-symbol of the form ETH-USD-MATIC
+   * @returns
+   */
+  private async _openOrdersOfPerpetual(
+    traderAddr: string,
+    symbol: string
+  ): Promise<{ orders: Order[]; orderIds: string[] }> {
     // open orders requested only for given symbol
     let orderBookContract = this.getOrderBookContract(symbol);
     let [orders, digests] = await Promise.all([

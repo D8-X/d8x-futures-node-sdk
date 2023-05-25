@@ -491,6 +491,7 @@ require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -901,6 +902,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### accountTrade.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### accountTrade.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -964,6 +978,7 @@ require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -1521,6 +1536,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### brokerTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### brokerTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -1577,6 +1605,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -1935,6 +1964,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### liquidatorTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### liquidatorTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -1989,6 +2031,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -2286,6 +2329,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### liquidityProviderTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### liquidityProviderTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -2360,6 +2416,7 @@ No gas required for the queries here.</p>
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+        * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
@@ -2961,6 +3018,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### marketData.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### marketData.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -3051,6 +3121,7 @@ gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -3489,6 +3560,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### orderReferrerTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### orderReferrerTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -3535,6 +3619,7 @@ common data and chain operations.</p>
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+        * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
@@ -3670,6 +3755,18 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### perpetualDataHandler.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
@@ -4415,6 +4512,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -5128,6 +5226,19 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### traderInterface.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### traderInterface.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -5181,6 +5292,7 @@ require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
@@ -5368,6 +5480,19 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
+
+### writeAccessHandler.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
