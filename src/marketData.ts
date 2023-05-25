@@ -176,8 +176,7 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns Promise<{ orders: Order[]; orderIds: string[] }[]> For each perpetual an
-   * array of open orders and corresponding order-ids.
+   * @returns For each perpetual an array of open orders and corresponding order-ids.
    */
   public async openOrders(traderAddr: string, symbol: string): Promise<{ orders: Order[]; orderIds: string[] }[]> {
     // open orders requested only for given symbol
@@ -202,7 +201,7 @@ export default class MarketData extends PerpetualDataHandler {
    * All open orders for a trader-address and a given perpetual symbol.
    * @param {string} traderAddr Address of the trader for which we get the open orders.
    * @param {string} symbol perpetual-symbol of the form ETH-USD-MATIC
-   * @returns
+   * @returns open orders and order ids
    */
   private async _openOrdersOfPerpetual(
     traderAddr: string,
@@ -284,7 +283,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param order Order to be submitted
    * @param account Position risk before trade
    * @param indexPriceInfo Index prices and market status (open/closed)
-   * @returns {MarginAccount} Position risk after trade
+   * @returns Position risk after trade
    */
   public async positionRiskOnTrade(
     traderAddr: string,
