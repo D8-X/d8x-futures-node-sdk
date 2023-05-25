@@ -116,7 +116,7 @@ describe("write and spoil gas and tokens", () => {
     let tx = await refTool.executeOrder("ETH-USD-MATIC", resp.orderId);
     console.log("tx hash = ", tx.hash);
     wallet = new ethers.Wallet(pk);
-    let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
+    let pos = (await mktData.positionRisk(wallet.address, "ETH-USD-MATIC"))[0];
     if (Math.abs(pos.leverage - 10) > 0.1) {
       console.log(`Leverage expected ${10}, leverage realized ${pos.leverage}`);
     }
@@ -175,7 +175,7 @@ describe("write and spoil gas and tokens", () => {
   // });
 
   // it("should liquidate trader", async () => {
-  //   let posRisk = await mktData.positionRisk(accTrade.getAddress(), "BTC-USD-MATIC");
+  //   let posRisk = (await mktData.positionRisk(accTrade.getAddress(), "BTC-USD-MATIC"))[0];
   //   console.log("trying to liquidate account:");
   //   console.log(posRisk);
   //   let tx = await liqTool.liquidateTrader("BTC-USD-MATIC", accTrade.getAddress());

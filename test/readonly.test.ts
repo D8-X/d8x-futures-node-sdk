@@ -235,12 +235,17 @@ describe("readOnly", () => {
     });
     it("maxOrderSizeForTrader (long)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos[0]);
       console.log(`max long trade size w/o   wallet: ${maxTradeSize}`);
+    });
+    it("position risk in pool", async () => {
+      let pos = await mktData.positionRisk(wallet.address, "MATIC");
+      console.log(`Position risk in MATIC pool`);
+      console.log(pos);
     });
     it("maxOrderSizeForTrader (short)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos[0]);
       console.log(`max short trade size w/o  wallet: ${maxTradeSize}`);
     });
     it("openOrders in perpetual", async () => {
@@ -259,7 +264,7 @@ describe("readOnly", () => {
     });
 
     it("get margin info if an opening trade was performed", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let order: Order = {
         symbol: "MATIC-USD-MATIC",
         side: "BUY",
@@ -274,7 +279,7 @@ describe("readOnly", () => {
     });
 
     it("get margin info if a closing trade was performed", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let order: Order = {
         symbol: "MATIC-USD-MATIC",
         side: "SELL",
@@ -288,14 +293,14 @@ describe("readOnly", () => {
       console.log("mgn after  closing=", newPositionRisk, "\ndeposit =", orderCost);
     });
     it("get margin info if collateral is added", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let deposit = 100;
       let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
       console.log("mgnBefore:", mgnBefore);
       console.log("mgnAfter :", mgnAfter);
     });
     it("get margin info if collateral is removed", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let deposit = -2;
       let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
       console.log("mgnBefore:", mgnBefore);
@@ -408,7 +413,7 @@ describe("readOnly", () => {
       if (accounts.length > 0) {
         let traderAddr = accounts[0];
         let isLiquidatable = !(await liqTool.isMaintenanceMarginSafe(symbol, traderAddr));
-        let posRisk = await mktData.positionRisk(traderAddr, symbol);
+        let posRisk = (await mktData.positionRisk(traderAddr, symbol))[0];
         let matchLiqAndLvg =
           (isLiquidatable && posRisk.leverage >= posRisk.liquidationLvg) ||
           (!isLiquidatable && posRisk.leverage < posRisk.liquidationLvg);

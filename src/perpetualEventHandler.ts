@@ -81,7 +81,7 @@ export default class PerpetualEventHandler {
         let orders = await this.mktData.openOrders(this.traderAddr, perpSymbol);
         let perpId = perpState.id;
         this.ordersInPerpetual.set(perpId, orders[0]);
-        let position = await this.mktData.positionRisk(this.traderAddr, perpSymbol);
+        let position = (await this.mktData.positionRisk(this.traderAddr, perpSymbol))[0];
         this.positionInPerpetual.set(perpId, position);
         this.poolIndexForPerpetual.set(perpId, k);
       }
@@ -349,7 +349,7 @@ export default class PerpetualEventHandler {
       return;
     }
     let perpetualIdStr = perpetualId.toString();
-    let margin = await this.mktData.positionRisk(this.traderAddr, perpetualIdStr);
+    let margin = (await this.mktData.positionRisk(this.traderAddr, perpetualIdStr))[0];
     this.positionInPerpetual.set(perpetualId, margin);
   }
 

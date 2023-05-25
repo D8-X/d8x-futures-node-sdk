@@ -218,9 +218,10 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Information about the position open by a given trader in a given perpetual contract.
+   * Information about the position open by a given trader in a given perpetual contract, or
+   * for all perpetuals in a pool
    * @param {string} traderAddr Address of the trader for which we get the position risk.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC or pool symbol ("MATIC")
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -236,18 +237,42 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns {MarginAccount} Position risk of trader.
+   * @returns {MarginAccount[]} Array of position risks of trader.
    */
-  public async positionRisk(traderAddr: string, symbol: string): Promise<MarginAccount> {
+  public async positionRisk(traderAddr: string, symbol: string): Promise<MarginAccount[]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    let resArray: Array<MarginAccount> = [];
+    if (symbol.split("-").length == 1) {
+      // pool symbol
+      const symbols = this.getPerpetualSymbolsInPool(symbol);
+      let prom: Array<Promise<MarginAccount>> = [];
+      for (let k = 0; k < symbols.length; k++) {
+        let p = this._positionRiskForTraderInPerpetual(traderAddr, symbols[k]);
+        prom.push(p);
+      }
+      resArray = await Promise.all(prom);
+    } else {
+      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbol);
+      resArray.push(res!);
+    }
+    return resArray;
+  }
+
+  /**
+   * Information about the position open by a given trader in a given perpetual contract.
+   * @param {string} traderAddr Address of the trader for which we get the position risk.
+   * @param {string} symbol perpetual symbol of the form ETH-USD-MATIC
+   * @returns MarginAccount struct for the trader
+   */
+  private async _positionRiskForTraderInPerpetual(traderAddr: string, symbol: string): Promise<MarginAccount> {
     let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
     let mgnAcct = await PerpetualDataHandler.getMarginAccount(
       traderAddr,
       symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract,
+      this.proxyContract!,
       [obj.idxPrices[0], obj.idxPrices[1]]
     );
     return mgnAcct;
@@ -272,7 +297,7 @@ export default class MarketData extends PerpetualDataHandler {
     }
     // fetch undefined data
     if (account == undefined) {
-      account = await this.positionRisk(traderAddr, order.symbol);
+      account = (await this.positionRisk(traderAddr, order.symbol))[0];
     }
     if (indexPriceInfo == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(account.symbol);
