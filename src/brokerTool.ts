@@ -458,12 +458,12 @@ export default class BrokerTool extends WriteAccessHandler {
     );
     //
     const TRADE_BROKER_TYPEHASH = keccak256(
-      Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint64 iDeadline)")
+      Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint32 iDeadline)")
     );
     let iPerpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let structHash = keccak256(
       abiCoder.encode(
-        ["bytes32", "uint24", "uint16", "address", "uint64"],
+        ["bytes32", "uint24", "uint16", "address", "uint32"],
         [TRADE_BROKER_TYPEHASH, iPerpetualId, brokerFeeTbps, traderAddr, iDeadline]
       )
     );
