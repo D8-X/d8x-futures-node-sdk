@@ -859,13 +859,20 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   protected async openOrdersOnOrderBook(traderAddr: string, orderBookContract: Contract): Promise<Order[]> {
-    let orders: ClientOrder[] = await orderBookContract.getOrders(traderAddr, 0, 15);
     //eliminate empty orders and map to user friendly orders
     let userFriendlyOrders: Order[] = new Array<Order>();
-    let k = 0;
-    while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
-      userFriendlyOrders.push(PerpetualDataHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
-      k++;
+    let haveMoreOrders = true;
+    let from = 0;
+    const bulkSize = 15;
+    while (haveMoreOrders) {
+      let orders: ClientOrder[] = await orderBookContract.getOrders(traderAddr, from, bulkSize);
+      let k = 0;
+      while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
+        userFriendlyOrders.push(PerpetualDataHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
+        k++;
+      }
+      haveMoreOrders = orders[orders.length - 1].traderAddr != ZERO_ADDRESS;
+      from = from + bulkSize;
     }
     return userFriendlyOrders;
   }
