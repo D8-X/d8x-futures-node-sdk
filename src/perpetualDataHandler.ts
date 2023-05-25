@@ -325,7 +325,25 @@ export default class PerpetualDataHandler {
     return j + 1;
   }
 
-  public getNestedPerpetualIds(_proxyContract: Contract): number[][] {
+  /**
+   * Get perpetual symbols for a given pool
+   * @param poolSymbol pool symbol such as "MATIC"
+   * @returns array of perpetual symbols in this pool
+   */
+  public getPerpetualSymbolsInPool(poolSymbol: string): string[] {
+    const j = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbol, this.poolStaticInfos);
+    const perpIds = this.nestedPerpetualIDs[j - 1];
+    const perpSymbols = perpIds.map((k) => {
+      let s = this.getSymbolFromPerpId(k);
+      if (s == undefined) {
+        return "";
+      }
+      return s;
+    });
+    return perpSymbols;
+  }
+
+  public getNestedPerpetualIds(): number[][] {
     return this.nestedPerpetualIDs;
   }
 
