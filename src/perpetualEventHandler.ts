@@ -80,7 +80,7 @@ export default class PerpetualEventHandler {
         let perpSymbol = perpState.baseCurrency + "-" + perpState.quoteCurrency + "-" + poolSymbol;
         let orders = await this.mktData.openOrders(this.traderAddr, perpSymbol);
         let perpId = perpState.id;
-        this.ordersInPerpetual.set(perpId, orders);
+        this.ordersInPerpetual.set(perpId, orders[0]);
         let position = await this.mktData.positionRisk(this.traderAddr, perpSymbol);
         this.positionInPerpetual.set(perpId, position);
         this.poolIndexForPerpetual.set(perpId, k);
