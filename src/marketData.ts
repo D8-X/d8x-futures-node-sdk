@@ -1,6 +1,7 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { Contract } from "@ethersproject/contracts";
+import { CallOverrides, Contract } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
+import { ERC20__factory } from "./contracts";
 import {
   ABK64x64ToFloat,
   calculateLiquidationPriceCollateralBase,
@@ -559,12 +560,13 @@ export default class MarketData extends PerpetualDataHandler {
    * @param symbol Symbol of the form ETH-USD-MATIC.
    * @returns Balance
    */
-  public async getWalletBalance(address: string, symbol: string): Promise<number> {
+  public async getWalletBalance(address: string, symbol: string, overrides?: CallOverrides): Promise<number> {
     let poolIdx = this.getPoolStaticInfoIndexFromSymbol(symbol);
     let marginTokenAddr = this.poolStaticInfos[poolIdx].poolMarginTokenAddr;
-    let token = new Contract(marginTokenAddr, ERC20_ABI, this.provider!);
-    let walletBalanceDec18 = await token.balanceOf(address);
-    return walletBalanceDec18 / 10 ** 18;
+    let token = ERC20__factory.connect(marginTokenAddr, this.provider!);
+    let walletBalanceDec18 = await token.balanceOf(address, overrides);
+    let decimals = await token.decimals(overrides);
+    return walletBalanceDec18.toNumber() / 10 ** decimals;
   }
 
   /**
@@ -572,9 +574,13 @@ export default class MarketData extends PerpetualDataHandler {
    * @param address address of the liquidity provider
    * @param symbolOrId Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id
    */
-  public async getPoolShareTokenBalance(address: string, symbolOrId: string | number): Promise<number> {
+  public async getPoolShareTokenBalance(
+    address: string,
+    symbolOrId: string | number,
+    overrides?: CallOverrides
+  ): Promise<number> {
     let poolId = this._poolSymbolOrIdToPoolId(symbolOrId);
-    return this._getPoolShareTokenBalanceFromId(address, poolId);
+    return this._getPoolShareTokenBalanceFromId(address, poolId, overrides);
   }
 
   /**
@@ -583,10 +589,14 @@ export default class MarketData extends PerpetualDataHandler {
    * @param poolId pool id
    * @returns pool share token balance of address
    */
-  private async _getPoolShareTokenBalanceFromId(address: string, poolId: number): Promise<number> {
+  private async _getPoolShareTokenBalanceFromId(
+    address: string,
+    poolId: number,
+    overrides?: CallOverrides
+  ): Promise<number> {
     let shareTokenAddr = this.poolStaticInfos[poolId - 1].shareTokenAddr;
-    let shareToken = new Contract(shareTokenAddr, ERC20_ABI, this.provider!);
-    let d18ShareTokenBalanceOfAddr = await shareToken.balanceOf(address);
+    let shareToken = ERC20__factory.connect(shareTokenAddr, this.provider!);
+    let d18ShareTokenBalanceOfAddr = await shareToken.balanceOf(address, overrides);
     return dec18ToFloat(d18ShareTokenBalanceOfAddr);
   }
 
@@ -595,9 +605,9 @@ export default class MarketData extends PerpetualDataHandler {
    * @param symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
    * @returns current pool share token price in collateral currency
    */
-  public async getShareTokenPrice(symbolOrId: string | number): Promise<number> {
+  public async getShareTokenPrice(symbolOrId: string | number, overrides?: CallOverrides): Promise<number> {
     let poolId = this._poolSymbolOrIdToPoolId(symbolOrId);
-    const priceDec18 = await this.proxyContract!.getShareTokenPriceD18(poolId);
+    const priceDec18 = await this.proxyContract!.getShareTokenPriceD18(poolId, overrides);
     const price = dec18ToFloat(priceDec18);
     return price;
   }
@@ -624,10 +634,11 @@ export default class MarketData extends PerpetualDataHandler {
    */
   public async getParticipationValue(
     address: string,
-    symbolOrId: string | number
+    symbolOrId: string | number,
+    overrides?: CallOverrides
   ): Promise<{ value: number; shareTokenBalance: number; poolShareToken: string }> {
     let poolId = this._poolSymbolOrIdToPoolId(symbolOrId);
-    const shareTokens = await this._getPoolShareTokenBalanceFromId(address, poolId);
+    const shareTokens = await this._getPoolShareTokenBalanceFromId(address, poolId, overrides);
     const priceDec18 = await this.proxyContract!.getShareTokenPriceD18(poolId);
     const price = dec18ToFloat(priceDec18);
     const value = price * shareTokens;
@@ -660,13 +671,18 @@ export default class MarketData extends PerpetualDataHandler {
    * @param positionRisk Current position risk (as seen in positionRisk)
    * @returns Maximal trade size, not signed
    */
-  public async maxOrderSizeForTrader(side: string, positionRisk: MarginAccount): Promise<number> {
+  public async maxOrderSizeForTrader(
+    side: string,
+    positionRisk: MarginAccount,
+    overrides?: CallOverrides
+  ): Promise<number> {
     let curPosition = side == BUY_SIDE ? positionRisk.positionNotionalBaseCCY : -positionRisk.positionNotionalBaseCCY;
     let perpId = this.getPerpIdFromSymbol(positionRisk.symbol);
     let perpMaxPositionABK = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(
       perpId,
       floatToABK64x64(curPosition),
-      side == BUY_SIDE
+      side == BUY_SIDE,
+      overrides
     );
     return ABK64x64ToFloat(perpMaxPositionABK.abs());
   }
@@ -677,10 +693,15 @@ export default class MarketData extends PerpetualDataHandler {
    * @param symbol of the form ETH-USD-MATIC.
    * @returns signed maximal position size in base currency
    */
-  public async maxSignedPosition(side: string, symbol: string): Promise<number> {
+  public async maxSignedPosition(side: string, symbol: string, overrides?: CallOverrides): Promise<number> {
     let perpId = this.getPerpIdFromSymbol(symbol);
     let isBuy = side == BUY_SIDE;
-    let maxSignedPos = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(perpId, BigNumber.from(0), isBuy);
+    let maxSignedPos = await this.proxyContract!.getMaxSignedOpenTradeSizeForPos(
+      perpId,
+      BigNumber.from(0),
+      isBuy,
+      overrides
+    );
     return ABK64x64ToFloat(maxSignedPos);
   }
 
@@ -704,21 +725,27 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns {number} Price of index in given currency.
    */
-  public async getOraclePrice(base: string, quote: string): Promise<number | undefined> {
-    if (this.proxyContract == null) {
+  public async getOraclePrice(base: string, quote: string, overrides?: CallOverrides): Promise<number | undefined> {
+    if (!this.proxyContract) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let px = await this.proxyContract.getOraclePrice([toBytes4(base), toBytes4(quote)]);
+    let px = await this.proxyContract.getOraclePrice([toBytes4(base), toBytes4(quote)], overrides);
     return px == undefined ? undefined : ABK64x64ToFloat(px);
   }
 
-  public async getOrderStatus(symbol: string, orderId: string): Promise<string> {
-    if (this.proxyContract == null) {
+  /**
+   *
+   * @param symbol Symbol of the form ETH-USD-MATIC
+   * @param orderId Order Id
+   * @param overrides
+   * @returns Order status ()
+   */
+  public async getOrderStatus(symbol: string, orderId: string, overrides?: CallOverrides): Promise<number> {
+    if (!this.proxyContract) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let orderBookContract: Contract | null = null;
-    orderBookContract = this.getOrderBookContract(symbol);
-    let status = await orderBookContract.getOrderStatus(orderId);
+    const orderBookContract = this.getOrderBookContract(symbol);
+    let status = await orderBookContract.getOrderStatus(orderId, overrides);
     return status;
   }
 
@@ -927,7 +954,12 @@ export default class MarketData extends PerpetualDataHandler {
    * @param indexPrices optional index prices, will otherwise fetch from REST API
    * @returns available margin in collateral currency
    */
-  public async getAvailableMargin(traderAddr: string, symbol: string, indexPrices?: [number, number]): Promise<number> {
+  public async getAvailableMargin(
+    traderAddr: string,
+    symbol: string,
+    indexPrices?: [number, number],
+    overrides?: CallOverrides
+  ): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -941,7 +973,8 @@ export default class MarketData extends PerpetualDataHandler {
     let traderState = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x))
+      indexPrices.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      overrides
     );
     const idx_availableMargin = 1;
     let mgn = ABK64x64ToFloat(traderState[idx_availableMargin]);
@@ -954,7 +987,11 @@ export default class MarketData extends PerpetualDataHandler {
    * @param brokerAddr address of the trader's broker or undefined
    * @returns a loyality score (4 worst, 1 best)
    */
-  public async getTraderLoyalityScore(traderAddr: string, brokerAddr?: string): Promise<number> {
+  public async getTraderLoyalityScore(
+    traderAddr: string,
+    brokerAddr?: string,
+    overrides?: CallOverrides
+  ): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -963,10 +1000,10 @@ export default class MarketData extends PerpetualDataHandler {
     let traderProm: Array<Promise<BigNumber>> = [];
     for (let k = 0; k < this.poolStaticInfos.length; k++) {
       if (brokerAddr != "" && brokerAddr != undefined) {
-        let brkrVol = this.proxyContract.getCurrentBrokerVolume(this.poolStaticInfos[k].poolId, brokerAddr);
+        let brkrVol = this.proxyContract.getCurrentBrokerVolume(this.poolStaticInfos[k].poolId, brokerAddr, overrides);
         brokerProm.push(brkrVol);
       }
-      let trdrVol = this.proxyContract.getCurrentTraderVolume(this.poolStaticInfos[k].poolId, traderAddr);
+      let trdrVol = this.proxyContract.getCurrentTraderVolume(this.poolStaticInfos[k].poolId, traderAddr, overrides);
       traderProm.push(trdrVol);
     }
     // sum
@@ -1058,7 +1095,8 @@ export default class MarketData extends PerpetualDataHandler {
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _perpetualIdToSymbol: Map<number, string>,
-    _idxPriceMap: Map<string, [number, boolean]>
+    _idxPriceMap: Map<string, [number, boolean]>,
+    overrides?: CallOverrides
   ): Promise<Map<string, number>> {
     // what is the maximal number of queries at once?
     const chunkSize = 10;
@@ -1083,7 +1121,7 @@ export default class MarketData extends PerpetualDataHandler {
         indexPrices.push(S2);
         indexPrices.push(S3);
       }
-      let fMidPrice = await _proxyContract.queryMidPrices(perpetualIDChunks[k], indexPrices);
+      let fMidPrice = await _proxyContract.queryMidPrices(perpetualIDChunks[k], indexPrices, overrides);
       for (let j = 0; j < fMidPrice.length; j++) {
         let id = perpetualIDChunks[k][j];
         let symbol3s = _perpetualIdToSymbol.get(id);
@@ -1096,13 +1134,14 @@ export default class MarketData extends PerpetualDataHandler {
   private static async _queryPoolStates(
     _proxyContract: Contract,
     _poolStaticInfos: PoolStaticInfo[],
-    _numPools: number
+    _numPools: number,
+    overrides?: CallOverrides
   ): Promise<Array<PoolState>> {
     const chunkSize = 5;
     let iFrom = 1;
     let poolStates: Array<PoolState> = [];
     while (iFrom <= _numPools) {
-      let pools = await _proxyContract.getLiquidityPools(iFrom, iFrom + chunkSize);
+      let pools = await _proxyContract.getLiquidityPools(iFrom, iFrom + chunkSize, overrides);
       for (let k = 0; k < pools.length; k++) {
         let poolSymbol = _poolStaticInfos[iFrom + k - 1].poolMarginSymbol;
         let poolState: PoolState = {
@@ -1127,7 +1166,8 @@ export default class MarketData extends PerpetualDataHandler {
   private static async _queryPerpetualStates(
     _proxyContract: Contract,
     _nestedPerpetualIDs: Array<Array<number>>,
-    _symbolList: Map<string, string>
+    _symbolList: Map<string, string>,
+    overrides?: CallOverrides
   ) {
     // what is the maximal number of queries at once?
     const chunkSize = 10;
@@ -1137,7 +1177,7 @@ export default class MarketData extends PerpetualDataHandler {
     );
     let perpStateInfos = new Array<PerpetualState>();
     for (let k = 0; k < perpetualIDChunks.length; k++) {
-      let perps = await _proxyContract.getPerpetuals(perpetualIDChunks[k]);
+      let perps = await _proxyContract.getPerpetuals(perpetualIDChunks[k], overrides);
       for (let j = 0; j < perps.length; j++) {
         let PerpetualState: PerpetualState = {
           id: perps[j].id,
@@ -1165,7 +1205,8 @@ export default class MarketData extends PerpetualDataHandler {
     _perpetualIdToSymbol: Map<number, string>,
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolList: Map<string, string>,
-    _priceFeedGetter: PriceFeeds
+    _priceFeedGetter: PriceFeeds,
+    overrides?: CallOverrides
   ): Promise<ExchangeInfo> {
     // get the factory address (shared among all pools)
     let factory = _poolStaticInfos[0].oracleFactoryAddr;
@@ -1180,10 +1221,16 @@ export default class MarketData extends PerpetualDataHandler {
       _nestedPerpetualIDs,
       _symbolToPerpStaticInfo,
       _perpetualIdToSymbol,
-      idxPriceMap
+      idxPriceMap,
+      overrides
     );
-    let poolStateInfos = await MarketData._queryPoolStates(_proxyContract, _poolStaticInfos, numPools);
-    let perpStateInfos = await MarketData._queryPerpetualStates(_proxyContract, _nestedPerpetualIDs, _symbolList);
+    let poolStateInfos = await MarketData._queryPoolStates(_proxyContract, _poolStaticInfos, numPools, overrides);
+    let perpStateInfos = await MarketData._queryPerpetualStates(
+      _proxyContract,
+      _nestedPerpetualIDs,
+      _symbolList,
+      overrides
+    );
     // put together all info
     for (let k = 0; k < perpStateInfos.length; k++) {
       const perp = perpStateInfos[k];

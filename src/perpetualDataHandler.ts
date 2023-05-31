@@ -5,6 +5,14 @@ import { AddressZero } from "@ethersproject/constants";
 import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
 import { Network, Provider } from "@ethersproject/providers";
 import {
+  IPerpetualManager,
+  IPerpetualManager__factory,
+  LimitOrderBook,
+  LimitOrderBookFactory,
+  LimitOrderBookFactory__factory,
+  LimitOrderBook__factory,
+} from "./contracts";
+import {
   ABDK29ToFloat,
   ABK64x64ToFloat,
   calculateLiquidationPriceCollateralBase,
@@ -67,11 +75,11 @@ export default class PerpetualDataHandler {
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
   protected chainId: number;
-  protected proxyContract: Contract | null = null;
+  protected proxyContract: IPerpetualManager | undefined;
   protected proxyABI: ContractInterface;
   protected proxyAddr: string;
   // limit order book
-  protected lobFactoryContract: Contract | null = null;
+  protected lobFactoryContract: LimitOrderBookFactory | undefined;
   protected lobFactoryABI: ContractInterface;
   protected lobFactoryAddr: string | undefined;
   protected lobABI: ContractInterface;
@@ -121,10 +129,10 @@ export default class PerpetualDataHandler {
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
-    this.proxyContract = new Contract(this.proxyAddr, this.proxyABI!, signerOrProvider);
+    this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
     this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides);
-    this.lobFactoryContract = new Contract(this.lobFactoryAddr!, this.lobFactoryABI!, signerOrProvider);
-    await this._fillSymbolMaps(this.proxyContract, overrides);
+    this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, signerOrProvider);
+    await this._fillSymbolMaps(overrides);
   }
 
   /**
@@ -132,12 +140,12 @@ export default class PerpetualDataHandler {
    * @param symbol symbol of the form ETH-USD-MATIC
    * @returns order book contract for the perpetual
    */
-  public getOrderBookContract(symbol: string): Contract {
+  public getOrderBookContract(symbol: string): Contract & LimitOrderBook {
     let orderBookAddr = this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr;
     if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
       throw Error(`no limit order book found for ${symbol} or no signer`);
     }
-    let lobContract = new Contract(orderBookAddr, this.lobABI, this.signerOrProvider);
+    let lobContract = LimitOrderBook__factory.connect(orderBookAddr, this.signerOrProvider);
     return lobContract;
   }
 
@@ -146,11 +154,11 @@ export default class PerpetualDataHandler {
    * and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo
    *
    */
-  protected async _fillSymbolMaps(proxyContract: Contract, overrides?: CallOverrides) {
-    if (proxyContract == null || this.lobFactoryContract == null) {
+  protected async _fillSymbolMaps(overrides?: CallOverrides) {
+    if (!this.proxyContract || !this.lobFactoryContract) {
       throw Error("proxy or limit order book not defined");
     }
-    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(proxyContract, overrides);
+    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(this.proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
 
@@ -166,7 +174,7 @@ export default class PerpetualDataHandler {
       this.poolStaticInfos.push(info);
     }
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
-      proxyContract,
+      this.proxyContract,
       this.nestedPerpetualIDs,
       this.symbolList,
       overrides
@@ -420,7 +428,7 @@ export default class PerpetualDataHandler {
   }
 
   public static async getPoolStaticInfo(
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     overrides?: CallOverrides
   ): Promise<{
     nestedPerpetualIDs: Array<Array<number>>;

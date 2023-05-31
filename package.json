@@ -28,7 +28,9 @@
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
     "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublish": "yarn build",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "typechain": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'",
+    "postinstall": "yarn typechain"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -57,6 +59,7 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.20.2",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.18.6",
+    "@typechain/ethers-v5": "^11.0.0",
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
     "babel-jest": "^29.3.1",
@@ -70,6 +73,7 @@
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
+    "typechain": "^8.2.0",
     "typescript": "^4.9.3"
   }
 }
