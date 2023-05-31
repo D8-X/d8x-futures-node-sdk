@@ -1,4 +1,5 @@
 import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
+import { BigNumber } from "ethers";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -130,10 +131,10 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let traderState = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x)),
+      indexPrices.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
       overrides
     );
-    if (traderState[idx_notional] == 0) {
+    if (traderState[idx_notional].eq(0)) {
       // trader does not have open position
       return true;
     }

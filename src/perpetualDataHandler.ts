@@ -12,6 +12,8 @@ import {
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
 } from "./contracts";
+import { IPerpetualOrder } from "./contracts/IPerpetualManager";
+import { IClientOrder } from "./contracts/LimitOrderBook";
 import {
   ABDK29ToFloat,
   ABK64x64ToFloat,
@@ -697,7 +699,7 @@ export default class PerpetualDataHandler {
   }
 
   protected static fromSmartContractOrder(
-    order: SmartContractOrder,
+    order: SmartContractOrder | IPerpetualOrder.OrderStruct,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): Order {
     // find symbol of perpetual id
@@ -849,14 +851,16 @@ export default class PerpetualDataHandler {
    * @param obOrder Order-book contract order type
    * @returns User friendly order struct
    */
-  public static fromClientOrder(obOrder: ClientOrder, perpStaticInfo: Map<string, PerpetualStaticInfo>): Order {
+  public static fromClientOrder(
+    obOrder: IClientOrder.ClientOrderStruct | IClientOrder.ClientOrderStructOutput,
+    perpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): Order {
     const scOrder = {
       flags: obOrder.flags,
       iPerpetualId: obOrder.iPerpetualId,
       brokerFeeTbps: obOrder.brokerFeeTbps,
       traderAddr: obOrder.traderAddr,
       brokerAddr: obOrder.brokerAddr,
-      referrerAddr: obOrder.referrerAddr,
       brokerSignature: obOrder.brokerSignature,
       fAmount: obOrder.fAmount,
       fLimitPrice: obOrder.fLimitPrice,
@@ -866,8 +870,11 @@ export default class PerpetualDataHandler {
       executionTimestamp: obOrder.executionTimestamp,
     } as SmartContractOrder;
     const order = PerpetualDataHandler.fromSmartContractOrder(scOrder, perpStaticInfo);
-    if (obOrder.parentChildDigest1 != ZERO_ORDER_ID || obOrder.parentChildDigest2 != ZERO_ORDER_ID) {
-      order.parentChildOrderIds = [obOrder.parentChildDigest1, obOrder.parentChildDigest2];
+    if (
+      obOrder.parentChildDigest1.toString() != ZERO_ORDER_ID ||
+      obOrder.parentChildDigest2.toString() != ZERO_ORDER_ID
+    ) {
+      order.parentChildOrderIds = [obOrder.parentChildDigest1.toString(), obOrder.parentChildDigest2.toString()];
     }
     return order;
   }

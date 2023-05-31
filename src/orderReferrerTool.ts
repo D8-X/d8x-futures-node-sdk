@@ -270,9 +270,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
-    let orders: ClientOrder[];
-    let orderIds: string[];
-    [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements), overrides);
+    let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements), overrides);
     let userFriendlyOrders: Order[] = new Array<Order>();
     let orderIdsOut = [];
     let k = 0;
