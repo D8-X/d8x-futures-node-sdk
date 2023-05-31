@@ -1,4 +1,4 @@
-import { Contract } from "@ethersproject/contracts";
+import { CallOverrides, Contract } from "@ethersproject/contracts";
 import { ABK64x64ToFloat } from "./d8XMath";
 import MarketData from "./marketData";
 import { ClientOrder, NodeSDKConfig, Order, SmartContractOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
@@ -35,12 +35,17 @@ export default class TraderInterface extends MarketData {
    * @param brokerAddr address of broker
    * @returns fee (in decimals) that is charged by exchange (without broker)
    */
-  public async queryExchangeFee(poolSymbolName: string, traderAddr: string, brokerAddr: string): Promise<number> {
+  public async queryExchangeFee(
+    poolSymbolName: string,
+    traderAddr: string,
+    brokerAddr: string,
+    overrides?: CallOverrides
+  ): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, traderAddr, brokerAddr);
+    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, traderAddr, brokerAddr, overrides);
     return feeTbps / 100_000;
   }
 
@@ -50,12 +55,16 @@ export default class TraderInterface extends MarketData {
    * @param traderAddr address of the trader
    * @returns volume in USD
    */
-  public async getCurrentTraderVolume(poolSymbolName: string, traderAddr: string): Promise<number> {
+  public async getCurrentTraderVolume(
+    poolSymbolName: string,
+    traderAddr: string,
+    overrides?: CallOverrides
+  ): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr);
+    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr, overrides);
     return ABK64x64ToFloat(volume);
   }
 
@@ -66,13 +75,17 @@ export default class TraderInterface extends MarketData {
    * @param orderId
    * @returns tuple of digest which the trader needs to sign and address of order book contract
    */
-  public async cancelOrderDigest(symbol: string, orderId: string): Promise<{ digest: string; OBContractAddr: string }> {
+  public async cancelOrderDigest(
+    symbol: string,
+    orderId: string,
+    overrides?: CallOverrides
+  ): Promise<{ digest: string; OBContractAddr: string }> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let orderBookContract = this.getOrderBookContract(symbol);
-    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
-    let digest = await this.digestTool.createDigest(scOrder, this.chainId, false, this.proxyAddr);
+    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId, overrides);
+    let digest = this.digestTool.createDigest(scOrder, this.chainId, false, this.proxyAddr);
     return { digest: digest, OBContractAddr: orderBookContract.address };
   }
 
@@ -104,11 +117,11 @@ export default class TraderInterface extends MarketData {
    * @param scOrder smart contract order struct (get from order via createSCOrder)
    * @returns digest that the trader has to sign
    */
-  public async orderDigest(scOrder: SmartContractOrder): Promise<string> {
+  public orderDigest(scOrder: SmartContractOrder): string {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let digest = await this.digestTool.createDigest(scOrder, this.chainId, true, this.proxyContract.address);
+    let digest = this.digestTool.createDigest(scOrder, this.chainId, true, this.proxyContract.address);
     return digest;
   }
 

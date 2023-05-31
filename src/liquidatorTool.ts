@@ -1,4 +1,4 @@
-import { ContractTransaction } from "@ethersproject/contracts";
+import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -62,7 +62,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
     symbol: string,
     traderAddr: string,
     liquidatorAddr: string = "",
-    priceFeedData?: PriceFeedSubmission
+    priceFeedData?: PriceFeedSubmission,
+    overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
@@ -76,10 +77,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (priceFeedData == undefined) {
       priceFeedData = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, {
-      gasLimit: this.gasLimit,
-      value: this.PRICE_UPDATE_FEE_GWEI * priceFeedData.priceFeedVaas.length,
-    });
+    if (!overrides || overrides.value == undefined) {
+      overrides = {
+        value: priceFeedData.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        ...overrides,
+      } as PayableOverrides;
+    }
+    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, overrides);
   }
 
   /**
@@ -110,7 +114,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
   public async isMaintenanceMarginSafe(
     symbol: string,
     traderAddr: string,
-    indexPrices?: [number, number]
+    indexPrices?: [number, number],
+    overrides?: CallOverrides
   ): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -125,7 +130,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let traderState = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x))
+      indexPrices.map((x) => floatToABK64x64(x)),
+      overrides
     );
     if (traderState[idx_notional] == 0) {
       // trader does not have open position
@@ -159,7 +165,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     liquidatorAddr: string,
     traderAddr: string,
     priceFeedData: PriceFeedSubmission,
-    options: object
+    overrides?: PayableOverrides
   ) {
     return await this.proxyContract!.liquidateByAMM(
       perpetualId,
@@ -167,7 +173,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       traderAddr,
       priceFeedData.priceFeedVaas,
       priceFeedData.timestamps,
-      options
+      overrides
     );
   }
 
@@ -191,12 +197,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *
    * @returns {number} Number of active accounts.
    */
-  public async countActivePerpAccounts(symbol: string): Promise<number> {
+  public async countActivePerpAccounts(symbol: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    let numAccounts = await this.proxyContract.countActivePerpAccounts(perpID);
+    let numAccounts = await this.proxyContract.countActivePerpAccounts(perpID, overrides);
     return Number(numAccounts);
   }
 
@@ -222,12 +228,17 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *
    * @returns {string[]} Array of addresses at locations 'from', 'from'+1 ,..., 'to'-1.
    */
-  public async getActiveAccountsByChunks(symbol: string, from: number, to: number): Promise<string[]> {
+  public async getActiveAccountsByChunks(
+    symbol: string,
+    from: number,
+    to: number,
+    overrides?: CallOverrides
+  ): Promise<string[]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this.proxyContract.getActivePerpAccountsByChunks(perpID, from, to);
+    return await this.proxyContract.getActivePerpAccountsByChunks(perpID, from, to, overrides);
   }
 
   /**
@@ -250,9 +261,9 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *
    * @returns {string[]} Array of addresses.
    */
-  public async getAllActiveAccounts(symbol: string): Promise<string[]> {
+  public async getAllActiveAccounts(symbol: string, overrides?: CallOverrides): Promise<string[]> {
     // checks are done inside the intermediate functions
     let totalAccounts = await this.countActivePerpAccounts(symbol);
-    return await this.getActiveAccountsByChunks(symbol, 0, totalAccounts);
+    return await this.getActiveAccountsByChunks(symbol, 0, totalAccounts, overrides);
   }
 }

@@ -1,4 +1,4 @@
-import { Contract, ContractTransaction } from "@ethersproject/contracts";
+import { Contract, ContractTransaction, Overrides } from "@ethersproject/contracts";
 import { dec18ToFloat, floatToDec18 } from "./d8XMath";
 import { ERC20_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -55,14 +55,16 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *
    * @return Transaction object
    */
-  public async addLiquidity(poolSymbolName: string, amountCC: number): Promise<ContractTransaction> {
+  public async addLiquidity(
+    poolSymbolName: string,
+    amountCC: number,
+    overrides?: Overrides
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.addLiquidity(poolId, floatToDec18(amountCC), {
-      gasLimit: this.gasLimit,
-    });
+    let tx = await this.proxyContract.addLiquidity(poolId, floatToDec18(amountCC), overrides);
     return tx;
   }
 
@@ -91,15 +93,14 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    */
   public async initiateLiquidityWithdrawal(
     poolSymbolName: string,
-    amountPoolShares: number
+    amountPoolShares: number,
+    overrides?: Overrides
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.withdrawLiquidity(poolId, floatToDec18(amountPoolShares), {
-      gasLimit: this.gasLimit,
-    });
+    let tx = await this.proxyContract.withdrawLiquidity(poolId, floatToDec18(amountPoolShares), overrides);
     return tx;
   }
 
@@ -124,14 +125,12 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *
    * @returns Transaction object.
    */
-  public async executeLiquidityWithdrawal(poolSymbolName: string): Promise<ContractTransaction> {
+  public async executeLiquidityWithdrawal(poolSymbolName: string, overrides?: Overrides): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.executeLiquidityWithdrawal(poolId, {
-      gasLimit: this.gasLimit,
-    });
+    let tx = await this.proxyContract.executeLiquidityWithdrawal(poolId, overrides);
     return tx;
   }
 }

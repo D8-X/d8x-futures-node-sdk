@@ -2,7 +2,7 @@ import { FormatTypes } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
-import { Contract, ContractInterface } from "@ethersproject/contracts";
+import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
 import { Network, Provider } from "@ethersproject/providers";
 import {
   ABDK29ToFloat,
@@ -104,7 +104,7 @@ export default class PerpetualDataHandler {
     this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
 
-  protected async initContractsAndData(signerOrProvider: Signer | Provider) {
+  protected async initContractsAndData(signerOrProvider: Signer | Provider, overrides?: CallOverrides) {
     this.signerOrProvider = signerOrProvider;
     // check network
     let network: Network;
@@ -122,9 +122,9 @@ export default class PerpetualDataHandler {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = new Contract(this.proxyAddr, this.proxyABI!, signerOrProvider);
-    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
+    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides);
     this.lobFactoryContract = new Contract(this.lobFactoryAddr!, this.lobFactoryABI!, signerOrProvider);
-    await this._fillSymbolMaps(this.proxyContract);
+    await this._fillSymbolMaps(this.proxyContract, overrides);
   }
 
   /**
@@ -146,11 +146,11 @@ export default class PerpetualDataHandler {
    * and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo
    *
    */
-  protected async _fillSymbolMaps(proxyContract: Contract) {
+  protected async _fillSymbolMaps(proxyContract: Contract, overrides?: CallOverrides) {
     if (proxyContract == null || this.lobFactoryContract == null) {
       throw Error("proxy or limit order book not defined");
     }
-    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(proxyContract);
+    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
 
@@ -168,7 +168,8 @@ export default class PerpetualDataHandler {
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
       proxyContract,
       this.nestedPerpetualIDs,
-      this.symbolList
+      this.symbolList,
+      overrides
     );
 
     let requiredPairs = new Set<string>();
@@ -357,7 +358,8 @@ export default class PerpetualDataHandler {
   public static async getPerpetualStaticInfo(
     _proxyContract: Contract,
     nestedPerpetualIDs: Array<Array<number>>,
-    symbolList: Map<string, string>
+    symbolList: Map<string, string>,
+    overrides?: CallOverrides
   ): Promise<Array<PerpetualStaticInfo>> {
     // flatten perpetual ids into chunks
     const chunkSize = 10;
@@ -365,7 +367,7 @@ export default class PerpetualDataHandler {
     // query blockchain in chunks
     const infoArr = new Array<PerpetualStaticInfo>();
     for (let k = 0; k < ids.length; k++) {
-      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k]);
+      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k], overrides);
       for (let j = 0; j < perpInfos.length; j++) {
         let base = contractSymbolToSymbol(perpInfos[j].S2BaseCCY, symbolList);
         let quote = contractSymbolToSymbol(perpInfos[j].S2QuoteCCY, symbolList);
@@ -417,7 +419,10 @@ export default class PerpetualDataHandler {
     return chunkIDs;
   }
 
-  public static async getPoolStaticInfo(_proxyContract: Contract): Promise<{
+  public static async getPoolStaticInfo(
+    _proxyContract: Contract,
+    overrides?: CallOverrides
+  ): Promise<{
     nestedPerpetualIDs: Array<Array<number>>;
     poolShareTokenAddr: Array<string>;
     poolMarginTokenAddr: Array<string>;
@@ -431,7 +436,7 @@ export default class PerpetualDataHandler {
     let poolMarginTokenAddr: Array<string> = [];
     let oracleFactory: string = "";
     while (lenReceived == len) {
-      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1);
+      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1, overrides);
       lenReceived = res.length;
       nestedPerpetualIDs = nestedPerpetualIDs.concat(res[0]);
       poolShareTokenAddr = res[1];
@@ -521,11 +526,17 @@ export default class PerpetualDataHandler {
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
-    indexPrices: [number, number]
+    indexPrices: [number, number],
+    overrides?: CallOverrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let fIndexPrices = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
-    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), fIndexPrices);
+    let fPrice = await _proxyContract.queryPerpetualPrice(
+      perpId,
+      floatToABK64x64(tradeAmount),
+      fIndexPrices,
+      overrides
+    );
     return ABK64x64ToFloat(fPrice);
   }
 
@@ -533,11 +544,12 @@ export default class PerpetualDataHandler {
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
-    indexPrices: [number, number]
+    indexPrices: [number, number],
+    overrides?: CallOverrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3], overrides);
     // ammState[6] == S2 == indexPrices[0] up to rounding errors (indexPrices is most accurate)
     return indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
   }
@@ -546,7 +558,8 @@ export default class PerpetualDataHandler {
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
-    indexPrices: [number, number, boolean, boolean]
+    indexPrices: [number, number, boolean, boolean],
+    overrides?: CallOverrides
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
@@ -557,7 +570,7 @@ export default class PerpetualDataHandler {
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
       S3 = 1;
     }
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64));
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64), overrides);
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state: PerpetualState = {
       id: perpId,

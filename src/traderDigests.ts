@@ -12,7 +12,7 @@ export default class TraderDigests {
    * @returns orderId string
    * @ignore
    */
-  public async createOrderId(digest: string) {
+  public createOrderId(digest: string): string {
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     const messagePrefix = "\x19Ethereum Signed Message:\n";
     let tmp = concat([toUtf8Bytes(messagePrefix), toUtf8Bytes(String(digestBuffer.length)), digestBuffer]);
@@ -30,12 +30,7 @@ export default class TraderDigests {
    * @returns digest
    * @ignore
    */
-  public async createDigest(
-    order: SmartContractOrder,
-    chainId: number,
-    isNewOrder: boolean,
-    proxyAddress: string
-  ): Promise<string> {
+  public createDigest(order: SmartContractOrder, chainId: number, isNewOrder: boolean, proxyAddress: string): string {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
