@@ -77,11 +77,11 @@ export default class PerpetualDataHandler {
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
   protected chainId: number;
-  protected proxyContract: IPerpetualManager | undefined;
+  protected proxyContract: IPerpetualManager | null = null;
   protected proxyABI: ContractInterface;
   protected proxyAddr: string;
   // limit order book
-  protected lobFactoryContract: LimitOrderBookFactory | undefined;
+  protected lobFactoryContract: LimitOrderBookFactory | null = null;
   protected lobFactoryABI: ContractInterface;
   protected lobFactoryAddr: string | undefined;
   protected lobABI: ContractInterface;
@@ -132,7 +132,8 @@ export default class PerpetualDataHandler {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
-    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides);
+
+    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides || {});
     this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
@@ -366,7 +367,7 @@ export default class PerpetualDataHandler {
    * @returns array with PerpetualStaticInfo for each perpetual
    */
   public static async getPerpetualStaticInfo(
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     nestedPerpetualIDs: Array<Array<number>>,
     symbolList: Map<string, string>,
     overrides?: CallOverrides
@@ -377,7 +378,7 @@ export default class PerpetualDataHandler {
     // query blockchain in chunks
     const infoArr = new Array<PerpetualStaticInfo>();
     for (let k = 0; k < ids.length; k++) {
-      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k], overrides);
+      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k], overrides || {});
       for (let j = 0; j < perpInfos.length; j++) {
         let base = contractSymbolToSymbol(perpInfos[j].S2BaseCCY, symbolList);
         let quote = contractSymbolToSymbol(perpInfos[j].S2QuoteCCY, symbolList);
@@ -446,7 +447,7 @@ export default class PerpetualDataHandler {
     let poolMarginTokenAddr: Array<string> = [];
     let oracleFactory: string = "";
     while (lenReceived == len) {
-      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1, overrides);
+      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1, overrides || {});
       lenReceived = res.length;
       nestedPerpetualIDs = nestedPerpetualIDs.concat(res[0]);
       poolShareTokenAddr = res[1];
@@ -516,8 +517,9 @@ export default class PerpetualDataHandler {
     traderAddr: string,
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
-    _pxS2S3: [number, number]
+    _proxyContract: IPerpetualManager,
+    _pxS2S3: [number, number],
+    overrides?: CallOverrides
   ): Promise<MarginAccount> {
     let perpId = Number(symbol);
     if (isNaN(perpId)) {
@@ -526,7 +528,8 @@ export default class PerpetualDataHandler {
     let traderState = await _proxyContract.getTraderState(
       perpId,
       traderAddr,
-      _pxS2S3.map((x) => floatToABK64x64(x))
+      _pxS2S3.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      overrides || {}
     );
     return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
   }
@@ -535,7 +538,7 @@ export default class PerpetualDataHandler {
     symbol: string,
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     indexPrices: [number, number],
     overrides?: CallOverrides
   ): Promise<number> {
@@ -544,8 +547,8 @@ export default class PerpetualDataHandler {
     let fPrice = await _proxyContract.queryPerpetualPrice(
       perpId,
       floatToABK64x64(tradeAmount),
-      fIndexPrices,
-      overrides
+      fIndexPrices as [BigNumber, BigNumber],
+      overrides || {}
     );
     return ABK64x64ToFloat(fPrice);
   }
@@ -553,13 +556,13 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     indexPrices: [number, number],
     overrides?: CallOverrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3], overrides);
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3], overrides || {});
     // ammState[6] == S2 == indexPrices[0] up to rounding errors (indexPrices is most accurate)
     return indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
   }
@@ -567,7 +570,7 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualState(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     indexPrices: [number, number, boolean, boolean],
     overrides?: CallOverrides
   ): Promise<PerpetualState> {
@@ -580,11 +583,15 @@ export default class PerpetualDataHandler {
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
       S3 = 1;
     }
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64), overrides);
+    let ammState = await _proxyContract.getAMMState(
+      perpId,
+      [S2, S3].map(floatToABK64x64) as [BigNumber, BigNumber],
+      overrides || {}
+    );
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state: PerpetualState = {
       id: perpId,
-      state: PERP_STATE_STR[ammState[13]],
+      state: PERP_STATE_STR[ammState[13].toNumber()],
       baseCurrency: ccy[0],
       quoteCurrency: ccy[1],
       indexPrice: S2,

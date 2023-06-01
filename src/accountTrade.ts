@@ -1,6 +1,7 @@
 import { Signer } from "@ethersproject/abstract-signer";
-import { Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
 import { Buffer } from "buffer";
+import { IPerpetualManager, LimitOrderBook } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import {
@@ -83,8 +84,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    let orderBookContract: Contract | null = null;
-    orderBookContract = this.getOrderBookContract(symbol);
+    const orderBookContract = this.getOrderBookContract(symbol);
 
     return await this._cancelOrder(symbol, orderId, orderBookContract, submission, overrides);
   }
@@ -147,7 +147,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
-  public async order(order: Order, parentChildIds?: [string, string]): Promise<OrderResponse> {
+  public async order(order: Order, parentChildIds?: [string, string], overrides?: Overrides): Promise<OrderResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -155,7 +155,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (Math.abs(order.quantity) < minSize) {
       throw Error("order size too small");
     }
-    let orderBookContract: Contract = this.getOrderBookContract(order.symbol);
+    let orderBookContract = this.getOrderBookContract(order.symbol);
     let res: OrderResponse = await this._order(
       order,
       this.traderAddr,
@@ -164,8 +164,8 @@ export default class AccountTrade extends WriteAccessHandler {
       orderBookContract,
       this.chainId,
       this.signer,
-      this.gasLimit,
-      parentChildIds
+      parentChildIds,
+      overrides
     );
     return res;
   }
@@ -194,7 +194,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
    */
-  public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string): Promise<number> {
+  public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -202,7 +202,7 @@ export default class AccountTrade extends WriteAccessHandler {
       brokerAddr = ZERO_ADDRESS;
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr);
+    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -227,12 +227,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {number} Current trading volume for this trader, in USD.
    */
-  public async getCurrentTraderVolume(poolSymbolName: string): Promise<number> {
+  public async getCurrentTraderVolume(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr);
+    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr, overrides || {});
     return ABK64x64ToFloat(volume);
   }
 
@@ -256,12 +256,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {string[]} Array of Ids for all the orders currently open by this trader.
    */
-  public async getOrderIds(symbol: string): Promise<string[]> {
+  public async getOrderIds(symbol: string, overrides?: CallOverrides): Promise<string[]> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let orderBookContract = this.getOrderBookContract(symbol);
-    return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract);
+    return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract, overrides);
   }
 
   /**
@@ -281,13 +281,12 @@ export default class AccountTrade extends WriteAccessHandler {
     order: Order,
     traderAddr: string,
     symbolToPerpetualMap: Map<string, PerpetualStaticInfo>,
-    proxyContract: Contract,
-    orderBookContract: Contract,
+    proxyContract: IPerpetualManager,
+    orderBookContract: LimitOrderBook,
     chainId: number,
     signer: Signer,
-    gasLimit: number,
     parentChildIds?: [string, string],
-    overrides?: PayableOverrides
+    overrides?: Overrides
   ): Promise<OrderResponse> {
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap);
     let clientOrder = AccountTrade.fromSmartContratOrderToClientOrder(scOrder, parentChildIds);
@@ -296,7 +295,7 @@ export default class AccountTrade extends WriteAccessHandler {
     let tx: ContractTransaction;
     // all orders are sent to the order-book
     let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-    tx = await orderBookContract.postOrder(clientOrder, signature, { gasLimit: gasLimit });
+    tx = await orderBookContract.postOrder(clientOrder, signature, overrides || {});
     let id = await this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };
   }
@@ -304,7 +303,7 @@ export default class AccountTrade extends WriteAccessHandler {
   protected async _cancelOrder(
     symbol: string,
     orderId: string,
-    orderBookContract: Contract | null,
+    orderBookContract: LimitOrderBook,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
@@ -386,7 +385,7 @@ export default class AccountTrade extends WriteAccessHandler {
       fAmountCC,
       submission.priceFeedVaas,
       submission.timestamps,
-      overrides
+      overrides || {}
     );
   }
 
@@ -420,7 +419,7 @@ export default class AccountTrade extends WriteAccessHandler {
       fAmountCC,
       submission.priceFeedVaas,
       submission.timestamps,
-      overrides
+      overrides || {}
     );
   }
 }

@@ -132,7 +132,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       perpID,
       traderAddr,
       indexPrices.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
-      overrides
+      overrides || {}
     );
     if (traderState[idx_notional].eq(0)) {
       // trader does not have open position
@@ -203,7 +203,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    let numAccounts = await this.proxyContract.countActivePerpAccounts(perpID, overrides);
+    let numAccounts = await this.proxyContract.countActivePerpAccounts(perpID, overrides || {});
     return Number(numAccounts);
   }
 
@@ -239,7 +239,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    return await this.proxyContract.getActivePerpAccountsByChunks(perpID, from, to, overrides);
+    return await this.proxyContract.getActivePerpAccountsByChunks(perpID, from, to, overrides || {});
   }
 
   /**

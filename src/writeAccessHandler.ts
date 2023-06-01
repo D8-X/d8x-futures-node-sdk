@@ -1,9 +1,10 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
-import { Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
+import { ERC20__factory } from "./contracts";
 import { floatToDec18 } from "./d8XMath";
 import { ERC20_ABI, MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -45,7 +46,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: Provider) {
+  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides) {
     if (provider == undefined) {
       this.provider = new StaticJsonRpcProvider(this.nodeURL);
     } else {
@@ -55,7 +56,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
       const wallet = new Wallet(this.privateKey!);
       this.signer = wallet.connect(this.provider);
     }
-    await this.initContractsAndData(this.signer);
+    await this.initContractsAndData(this.signer, overrides);
     this.traderAddr = await this.signer.getAddress();
   }
 
@@ -90,8 +91,8 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     amount: BigNumber,
     overrides?: Overrides
   ): Promise<ContractTransaction> {
-    const marginToken: Contract = new Contract(tokenAddr, ERC20_ABI, signer);
-    return await marginToken.approve(proxyAddr, amount, overrides);
+    const marginToken = ERC20__factory.connect(tokenAddr, signer);
+    return await marginToken.approve(proxyAddr, amount, overrides || {});
   }
 
   /**

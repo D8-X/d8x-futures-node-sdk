@@ -69,7 +69,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let feeTbps = await this.proxyContract.getBrokerInducedFee(poolId, this.traderAddr, overrides);
+    let feeTbps = await this.proxyContract.getBrokerInducedFee(poolId, this.traderAddr, overrides || {});
     let fee = feeTbps / 100_000;
     if (fee == 0.65535) {
       return undefined;
@@ -116,7 +116,7 @@ export default class BrokerTool extends WriteAccessHandler {
     } else {
       brokerDesignation = lots;
     }
-    let feeTbps = await this.proxyContract.getFeeForBrokerDesignation(brokerDesignation, overrides);
+    let feeTbps = await this.proxyContract.getFeeForBrokerDesignation(brokerDesignation, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -147,7 +147,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let feeTbps = await this.proxyContract.getFeeForBrokerVolume(poolId, this.traderAddr, overrides);
+    let feeTbps = await this.proxyContract.getFeeForBrokerVolume(poolId, this.traderAddr, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -180,7 +180,7 @@ export default class BrokerTool extends WriteAccessHandler {
     if (typeof brokerAddr == "undefined") {
       brokerAddr = this.traderAddr;
     }
-    let feeTbps = await this.proxyContract.getFeeForBrokerStake(brokerAddr, overrides);
+    let feeTbps = await this.proxyContract.getFeeForBrokerStake(brokerAddr, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -224,7 +224,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
-    let feeTbps = await this.proxyContract.determineExchangeFee(scOrder, overrides);
+    let feeTbps = await this.proxyContract.determineExchangeFee(scOrder, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -256,7 +256,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let volume = await this.proxyContract.getCurrentBrokerVolume(poolId, this.traderAddr, overrides);
+    let volume = await this.proxyContract.getCurrentBrokerVolume(poolId, this.traderAddr, overrides || {});
     return ABK64x64ToFloat(volume);
   }
 
@@ -288,7 +288,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let pool = await this.proxyContract.getLiquidityPool(poolId, overrides);
+    let pool = await this.proxyContract.getLiquidityPool(poolId, overrides || {});
     let lot = ABK64x64ToFloat(pool.fBrokerCollateralLotSize);
     return lot;
   }
@@ -319,7 +319,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let designation = await this.proxyContract.getBrokerDesignation(poolId, this.traderAddr, overrides);
+    let designation = await this.proxyContract.getBrokerDesignation(poolId, this.traderAddr, overrides || {});
     return designation;
   }
 
@@ -354,7 +354,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, lots, overrides);
+    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, lots, overrides || {});
     return tx;
   }
 
@@ -515,7 +515,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.transferBrokerOwnership(poolId, newAddress, overrides);
+    let tx = await this.proxyContract.transferBrokerOwnership(poolId, newAddress, overrides || {});
     return tx;
   }
 }

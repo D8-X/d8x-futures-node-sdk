@@ -198,7 +198,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    let numOrders = await orderBookSC.numberOfOrderBookDigests(overrides);
+    let numOrders = await orderBookSC.numberOfOrderBookDigests(overrides || {});
     return Number(numOrders);
   }
 
@@ -226,7 +226,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    */
   public async getOrderById(symbol: string, id: string, overrides?: CallOverrides): Promise<Order | undefined> {
     let ob = await this.getOrderBookContract(symbol);
-    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id, overrides);
+    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id, overrides || {});
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
     }
@@ -270,7 +270,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
-    let [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements), overrides);
+    let [orders, orderIds] = await orderBookSC.pollLimitOrders(
+      startAfter,
+      BigNumber.from(numElements),
+      overrides || {}
+    );
     let userFriendlyOrders: Order[] = new Array<Order>();
     let orderIdsOut = [];
     let k = 0;
@@ -479,7 +483,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     ) {
       // order has a parent
       const orderBookContract = this.getOrderBookContract(order.symbol);
-      const parentStatus = await orderBookContract.getOrderStatus(order.parentChildOrderIds[1], overrides);
+      const parentStatus = await orderBookContract.getOrderStatus(order.parentChildOrderIds[1], overrides || {});
       if (parentStatus == 2 || parentStatus == 3) {
         // console.log("parent not executed/cancelled");
         // parent is open or unknown

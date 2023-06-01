@@ -64,7 +64,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.addLiquidity(poolId, floatToDec18(amountCC), overrides);
+    let tx = await this.proxyContract.addLiquidity(poolId, floatToDec18(amountCC), overrides || {});
     return tx;
   }
 
@@ -100,7 +100,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.withdrawLiquidity(poolId, floatToDec18(amountPoolShares), overrides);
+    let tx = await this.proxyContract.withdrawLiquidity(poolId, floatToDec18(amountPoolShares), overrides || {});
     return tx;
   }
 
@@ -130,7 +130,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.executeLiquidityWithdrawal(poolId, this.traderAddr, overrides);
+    let tx = await this.proxyContract.executeLiquidityWithdrawal(poolId, this.traderAddr, overrides || {});
     return tx;
   }
 }

@@ -45,7 +45,7 @@ export default class TraderInterface extends MarketData {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, traderAddr, brokerAddr, overrides);
+    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, traderAddr, brokerAddr, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -64,7 +64,7 @@ export default class TraderInterface extends MarketData {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr, overrides);
+    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, traderAddr, overrides || {});
     return ABK64x64ToFloat(volume);
   }
 
@@ -84,7 +84,7 @@ export default class TraderInterface extends MarketData {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let orderBookContract = this.getOrderBookContract(symbol);
-    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId, overrides);
+    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId, overrides || {});
     let digest = this.digestTool.createDigest(scOrder, this.chainId, false, this.proxyAddr);
     return { digest: digest, OBContractAddr: orderBookContract.address };
   }
