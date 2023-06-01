@@ -10,6 +10,7 @@ import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
+import { IPerpetualManager, IPerpetualManager__factory } from "../src/contracts";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -17,7 +18,7 @@ let RPC: string = <string>process.env.RPC;
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
-let proxyContract: ethers.Contract;
+let proxyContract: IPerpetualManager;
 let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
@@ -54,8 +55,7 @@ describe("readOnly", () => {
   describe("Oracle Routes", () => {
     beforeAll(() => {
       const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
-      let abi = require("../src/abi/testnet/IPerpetualManager.json");
-      proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
+      proxyContract = IPerpetualManager__factory.connect(config.proxyAddr, provider);
     });
     it("routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
