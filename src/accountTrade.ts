@@ -295,7 +295,7 @@ export default class AccountTrade extends WriteAccessHandler {
     let tx: ContractTransaction;
     // all orders are sent to the order-book
     let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-    tx = await orderBookContract.postOrder(clientOrder, signature, overrides || {});
+    tx = await orderBookContract.postOrder(clientOrder, signature, overrides || { gasLimit: this.gasLimit });
     let id = await this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };
   }
@@ -319,6 +319,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (!overrides || overrides.value == undefined) {
       overrides = {
         value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
@@ -377,6 +378,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (!overrides || overrides.value == undefined) {
       overrides = {
         value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
@@ -385,7 +387,7 @@ export default class AccountTrade extends WriteAccessHandler {
       fAmountCC,
       submission.priceFeedVaas,
       submission.timestamps,
-      overrides || {}
+      overrides || { gasLimit: this.gasLimit }
     );
   }
 
@@ -411,6 +413,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (!overrides || overrides.value == undefined) {
       overrides = {
         value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
@@ -419,7 +422,7 @@ export default class AccountTrade extends WriteAccessHandler {
       fAmountCC,
       submission.priceFeedVaas,
       submission.timestamps,
-      overrides || {}
+      overrides || { gasLimit: this.gasLimit }
     );
   }
 }

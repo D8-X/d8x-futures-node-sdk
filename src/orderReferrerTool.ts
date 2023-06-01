@@ -104,6 +104,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (!overrides || overrides.value == undefined) {
       overrides = {
         value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
@@ -136,6 +137,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (!overrides || overrides.value == undefined) {
       overrides = {
         value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
