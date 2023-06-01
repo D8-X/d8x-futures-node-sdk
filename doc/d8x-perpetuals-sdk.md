@@ -2400,6 +2400,7 @@ No gas required for the queries here.</p>
         * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+        * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -2772,6 +2773,18 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getOrderStatus"></a>
+
+### marketData.getOrderStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Order status ()</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Order Id</p> |
+| overrides |  |
+
 <a name="MarketData+getMarkPrice"></a>
 
 ### marketData.getMarkPrice(symbol) ⇒
@@ -4525,6 +4538,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
     * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+    * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -5003,6 +5017,19 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getOrderStatus"></a>
+
+### traderInterface.getOrderStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getOrderStatus</code>](#MarketData+getOrderStatus)  
+**Returns**: <p>Order status ()</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Order Id</p> |
+| overrides |  |
+
 <a name="MarketData+getMarkPrice"></a>
 
 ### traderInterface.getMarkPrice(symbol) ⇒
