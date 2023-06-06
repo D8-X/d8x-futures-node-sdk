@@ -1,6 +1,6 @@
 {
   "name": "@d8x/perpetuals-sdk",
-  "version": "0.6.1",
+  "version": "0.6.5",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
   "author": "D8X",
   "homepage": "https://github.com/D8-X/d8x-futures-node-sdk#readme",
@@ -20,22 +20,22 @@
     "api"
   ],
   "scripts": {
-    "build": "yarn typechain && yarn build:esm && yarn build:cjs",
+    "build": "yarn build:esm && yarn build:cjs",
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
     "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderReferrerTool.ts --configure ./jsdoc2md.json > ./doc/orderReferrerTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
-    "test": "yarn typechain && yarn jest",
+    "test": "yarn jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
-    "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
+    "prebuild": "node -p \"'export const sD8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublish": "yarn build",
     "prepare": "npm run build",
-    "typechain": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'",
-    "postinstall": "yarn typechain"
+    "postinstall": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
   "files": [
+    "src",
     "dist",
     "doc"
   ],
@@ -50,8 +50,10 @@
     "@ethersproject/strings": "^5.7.0",
     "@ethersproject/units": "^5.7.0",
     "@ethersproject/wallet": "^5.7.0",
+    "@typechain/ethers-v5": "^11.0.0",
     "buffer": "^6.0.3",
-    "process": "^0.11.10"
+    "process": "^0.11.10",
+    "typechain": "^8.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
@@ -59,7 +61,6 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.20.2",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.18.6",
-    "@typechain/ethers-v5": "^11.0.0",
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
     "babel-jest": "^29.3.1",
@@ -73,7 +74,6 @@
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
-    "typechain": "^8.2.0",
     "typescript": "^4.9.3"
   }
 }
