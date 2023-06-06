@@ -68,8 +68,8 @@ function toSCOrder(order: Order, traderAddr: string): SmartContractOrder {
   const perpetualId = 100001;
   let smOrder: SmartContractOrder = {
     flags: order.type == ORDER_TYPE_MARKET ? MASK_MARKET_ORDER : NaN,
-    iPerpetualId: BigNumber.from(perpetualId),
-    brokerFeeTbps: order.brokerFeeTbps == undefined ? BigNumber.from(0) : BigNumber.from(order.brokerFeeTbps),
+    iPerpetualId: perpetualId,
+    brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
     traderAddr: traderAddr,
     brokerAddr: order.brokerAddr == undefined ? ethers.constants.AddressZero : order.brokerAddr,
     referrerAddr: ethers.constants.AddressZero,
@@ -78,9 +78,9 @@ function toSCOrder(order: Order, traderAddr: string): SmartContractOrder {
     fLimitPrice: floatToABK64x64(order.limitPrice!),
     fTriggerPrice: floatToABK64x64(order.stopPrice!),
     leverageTDR: Math.round(100 * order.leverage!),
-    iDeadline: BigNumber.from(Math.round(order.deadline!)),
-    submittedTimestamp: BigNumber.from(Math.round(order.submittedTimestamp!)),
-    executionTimestamp: BigNumber.from(Math.round(order.executionTimestamp!)),
+    iDeadline: Math.round(order.deadline!),
+    submittedTimestamp: Math.round(order.submittedTimestamp!),
+    executionTimestamp: Math.round(order.executionTimestamp!),
   };
   return smOrder;
 }

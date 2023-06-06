@@ -159,7 +159,7 @@ describe("Front-end-like functionality", () => {
       type: "MARKET",
       quantity: 200,
       leverage: 10,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
 
     let resp: OrderResponse = await accTrade1.order(order);
@@ -187,7 +187,7 @@ describe("Front-end-like functionality", () => {
       type: "MARKET",
       quantity: 200,
       leverage: 10,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     order.side = "SELL";
     let resp: OrderResponse = await accTrade1.order(order);

@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import { PerpetualDataHandler, ZERO_ADDRESS } from "@d8x/perpetuals-sdk";
-import { TraderInterface } from "@d8x/perpetuals-sdk";
+import TraderInterface from "../src/traderInterface";
+import PerpetualDataHandler from "../src/perpetualDataHandler";
 import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
 // npm link "@d8x/perpetuals-sdk"
 jest.setTimeout(300000);
@@ -18,12 +18,12 @@ describe("Front-end-like functionality", () => {
       type: "MARKET",
       quantity: -0.05,
       leverage: 2,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
     let res = await apiInterface.orderDigest(orderSC);
     console.log(res);
-    let fee = await apiInterface.queryExchangeFee("MATIC", wallet.address, ZERO_ADDRESS);
+    let fee = await apiInterface.queryExchangeFee("MATIC", wallet.address, ethers.constants.AddressZero);
     console.log("fee=", fee);
     let vol = await apiInterface.getCurrentTraderVolume("MATIC", wallet.address);
     console.log("vol=", vol);

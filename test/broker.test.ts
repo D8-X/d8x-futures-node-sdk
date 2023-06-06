@@ -78,7 +78,7 @@ describe("broker tools that spend gas and tokens", () => {
           type: "MARKET",
           quantity: amount,
           leverage: 10,
-          timestamp: Math.round(Date.now() / 1000),
+          executionTimestamp: Math.round(Date.now() / 1000),
           brokerFeeTbps: brokerFeeTbps,
           deadline: Math.round(Date.now() / 1000) + 100000,
         };
