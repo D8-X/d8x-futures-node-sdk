@@ -733,7 +733,7 @@ export default class PerpetualDataHandler {
     let userOrder: Order = {
       symbol: symbol!,
       side: side,
-      type: PerpetualDataHandler._flagToOrderType(order),
+      type: PerpetualDataHandler._flagToOrderType(BigNumber.from(order.flags), BigNumber.from(order.fLimitPrice)),
       quantity: Math.abs(ABK64x64ToFloat(BigNumber.from(order.fAmount))),
       reduceOnly: containsFlag(BigNumber.from(order.flags), MASK_CLOSE_ONLY),
       limitPrice: limitPrice,
@@ -791,8 +791,8 @@ export default class PerpetualDataHandler {
 
     let smOrder: SmartContractOrder = {
       flags: flags,
-      iPerpetualId: BigNumber.from(perpetualId),
-      brokerFeeTbps: order.brokerFeeTbps == undefined ? BigNumber.from(0) : BigNumber.from(order.brokerFeeTbps),
+      iPerpetualId: perpetualId,
+      brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
       traderAddr: traderAddr,
       brokerAddr: order.brokerAddr == undefined ? ZERO_ADDRESS : order.brokerAddr,
       referrerAddr: ZERO_ADDRESS,
@@ -800,9 +800,9 @@ export default class PerpetualDataHandler {
       fAmount: fAmount,
       fLimitPrice: fLimitPrice,
       fTriggerPrice: fTriggerPrice,
-      leverageTDR: order.leverage == undefined ? BigNumber.from(0) : Math.round(100 * order.leverage),
-      iDeadline: BigNumber.from(Math.round(iDeadline)),
-      executionTimestamp: BigNumber.from(Math.round(order.executionTimestamp)),
+      leverageTDR: order.leverage == undefined ? 0 : Math.round(100 * order.leverage),
+      iDeadline: Math.round(iDeadline),
+      executionTimestamp: Math.round(order.executionTimestamp),
       submittedTimestamp: 0,
     };
     return smOrder;
@@ -886,10 +886,10 @@ export default class PerpetualDataHandler {
     return order;
   }
 
-  private static _flagToOrderType(order: SmartContractOrder): string {
-    let flag = BigNumber.from(order.flags);
+  private static _flagToOrderType(orderFlags: BigNumber, orderLimitPrice: BigNumber): string {
+    let flag = BigNumber.from(orderFlags);
     let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
-    let hasLimit = !BigNumber.from(order.fLimitPrice).eq(0) || !BigNumber.from(order.fLimitPrice).eq(MAX_64x64);
+    let hasLimit = !BigNumber.from(orderLimitPrice).eq(0) || !BigNumber.from(orderLimitPrice).eq(MAX_64x64);
     let isStop = containsFlag(flag, MASK_STOP_ORDER);
 
     if (isStop && hasLimit) {
