@@ -226,8 +226,8 @@ export interface TradeEvent {
  */
 export interface SmartContractOrder {
   flags: BigNumberish;
-  iPerpetualId: BigNumberish;
-  brokerFeeTbps: BigNumberish;
+  iPerpetualId: number;
+  brokerFeeTbps: number;
   traderAddr: string;
   brokerAddr: string;
   referrerAddr: string;
@@ -235,10 +235,10 @@ export interface SmartContractOrder {
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;
   fTriggerPrice: BigNumberish;
-  leverageTDR: BigNumberish;
-  iDeadline: BigNumberish;
-  executionTimestamp: BigNumberish;
-  submittedTimestamp: BigNumberish;
+  leverageTDR: number;
+  iDeadline: number;
+  executionTimestamp: number;
+  submittedTimestamp: number;
 }
 
 /**

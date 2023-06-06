@@ -4,7 +4,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { CallOverrides, ContractTransaction, Overrides } from "@ethersproject/contracts";
 import { keccak256 } from "@ethersproject/keccak256";
 import { ABK64x64ToFloat } from "./d8XMath";
-import { NodeSDKConfig, Order, PerpetualStaticInfo } from "./nodeSDKTypes";
+import { NodeSDKConfig, Order, PerpetualStaticInfo, SmartContractOrder } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 
@@ -397,11 +397,14 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     order.brokerAddr = this.traderAddr;
+    if (order.deadline==undefined) {
+      throw Error("brokerTool::signOrder: deadline not defined");
+    }
     order.brokerSignature = await BrokerTool._signOrder(
       order.symbol,
       order.brokerFeeTbps!,
       traderAddr,
-      BigNumber.from(order.deadline),
+      order.deadline,
       this.signer,
       this.chainId,
       this.proxyAddr,
@@ -409,6 +412,18 @@ export default class BrokerTool extends WriteAccessHandler {
     );
     return order;
   }
+
+  public async signSCOrder(scOrder: SmartContractOrder): Promise<string> {
+    return await BrokerTool._signOrderFromRawData(
+      scOrder.iPerpetualId,
+      scOrder.brokerFeeTbps,
+      scOrder.traderAddr,
+      scOrder.iDeadline,
+      this.signer!,
+      this.chainId,
+      this.proxyAddr);
+  }
+
 
   /**
    * Creates a signature that a trader can use to place orders with this broker.
@@ -429,13 +444,12 @@ export default class BrokerTool extends WriteAccessHandler {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let iDeadline = BigNumber.from(deadline);
     let brokerFeeTbps = 100_000 * brokerFee;
     return await BrokerTool._signOrder(
       symbol,
       brokerFeeTbps,
       traderAddr,
-      iDeadline,
+      deadline,
       this.signer,
       this.chainId,
       this.proxyAddr,
@@ -443,16 +457,15 @@ export default class BrokerTool extends WriteAccessHandler {
     );
   }
 
-  private static async _signOrder(
-    symbol: string,
+  private static async _signOrderFromRawData(
+    iPerpetualId: number,
     brokerFeeTbps: number,
     traderAddr: string,
-    iDeadline: BigNumber,
+    iDeadline: number,
     signer: Signer,
     chainId: number,
-    proxyAddress: string,
-    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
-  ): Promise<string> {
+    proxyAddress: string
+  ) {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
@@ -468,7 +481,7 @@ export default class BrokerTool extends WriteAccessHandler {
     const TRADE_BROKER_TYPEHASH = keccak256(
       Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint32 iDeadline)")
     );
-    let iPerpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+   
     let structHash = keccak256(
       abiCoder.encode(
         ["bytes32", "uint24", "uint16", "address", "uint32"],
@@ -479,6 +492,27 @@ export default class BrokerTool extends WriteAccessHandler {
     let digest = keccak256(abiCoder.encode(["bytes32", "bytes32"], [domainSeparator, structHash]));
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     return await signer.signMessage(digestBuffer);
+  }
+
+  private static async _signOrder(
+    symbol: string,
+    brokerFeeTbps: number,
+    traderAddr: string,
+    iDeadline: number,
+    signer: Signer,
+    chainId: number,
+    proxyAddress: string,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): Promise<string> {
+    let iPerpetualId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    return await BrokerTool._signOrderFromRawData(
+      iPerpetualId,
+      brokerFeeTbps,
+      traderAddr,
+      iDeadline,
+      signer,
+      chainId,
+      proxyAddress);
   }
 
   // Transfer ownership
