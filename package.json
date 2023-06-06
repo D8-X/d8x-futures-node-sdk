@@ -20,15 +20,17 @@
     "api"
   ],
   "scripts": {
-    "build": "yarn build:esm && yarn build:cjs",
+    "build": "yarn typechain && yarn build:esm && yarn build:cjs",
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
     "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderReferrerTool.ts --configure ./jsdoc2md.json > ./doc/orderReferrerTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
-    "test": "jest",
+    "test": "yarn typechain && yarn jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
     "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublish": "yarn build",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "typechain": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'",
+    "postinstall": "yarn typechain"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -57,6 +59,7 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.20.2",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-typescript": "^7.18.6",
+    "@typechain/ethers-v5": "^11.0.0",
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
     "babel-jest": "^29.3.1",
@@ -70,6 +73,7 @@
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
+    "typechain": "^8.2.0",
     "typescript": "^4.9.3"
   }
 }

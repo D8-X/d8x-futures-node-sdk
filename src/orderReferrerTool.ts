@@ -1,6 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
-import { ContractTransaction } from "@ethersproject/contracts";
+import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { BlockTag } from "@ethersproject/providers";
 import {
   BUY_SIDE,
@@ -88,8 +88,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     symbol: string,
     orderId: string,
     referrerAddr?: string,
-    nonce?: number,
-    submission?: PriceFeedSubmission
+    submission?: PriceFeedSubmission,
+    overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -101,17 +101,19 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
     }
-    const options = {
-      gasLimit: this.gasLimit,
-      nonce: nonce,
-      value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
-    };
+    if (!overrides || overrides.value == undefined) {
+      overrides = {
+        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        ...overrides,
+      } as PayableOverrides;
+    }
     return await orderBookSC.executeOrder(
       orderId,
       referrerAddr,
-      submission?.priceFeedVaas,
-      submission?.timestamps,
-      options
+      submission.priceFeedVaas,
+      submission.timestamps,
+      overrides
     );
   }
 
@@ -119,8 +121,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     symbol: string,
     orderIds: string[],
     referrerAddr?: string,
-    nonce?: number,
-    submission?: PriceFeedSubmission
+    submission?: PriceFeedSubmission,
+    overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -132,17 +134,19 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
     }
-    const options = {
-      gasLimit: this.gasLimit,
-      nonce: nonce,
-      value: this.PRICE_UPDATE_FEE_GWEI * submission?.priceFeedVaas.length,
-    };
+    if (!overrides || overrides.value == undefined) {
+      overrides = {
+        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        ...overrides,
+      } as PayableOverrides;
+    }
     return await orderBookSC.executeOrders(
       orderIds,
       referrerAddr,
       submission?.priceFeedVaas,
       submission?.timestamps,
-      options
+      overrides
     );
   }
 
@@ -166,9 +170,9 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    *
    * @returns Array with all open orders and their IDs.
    */
-  public async getAllOpenOrders(symbol: string): Promise<[Order[], string[]]> {
-    let totalOrders = await this.numberOfOpenOrders(symbol);
-    return await this.pollLimitOrders(symbol, totalOrders);
+  public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[]]> {
+    let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
+    return await this.pollLimitOrders(symbol, totalOrders, ZERO_ORDER_ID, overrides);
   }
 
   /**
@@ -191,12 +195,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    *
    * @returns {number} Number of open orders.
    */
-  public async numberOfOpenOrders(symbol: string): Promise<number> {
+  public async numberOfOpenOrders(symbol: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    let numOrders = await orderBookSC.numberOfOrderBookDigests();
+    let numOrders = await orderBookSC.numberOfOrderBookDigests(overrides || {});
     return Number(numOrders);
   }
 
@@ -222,9 +226,9 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    *
    * @returns order or undefined
    */
-  public async getOrderById(symbol: string, id: string): Promise<Order | undefined> {
+  public async getOrderById(symbol: string, id: string, overrides?: CallOverrides): Promise<Order | undefined> {
     let ob = await this.getOrderBookContract(symbol);
-    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id);
+    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id, overrides || {});
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
     }
@@ -255,7 +259,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    *
    * @returns Array of orders and corresponding order IDs
    */
-  public async pollLimitOrders(symbol: string, numElements: number, startAfter?: string): Promise<[Order[], string[]]> {
+  public async pollLimitOrders(
+    symbol: string,
+    numElements: number,
+    startAfter?: string,
+    overrides?: CallOverrides
+  ): Promise<[Order[], string[]]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -263,9 +272,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
-    let orders: ClientOrder[];
-    let orderIds: string[];
-    [orders, orderIds] = await orderBookSC.pollLimitOrders(startAfter, BigNumber.from(numElements));
+    let [orders, orderIds] = await orderBookSC.pollLimitOrders(
+      startAfter,
+      BigNumber.from(numElements),
+      overrides || {}
+    );
     let userFriendlyOrders: Order[] = new Array<Order>();
     let orderIdsOut = [];
     let k = 0;
@@ -299,7 +310,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * main();
    * @returns true if order can be executed for the current state of the perpetuals
    */
-  public async isTradeable(order: Order, blockTimestamp?: number, indexPrices?: [number, number]): Promise<boolean> {
+  public async isTradeable(
+    order: Order,
+    blockTimestamp?: number,
+    indexPrices?: [number, number],
+    overrides?: CallOverrides
+  ): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -312,19 +328,28 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       order.quantity,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
-      indexPrices
+      indexPrices,
+      overrides
     );
     let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
       order.symbol,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
-      indexPrices
+      indexPrices,
+      overrides
     );
     if (blockTimestamp == undefined) {
       const currentBlock = await this.provider!.getBlockNumber();
       blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
     }
-    return await this._isTradeable(order, orderPrice, markPrice, blockTimestamp, this.symbolToPerpStaticInfo);
+    return await this._isTradeable(
+      order,
+      orderPrice,
+      markPrice,
+      blockTimestamp,
+      this.symbolToPerpStaticInfo,
+      overrides
+    );
   }
 
   /**
@@ -337,7 +362,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   public async isTradeableBatch(
     orders: Order[],
     blockTimestamp?: number,
-    indexPrices?: [number, number, boolean, boolean]
+    indexPrices?: [number, number, boolean, boolean],
+    overrides?: CallOverrides
   ): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
@@ -364,7 +390,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
           o.quantity,
           this.symbolToPerpStaticInfo,
           this.proxyContract!,
-          [indexPrices![0], indexPrices![1]]
+          [indexPrices![0], indexPrices![1]],
+          overrides
         )
       )
     );
@@ -372,14 +399,17 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       orders[0].symbol,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
-      [indexPrices![0], indexPrices![1]]
+      [indexPrices![0], indexPrices![1]],
+      overrides
     );
     if (blockTimestamp == undefined) {
       const currentBlock = await this.provider!.getBlockNumber();
       blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
     }
-    return await orders.map((o, idx) =>
-      this._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo)
+    return await Promise.all(
+      orders.map((o, idx) =>
+        this._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo, overrides)
+      )
     );
   }
 
@@ -392,13 +422,14 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param symbolToPerpInfoMap metadata
    * @returns true if trading conditions met, false otherwise
    */
-  protected _isTradeable(
+  protected async _isTradeable(
     order: Order,
     tradePrice: number,
     markPrice: number,
     blockTimestamp: number,
-    symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
-  ): boolean {
+    symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>,
+    overrides?: CallOverrides
+  ): Promise<boolean> {
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
       console.log("order expired");
@@ -454,15 +485,15 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     ) {
       // order has a parent
       const orderBookContract = this.getOrderBookContract(order.symbol);
-      return orderBookContract.getOrderStatus(order.parentChildOrderIds[1]).then((status: number) => {
-        if (status == 2 || status == 3) {
-          // console.log("parent not executed/cancelled");
-          // parent is open or unknown
-          return false;
-        }
-        return true;
-      });
+      const parentStatus = await orderBookContract.getOrderStatus(order.parentChildOrderIds[1], overrides || {});
+      if (parentStatus == 2 || parentStatus == 3) {
+        // console.log("parent not executed/cancelled");
+        // parent is open or unknown
+        return false;
+      }
+      return true;
     }
+
     // all checks passed -> order is tradeable
     return true;
   }

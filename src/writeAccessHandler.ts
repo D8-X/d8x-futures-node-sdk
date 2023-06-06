@@ -1,9 +1,10 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
-import { Contract, ContractTransaction } from "@ethersproject/contracts";
+import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
+import { ERC20__factory } from "./contracts";
 import { floatToDec18 } from "./d8XMath";
 import { ERC20_ABI, MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -45,7 +46,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: Provider) {
+  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides) {
     if (provider == undefined) {
       this.provider = new StaticJsonRpcProvider(this.nodeURL);
     } else {
@@ -55,7 +56,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
       const wallet = new Wallet(this.privateKey!);
       this.signer = wallet.connect(this.provider);
     }
-    await this.initContractsAndData(this.signer);
+    await this.initContractsAndData(this.signer, overrides);
     this.traderAddr = await this.signer.getAddress();
   }
 
@@ -65,7 +66,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @param amount optional, amount to approve if not 'infinity'
    * @returns ContractTransaction
    */
-  public async setAllowance(symbol: string, amount: number | undefined = undefined): Promise<ContractTransaction> {
+  public async setAllowance(symbol: string, amount?: number, overrides?: Overrides): Promise<ContractTransaction> {
     //extract margin-currency name
     let symbolarr = symbol.split("-");
     symbol = symbol.length == 3 ? symbolarr[2] : symbolarr[0];
@@ -80,17 +81,18 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     } else {
       amountDec18 = floatToDec18(amount);
     }
-    return WriteAccessHandler._setAllowance(marginTokenAddr, this.proxyAddr, this.signer, amountDec18);
+    return WriteAccessHandler._setAllowance(marginTokenAddr, this.proxyAddr, this.signer, amountDec18, overrides);
   }
 
   protected static async _setAllowance(
     tokenAddr: string,
     proxyAddr: string,
     signer: Signer,
-    amount: BigNumber
+    amount: BigNumber,
+    overrides?: Overrides
   ): Promise<ContractTransaction> {
-    const marginToken: Contract = new Contract(tokenAddr, ERC20_ABI, signer);
-    return await marginToken.approve(proxyAddr, amount);
+    const marginToken = ERC20__factory.connect(tokenAddr, signer);
+    return await marginToken.approve(proxyAddr, amount, overrides || {});
   }
 
   /**
@@ -108,7 +110,11 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @param amountToPay Amount in chain currency, e.g. "0.1" for 0.1 MATIC
    * @returns Transaction object
    */
-  public async swapForMockToken(symbol: string, amountToPay: string): Promise<ContractTransaction> {
+  public async swapForMockToken(
+    symbol: string,
+    amountToPay: string,
+    overrides?: PayableOverrides
+  ): Promise<ContractTransaction> {
     if (this.signer == null) {
       throw Error("no wallet initialized. Use createProxyInstance().");
     }
@@ -122,8 +128,12 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
       throw Error("No swap contract found for symbol.");
     }
     let contract = new Contract(swapAddress, MOCK_TOKEN_SWAP_ABI, this.signer);
+    if (overrides && overrides.value !== undefined) {
+      throw Error("Pass value to send in function call, not overrides.");
+    }
     return await contract.swapToMockToken({
       value: parseEther(amountToPay),
-    });
+      ...overrides,
+    } as PayableOverrides);
   }
 }
