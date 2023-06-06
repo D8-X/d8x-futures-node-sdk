@@ -3,6 +3,7 @@ import { NodeSDKConfig, Order } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import BrokerTool from "../src/brokerTool";
+import TraderInterface from "../src/traderInterface";
 
 const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
 
@@ -16,6 +17,7 @@ jest.setTimeout(300000);
 let pk1: string = <string>process.env.PK1;
 let pk2: string = <string>process.env.PK2;
 let RPC: string = <string>process.env.RPC;
+let traderInterface: TraderInterface;
 let config: NodeSDKConfig;
 let brokerTool: BrokerTool;
 let lotSize: number;
@@ -30,6 +32,8 @@ describe("broker tools that spend gas and tokens", () => {
     expect(pk1 == undefined).toBeFalsy();
     brokerTool = new BrokerTool(config, pk1);
     await brokerTool.createProxyInstance();
+    traderInterface = new TraderInterface(config);
+    traderInterface.createProxyInstance();
   });
 
   it("should set allowance to deposit n lots", async () => {
@@ -82,7 +86,11 @@ describe("broker tools that spend gas and tokens", () => {
           brokerFeeTbps: brokerFeeTbps,
           deadline: Math.round(Date.now() / 1000) + 100000,
         };
+
+        let SCOrder = await traderInterface.createSmartContractOrder(order, accTrade.getAddress());
         let signedOrder = await brokerTool.signOrder(order, accTrade.getAddress());
+        let scSign = await brokerTool.signSCOrder(SCOrder);
+        expect(scSign).toEqual(signedOrder.brokerSignature);
         let resp = await accTrade.order(signedOrder);
         // wait for 10 seconds, enough for the order to be executed
         await delay(10000);
