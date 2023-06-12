@@ -1,6 +1,5 @@
 import { defaultAbiCoder } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumber } from "@ethersproject/bignumber";
 import { CallOverrides, ContractTransaction, Overrides } from "@ethersproject/contracts";
 import { keccak256 } from "@ethersproject/keccak256";
 import { ABK64x64ToFloat } from "./d8XMath";
@@ -22,6 +21,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
    * readSDKConfig.
    * @param {string} privateKey Private key of a broker.
+   * @param {Signer} signer Signer (ignored if a private key is provided)
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -37,8 +37,8 @@ export default class BrokerTool extends WriteAccessHandler {
    * main();
    *
    */
-  public constructor(config: NodeSDKConfig, privateKey: string) {
-    super(config, privateKey);
+  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
+    super(config, privateKey, signer);
   }
 
   // Fee getters
@@ -397,7 +397,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     order.brokerAddr = this.traderAddr;
-    if (order.deadline==undefined) {
+    if (order.deadline == undefined) {
       throw Error("brokerTool::signOrder: deadline not defined");
     }
     order.brokerSignature = await BrokerTool._signOrder(
@@ -421,9 +421,9 @@ export default class BrokerTool extends WriteAccessHandler {
       scOrder.iDeadline,
       this.signer!,
       this.chainId,
-      this.proxyAddr);
+      this.proxyAddr
+    );
   }
-
 
   /**
    * Creates a signature that a trader can use to place orders with this broker.
@@ -481,7 +481,7 @@ export default class BrokerTool extends WriteAccessHandler {
     const TRADE_BROKER_TYPEHASH = keccak256(
       Buffer.from("Order(uint24 iPerpetualId,uint16 brokerFeeTbps,address traderAddr,uint32 iDeadline)")
     );
-   
+
     let structHash = keccak256(
       abiCoder.encode(
         ["bytes32", "uint24", "uint16", "address", "uint32"],
@@ -512,7 +512,8 @@ export default class BrokerTool extends WriteAccessHandler {
       iDeadline,
       signer,
       chainId,
-      proxyAddress);
+      proxyAddress
+    );
   }
 
   // Transfer ownership

@@ -9,7 +9,7 @@ require gas-payments.</p>
 **Extends**: <code>WriteAccessHandler</code>  
 
 * [BrokerTool](#BrokerTool) ⇐ <code>WriteAccessHandler</code>
-    * [new BrokerTool(config, privateKey)](#new_BrokerTool_new)
+    * [new BrokerTool(config, privateKey, signer)](#new_BrokerTool_new)
     * [.getBrokerInducedFee(poolSymbolName)](#BrokerTool+getBrokerInducedFee) ⇒ <code>number</code>
     * [.getFeeForBrokerDesignation(poolSymbolName, [lots])](#BrokerTool+getFeeForBrokerDesignation) ⇒ <code>number</code>
     * [.getFeeForBrokerVolume(poolSymbolName)](#BrokerTool+getFeeForBrokerVolume) ⇒ <code>number</code>
@@ -24,7 +24,7 @@ require gas-payments.</p>
 
 <a name="new_BrokerTool_new"></a>
 
-### new BrokerTool(config, privateKey)
+### new BrokerTool(config, privateKey, signer)
 <p>Constructor</p>
 
 
@@ -32,6 +32,7 @@ require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of a broker.</p> |
+| signer | <code>Signer</code> | <p>Signer (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js

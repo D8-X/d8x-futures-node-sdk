@@ -9,7 +9,7 @@ require gas-payments.</p>
 **Extends**: <code>WriteAccessHandler</code>  
 
 * [AccountTrade](#AccountTrade) ⇐ <code>WriteAccessHandler</code>
-    * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
+    * [new AccountTrade(config, privateKey, signer)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder) ⇒ <code>ContractTransaction</code>
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
@@ -20,7 +20,7 @@ require gas-payments.</p>
 
 <a name="new_AccountTrade_new"></a>
 
-### new AccountTrade(config, privateKey)
+### new AccountTrade(config, privateKey, signer)
 <p>Constructor</p>
 
 
@@ -28,6 +28,7 @@ require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that trades.</p> |
+| signer | <code>Signer</code> | <p>Signer that trades (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js

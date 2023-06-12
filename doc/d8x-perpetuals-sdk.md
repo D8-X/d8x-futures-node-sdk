@@ -469,7 +469,7 @@ require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [AccountTrade](#AccountTrade) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
+    * [new AccountTrade(config, privateKey, signer)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder) ⇒ <code>ContractTransaction</code>
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
@@ -497,7 +497,7 @@ require gas-payments.</p>
 
 <a name="new_AccountTrade_new"></a>
 
-### new AccountTrade(config, privateKey)
+### new AccountTrade(config, privateKey, signer)
 <p>Constructor</p>
 
 
@@ -505,6 +505,7 @@ require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that trades.</p> |
+| signer | <code>Signer</code> | <p>Signer that trades (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -952,7 +953,7 @@ require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [BrokerTool](#BrokerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new BrokerTool(config, privateKey)](#new_BrokerTool_new)
+    * [new BrokerTool(config, privateKey, signer)](#new_BrokerTool_new)
     * [.getBrokerInducedFee(poolSymbolName)](#BrokerTool+getBrokerInducedFee) ⇒ <code>number</code>
     * [.getFeeForBrokerDesignation(poolSymbolName, [lots])](#BrokerTool+getFeeForBrokerDesignation) ⇒ <code>number</code>
     * [.getFeeForBrokerVolume(poolSymbolName)](#BrokerTool+getFeeForBrokerVolume) ⇒ <code>number</code>
@@ -984,7 +985,7 @@ require gas-payments.</p>
 
 <a name="new_BrokerTool_new"></a>
 
-### new BrokerTool(config, privateKey)
+### new BrokerTool(config, privateKey, signer)
 <p>Constructor</p>
 
 
@@ -992,6 +993,7 @@ require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of a broker.</p> |
+| signer | <code>Signer</code> | <p>Signer (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -1585,7 +1587,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
+    * [new LiquidatorTool(config, privateKey, signer)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData)](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr, indexPrices)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
@@ -1611,7 +1613,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 <a name="new_LiquidatorTool_new"></a>
 
-### new LiquidatorTool(config, privateKey)
+### new LiquidatorTool(config, privateKey, signer)
 <p>Constructs a LiquidatorTool instance for a given configuration and private key.</p>
 
 
@@ -1619,6 +1621,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
+| signer | <code>Signer</code> | <p>Signer that liquidates (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -2013,7 +2016,7 @@ smart-contract interactions that require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [LiquidityProviderTool](#LiquidityProviderTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
+    * [new LiquidityProviderTool(config, privateKey, signer)](#new_LiquidityProviderTool_new)
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+initiateLiquidityWithdrawal) ⇒
     * [.executeLiquidityWithdrawal(poolSymbolName)](#LiquidityProviderTool+executeLiquidityWithdrawal) ⇒
@@ -2037,14 +2040,15 @@ smart-contract interactions that require gas-payments.</p>
 
 <a name="new_LiquidityProviderTool_new"></a>
 
-### new LiquidityProviderTool(config, privateKey)
+### new LiquidityProviderTool(config, privateKey, signer)
 <p>Constructor</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey |  | <p>private key of account that trades</p> |
+| privateKey | <code>string</code> | <p>private key of account that trades</p> |
+| signer | <code>Signer</code> | <p>Signer that provides liquidity (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -3139,7 +3143,7 @@ gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [OrderReferrerTool](#OrderReferrerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
+    * [new OrderReferrerTool(config, privateKey, signer)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
@@ -3169,7 +3173,7 @@ gas-payments.</p>
 
 <a name="new_OrderReferrerTool_new"></a>
 
-### new OrderReferrerTool(config, privateKey)
+### new OrderReferrerTool(config, privateKey, signer)
 <p>Constructor.</p>
 
 
@@ -3177,6 +3181,7 @@ gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of the wallet that executes the conditional orders.</p> |
+| signer | <code>Signer</code> | <p>Signer that executes orders (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js

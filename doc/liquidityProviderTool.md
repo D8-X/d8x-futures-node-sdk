@@ -8,21 +8,22 @@ smart-contract interactions that require gas-payments.</p>
 **Extends**: <code>WriteAccessHandler</code>  
 
 * [LiquidityProviderTool](#LiquidityProviderTool) ⇐ <code>WriteAccessHandler</code>
-    * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
+    * [new LiquidityProviderTool(config, privateKey, signer)](#new_LiquidityProviderTool_new)
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+initiateLiquidityWithdrawal) ⇒
     * [.executeLiquidityWithdrawal(poolSymbolName)](#LiquidityProviderTool+executeLiquidityWithdrawal) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
 
-### new LiquidityProviderTool(config, privateKey)
+### new LiquidityProviderTool(config, privateKey, signer)
 <p>Constructor</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey |  | <p>private key of account that trades</p> |
+| privateKey | <code>string</code> | <p>private key of account that trades</p> |
+| signer | <code>Signer</code> | <p>Signer that provides liquidity (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js

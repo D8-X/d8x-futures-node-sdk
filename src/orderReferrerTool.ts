@@ -2,6 +2,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { BlockTag } from "@ethersproject/providers";
+import { Signer } from "@ethersproject/abstract-signer";
 import {
   BUY_SIDE,
   ClientOrder,
@@ -43,11 +44,12 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * main();
    *
    * @param {string} privateKey Private key of the wallet that executes the conditional orders.
+   * @param {Signer} signer Signer that executes orders (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey: string) {
-    super(config, privateKey);
+  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
+    super(config, privateKey, signer);
     // override parent's gas limit with a lower number
-    this.gasLimit = 3_000_000;
+    this.gasLimit = 4_000_000;
   }
 
   /**

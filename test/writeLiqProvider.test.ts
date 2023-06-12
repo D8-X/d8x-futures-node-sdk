@@ -1,3 +1,4 @@
+import { JsonRpcProvider } from "@ethersproject/providers";
 import { ethers } from "ethers";
 // import AccountTrade from "../src/accountTrade";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
@@ -31,12 +32,14 @@ describe("LP: write and spoil gas and tokens", () => {
       expect(true).toBeFalsy;
     }
     console.log("creating liquidity provision tool...");
-    liqProvTool = new LiquidityProviderTool(config, pk);
-    await liqProvTool.createProxyInstance();
+    const lpWallet = new ethers.Wallet(pk);
+    const provider = new JsonRpcProvider(config.nodeURL);
+    liqProvTool = new LiquidityProviderTool(config, undefined, lpWallet.connect(provider));
+    await liqProvTool.createProxyInstance(provider);
     console.log("success\n");
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
-    wallet = new ethers.Wallet(pk);
+    wallet = lpWallet;
   });
   describe("Liquidity Provider", () => {
     it("deposit", async () => {

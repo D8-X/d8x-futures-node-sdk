@@ -1,4 +1,5 @@
 import { Contract, ContractTransaction, Overrides } from "@ethersproject/contracts";
+import { Signer } from "@ethersproject/abstract-signer";
 import { dec18ToFloat, floatToDec18 } from "./d8XMath";
 import { ERC20_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -27,10 +28,11 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @param privateKey private key of account that trades
+   * @param {string} privateKey private key of account that trades
+   * @param {Signer} signer Signer that provides liquidity (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey: string) {
-    super(config, privateKey);
+  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
+    super(config, privateKey, signer);
   }
 
   /**

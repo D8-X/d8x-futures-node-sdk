@@ -1,5 +1,6 @@
 import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import { BigNumber } from "ethers";
+import { Signer } from "@ethersproject/abstract-signer";
+import { BigNumber } from "@ethersproject/bignumber";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -29,9 +30,10 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * main();
    *
    * @param {string} privateKey Private key of account that liquidates.
+   * @param {Signer} signer Signer that liquidates (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey: string) {
-    super(config, privateKey);
+  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
+    super(config, privateKey, signer);
   }
 
   /**
