@@ -1198,7 +1198,6 @@ export default class MarketData extends PerpetualDataHandler {
           poolShareTokenAddr: pools[k].shareTokenAddress,
           defaultFundCashCC: ABK64x64ToFloat(pools[k].fDefaultFundCashCC),
           pnlParticipantCashCC: ABK64x64ToFloat(pools[k].fPnLparticipantsCashCC),
-          totalAMMFundCashCC: ABK64x64ToFloat(pools[k].fAMMFundCashCC),
           totalTargetAMMFundSizeCC: ABK64x64ToFloat(pools[k].fTargetAMMFundSize),
           brokerCollateralLotSize: ABK64x64ToFloat(pools[k].fBrokerCollateralLotSize),
           perpetuals: [],

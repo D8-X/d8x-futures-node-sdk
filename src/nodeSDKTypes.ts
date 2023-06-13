@@ -137,7 +137,6 @@ export interface ExchangeInfo {
  * This is the token issued to external liquidity providers.
  * @property {number} defaultFundCashCC Amount of cash in the default fund of this pool, denominated in margin tokens.
  * @property {number} pnlParticipantCashCC Amount of cash in the PnL participation pool, i.e. cash deposited by external liquidity providers.
- * @property {number} totalAMMFundCashCC Amount of cash aggregated across all perpetual AMM funds in this pool.
  * @property {number} totalTargetAMMFundSizeCC Target AMM funds aggregated across all perpetuals in this pool.
  * @property {number} brokerCollateralLotSize Price of one lot for brokers who wish to participate in this pool. Denominated in margin tokens.
  * @property {PerpetualState[]} perpetuals Array of all perpetuals in this pool.
@@ -149,7 +148,6 @@ export interface PoolState {
   poolShareTokenAddr: string;
   defaultFundCashCC: number;
   pnlParticipantCashCC: number;
-  totalAMMFundCashCC: number;
   totalTargetAMMFundSizeCC: number;
   brokerCollateralLotSize: number;
   perpetuals: PerpetualState[];
