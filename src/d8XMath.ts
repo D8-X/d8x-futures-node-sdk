@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
 
 /**

@@ -10,6 +10,7 @@ import OrderReferrerTool from "../src/orderReferrerTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
+import { IPerpetualManager, IPerpetualManager__factory } from "../src/contracts";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -17,7 +18,7 @@ let RPC: string = <string>process.env.RPC;
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
-let proxyContract: ethers.Contract;
+let proxyContract: IPerpetualManager;
 let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
@@ -54,8 +55,7 @@ describe("readOnly", () => {
   describe("Oracle Routes", () => {
     beforeAll(() => {
       const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
-      let abi = require("../src/abi/testnet/IPerpetualManager.json");
-      proxyContract = new ethers.Contract(config.proxyAddr, abi, provider);
+      proxyContract = IPerpetualManager__factory.connect(config.proxyAddr, provider);
     });
     it("routes", async () => {
       let ccyList = ["ETH-USD", "BTC-USD", "USD-USDC", "MATIC-USD"];
@@ -94,6 +94,11 @@ describe("readOnly", () => {
       await apiInterface.createProxyInstance();
       wallet = new ethers.Wallet(pk);
     });
+    it("Read ABI", () => {
+      let proxyABI = apiInterface.getABI("sharetoken") as string;
+      expect(proxyABI.length > 0).toBeTruthy;
+    });
+
     it("order digest", async () => {
       let order: Order = {
         symbol: "BTC-USD-MATIC",
@@ -101,7 +106,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: -0.05,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
       let res = await apiInterface.orderDigest(orderSC);
@@ -159,6 +164,11 @@ describe("readOnly", () => {
       mktData = new MarketData(config);
       await mktData.createProxyInstance();
     });
+    it("perpetual symbols in pool", async () => {
+      let v = mktData.getPerpetualSymbolsInPool("MATIC");
+      console.log("***\nPerpetuals for symbol MATIC:\n", v, "\n***");
+      expect(v.length).toBeGreaterThan(1);
+    });
     it("exchange info", async () => {
       let info: ExchangeInfo = await mktData.exchangeInfo();
       console.log(info);
@@ -168,9 +178,12 @@ describe("readOnly", () => {
         console.log("Closed markets:");
         for (let j = 0; j < pool.perpetuals.length; j++) {
           let perp = pool.perpetuals[j];
+          const symbol = perp.baseCurrency + "-" + perp.quoteCurrency + "-" + pool.poolSymbol;
           if (perp.isMarketClosed) {
             console.log(perp.baseCurrency + "-" + perp.quoteCurrency + ":" + perp.state + " - " + perp.isMarketClosed);
           }
+          let isClosedDirect = await mktData.isMarketClosed(symbol);
+          expect(isClosedDirect).toEqual(perp.isMarketClosed);
         }
       }
     });
@@ -222,19 +235,28 @@ describe("readOnly", () => {
     });
     it("maxOrderSizeForTrader (long)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos[0]);
       console.log(`max long trade size w/o   wallet: ${maxTradeSize}`);
+    });
+    it("position risk in pool", async () => {
+      let pos = await mktData.positionRisk(wallet.address, "MATIC");
+      console.log(`Position risk in MATIC pool`);
+      console.log(pos);
     });
     it("maxOrderSizeForTrader (short)", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos[0]);
       console.log(`max short trade size w/o  wallet: ${maxTradeSize}`);
     });
-    it("openOrders", async () => {
+    it("openOrders in perpetual", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
-      console.log("order ids=", ordersStruct.orderIds);
-      console.log("orders   =", ordersStruct.orders);
-      orderIds = ordersStruct.orderIds;
+      console.log("order ids=", ordersStruct[0].orderIds);
+      console.log("orders   =", ordersStruct[0].orders);
+      orderIds = ordersStruct[0].orderIds;
+    });
+    it("openOrders in pool", async () => {
+      let ordersStruct = await mktData.openOrders(wallet.address, "MATIC");
+      console.log("order =", ordersStruct);
     });
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
@@ -242,14 +264,14 @@ describe("readOnly", () => {
     });
 
     it("get margin info if an opening trade was performed", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let order: Order = {
         symbol: "MATIC-USD-MATIC",
         side: "BUY",
         type: "MARKET",
         quantity: 200,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
       console.log("mgn before opening=", mgnBefore, "\norder=", order);
@@ -257,28 +279,28 @@ describe("readOnly", () => {
     });
 
     it("get margin info if a closing trade was performed", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let order: Order = {
         symbol: "MATIC-USD-MATIC",
         side: "SELL",
         type: "MARKET",
         quantity: 50,
         leverage: 5,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
       console.log("mgn before closing=", mgnBefore, "\norder=", order);
       console.log("mgn after  closing=", newPositionRisk, "\ndeposit =", orderCost);
     });
     it("get margin info if collateral is added", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let deposit = 100;
       let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
       console.log("mgnBefore:", mgnBefore);
       console.log("mgnAfter :", mgnAfter);
     });
     it("get margin info if collateral is removed", async () => {
-      let mgnBefore = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
+      let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
       let deposit = -2;
       let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
       console.log("mgnBefore:", mgnBefore);
@@ -342,7 +364,7 @@ describe("readOnly", () => {
       await liqProvTool.createProxyInstance();
     });
     it("getParticipationValue", async () => {
-      let val = await liqProvTool.getParticipationValue("MATIC");
+      let val = await mktData.getParticipationValue(wallet.address, "MATIC");
       console.log("pool sharetoken value", val.value);
     });
   });
@@ -391,7 +413,7 @@ describe("readOnly", () => {
       if (accounts.length > 0) {
         let traderAddr = accounts[0];
         let isLiquidatable = !(await liqTool.isMaintenanceMarginSafe(symbol, traderAddr));
-        let posRisk = await mktData.positionRisk(traderAddr, symbol);
+        let posRisk = (await mktData.positionRisk(traderAddr, symbol))[0];
         let matchLiqAndLvg =
           (isLiquidatable && posRisk.leverage >= posRisk.liquidationLvg) ||
           (!isLiquidatable && posRisk.leverage < posRisk.liquidationLvg);
@@ -455,7 +477,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 5,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
       };
       const myAddress = new ethers.Wallet(pk).address;
       let fee = await brokerTool.determineExchangeFee(order, myAddress);
@@ -475,7 +497,7 @@ describe("readOnly", () => {
         type: "MARKET",
         quantity: 0.5,
         leverage: 2,
-        timestamp: Date.now() / 1000,
+        executionTimestamp: Date.now() / 1000,
         brokerFeeTbps: 500,
         deadline: Math.round(Date.now() / 1000) + 10000,
       };
@@ -498,7 +520,7 @@ describe("readOnly", () => {
     });
     it("get order by id/digest", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
-      orderIds = ordersStruct.orderIds;
+      orderIds = ordersStruct[0].orderIds;
       if (orderIds.length > 0) {
         let order = await refTool.getOrderById("ETH-USD-MATIC", orderIds[0]);
         console.log(order);

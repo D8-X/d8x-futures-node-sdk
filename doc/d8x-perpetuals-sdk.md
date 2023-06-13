@@ -80,22 +80,22 @@ require gas-payments.</p></dd>
 <dl>
 <dt><a href="#CollaterlCCY">CollaterlCCY</a></dt>
 <dd><p>struct ClientOrder {
-uint32 flags;
-uint24 iPerpetualId;
-uint16 brokerFeeTbps;
-address traderAddr;
-address brokerAddr;
-address referrerAddr;
-bytes brokerSignature;
-int128 fAmount;
-int128 fLimitPrice;
-int128 fTriggerPrice;
-int128 fLeverage; // 0 if deposit and trade separate
-uint64 iDeadline;
-uint64 createdTimestamp;
-//uint64 submittedTimestamp &lt;- will be set by LimitOrderBook
-bytes32 parentChildDigest1;
-bytes32 parentChildDigest2;
+uint24 iPerpetualId; // unique id of the perpetual
+int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
+uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -&gt; 1234)
+uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
+uint32 flags; // Order-flags are specified in OrderFlags.sol
+uint32 iDeadline; // order will not be executed after this deadline
+address brokerAddr; // can be empty, address of the broker
+int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
+int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
+bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
+address traderAddr; // address of the trader
+bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
+uint16 brokerFeeTbps; // broker fee in tenth of a basis point
+bytes brokerSignature; // signature, can be empty if no brokerAddr provided
+//address referrerAddr; &lt;- will be set by LimitOrderBook
+//uint64 submittedBlock &lt;- will be set by LimitOrderBook
 }</p></dd>
 </dl>
 
@@ -469,7 +469,7 @@ require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [AccountTrade](#AccountTrade) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new AccountTrade(config, privateKey)](#new_AccountTrade_new)
+    * [new AccountTrade(config, privateKey, signer)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder) ⇒ <code>ContractTransaction</code>
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
@@ -491,11 +491,13 @@ require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_AccountTrade_new"></a>
 
-### new AccountTrade(config, privateKey)
+### new AccountTrade(config, privateKey, signer)
 <p>Constructor</p>
 
 
@@ -503,6 +505,7 @@ require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that trades.</p> |
+| signer | <code>Signer</code> | <p>Signer that trades (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -580,7 +583,7 @@ async function main() {
        type: "MARKET",
        quantity: 100,
        leverage: 2,
-       timestamp: Date.now()/1000,
+       executionTimestamp: Date.now()/1000,
    };
    let orderTransaction = await accTrade.order(order);
    console.log(orderTransaction);
@@ -607,7 +610,7 @@ async function main() {
       limitPrice: 1,
       quantity: 5,
       leverage: 2,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
       deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
    };
    let orderTransaction = await accTrade.order(order);
@@ -810,7 +813,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### accountTrade.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -900,18 +903,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### accountTrade.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### accountTrade.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### accountTrade.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### accountTrade.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="BrokerTool"></a>
 
@@ -924,7 +953,7 @@ require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [BrokerTool](#BrokerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new BrokerTool(config, privateKey)](#new_BrokerTool_new)
+    * [new BrokerTool(config, privateKey, signer)](#new_BrokerTool_new)
     * [.getBrokerInducedFee(poolSymbolName)](#BrokerTool+getBrokerInducedFee) ⇒ <code>number</code>
     * [.getFeeForBrokerDesignation(poolSymbolName, [lots])](#BrokerTool+getFeeForBrokerDesignation) ⇒ <code>number</code>
     * [.getFeeForBrokerVolume(poolSymbolName)](#BrokerTool+getFeeForBrokerVolume) ⇒ <code>number</code>
@@ -933,9 +962,9 @@ require gas-payments.</p>
     * [.getCurrentBrokerVolume(poolSymbolName)](#BrokerTool+getCurrentBrokerVolume) ⇒ <code>number</code>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
-    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ethers.ContractTransaction</code>
+    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ContractTransaction</code>
     * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
-    * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ethers.providers.TransactionResponse</code>
+    * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ContractTransaction</code>
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -950,11 +979,13 @@ require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_BrokerTool_new"></a>
 
-### new BrokerTool(config, privateKey)
+### new BrokerTool(config, privateKey, signer)
 <p>Constructor</p>
 
 
@@ -962,6 +993,7 @@ require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of a broker.</p> |
+| signer | <code>Signer</code> | <p>Signer (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -1132,7 +1164,7 @@ async function main() {
       side: "BUY",
       type: "MARKET",
       quantity: 100,
-      timestamp: Date.now()
+      executionTimestamp: Date.now()/1000
   };
    let exchFee = await brokTool.determineExchangeFee(order,
        "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
@@ -1229,11 +1261,11 @@ main();
 ```
 <a name="BrokerTool+brokerDepositToDefaultFund"></a>
 
-### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ethers.ContractTransaction</code>
+### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ContractTransaction</code>
 <p>Deposit lots to the default fund of a given pool.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ethers.ContractTransaction</code> - <p>ContractTransaction object.</p>  
+**Returns**: <code>ContractTransaction</code> - <p>ContractTransaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1286,7 +1318,7 @@ async function main() {
       side: "BUY",
       type: "MARKET",
       quantity: 1,
-      timestamp: Date.now()
+      executionTimestamp: Date.now()/1000
    };
    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
        0.0001, 1669723339);
@@ -1299,13 +1331,13 @@ main();
 ```
 <a name="BrokerTool+transferOwnership"></a>
 
-### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ethers.providers.TransactionResponse</code>
+### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ContractTransaction</code>
 <p>Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
 (i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
 his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ethers.providers.TransactionResponse</code> - <p>ethers transaction object</p>  
+**Returns**: <code>ContractTransaction</code> - <p>ethers transaction object</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1416,7 +1448,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### brokerTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -1506,18 +1538,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### brokerTool.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### brokerTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### brokerTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### brokerTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="LiquidatorTool"></a>
 
@@ -1529,7 +1587,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new LiquidatorTool(config, privateKey)](#new_LiquidatorTool_new)
+    * [new LiquidatorTool(config, privateKey, signer)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData)](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr, indexPrices)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
@@ -1549,11 +1607,13 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidatorTool_new"></a>
 
-### new LiquidatorTool(config, privateKey)
+### new LiquidatorTool(config, privateKey, signer)
 <p>Constructs a LiquidatorTool instance for a given configuration and private key.</p>
 
 
@@ -1561,6 +1621,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
+| signer | <code>Signer</code> | <p>Signer that liquidates (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -1816,7 +1877,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### liquidatorTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -1906,18 +1967,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### liquidatorTool.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### liquidatorTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### liquidatorTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### liquidatorTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="LiquidityProviderTool"></a>
 
@@ -1929,8 +2016,7 @@ smart-contract interactions that require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [LiquidityProviderTool](#LiquidityProviderTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new LiquidityProviderTool(config, privateKey)](#new_LiquidityProviderTool_new)
-    * [.getParticipationValue(poolSymbolName)](#LiquidityProviderTool+getParticipationValue) ⇒
+    * [new LiquidityProviderTool(config, privateKey, signer)](#new_LiquidityProviderTool_new)
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+initiateLiquidityWithdrawal) ⇒
     * [.executeLiquidityWithdrawal(poolSymbolName)](#LiquidityProviderTool+executeLiquidityWithdrawal) ⇒
@@ -1948,18 +2034,21 @@ smart-contract interactions that require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
 
-### new LiquidityProviderTool(config, privateKey)
+### new LiquidityProviderTool(config, privateKey, signer)
 <p>Constructor</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey |  | <p>private key of account that trades</p> |
+| privateKey | <code>string</code> | <p>private key of account that trades</p> |
+| signer | <code>Signer</code> | <p>Signer that provides liquidity (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -1973,35 +2062,6 @@ async function main() {
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   // Create a proxy instance to access the blockchain
   await lqudtProviderTool.createProxyInstance();
-}
-main();
-```
-<a name="LiquidityProviderTool+getParticipationValue"></a>
-
-### liquidityProviderTool.getParticipationValue(poolSymbolName) ⇒
-<p>Value of the pool share tokens for this liquidity provider
-in poolSymbol-currency (e.g. MATIC, USDC).</p>
-
-**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
-**Returns**: <p>Value in poolSymbol-currency (e.g. MATIC, USDC), balance of pool share tokens, and share token symbol.</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC).</p> |
-
-**Example**  
-```js
-import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(LiquidityProviderTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance();
-  // get value of pool share token
-  let shareToken = await lqudtProviderTool.getParticipationValue("MATIC");
-  console.log(shareToken);
 }
 main();
 ```
@@ -2183,7 +2243,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### liquidityProviderTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -2273,18 +2333,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### liquidityProviderTool.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### liquidityProviderTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### liquidityProviderTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### liquidityProviderTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="MarketData"></a>
 
@@ -2304,14 +2390,21 @@ No gas required for the queries here.</p>
         * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
         * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
         * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
-        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
-        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
-        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
+        * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
+        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+        * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
+        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
         * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
         * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+        * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance)
+        * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
+        * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
+        * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+        * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -2319,6 +2412,7 @@ No gas required for the queries here.</p>
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
         * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -2329,7 +2423,9 @@ No gas required for the queries here.</p>
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-        * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+        * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+        * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
         * [._queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap)](#MarketData._queryMidPrices) ⇒
@@ -2436,16 +2532,16 @@ main();
 ```
 <a name="MarketData+openOrders"></a>
 
-### marketData.openOrders(traderAddr, symbol) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
+### marketData.openOrders(traderAddr, symbol) ⇒
 <p>All open orders for a trader-address and a symbol.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code> - <p>Array of open orders and corresponding order-ids.</p>  
+**Returns**: <p>For each perpetual an array of open orders and corresponding order-ids.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol.</p> |
 
 **Example**  
 ```js
@@ -2463,18 +2559,32 @@ async function main() {
 }
 main();
 ```
-<a name="MarketData+positionRisk"></a>
+<a name="MarketData+_openOrdersOfPerpetual"></a>
 
-### marketData.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
+### marketData.\_openOrdersOfPerpetual(traderAddr, symbol) ⇒
+<p>All open orders for a trader-address and a given perpetual symbol.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
+**Returns**: <p>open orders and order ids</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+positionRisk"></a>
+
+### marketData.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+<p>Information about the position open by a given trader in a given perpetual contract, or
+for all perpetuals in a pool</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>Array.&lt;MarginAccount&gt;</code> - <p>Array of position risks of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
 
 **Example**  
 ```js
@@ -2492,13 +2602,26 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+_positionRiskForTraderInPerpetual"></a>
+
+### marketData.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>MarginAccount struct for the trader</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRiskOnTrade"></a>
 
-### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒ <code>MarginAccount</code>
+### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒
 <p>Estimates what the position risk will be if a given order is executed.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+**Returns**: <p>Position risk after trade</p>  
 
 | Param | Description |
 | --- | --- |
@@ -2534,6 +2657,72 @@ main();
 | address | <p>Address to check</p> |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+<a name="MarketData+getPoolShareTokenBalance"></a>
+
+### marketData.getPoolShareTokenBalance(address, symbolOrId)
+<p>Get the address' balance of the pool share token</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of the liquidity provider</p> |
+| symbolOrId | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
+
+<a name="MarketData+_getPoolShareTokenBalanceFromId"></a>
+
+### marketData.\_getPoolShareTokenBalanceFromId(address, poolId) ⇒
+<p>Query the pool share token holdings of address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>pool share token balance of address</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of token holder</p> |
+| poolId | <p>pool id</p> |
+
+<a name="MarketData+getShareTokenPrice"></a>
+
+### marketData.getShareTokenPrice(symbolOrId) ⇒
+<p>Value of pool token in collateral currency</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>current pool share token price in collateral currency</p>  
+
+| Param | Description |
+| --- | --- |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+<a name="MarketData+getParticipationValue"></a>
+
+### marketData.getParticipationValue(address, symbolOrId) ⇒
+<p>Value of the pool share tokens for this liquidity provider
+in poolSymbol-currency (e.g. MATIC, USDC).</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of liquidity provider</p> |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get value of pool share token
+  let shareToken = await md.getParticipationValue(myaddress, "MATIC");
+  console.log(shareToken);
+}
+main();
+```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
 ### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
@@ -2588,6 +2777,18 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getOrderStatus"></a>
+
+### marketData.getOrderStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Order status ()</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Order Id</p> |
+| overrides |  |
+
 <a name="MarketData+getMarkPrice"></a>
 
 ### marketData.getMarkPrice(symbol) ⇒
@@ -2724,6 +2925,18 @@ Result is in collateral currency</p>
 | traderAddr | <p>address of the trader</p> |
 | brokerAddr | <p>address of the trader's broker or undefined</p> |
 
+<a name="MarketData+isMarketClosed"></a>
+
+### marketData.isMarketClosed(symbol) ⇒
+<p>Get market open/closed status</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>True if the market is closed</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
+
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### marketData.getOrderBookContract(symbol) ⇒
@@ -2761,7 +2974,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### marketData.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -2851,18 +3064,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### marketData.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### marketData.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### marketData.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### marketData.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="MarketData._getAllIndexPrices"></a>
 
@@ -2904,7 +3143,7 @@ gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [OrderReferrerTool](#OrderReferrerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
+    * [new OrderReferrerTool(config, privateKey, signer)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
@@ -2912,6 +3151,7 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
+    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderReferrerTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderReferrerTool+smartContractOrderToOrder) ⇒
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
@@ -2927,11 +3167,13 @@ gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
-### new OrderReferrerTool(config, privateKey)
+### new OrderReferrerTool(config, privateKey, signer)
 <p>Constructor.</p>
 
 
@@ -2939,6 +3181,7 @@ gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of the wallet that executes the conditional orders.</p> |
+| signer | <code>Signer</code> | <p>Signer that executes orders (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -3158,6 +3401,22 @@ main();
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
 
+<a name="OrderReferrerTool+_isTradeable"></a>
+
+### orderReferrerTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
+<p>Can the order be executed?</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>true if trading conditions met, false otherwise</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>order struct</p> |
+| tradePrice | <p>&quot;preview&quot; price of this order</p> |
+| markPrice | <p>current mark price</p> |
+| blockTimestamp | <p>last observed block timestamp (hence already in past)</p> |
+| symbolToPerpInfoMap | <p>metadata</p> |
+
 <a name="OrderReferrerTool+smartContractOrderToOrder"></a>
 
 ### orderReferrerTool.smartContractOrderToOrder(scOrder) ⇒
@@ -3258,7 +3517,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### orderReferrerTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -3348,18 +3607,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### orderReferrerTool.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### orderReferrerTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### orderReferrerTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### orderReferrerTool.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="PerpetualDataHandler"></a>
 
@@ -3381,7 +3666,9 @@ common data and chain operations.</p>
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-        * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+        * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+        * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
         * [.nestedIDsToChunks(chunkSize, nestedIDs)](#PerpetualDataHandler.nestedIDsToChunks) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
@@ -3433,7 +3720,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### perpetualDataHandler.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 **Returns**: <code>number</code> - <p>Pool Id.</p>  
@@ -3516,10 +3803,22 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### perpetualDataHandler.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### perpetualDataHandler.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### perpetualDataHandler.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
 
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 **Returns**: <p>Pool index</p>  
@@ -3527,6 +3826,18 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### perpetualDataHandler.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="PerpetualDataHandler.getPerpetualStaticInfo"></a>
 
@@ -4218,14 +4529,21 @@ so that signatures can be handled in frontend via wallet</p>
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
-    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
-    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
-    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
+    * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
+    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+    * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
+    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+    * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance)
+    * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
+    * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
+    * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
     * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
     * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+    * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -4233,6 +4551,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
     * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
     * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+    * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -4243,7 +4562,9 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_TraderInterface_new"></a>
 
@@ -4442,17 +4763,17 @@ main();
 ```
 <a name="MarketData+openOrders"></a>
 
-### traderInterface.openOrders(traderAddr, symbol) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
+### traderInterface.openOrders(traderAddr, symbol) ⇒
 <p>All open orders for a trader-address and a symbol.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>openOrders</code>](#MarketData+openOrders)  
-**Returns**: <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code> - <p>Array of open orders and corresponding order-ids.</p>  
+**Returns**: <p>For each perpetual an array of open orders and corresponding order-ids.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol.</p> |
 
 **Example**  
 ```js
@@ -4470,19 +4791,34 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+_openOrdersOfPerpetual"></a>
+
+### traderInterface.\_openOrdersOfPerpetual(traderAddr, symbol) ⇒
+<p>All open orders for a trader-address and a given perpetual symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>\_openOrdersOfPerpetual</code>](#MarketData+_openOrdersOfPerpetual)  
+**Returns**: <p>open orders and order ids</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRisk"></a>
 
-### traderInterface.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
+### traderInterface.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+<p>Information about the position open by a given trader in a given perpetual contract, or
+for all perpetuals in a pool</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>positionRisk</code>](#MarketData+positionRisk)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
+**Returns**: <code>Array.&lt;MarginAccount&gt;</code> - <p>Array of position risks of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
 
 **Example**  
 ```js
@@ -4500,14 +4836,28 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+_positionRiskForTraderInPerpetual"></a>
+
+### traderInterface.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>\_positionRiskForTraderInPerpetual</code>](#MarketData+_positionRiskForTraderInPerpetual)  
+**Returns**: <p>MarginAccount struct for the trader</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRiskOnTrade"></a>
 
-### traderInterface.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒ <code>MarginAccount</code>
+### traderInterface.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒
 <p>Estimates what the position risk will be if a given order is executed.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>positionRiskOnTrade</code>](#MarketData+positionRiskOnTrade)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+**Returns**: <p>Position risk after trade</p>  
 
 | Param | Description |
 | --- | --- |
@@ -4545,6 +4895,76 @@ main();
 | address | <p>Address to check</p> |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+<a name="MarketData+getPoolShareTokenBalance"></a>
+
+### traderInterface.getPoolShareTokenBalance(address, symbolOrId)
+<p>Get the address' balance of the pool share token</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPoolShareTokenBalance</code>](#MarketData+getPoolShareTokenBalance)  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of the liquidity provider</p> |
+| symbolOrId | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
+
+<a name="MarketData+_getPoolShareTokenBalanceFromId"></a>
+
+### traderInterface.\_getPoolShareTokenBalanceFromId(address, poolId) ⇒
+<p>Query the pool share token holdings of address</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>\_getPoolShareTokenBalanceFromId</code>](#MarketData+_getPoolShareTokenBalanceFromId)  
+**Returns**: <p>pool share token balance of address</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of token holder</p> |
+| poolId | <p>pool id</p> |
+
+<a name="MarketData+getShareTokenPrice"></a>
+
+### traderInterface.getShareTokenPrice(symbolOrId) ⇒
+<p>Value of pool token in collateral currency</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getShareTokenPrice</code>](#MarketData+getShareTokenPrice)  
+**Returns**: <p>current pool share token price in collateral currency</p>  
+
+| Param | Description |
+| --- | --- |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+<a name="MarketData+getParticipationValue"></a>
+
+### traderInterface.getParticipationValue(address, symbolOrId) ⇒
+<p>Value of the pool share tokens for this liquidity provider
+in poolSymbol-currency (e.g. MATIC, USDC).</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getParticipationValue</code>](#MarketData+getParticipationValue)  
+**Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of liquidity provider</p> |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get value of pool share token
+  let shareToken = await md.getParticipationValue(myaddress, "MATIC");
+  console.log(shareToken);
+}
+main();
+```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
 ### traderInterface.maxOrderSizeForTrader(side, positionRisk) ⇒
@@ -4602,6 +5022,19 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getOrderStatus"></a>
+
+### traderInterface.getOrderStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getOrderStatus</code>](#MarketData+getOrderStatus)  
+**Returns**: <p>Order status ()</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Order Id</p> |
+| overrides |  |
+
 <a name="MarketData+getMarkPrice"></a>
 
 ### traderInterface.getMarkPrice(symbol) ⇒
@@ -4745,6 +5178,19 @@ Result is in collateral currency</p>
 | traderAddr | <p>address of the trader</p> |
 | brokerAddr | <p>address of the trader's broker or undefined</p> |
 
+<a name="MarketData+isMarketClosed"></a>
+
+### traderInterface.isMarketClosed(symbol) ⇒
+<p>Get market open/closed status</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>isMarketClosed</code>](#MarketData+isMarketClosed)  
+**Returns**: <p>True if the market is closed</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
+
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### traderInterface.getOrderBookContract(symbol) ⇒
@@ -4782,7 +5228,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### traderInterface.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -4872,18 +5318,44 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### traderInterface.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### traderInterface.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### traderInterface.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getABI"></a>
+
+### traderInterface.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
 <a name="WriteAccessHandler"></a>
 
@@ -4912,7 +5384,9 @@ require gas-payments.</p>
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPoolIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolIndexFromSymbol) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_WriteAccessHandler_new"></a>
 
@@ -5009,7 +5483,7 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
 ### writeAccessHandler.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
-<p>Get pool Id given a pool symbol.</p>
+<p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
@@ -5099,39 +5573,65 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>perpetual symbol, e.g., BTC-USD-MATIC</p> |
 
-<a name="PerpetualDataHandler+getPoolIndexFromSymbol"></a>
+<a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### writeAccessHandler.getPoolIndexFromSymbol(symbol) ⇒
-<p>Gets the pool index (in exchangeInfo) corresponding to a given symbol.</p>
+### writeAccessHandler.getPerpetualSymbolsInPool(poolSymbol) ⇒
+<p>Get perpetual symbols for a given pool</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
-**Overrides**: [<code>getPoolIndexFromSymbol</code>](#PerpetualDataHandler+getPoolIndexFromSymbol)  
+**Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
+**Returns**: <p>array of perpetual symbols in this pool</p>  
+
+| Param | Description |
+| --- | --- |
+| poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
+
+<a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
+
+### writeAccessHandler.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+<p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getABI"></a>
+
+### writeAccessHandler.getABI(contract) ⇒
+<p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
+**Returns**: <p>ABI for the requested contract</p>  
+
+| Param | Description |
+| --- | --- |
+| contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
 <a name="CollaterlCCY"></a>
 
 ## CollaterlCCY
 <p>struct ClientOrder {
-uint32 flags;
-uint24 iPerpetualId;
-uint16 brokerFeeTbps;
-address traderAddr;
-address brokerAddr;
-address referrerAddr;
-bytes brokerSignature;
-int128 fAmount;
-int128 fLimitPrice;
-int128 fTriggerPrice;
-int128 fLeverage; // 0 if deposit and trade separate
-uint64 iDeadline;
-uint64 createdTimestamp;
-//uint64 submittedTimestamp &lt;- will be set by LimitOrderBook
-bytes32 parentChildDigest1;
-bytes32 parentChildDigest2;
+uint24 iPerpetualId; // unique id of the perpetual
+int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
+uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -&gt; 1234)
+uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
+uint32 flags; // Order-flags are specified in OrderFlags.sol
+uint32 iDeadline; // order will not be executed after this deadline
+address brokerAddr; // can be empty, address of the broker
+int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
+int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
+bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
+address traderAddr; // address of the trader
+bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
+uint16 brokerFeeTbps; // broker fee in tenth of a basis point
+bytes brokerSignature; // signature, can be empty if no brokerAddr provided
+//address referrerAddr; &lt;- will be set by LimitOrderBook
+//uint64 submittedBlock &lt;- will be set by LimitOrderBook
 }</p>
 
 **Kind**: global variable  

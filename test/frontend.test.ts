@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from "ethers";
+import { BigNumber, Contract } from "ethers";
 import { stringify } from "querystring";
 import { sys } from "typescript";
 import AccountTrade from "../src/accountTrade";
@@ -27,9 +27,9 @@ jest.setTimeout(150000);
 let config: NodeSDKConfig;
 let mktData: MarketData;
 let eventHandler: PerpetualEventHandler;
-let proxyContract: ethers.Contract;
+let proxyContract: Contract;
 let accTrade1: AccountTrade, accTrade2: AccountTrade;
-let LOBContracts = new Map<string, ethers.Contract>();
+let LOBContracts = new Map<string, Contract>();
 
 let poolSymbols = new Array<string>(); // e.g. [USDC, MATIC]
 let perpSymbols = new Map<string, string[]>(); // e.g. {USDC: [BTC, ETH, GBP], MATIC: [BTC, ETH, MATIC]}
@@ -159,7 +159,7 @@ describe("Front-end-like functionality", () => {
       type: "MARKET",
       quantity: 200,
       leverage: 10,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
 
     let resp: OrderResponse = await accTrade1.order(order);
@@ -187,7 +187,7 @@ describe("Front-end-like functionality", () => {
       type: "MARKET",
       quantity: 200,
       leverage: 10,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     order.side = "SELL";
     let resp: OrderResponse = await accTrade1.order(order);

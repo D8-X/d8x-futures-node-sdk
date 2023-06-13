@@ -1,4 +1,7 @@
-import { BigNumber, BigNumberish, BytesLike, constants, ContractTransaction, ContractInterface } from "ethers";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
+import { BytesLike } from "@ethersproject/bytes";
+import { AddressZero, HashZero } from "@ethersproject/constants";
+import { ContractInterface, ContractTransaction } from "@ethersproject/contracts";
 
 export const ERC20_ABI = require("./abi/ERC20.json");
 export const MOCK_TOKEN_SWAP_ABI = require("./abi/MockTokenSwap.json");
@@ -7,8 +10,8 @@ export const COLLATERAL_CURRENCY_QUOTE = 0;
 export const COLLATERAL_CURRENCY_BASE = 1;
 export const COLLATERAL_CURRENCY_QUANTO = 2;
 export const PERP_STATE_STR = ["INVALID", "INITIALIZING", "NORMAL", "EMERGENCY", "CLEARED"];
-export const ZERO_ADDRESS = constants.AddressZero;
-export const ZERO_ORDER_ID = constants.HashZero;
+export const ZERO_ADDRESS = AddressZero;
+export const ZERO_ORDER_ID = HashZero;
 
 export const ONE_64x64 = BigNumber.from("0x010000000000000000");
 export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
@@ -37,6 +40,7 @@ export interface NodeSDKConfig {
   nodeURL: string;
   proxyAddr: string;
   proxyABILocation: string;
+  shareTokenABILocation: string;
   limitOrderBookABILocation: string;
   limitOrderBookFactoryABILocation: string;
   symbolListLocation: string;
@@ -45,6 +49,7 @@ export interface NodeSDKConfig {
   proxyABI?: ContractInterface | undefined;
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
+  shareTokenABI?: ContractInterface | undefined;
 }
 
 export interface MarginAccount {
@@ -188,7 +193,7 @@ export interface Order {
   stopPrice?: number | undefined;
   leverage?: number | undefined;
   deadline?: number | undefined;
-  timestamp: number;
+  executionTimestamp: number;
   submittedTimestamp?: number;
   parentChildOrderIds?: [string, string];
 }
@@ -202,27 +207,27 @@ export interface TradeEvent {
 }
 
 /**
- *     struct Order {
-        uint32 flags;
-        uint24 iPerpetualId;
-        uint16 brokerFeeTbps;
-        address traderAddr;
-        address brokerAddr;
-        address referrerAddr;
-        bytes brokerSignature;
-        int128 fAmount;
-        int128 fLimitPrice;
-        int128 fTriggerPrice;
-        int128 fLeverage; // 0 if deposit and trade separate
-        uint64 iDeadline;
-        uint64 createdTimestamp;
-        uint64 submittedTimestamp;
+ *      struct Order {
+        uint16 leverageTDR; // 12.43x leverage is represented by 1243 (two-digit integer representation); 0 if deposit and trade separate
+        uint16 brokerFeeTbps; // broker can set their own fee
+        uint24 iPerpetualId; // global id for perpetual
+        address traderAddr; // address of trader
+        uint32 executionTimestamp; // normally set to current timestamp; order will not be executed prior to this timestamp.
+        address brokerAddr; // address of the broker or zero
+        uint32 submittedTimestamp;
+        uint32 flags; // order flags
+        uint32 iDeadline; //deadline for price (seconds timestamp)
+        address referrerAddr; // address of the referrer set by contract
+        int128 fAmount; // amount in base currency to be traded
+        int128 fLimitPrice; // limit price
+        int128 fTriggerPrice; //trigger price. Non-zero for stop orders.
+        bytes brokerSignature; //signature of broker (or 0)
     }
  */
 export interface SmartContractOrder {
   flags: BigNumberish;
-  iPerpetualId: BigNumberish;
-  brokerFeeTbps: BigNumberish;
+  iPerpetualId: number;
+  brokerFeeTbps: number;
   traderAddr: string;
   brokerAddr: string;
   referrerAddr: string;
@@ -230,30 +235,30 @@ export interface SmartContractOrder {
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;
   fTriggerPrice: BigNumberish;
-  fLeverage: BigNumberish;
-  iDeadline: BigNumberish;
-  createdTimestamp: BigNumberish;
-  submittedTimestamp: BigNumberish;
+  leverageTDR: number;
+  iDeadline: number;
+  executionTimestamp: number;
+  submittedTimestamp: number;
 }
 
 /**
- *     struct ClientOrder {
-        uint32 flags;
-        uint24 iPerpetualId;
-        uint16 brokerFeeTbps;
-        address traderAddr;
-        address brokerAddr;
-        address referrerAddr;
-        bytes brokerSignature;
-        int128 fAmount;
-        int128 fLimitPrice;
-        int128 fTriggerPrice;
-        int128 fLeverage; // 0 if deposit and trade separate
-        uint64 iDeadline;
-        uint64 createdTimestamp;
-        //uint64 submittedTimestamp <- will be set by LimitOrderBook
-        bytes32 parentChildDigest1;
-        bytes32 parentChildDigest2;
+ *    struct ClientOrder {
+        uint24 iPerpetualId; // unique id of the perpetual
+        int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
+        uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -> 1234)
+        uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
+        uint32 flags; // Order-flags are specified in OrderFlags.sol
+        uint32 iDeadline; // order will not be executed after this deadline
+        address brokerAddr; // can be empty, address of the broker
+        int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
+        int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
+        bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
+        address traderAddr; // address of the trader
+        bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
+        uint16 brokerFeeTbps; // broker fee in tenth of a basis point
+        bytes brokerSignature; // signature, can be empty if no brokerAddr provided
+        //address referrerAddr; <- will be set by LimitOrderBook
+        //uint64 submittedBlock <- will be set by LimitOrderBook
     }
  */
 export interface ClientOrder {
@@ -267,9 +272,9 @@ export interface ClientOrder {
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;
   fTriggerPrice: BigNumberish;
-  fLeverage: BigNumberish;
+  leverageTDR: BigNumberish;
   iDeadline: BigNumberish;
-  createdTimestamp: BigNumberish;
+  executionTimestamp: BigNumberish;
   parentChildDigest1: string;
   parentChildDigest2: string;
 }
@@ -295,6 +300,18 @@ export interface PriceFeedFormat {
   publish_time: number;
 }
 
+export interface PythLatestPriceFeed {
+  ema_price: {
+    conf: string;
+    expo: number;
+    price: string;
+    publish_time: number;
+  };
+  id: string;
+  price: PriceFeedFormat;
+  vaa: string;
+}
+
 export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
 export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 
@@ -303,6 +320,7 @@ export function loadABIs(config: NodeSDKConfig) {
     config.proxyABI = require(`./abi/${config.proxyABILocation}`);
     config.lobFactoryABI = require(`./abi/${config.limitOrderBookFactoryABILocation}`);
     config.lobABI = require(`./abi/${config.limitOrderBookABILocation}`);
+    config.shareTokenABI = require(`./abi/${config.shareTokenABILocation}`);
   }
 }
 

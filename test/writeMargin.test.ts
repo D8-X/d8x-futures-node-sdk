@@ -5,6 +5,7 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import MarketData from "../src/marketData";
 import LiquidatorTool from "../src/liquidatorTool";
+import { JsonRpcProvider } from "@ethersproject/providers";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -29,8 +30,10 @@ describe("write and spoil gas and tokens", () => {
       config.nodeURL = RPC;
     }
     expect(pk == undefined).toBeFalsy();
-    accTrade = new AccountTrade(config, pk);
-    await accTrade.createProxyInstance();
+    const traderWallet = new ethers.Wallet(pk);
+    const provider = new JsonRpcProvider(config.nodeURL);
+    accTrade = new AccountTrade(config, undefined, traderWallet.connect(provider));
+    await accTrade.createProxyInstance(provider);
   });
 
   it("set allowance", async () => {

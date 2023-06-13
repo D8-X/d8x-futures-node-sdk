@@ -1,4 +1,7 @@
-import { ethers } from "ethers";
+import { Signer } from "@ethersproject/abstract-signer";
+import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import { Buffer } from "buffer";
+import { IPerpetualManager, LimitOrderBook } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import {
@@ -6,14 +9,13 @@ import {
   Order,
   OrderResponse,
   PerpetualStaticInfo,
+  PriceFeedSubmission,
   SmartContractOrder,
   ZERO_ADDRESS,
-  PriceFeedSubmission,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
 import WriteAccessHandler from "./writeAccessHandler";
-import { Buffer } from "buffer";
 
 /**
  * Functions to create, submit and cancel orders on the exchange.
@@ -43,9 +45,10 @@ export default class AccountTrade extends WriteAccessHandler {
    * main();
    *
    * @param {string} privateKey Private key of account that trades.
+   * @param {Signer} signer Signer that trades (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey: string) {
-    super(config, privateKey);
+  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
+    super(config, privateKey, signer);
     this.digestTool = new TraderDigests();
   }
 
@@ -73,18 +76,18 @@ export default class AccountTrade extends WriteAccessHandler {
   public async cancelOrder(
     symbol: string,
     orderId: string,
-    submission?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+    submission?: PriceFeedSubmission,
+    overrides?: Overrides
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    let orderBookContract: ethers.Contract | null = null;
-    orderBookContract = this.getOrderBookContract(symbol);
+    const orderBookContract = this.getOrderBookContract(symbol);
 
-    return await this._cancelOrder(symbol, orderId, orderBookContract, submission);
+    return await this._cancelOrder(symbol, orderId, orderBookContract, submission, overrides);
   }
 
   /**
@@ -109,7 +112,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *        type: "MARKET",
    *        quantity: 100,
    *        leverage: 2,
-   *        timestamp: Date.now()/1000,
+   *        executionTimestamp: Date.now()/1000,
    *    };
    *    let orderTransaction = await accTrade.order(order);
    *    console.log(orderTransaction);
@@ -135,7 +138,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *       limitPrice: 1,
    *       quantity: 5,
    *       leverage: 2,
-   *       timestamp: Date.now() / 1000,
+   *       executionTimestamp: Date.now() / 1000,
    *       deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
    *    };
    *    let orderTransaction = await accTrade.order(order);
@@ -145,7 +148,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {ContractTransaction} Contract Transaction (containing events).
    */
-  public async order(order: Order, parentChildIds?: [string, string]): Promise<OrderResponse> {
+  public async order(order: Order, parentChildIds?: [string, string], overrides?: Overrides): Promise<OrderResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -153,7 +156,7 @@ export default class AccountTrade extends WriteAccessHandler {
     if (Math.abs(order.quantity) < minSize) {
       throw Error("order size too small");
     }
-    let orderBookContract: ethers.Contract = this.getOrderBookContract(order.symbol);
+    let orderBookContract = this.getOrderBookContract(order.symbol);
     let res: OrderResponse = await this._order(
       order,
       this.traderAddr,
@@ -162,8 +165,8 @@ export default class AccountTrade extends WriteAccessHandler {
       orderBookContract,
       this.chainId,
       this.signer,
-      this.gasLimit,
-      parentChildIds
+      parentChildIds,
+      overrides
     );
     return res;
   }
@@ -192,7 +195,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns Exchange fee, in decimals (i.e. 0.1% is 0.001).
    */
-  public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string): Promise<number> {
+  public async queryExchangeFee(poolSymbolName: string, brokerAddr?: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -200,7 +203,7 @@ export default class AccountTrade extends WriteAccessHandler {
       brokerAddr = ZERO_ADDRESS;
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr);
+    let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr, overrides || {});
     return feeTbps / 100_000;
   }
 
@@ -225,12 +228,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {number} Current trading volume for this trader, in USD.
    */
-  public async getCurrentTraderVolume(poolSymbolName: string): Promise<number> {
+  public async getCurrentTraderVolume(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = WriteAccessHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr);
+    let volume = await this.proxyContract.getCurrentTraderVolume(poolId, this.traderAddr, overrides || {});
     return ABK64x64ToFloat(volume);
   }
 
@@ -254,12 +257,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @returns {string[]} Array of Ids for all the orders currently open by this trader.
    */
-  public async getOrderIds(symbol: string): Promise<string[]> {
+  public async getOrderIds(symbol: string, overrides?: CallOverrides): Promise<string[]> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let orderBookContract = this.getOrderBookContract(symbol);
-    return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract);
+    return await MarketData.orderIdsOfTrader(this.traderAddr, orderBookContract, overrides);
   }
 
   /**
@@ -279,21 +282,21 @@ export default class AccountTrade extends WriteAccessHandler {
     order: Order,
     traderAddr: string,
     symbolToPerpetualMap: Map<string, PerpetualStaticInfo>,
-    proxyContract: ethers.Contract,
-    orderBookContract: ethers.Contract,
+    proxyContract: IPerpetualManager,
+    orderBookContract: LimitOrderBook,
     chainId: number,
-    signer: ethers.Signer,
-    gasLimit: number,
-    parentChildIds?: [string, string]
+    signer: Signer,
+    parentChildIds?: [string, string],
+    overrides?: Overrides
   ): Promise<OrderResponse> {
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap);
     let clientOrder = AccountTrade.fromSmartContratOrderToClientOrder(scOrder, parentChildIds);
     // if we are here, we have a clean order
     // decide whether to send order to Limit Order Book or AMM based on order type
-    let tx: ethers.ContractTransaction;
+    let tx: ContractTransaction;
     // all orders are sent to the order-book
     let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-    tx = await orderBookContract.postOrder(clientOrder, signature, { gasLimit: gasLimit });
+    tx = await orderBookContract.postOrder(clientOrder, signature, overrides || { gasLimit: this.gasLimit });
     let id = await this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };
   }
@@ -301,9 +304,10 @@ export default class AccountTrade extends WriteAccessHandler {
   protected async _cancelOrder(
     symbol: string,
     orderId: string,
-    orderBookContract: ethers.Contract | null,
-    submission?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+    orderBookContract: LimitOrderBook,
+    submission?: PriceFeedSubmission,
+    overrides?: PayableOverrides
+  ): Promise<ContractTransaction> {
     if (orderBookContract == null || this.signer == null) {
       throw Error(`Order Book contract for symbol ${symbol} or signer not defined`);
     }
@@ -312,9 +316,22 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
     let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
-    return await orderBookContract.cancelOrder(orderId, signature, submission.priceFeedVaas, submission.timestamps, {
-      value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
-    });
+    // value is minimal necessary by default, but can be overriden
+    if (!overrides || overrides.value == undefined) {
+      overrides = {
+        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        ...overrides,
+      } as PayableOverrides;
+    }
+
+    return await orderBookContract.cancelOrder(
+      orderId,
+      signature,
+      submission.priceFeedVaas,
+      submission.timestamps,
+      overrides
+    );
   }
 
   /**
@@ -331,7 +348,7 @@ export default class AccountTrade extends WriteAccessHandler {
     order: SmartContractOrder,
     chainId: number,
     isNewOrder: boolean,
-    signer: ethers.Signer,
+    signer: Signer,
     proxyAddress: string
   ): Promise<string[]> {
     let digest = await this.digestTool.createDigest(order, chainId, isNewOrder, proxyAddress);
@@ -348,8 +365,9 @@ export default class AccountTrade extends WriteAccessHandler {
   public async addCollateral(
     symbol: string,
     amount: number,
-    submission?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+    submission?: PriceFeedSubmission,
+    overrides?: PayableOverrides
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -358,10 +376,20 @@ export default class AccountTrade extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    return await this.proxyContract.deposit(perpId, fAmountCC, submission.priceFeedVaas, submission.timestamps, {
-      gasLimit: this.gasLimit,
-      value: this.PRICE_UPDATE_FEE_GWEI * submission.priceFeedVaas.length,
-    });
+    if (!overrides || overrides.value == undefined) {
+      overrides = {
+        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        ...overrides,
+      } as PayableOverrides;
+    }
+    return await this.proxyContract.deposit(
+      perpId,
+      fAmountCC,
+      submission.priceFeedVaas,
+      submission.timestamps,
+      overrides || { gasLimit: this.gasLimit }
+    );
   }
 
   /**
@@ -372,8 +400,9 @@ export default class AccountTrade extends WriteAccessHandler {
   public async removeCollateral(
     symbol: string,
     amount: number,
-    submission?: PriceFeedSubmission
-  ): Promise<ethers.ContractTransaction> {
+    submission?: PriceFeedSubmission,
+    overrides?: PayableOverrides
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -382,9 +411,19 @@ export default class AccountTrade extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    return await this.proxyContract.withdraw(perpId, fAmountCC, submission.priceFeedVaas, submission.timestamps, {
-      gasLimit: this.gasLimit,
-      value: this.PRICE_UPDATE_FEE_GWEI * submission.priceFeedVaas.length,
-    });
+    if (!overrides || overrides.value == undefined) {
+      overrides = {
+        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        ...overrides,
+      } as PayableOverrides;
+    }
+    return await this.proxyContract.withdraw(
+      perpId,
+      fAmountCC,
+      submission.priceFeedVaas,
+      submission.timestamps,
+      overrides || { gasLimit: this.gasLimit }
+    );
   }
 }

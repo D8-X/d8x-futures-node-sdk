@@ -9,7 +9,7 @@ gas-payments.</p>
 **Extends**: <code>WriteAccessHandler</code>  
 
 * [OrderReferrerTool](#OrderReferrerTool) ⇐ <code>WriteAccessHandler</code>
-    * [new OrderReferrerTool(config, privateKey)](#new_OrderReferrerTool_new)
+    * [new OrderReferrerTool(config, privateKey, signer)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
@@ -17,11 +17,12 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
+    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderReferrerTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderReferrerTool+smartContractOrderToOrder) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
-### new OrderReferrerTool(config, privateKey)
+### new OrderReferrerTool(config, privateKey, signer)
 <p>Constructor.</p>
 
 
@@ -29,6 +30,7 @@ gas-payments.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 | privateKey | <code>string</code> | <p>Private key of the wallet that executes the conditional orders.</p> |
+| signer | <code>Signer</code> | <p>Signer that executes orders (ignored if a private key is provided)</p> |
 
 **Example**  
 ```js
@@ -247,6 +249,22 @@ main();
 | --- | --- |
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
+
+<a name="OrderReferrerTool+_isTradeable"></a>
+
+### orderReferrerTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
+<p>Can the order be executed?</p>
+
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Returns**: <p>true if trading conditions met, false otherwise</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>order struct</p> |
+| tradePrice | <p>&quot;preview&quot; price of this order</p> |
+| markPrice | <p>current mark price</p> |
+| blockTimestamp | <p>last observed block timestamp (hence already in past)</p> |
+| symbolToPerpInfoMap | <p>metadata</p> |
 
 <a name="OrderReferrerTool+smartContractOrderToOrder"></a>
 

@@ -1,50 +1,64 @@
-import { ethers, BigNumber } from "ethers";
+import { FormatTypes } from "@ethersproject/abi";
+import { Signer } from "@ethersproject/abstract-signer";
+import { BigNumber } from "@ethersproject/bignumber";
+import { AddressZero } from "@ethersproject/constants";
+import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
+import { Network, Provider } from "@ethersproject/providers";
 import {
-  NodeSDKConfig,
-  MAX_64x64,
-  Order,
-  SmartContractOrder,
-  CollaterlCCY,
-  PerpetualStaticInfo,
+  IPerpetualManager,
+  IPerpetualManager__factory,
+  LimitOrderBook,
+  LimitOrderBookFactory,
+  LimitOrderBookFactory__factory,
+  LimitOrderBook__factory,
+} from "./contracts";
+import { IPerpetualOrder } from "./contracts/IPerpetualManager";
+import { IClientOrder } from "./contracts/LimitOrderBook";
+import {
+  ABDK29ToFloat,
+  ABK64x64ToFloat,
+  calculateLiquidationPriceCollateralBase,
+  calculateLiquidationPriceCollateralQuanto,
+  calculateLiquidationPriceCollateralQuote,
+  div64x64,
+  floatToABK64x64,
+} from "./d8XMath";
+import {
+  BUY_SIDE,
+  ClientOrder,
+  CLOSED_SIDE,
   COLLATERAL_CURRENCY_BASE,
   COLLATERAL_CURRENCY_QUOTE,
-  BUY_SIDE,
-  SELL_SIDE,
-  CLOSED_SIDE,
-  ORDER_MAX_DURATION_SEC,
-  ZERO_ADDRESS,
-  ORDER_TYPE_LIMIT,
-  ORDER_TYPE_MARKET,
-  ORDER_TYPE_STOP_MARKET,
-  ORDER_TYPE_STOP_LIMIT,
-  MASK_LIMIT_ORDER,
+  CollaterlCCY,
+  DEFAULT_CONFIG,
+  loadABIs,
+  MarginAccount,
   MASK_CLOSE_ONLY,
   MASK_KEEP_POS_LEVERAGE,
+  MASK_LIMIT_ORDER,
   MASK_MARKET_ORDER,
   MASK_STOP_ORDER,
-  MarginAccount,
-  PoolStaticInfo,
-  ONE_64x64,
-  PERP_STATE_STR,
+  MAX_64x64,
+  NodeSDKConfig,
+  Order,
+  ORDER_MAX_DURATION_SEC,
+  ORDER_TYPE_LIMIT,
+  ORDER_TYPE_MARKET,
+  ORDER_TYPE_STOP_LIMIT,
+  ORDER_TYPE_STOP_MARKET,
   PerpetualState,
-  DEFAULT_CONFIG,
+  PerpetualStaticInfo,
+  PERP_STATE_STR,
+  PoolStaticInfo,
   PriceFeedSubmission,
-  loadABIs,
+  SELL_SIDE,
+  SmartContractOrder,
   SYMBOL_LIST,
-  ClientOrder,
+  ZERO_ADDRESS,
   ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
-import { to4Chars, combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol } from "./utils";
-import {
-  ABK64x64ToFloat,
-  ABDK29ToFloat,
-  floatToABK64x64,
-  div64x64,
-  calculateLiquidationPriceCollateralQuanto,
-  calculateLiquidationPriceCollateralBase,
-  calculateLiquidationPriceCollateralQuote,
-} from "./d8XMath";
 import PriceFeeds from "./priceFeeds";
+import { combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol, to4Chars } from "./utils";
 
 /**
  * Parent class for MarketData and WriteAccessHandler that handles
@@ -63,18 +77,19 @@ export default class PerpetualDataHandler {
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
   protected chainId: number;
-  protected proxyContract: ethers.Contract | null = null;
-  protected proxyABI: ethers.ContractInterface;
+  protected proxyContract: IPerpetualManager | null = null;
+  protected proxyABI: ContractInterface;
   protected proxyAddr: string;
   // limit order book
-  protected lobFactoryContract: ethers.Contract | null = null;
-  protected lobFactoryABI: ethers.ContractInterface;
+  protected lobFactoryContract: LimitOrderBookFactory | null = null;
+  protected lobFactoryABI: ContractInterface;
   protected lobFactoryAddr: string | undefined;
-  protected lobABI: ethers.ContractInterface;
+  protected lobABI: ContractInterface;
+  protected shareTokenABI: ContractInterface;
   protected nodeURL: string;
-  protected provider: ethers.providers.Provider | null = null;
+  protected provider: Provider | null = null;
 
-  private signerOrProvider: ethers.Signer | ethers.providers.Provider | null = null;
+  private signerOrProvider: Signer | Provider | null = null;
   protected priceFeedGetter: PriceFeeds;
 
   // pools are numbered consecutively starting at 1
@@ -94,16 +109,17 @@ export default class PerpetualDataHandler {
     this.proxyABI = config.proxyABI!;
     this.lobFactoryABI = config.lobFactoryABI!;
     this.lobABI = config.lobABI!;
+    this.shareTokenABI = config.shareTokenABI!;
     this.symbolList = SYMBOL_LIST;
     this.priceFeedGetter = new PriceFeeds(this, config.priceFeedConfigNetwork);
   }
 
-  protected async initContractsAndData(signerOrProvider: ethers.Signer | ethers.providers.Provider) {
+  protected async initContractsAndData(signerOrProvider: Signer | Provider, overrides?: CallOverrides) {
     this.signerOrProvider = signerOrProvider;
     // check network
-    let network: ethers.providers.Network;
+    let network: Network;
     try {
-      if (signerOrProvider instanceof ethers.Signer) {
+      if (signerOrProvider instanceof Signer) {
         network = await signerOrProvider.provider!.getNetwork();
       } else {
         network = await signerOrProvider.getNetwork();
@@ -115,10 +131,11 @@ export default class PerpetualDataHandler {
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
-    this.proxyContract = new ethers.Contract(this.proxyAddr, this.proxyABI!, signerOrProvider);
-    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress();
-    this.lobFactoryContract = new ethers.Contract(this.lobFactoryAddr!, this.lobFactoryABI!, signerOrProvider);
-    await this._fillSymbolMaps(this.proxyContract);
+    this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
+
+    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides || {});
+    this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, signerOrProvider);
+    await this._fillSymbolMaps(overrides);
   }
 
   /**
@@ -126,12 +143,12 @@ export default class PerpetualDataHandler {
    * @param symbol symbol of the form ETH-USD-MATIC
    * @returns order book contract for the perpetual
    */
-  public getOrderBookContract(symbol: string): ethers.Contract {
+  public getOrderBookContract(symbol: string): Contract & LimitOrderBook {
     let orderBookAddr = this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr;
     if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
       throw Error(`no limit order book found for ${symbol} or no signer`);
     }
-    let lobContract = new ethers.Contract(orderBookAddr, this.lobABI, this.signerOrProvider);
+    let lobContract = LimitOrderBook__factory.connect(orderBookAddr, this.signerOrProvider);
     return lobContract;
   }
 
@@ -140,11 +157,11 @@ export default class PerpetualDataHandler {
    * and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo
    *
    */
-  protected async _fillSymbolMaps(proxyContract: ethers.Contract) {
-    if (proxyContract == null || this.lobFactoryContract == null) {
+  protected async _fillSymbolMaps(overrides?: CallOverrides) {
+    if (!this.proxyContract || !this.lobFactoryContract) {
       throw Error("proxy or limit order book not defined");
     }
-    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(proxyContract);
+    let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(this.proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
 
@@ -155,14 +172,15 @@ export default class PerpetualDataHandler {
         poolMarginTokenAddr: poolInfo.poolMarginTokenAddr[j],
         shareTokenAddr: poolInfo.poolShareTokenAddr[j],
         oracleFactoryAddr: poolInfo.oracleFactory,
-        isRunning: poolInfo.poolShareTokenAddr[j] != ethers.constants.AddressZero,
+        isRunning: poolInfo.poolShareTokenAddr[j] != AddressZero,
       };
       this.poolStaticInfos.push(info);
     }
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
-      proxyContract,
+      this.proxyContract,
       this.nestedPerpetualIDs,
-      this.symbolList
+      this.symbolList,
+      overrides
     );
 
     let requiredPairs = new Set<string>();
@@ -218,7 +236,7 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Get pool Id given a pool symbol.
+   * Get pool Id given a pool symbol. Pool IDs start at 1.
    * @param {string} symbol Pool symbol.
    * @returns {number} Pool Id.
    */
@@ -319,7 +337,25 @@ export default class PerpetualDataHandler {
     return j + 1;
   }
 
-  public getNestedPerpetualIds(_proxyContract: ethers.Contract): number[][] {
+  /**
+   * Get perpetual symbols for a given pool
+   * @param poolSymbol pool symbol such as "MATIC"
+   * @returns array of perpetual symbols in this pool
+   */
+  public getPerpetualSymbolsInPool(poolSymbol: string): string[] {
+    const j = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbol, this.poolStaticInfos);
+    const perpIds = this.nestedPerpetualIDs[j - 1];
+    const perpSymbols = perpIds.map((k) => {
+      let s = this.getSymbolFromPerpId(k);
+      if (s == undefined) {
+        return "";
+      }
+      return s;
+    });
+    return perpSymbols;
+  }
+
+  public getNestedPerpetualIds(): number[][] {
     return this.nestedPerpetualIDs;
   }
 
@@ -331,9 +367,10 @@ export default class PerpetualDataHandler {
    * @returns array with PerpetualStaticInfo for each perpetual
    */
   public static async getPerpetualStaticInfo(
-    _proxyContract: ethers.Contract,
+    _proxyContract: IPerpetualManager,
     nestedPerpetualIDs: Array<Array<number>>,
-    symbolList: Map<string, string>
+    symbolList: Map<string, string>,
+    overrides?: CallOverrides
   ): Promise<Array<PerpetualStaticInfo>> {
     // flatten perpetual ids into chunks
     const chunkSize = 10;
@@ -341,7 +378,7 @@ export default class PerpetualDataHandler {
     // query blockchain in chunks
     const infoArr = new Array<PerpetualStaticInfo>();
     for (let k = 0; k < ids.length; k++) {
-      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k]);
+      let perpInfos = await _proxyContract.getPerpetualStaticInfo(ids[k], overrides || {});
       for (let j = 0; j < perpInfos.length; j++) {
         let base = contractSymbolToSymbol(perpInfos[j].S2BaseCCY, symbolList);
         let quote = contractSymbolToSymbol(perpInfos[j].S2QuoteCCY, symbolList);
@@ -393,7 +430,10 @@ export default class PerpetualDataHandler {
     return chunkIDs;
   }
 
-  public static async getPoolStaticInfo(_proxyContract: ethers.Contract): Promise<{
+  public static async getPoolStaticInfo(
+    _proxyContract: IPerpetualManager,
+    overrides?: CallOverrides
+  ): Promise<{
     nestedPerpetualIDs: Array<Array<number>>;
     poolShareTokenAddr: Array<string>;
     poolMarginTokenAddr: Array<string>;
@@ -407,7 +447,7 @@ export default class PerpetualDataHandler {
     let poolMarginTokenAddr: Array<string> = [];
     let oracleFactory: string = "";
     while (lenReceived == len) {
-      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1);
+      let res = await _proxyContract.getPoolStaticInfo(idxFrom, idxFrom + len - 1, overrides || {});
       lenReceived = res.length;
       nestedPerpetualIDs = nestedPerpetualIDs.concat(res[0]);
       poolShareTokenAddr = res[1];
@@ -425,7 +465,7 @@ export default class PerpetualDataHandler {
 
   public static buildMarginAccountFromState(
     symbol: string,
-    traderState: ethers.BigNumber[],
+    traderState: BigNumber[],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _pxS2S3: [number, number]
   ): MarginAccount {
@@ -477,8 +517,9 @@ export default class PerpetualDataHandler {
     traderAddr: string,
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract,
-    _pxS2S3: [number, number]
+    _proxyContract: IPerpetualManager,
+    _pxS2S3: [number, number],
+    overrides?: CallOverrides
   ): Promise<MarginAccount> {
     let perpId = Number(symbol);
     if (isNaN(perpId)) {
@@ -487,7 +528,8 @@ export default class PerpetualDataHandler {
     let traderState = await _proxyContract.getTraderState(
       perpId,
       traderAddr,
-      _pxS2S3.map((x) => floatToABK64x64(x))
+      _pxS2S3.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      overrides || {}
     );
     return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
   }
@@ -496,24 +538,31 @@ export default class PerpetualDataHandler {
     symbol: string,
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract,
-    indexPrices: [number, number]
+    _proxyContract: IPerpetualManager,
+    indexPrices: [number, number],
+    overrides?: CallOverrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let fIndexPrices = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
-    let fPrice = await _proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmount), fIndexPrices);
+    let fPrice = await _proxyContract.queryPerpetualPrice(
+      perpId,
+      floatToABK64x64(tradeAmount),
+      fIndexPrices as [BigNumber, BigNumber],
+      overrides || {}
+    );
     return ABK64x64ToFloat(fPrice);
   }
 
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract,
-    indexPrices: [number, number]
+    _proxyContract: IPerpetualManager,
+    indexPrices: [number, number],
+    overrides?: CallOverrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3]);
+    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3], overrides || {});
     // ammState[6] == S2 == indexPrices[0] up to rounding errors (indexPrices is most accurate)
     return indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
   }
@@ -521,8 +570,9 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualState(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: ethers.Contract,
-    indexPrices: [number, number, boolean, boolean]
+    _proxyContract: IPerpetualManager,
+    indexPrices: [number, number, boolean, boolean],
+    overrides?: CallOverrides
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
@@ -533,11 +583,15 @@ export default class PerpetualDataHandler {
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
       S3 = 1;
     }
-    let ammState = await _proxyContract.getAMMState(perpId, [S2, S3].map(floatToABK64x64));
+    let ammState = await _proxyContract.getAMMState(
+      perpId,
+      [S2, S3].map(floatToABK64x64) as [BigNumber, BigNumber],
+      overrides || {}
+    );
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state: PerpetualState = {
       id: perpId,
-      state: PERP_STATE_STR[ammState[13]],
+      state: PERP_STATE_STR[ammState[13].toNumber()],
       baseCurrency: ccy[0],
       quoteCurrency: ccy[1],
       indexPrice: S2,
@@ -652,7 +706,7 @@ export default class PerpetualDataHandler {
   }
 
   protected static fromSmartContractOrder(
-    order: SmartContractOrder,
+    order: SmartContractOrder | IPerpetualOrder.OrderStruct,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): Order {
     // find symbol of perpetual id
@@ -660,7 +714,7 @@ export default class PerpetualDataHandler {
     if (symbol == undefined) {
       throw Error(`Perpetual id ${order.iPerpetualId} not found. Check with marketData.exchangeInfo().`);
     }
-    let side = order.fAmount > 0 ? BUY_SIDE : SELL_SIDE;
+    let side = order.fAmount > BigNumber.from(0) ? BUY_SIDE : SELL_SIDE;
     let limitPrice, stopPrice;
     let fLimitPrice: BigNumber | undefined = BigNumber.from(order.fLimitPrice);
     if (fLimitPrice.eq(0)) {
@@ -679,7 +733,7 @@ export default class PerpetualDataHandler {
     let userOrder: Order = {
       symbol: symbol!,
       side: side,
-      type: PerpetualDataHandler._flagToOrderType(order),
+      type: PerpetualDataHandler._flagToOrderType(BigNumber.from(order.flags), BigNumber.from(order.fLimitPrice)),
       quantity: Math.abs(ABK64x64ToFloat(BigNumber.from(order.fAmount))),
       reduceOnly: containsFlag(BigNumber.from(order.flags), MASK_CLOSE_ONLY),
       limitPrice: limitPrice,
@@ -688,9 +742,9 @@ export default class PerpetualDataHandler {
       brokerAddr: order.brokerAddr == ZERO_ADDRESS ? undefined : order.brokerAddr,
       brokerSignature: order.brokerSignature == "0x" ? undefined : order.brokerSignature,
       stopPrice: stopPrice,
-      leverage: ABK64x64ToFloat(BigNumber.from(order.fLeverage)),
+      leverage: Number(order.leverageTDR) / 100,
       deadline: Number(order.iDeadline),
-      timestamp: Number(order.createdTimestamp),
+      executionTimestamp: Number(order.executionTimestamp),
       submittedTimestamp: Number(order.submittedTimestamp),
     };
     return userOrder;
@@ -737,8 +791,8 @@ export default class PerpetualDataHandler {
 
     let smOrder: SmartContractOrder = {
       flags: flags,
-      iPerpetualId: BigNumber.from(perpetualId),
-      brokerFeeTbps: order.brokerFeeTbps == undefined ? BigNumber.from(0) : BigNumber.from(order.brokerFeeTbps),
+      iPerpetualId: perpetualId,
+      brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
       traderAddr: traderAddr,
       brokerAddr: order.brokerAddr == undefined ? ZERO_ADDRESS : order.brokerAddr,
       referrerAddr: ZERO_ADDRESS,
@@ -746,9 +800,9 @@ export default class PerpetualDataHandler {
       fAmount: fAmount,
       fLimitPrice: fLimitPrice,
       fTriggerPrice: fTriggerPrice,
-      fLeverage: order.leverage == undefined ? BigNumber.from(0) : floatToABK64x64(order.leverage),
-      iDeadline: BigNumber.from(Math.round(iDeadline)),
-      createdTimestamp: BigNumber.from(Math.round(order.timestamp)),
+      leverageTDR: order.leverage == undefined ? 0 : Math.round(100 * order.leverage),
+      iDeadline: Math.round(iDeadline),
+      executionTimestamp: Math.round(order.executionTimestamp),
       submittedTimestamp: 0,
     };
     return smOrder;
@@ -775,9 +829,9 @@ export default class PerpetualDataHandler {
       fAmount: scOrder.fAmount,
       fLimitPrice: scOrder.fLimitPrice,
       fTriggerPrice: scOrder.fTriggerPrice,
-      fLeverage: scOrder.fLeverage,
+      leverageTDR: scOrder.leverageTDR,
       iDeadline: scOrder.iDeadline,
-      createdTimestamp: scOrder.createdTimestamp,
+      executionTimestamp: scOrder.executionTimestamp,
       parentChildDigest1: parentChildIds ? parentChildIds[0] : ZERO_ORDER_ID,
       parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
     };
@@ -804,33 +858,38 @@ export default class PerpetualDataHandler {
    * @param obOrder Order-book contract order type
    * @returns User friendly order struct
    */
-  public static fromClientOrder(obOrder: ClientOrder, perpStaticInfo: Map<string, PerpetualStaticInfo>): Order {
+  public static fromClientOrder(
+    obOrder: IClientOrder.ClientOrderStruct | IClientOrder.ClientOrderStructOutput,
+    perpStaticInfo: Map<string, PerpetualStaticInfo>
+  ): Order {
     const scOrder = {
       flags: obOrder.flags,
       iPerpetualId: obOrder.iPerpetualId,
       brokerFeeTbps: obOrder.brokerFeeTbps,
       traderAddr: obOrder.traderAddr,
       brokerAddr: obOrder.brokerAddr,
-      referrerAddr: obOrder.referrerAddr,
       brokerSignature: obOrder.brokerSignature,
       fAmount: obOrder.fAmount,
       fLimitPrice: obOrder.fLimitPrice,
       fTriggerPrice: obOrder.fTriggerPrice,
-      fLeverage: obOrder.fLeverage,
+      leverageTDR: obOrder.leverageTDR,
       iDeadline: obOrder.iDeadline,
-      createdTimestamp: obOrder.createdTimestamp,
+      executionTimestamp: obOrder.executionTimestamp,
     } as SmartContractOrder;
     const order = PerpetualDataHandler.fromSmartContractOrder(scOrder, perpStaticInfo);
-    if (obOrder.parentChildDigest1 != ZERO_ORDER_ID || obOrder.parentChildDigest2 != ZERO_ORDER_ID) {
-      order.parentChildOrderIds = [obOrder.parentChildDigest1, obOrder.parentChildDigest2];
+    if (
+      obOrder.parentChildDigest1.toString() != ZERO_ORDER_ID ||
+      obOrder.parentChildDigest2.toString() != ZERO_ORDER_ID
+    ) {
+      order.parentChildOrderIds = [obOrder.parentChildDigest1.toString(), obOrder.parentChildDigest2.toString()];
     }
     return order;
   }
 
-  private static _flagToOrderType(order: SmartContractOrder): string {
-    let flag = BigNumber.from(order.flags);
+  private static _flagToOrderType(orderFlags: BigNumber, orderLimitPrice: BigNumber): string {
+    let flag = BigNumber.from(orderFlags);
     let isLimit = containsFlag(flag, MASK_LIMIT_ORDER);
-    let hasLimit = !BigNumber.from(order.fLimitPrice).eq(0) || !BigNumber.from(order.fLimitPrice).eq(MAX_64x64);
+    let hasLimit = !BigNumber.from(orderLimitPrice).eq(0) || !BigNumber.from(orderLimitPrice).eq(MAX_64x64);
     let isStop = containsFlag(flag, MASK_STOP_ORDER);
 
     if (isStop && hasLimit) {
@@ -950,7 +1009,7 @@ export default class PerpetualDataHandler {
       return configFile[0];
     } else {
       if (version === undefined) {
-        configFile = configFile.sort((conf) => conf.version);
+        configFile = configFile.sort((conf) => -conf.version);
         return configFile[0];
       } else {
         return configFile.find((conf) => conf.version === version);
@@ -987,7 +1046,7 @@ export default class PerpetualDataHandler {
       return configFile[0];
     } else {
       if (version === undefined) {
-        configFile = configFile.sort((conf) => conf.version);
+        configFile = configFile.sort((conf) => -conf.version);
         return configFile[0];
       } else {
         return configFile.find((conf) => conf.version === version);
@@ -1001,17 +1060,16 @@ export default class PerpetualDataHandler {
    * @param functionName Name of the function whose ABI we want
    * @returns Function ABI as a single JSON string
    */
-  protected static _getABIFromContract(contract: ethers.Contract, functionName: string): string {
-    const FormatTypes = ethers.utils.FormatTypes;
+  protected static _getABIFromContract(contract: Contract, functionName: string): string {
     return contract.interface.getFunction(functionName).format(FormatTypes.full);
   }
 
   /**
-   * Gets the pool index (in exchangeInfo) corresponding to a given symbol.
+   * Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.
    * @param symbol Symbol of the form ETH-USD-MATIC
    * @returns Pool index
    */
-  public getPoolIndexFromSymbol(symbol: string): number {
+  public getPoolStaticInfoIndexFromSymbol(symbol: string): number {
     let pools = this.poolStaticInfos!;
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
     let k = 0;
@@ -1039,12 +1097,19 @@ export default class PerpetualDataHandler {
     return undefined;
   }
 
-  public getABI(contract: string): ethers.ContractInterface | undefined {
+  /**
+   * Get ABI for LimitOrderBook, Proxy, or Share Pool Token
+   * @param contract name of contract: proxy|lob|sharetoken
+   * @returns ABI for the requested contract
+   */
+  public getABI(contract: string): ContractInterface | undefined {
     switch (contract) {
       case "proxy":
         return this.proxyABI;
       case "lob":
         return this.lobABI;
+      case "sharetoken":
+        return this.shareTokenABI;
       default:
         return undefined;
     }

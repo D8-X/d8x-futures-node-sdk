@@ -1,4 +1,4 @@
-import { BigNumber } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 import { emitWarning } from "process";
 import { ABK64x64ToFloat, mul64x64 } from "./d8XMath";
 import MarketData from "./marketData";
@@ -80,8 +80,8 @@ export default class PerpetualEventHandler {
         let perpSymbol = perpState.baseCurrency + "-" + perpState.quoteCurrency + "-" + poolSymbol;
         let orders = await this.mktData.openOrders(this.traderAddr, perpSymbol);
         let perpId = perpState.id;
-        this.ordersInPerpetual.set(perpId, orders);
-        let position = await this.mktData.positionRisk(this.traderAddr, perpSymbol);
+        this.ordersInPerpetual.set(perpId, orders[0]);
+        let position = (await this.mktData.positionRisk(this.traderAddr, perpSymbol))[0];
         this.positionInPerpetual.set(perpId, position);
         this.poolIndexForPerpetual.set(perpId, k);
       }
@@ -349,7 +349,7 @@ export default class PerpetualEventHandler {
       return;
     }
     let perpetualIdStr = perpetualId.toString();
-    let margin = await this.mktData.positionRisk(this.traderAddr, perpetualIdStr);
+    let margin = (await this.mktData.positionRisk(this.traderAddr, perpetualIdStr))[0];
     this.positionInPerpetual.set(perpetualId, margin);
   }
 

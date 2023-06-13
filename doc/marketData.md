@@ -16,14 +16,21 @@ No gas required for the queries here.</p>
         * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
         * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
         * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
-        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
-        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>MarginAccount</code>
-        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒ <code>MarginAccount</code>
+        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
+        * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
+        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+        * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
+        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
         * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
         * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+        * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance)
+        * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
+        * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
+        * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+        * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -31,6 +38,7 @@ No gas required for the queries here.</p>
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
         * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
     * _static_
         * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
         * [._queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap)](#MarketData._queryMidPrices) ⇒
@@ -137,16 +145,16 @@ main();
 ```
 <a name="MarketData+openOrders"></a>
 
-### marketData.openOrders(traderAddr, symbol) ⇒ <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code>
+### marketData.openOrders(traderAddr, symbol) ⇒
 <p>All open orders for a trader-address and a symbol.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>Array.&lt;Array.&lt;Order&gt;, Array.&lt;string&gt;&gt;</code> - <p>Array of open orders and corresponding order-ids.</p>  
+**Returns**: <p>For each perpetual an array of open orders and corresponding order-ids.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol.</p> |
 
 **Example**  
 ```js
@@ -164,18 +172,32 @@ async function main() {
 }
 main();
 ```
-<a name="MarketData+positionRisk"></a>
+<a name="MarketData+_openOrdersOfPerpetual"></a>
 
-### marketData.positionRisk(traderAddr, symbol) ⇒ <code>MarginAccount</code>
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
+### marketData.\_openOrdersOfPerpetual(traderAddr, symbol) ⇒
+<p>All open orders for a trader-address and a given perpetual symbol.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk of trader.</p>  
+**Returns**: <p>open orders and order ids</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+positionRisk"></a>
+
+### marketData.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+<p>Information about the position open by a given trader in a given perpetual contract, or
+for all perpetuals in a pool</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>Array.&lt;MarginAccount&gt;</code> - <p>Array of position risks of trader.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC. Can also be the perpetual id as string</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
 
 **Example**  
 ```js
@@ -193,13 +215,26 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+_positionRiskForTraderInPerpetual"></a>
+
+### marketData.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>MarginAccount struct for the trader</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRiskOnTrade"></a>
 
-### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒ <code>MarginAccount</code>
+### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒
 <p>Estimates what the position risk will be if a given order is executed.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk after trade</p>  
+**Returns**: <p>Position risk after trade</p>  
 
 | Param | Description |
 | --- | --- |
@@ -235,6 +270,72 @@ main();
 | address | <p>Address to check</p> |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+<a name="MarketData+getPoolShareTokenBalance"></a>
+
+### marketData.getPoolShareTokenBalance(address, symbolOrId)
+<p>Get the address' balance of the pool share token</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of the liquidity provider</p> |
+| symbolOrId | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
+
+<a name="MarketData+_getPoolShareTokenBalanceFromId"></a>
+
+### marketData.\_getPoolShareTokenBalanceFromId(address, poolId) ⇒
+<p>Query the pool share token holdings of address</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>pool share token balance of address</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of token holder</p> |
+| poolId | <p>pool id</p> |
+
+<a name="MarketData+getShareTokenPrice"></a>
+
+### marketData.getShareTokenPrice(symbolOrId) ⇒
+<p>Value of pool token in collateral currency</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>current pool share token price in collateral currency</p>  
+
+| Param | Description |
+| --- | --- |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+<a name="MarketData+getParticipationValue"></a>
+
+### marketData.getParticipationValue(address, symbolOrId) ⇒
+<p>Value of the pool share tokens for this liquidity provider
+in poolSymbol-currency (e.g. MATIC, USDC).</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
+
+| Param | Description |
+| --- | --- |
+| address | <p>address of liquidity provider</p> |
+| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get value of pool share token
+  let shareToken = await md.getParticipationValue(myaddress, "MATIC");
+  console.log(shareToken);
+}
+main();
+```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
 ### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
@@ -289,6 +390,18 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+getOrderStatus"></a>
+
+### marketData.getOrderStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Order status ()</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Order Id</p> |
+| overrides |  |
+
 <a name="MarketData+getMarkPrice"></a>
 
 ### marketData.getMarkPrice(symbol) ⇒
@@ -424,6 +537,18 @@ Result is in collateral currency</p>
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
 | brokerAddr | <p>address of the trader's broker or undefined</p> |
+
+<a name="MarketData+isMarketClosed"></a>
+
+### marketData.isMarketClosed(symbol) ⇒
+<p>Get market open/closed status</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>True if the market is closed</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData._getAllIndexPrices"></a>
 

@@ -5,3 +5,5 @@ cache
 yarn-error.log
 dist
 src/version.ts
+example*
+src/contracts

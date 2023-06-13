@@ -1,4 +1,4 @@
-// import { ethers } from "ethers";
+import { ethers } from "ethers";
 import { NodeSDKConfig, Order, OrderResponse } from "../src/nodeSDKTypes";
 // import { ABK64x64ToFloat, floatToABK64x64 } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
@@ -7,6 +7,7 @@ import MarketData from "../src/marketData";
 // import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderReferrerTool from "../src/orderReferrerTool";
+import { Wallet } from "ethers";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -18,7 +19,7 @@ let config: NodeSDKConfig;
 // let proxyContract: ethers.Contract;
 let mktData: MarketData;
 // let orderIds: string[];
-// let wallet: ethers.Wallet;
+let wallet: ethers.Wallet;
 let accTrade: AccountTrade;
 let liqTool: LiquidatorTool;
 let orderId: string;
@@ -70,7 +71,7 @@ describe("write and spoil gas and tokens", () => {
       type: "MARKET",
       quantity: 0.05,
       leverage: 2,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     /*
     let order: Order = {
@@ -82,7 +83,7 @@ describe("write and spoil gas and tokens", () => {
       leverage: 5,
       reduceOnly: true,
       keepPositionLvg: false,
-      timestamp: 1677588583,
+      executionTimestamp: 1677588583,
       deadline: 1677617383,
     };*/
 
@@ -108,12 +109,18 @@ describe("write and spoil gas and tokens", () => {
       type: "MARKET",
       quantity: 0.1,
       leverage: 10,
-      timestamp: Date.now() / 1000,
+      executionTimestamp: Date.now() / 1000,
     };
     let resp = await accTrade.order(order);
     await delay(4000);
     let tx = await refTool.executeOrder("ETH-USD-MATIC", resp.orderId);
     console.log("tx hash = ", tx.hash);
+    wallet = new ethers.Wallet(pk);
+    let pos = (await mktData.positionRisk(wallet.address, "ETH-USD-MATIC"))[0];
+    if (Math.abs(pos.leverage - 10) > 0.1) {
+      console.log(`Leverage expected ${10}, leverage realized ${pos.leverage}`);
+    }
+    expect(pos.leverage).toBeCloseTo(10, 0);
   });
   // it("post limit order", async () => {
   //   let order: Order = {
@@ -123,7 +130,7 @@ describe("write and spoil gas and tokens", () => {
   //     limitPrice: 4,
   //     quantity: 10,
   //     leverage: 2,
-  //     timestamp: Date.now() / 1000,
+  //     executionTimestamp: Date.now() / 1000,
   //   };
   //   //* UNCOMMENT TO ENABLE TRADING
   //   let tx = await accTrade.order(order);
@@ -139,7 +146,7 @@ describe("write and spoil gas and tokens", () => {
   //     limitPrice: 4,
   //     quantity: 20,
   //     leverage: 2,
-  //     timestamp: Date.now() / 1000,
+  //     executionTimestamp: Date.now() / 1000,
   //   };
   //   //* UNCOMMENT TO ENABLE TRADING
   //   let orderPosted = false;
@@ -168,7 +175,7 @@ describe("write and spoil gas and tokens", () => {
   // });
 
   // it("should liquidate trader", async () => {
-  //   let posRisk = await mktData.positionRisk(accTrade.getAddress(), "BTC-USD-MATIC");
+  //   let posRisk = (await mktData.positionRisk(accTrade.getAddress(), "BTC-USD-MATIC"))[0];
   //   console.log("trying to liquidate account:");
   //   console.log(posRisk);
   //   let tx = await liqTool.liquidateTrader("BTC-USD-MATIC", accTrade.getAddress());
