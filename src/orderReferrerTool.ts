@@ -43,8 +43,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @param {string} privateKey Private key of the wallet that executes the conditional orders.
-   * @param {Signer} signer Signer that executes orders (ignored if a private key is provided)
+   * @param {string | Signer} signer Private key or ethers Signer of the account
    */
   public constructor(config: NodeSDKConfig, signer: string | Signer) {
     super(config, signer);

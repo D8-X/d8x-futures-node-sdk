@@ -34,7 +34,7 @@ describe("LP: write and spoil gas and tokens", () => {
     console.log("creating liquidity provision tool...");
     const lpWallet = new ethers.Wallet(pk);
     const provider = new JsonRpcProvider(config.nodeURL);
-    liqProvTool = new LiquidityProviderTool(config, undefined, lpWallet.connect(provider));
+    liqProvTool = new LiquidityProviderTool(config, lpWallet.connect(provider));
     await liqProvTool.createProxyInstance(provider);
     console.log("success\n");
     mktData = new MarketData(config);

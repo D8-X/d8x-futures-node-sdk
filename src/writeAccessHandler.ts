@@ -23,8 +23,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
   protected gasLimit: number = 15_000_000;
   /**
    * Constructor
-   * @param {NodeSDKConfig} config configuration
-   * @param {string} privateKey private key of account that trades
+   * @param {string | Signer} signer Private key or ethers Signer of the account
    */
   public constructor(config: NodeSDKConfig, signer: string | Signer) {
     super(config);
