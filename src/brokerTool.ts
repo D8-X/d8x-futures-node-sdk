@@ -37,8 +37,8 @@ export default class BrokerTool extends WriteAccessHandler {
    * main();
    *
    */
-  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
-    super(config, privateKey, signer);
+  public constructor(config: NodeSDKConfig, signer: string | Signer) {
+    super(config, signer);
   }
 
   // Fee getters
