@@ -31,8 +31,8 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    * @param {string} privateKey private key of account that trades
    * @param {Signer} signer Signer that provides liquidity (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
-    super(config, privateKey, signer);
+  public constructor(config: NodeSDKConfig, signer: string | Signer) {
+    super(config, signer);
   }
 
   /**

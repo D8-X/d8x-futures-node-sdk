@@ -26,14 +26,12 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @param {NodeSDKConfig} config configuration
    * @param {string} privateKey private key of account that trades
    */
-  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
+  public constructor(config: NodeSDKConfig, signer: string | Signer) {
     super(config);
-    if (privateKey) {
-      this.privateKey = privateKey;
-    } else if (signer) {
-      this.signer = signer;
+    if (typeof signer == "string") {
+      this.privateKey = signer;
     } else {
-      throw new Error("No private key nor signer provided.");
+      this.signer = signer;
     }
     if (config.gasLimit != undefined) {
       this.gasLimit = config.gasLimit;

@@ -32,8 +32,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * @param {string} privateKey Private key of account that liquidates.
    * @param {Signer} signer Signer that liquidates (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
-    super(config, privateKey, signer);
+  public constructor(config: NodeSDKConfig, signer: string | Signer) {
+    super(config, signer);
   }
 
   /**

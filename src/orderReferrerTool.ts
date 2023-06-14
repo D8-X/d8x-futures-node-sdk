@@ -46,8 +46,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param {string} privateKey Private key of the wallet that executes the conditional orders.
    * @param {Signer} signer Signer that executes orders (ignored if a private key is provided)
    */
-  public constructor(config: NodeSDKConfig, privateKey?: string, signer?: Signer) {
-    super(config, privateKey, signer);
+  public constructor(config: NodeSDKConfig, signer: string | Signer) {
+    super(config, signer);
     // override parent's gas limit with a lower number
     this.gasLimit = 4_000_000;
   }
