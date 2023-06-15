@@ -5394,6 +5394,11 @@
                 "internalType": "struct IPerpetualOrder.Order",
                 "name": "_order",
                 "type": "tuple"
+            },
+            {
+                "internalType": "bool",
+                "name": "_isApprovedExecutor",
+                "type": "bool"
             }
         ],
         "name": "tradeViaOrderBook",
