@@ -50,8 +50,8 @@
   {
     "name": "zkevmTestnet",
     "chainId": 1442,
-    "version": 0,
-    "proxyAddr": "0xb56b81e40e1cDB77bb5Db6C0283e25C27DAE1Be6",
+    "version": 1,
+    "proxyAddr": "0x1a23C2d6DB5B0C340bADa2fAB1f603aA3c37779C",
     "nodeURL": "https://rpc.public.zkevm-test.net",
     "priceFeedConfigNetwork": "testnet",
     "shareTokenABILocation": "ShareToken.json",
