@@ -199,6 +199,12 @@ describe("readOnly", () => {
         expect(success).toBeTruthy;
       }
     });
+    it("pool state", async () => {
+      let symbol = "MATIC";
+      let pool = await mktData.getPoolState(symbol);
+      console.log(pool);
+      expect(pool.pnlParticipantCashCC > 0);
+    });
     it("max positions", async () => {
       let maxLong = await mktData.maxSignedPosition(BUY_SIDE, "MATIC-USD-MATIC");
       let maxShort = await mktData.maxSignedPosition(SELL_SIDE, "MATIC-USD-MATIC");

@@ -875,6 +875,32 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
+   * Query recent pool state from blockchain, not including perpetual states
+   * @param symbol symbol of the form USDC
+   * @param indexPrices S2 and S3 prices/isMarketOpen if not provided fetch via REST API
+   * @returns PoolState reference
+   */
+  public async getPoolState(poolSymbol: string, overrides?: CallOverrides): Promise<PoolState> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    const poolId = this._poolSymbolOrIdToPoolId(poolSymbol);
+    const pool = await this.proxyContract.getLiquidityPool(poolId, overrides || {});
+    let state: PoolState = {
+      isRunning: pool.isRunning,
+      poolSymbol: poolSymbol,
+      marginTokenAddr: pool.marginTokenAddress,
+      poolShareTokenAddr: pool.shareTokenAddress,
+      defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC),
+      pnlParticipantCashCC: ABK64x64ToFloat(pool.fPnLparticipantsCashCC),
+      totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize),
+      brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
+      perpetuals: [],
+    };
+    return state;
+  }
+
+  /**
    * Query perpetual static info.
    * This information is queried once at createProxyInstance-time and remains static after that.
    * @param symbol symbol of the form ETH-USD-MATIC
