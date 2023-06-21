@@ -32,7 +32,7 @@ describe("write and spoil gas and tokens", () => {
     expect(pk == undefined).toBeFalsy();
     const traderWallet = new ethers.Wallet(pk);
     const provider = new JsonRpcProvider(config.nodeURL);
-    accTrade = new AccountTrade(config, undefined, traderWallet.connect(provider));
+    accTrade = new AccountTrade(config, traderWallet.connect(provider));
     await accTrade.createProxyInstance(provider);
   });
 

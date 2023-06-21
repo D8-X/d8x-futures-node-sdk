@@ -5,6 +5,7 @@ import { AddressZero } from "@ethersproject/constants";
 import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
 import { Network, Provider } from "@ethersproject/providers";
 import {
+  ERC20__factory,
   IPerpetualManager,
   IPerpetualManager__factory,
   LimitOrderBook,
@@ -166,10 +167,12 @@ export default class PerpetualDataHandler {
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
 
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
+      let decimals = await ERC20__factory.connect(poolInfo.poolMarginTokenAddr[j], this.provider!).decimals();
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
         poolMarginTokenAddr: poolInfo.poolMarginTokenAddr[j],
+        poolMarginTokenDecimals: decimals,
         shareTokenAddr: poolInfo.poolShareTokenAddr[j],
         oracleFactoryAddr: poolInfo.oracleFactory,
         isRunning: poolInfo.poolShareTokenAddr[j] != AddressZero,
@@ -1083,6 +1086,11 @@ export default class PerpetualDataHandler {
     return -1;
   }
 
+  /**
+   *
+   * @param symbol Symbol of the form USDC
+   * @returns Address of the corresponding token
+   */
   public getMarginTokenFromSymbol(symbol: string): string | undefined {
     let pools = this.poolStaticInfos!;
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
@@ -1091,6 +1099,25 @@ export default class PerpetualDataHandler {
       if (pools[k].poolId == poolId) {
         // pool found
         return pools[k].poolMarginTokenAddr;
+      }
+      k++;
+    }
+    return undefined;
+  }
+
+  /**
+   *
+   * @param symbol Symbol of the form USDC
+   * @returns Decimals of the corresponding token
+   */
+  public getMarginTokenDecimalsFromSymbol(symbol: string): number | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolMarginTokenDecimals;
       }
       k++;
     }

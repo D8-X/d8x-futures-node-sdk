@@ -118,6 +118,27 @@ export function floatToDec18(x: number): BigNumber {
 }
 
 /**
+ *
+ * @param {number} x number (float)
+ * @param {number} decimals number of decimals
+ * @returns {BigNumber} x as a BigNumber in Dec18 format
+ */
+export function floatToDecN(x: number, decimals: number): BigNumber {
+  // float number to dec 18
+  if (x === 0) {
+    return BigNumber.from(0);
+  }
+  let sg = Math.sign(x);
+  x = Math.abs(x);
+  let strX = x.toFixed(decimals);
+  const arrX = strX.split(".");
+  let xInt = BigNumber.from(arrX[0]);
+  let xDec = BigNumber.from(arrX[1]);
+  let xIntBig = xInt.mul(BigNumber.from(10).pow(BigNumber.from(decimals)));
+  return xIntBig.add(xDec).mul(sg);
+}
+
+/**
  * 9 are rounded up regardless of precision, e.g, 0.1899000 at precision 6 results in 3
  * @param x
  * @param precision

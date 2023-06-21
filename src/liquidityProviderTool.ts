@@ -1,7 +1,7 @@
-import { Contract, ContractTransaction, Overrides } from "@ethersproject/contracts";
+import { ContractTransaction, Overrides } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
-import { dec18ToFloat, floatToDec18 } from "./d8XMath";
-import { ERC20_ABI, NodeSDKConfig } from "./nodeSDKTypes";
+import { floatToDec18, floatToDecN } from "./d8XMath";
+import { NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 /**
@@ -65,9 +65,10 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let decimals = this.getMarginTokenDecimalsFromSymbol(poolSymbolName);
     let tx = await this.proxyContract.addLiquidity(
       poolId,
-      floatToDec18(amountCC),
+      floatToDecN(amountCC, decimals!),
       overrides || { gasLimit: this.gasLimit }
     );
     return tx;

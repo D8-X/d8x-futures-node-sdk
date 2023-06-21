@@ -5,8 +5,8 @@ import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
 import { ERC20__factory } from "./contracts";
-import { floatToDec18 } from "./d8XMath";
-import { ERC20_ABI, MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, NodeSDKConfig } from "./nodeSDKTypes";
+import { floatToDecN } from "./d8XMath";
+import { MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 
 /**
@@ -76,7 +76,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     if (amount == undefined) {
       amountDec18 = MAX_UINT_256;
     } else {
-      amountDec18 = floatToDec18(amount);
+      amountDec18 = floatToDecN(amount, this.getMarginTokenDecimalsFromSymbol(symbol)!);
     }
     return WriteAccessHandler._setAllowance(marginTokenAddr, this.proxyAddr, this.signer, amountDec18, overrides);
   }

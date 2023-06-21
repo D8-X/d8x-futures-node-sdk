@@ -77,6 +77,7 @@ export interface PoolStaticInfo {
   poolId: number;
   poolMarginSymbol: string;
   poolMarginTokenAddr: string;
+  poolMarginTokenDecimals?: number;
   shareTokenAddr: string;
   oracleFactoryAddr: string;
   isRunning: boolean;
