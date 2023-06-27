@@ -12,6 +12,7 @@ import WriteAccessHandler from "./writeAccessHandler";
 import LiquidatorTool from "./liquidatorTool";
 import TraderInterface from "./traderInterface";
 import PerpetualEventHandler from "./perpetualEventHandler";
+import PriceFeeds from "./priceFeeds";
 
 export {
   AccountTrade,
@@ -24,6 +25,7 @@ export {
   LiquidatorTool,
   TraderInterface,
   PerpetualEventHandler,
+  PriceFeeds,
 };
 
 export * from "./version";
