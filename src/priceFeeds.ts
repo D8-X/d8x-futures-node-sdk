@@ -194,7 +194,7 @@ export default class PriceFeeds {
       if (queries[id] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id] + "/latest_price_feeds?target_chain=default&";
+        queries[id] = this.feedEndpoints[id] + "/latest_price_feeds?binary=true&";
         idCountPriceFeeds[id] = 0;
       }
       queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";
