@@ -281,7 +281,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     let userFriendlyOrders: Order[] = new Array<Order>();
     let orderIdsOut = [];
     let k = 0;
-    while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
+    while (k < numElements && k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
       userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
       k++;
