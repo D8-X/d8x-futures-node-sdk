@@ -5,7 +5,7 @@
     }
   },
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2020",
     "module": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "importHelpers": true,
