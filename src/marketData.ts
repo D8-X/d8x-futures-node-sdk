@@ -189,17 +189,9 @@ export default class MarketData extends PerpetualDataHandler {
   ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
     // open orders requested only for given symbol
     let resArray: Array<{ orders: Order[]; orderIds: string[] }> = [];
-    if (symbol.split("-").length == 1) {
-      // pool symbol
-      const symbols = this.getPerpetualSymbolsInPool(symbol);
-      let prom: Array<Promise<{ orders: Order[]; orderIds: string[] }>> = [];
-      for (let k = 0; k < symbols.length; k++) {
-        let p = this._openOrdersOfPerpetual(traderAddr, symbols[k], overrides);
-        prom.push(p);
-      }
-      resArray = await Promise.all(prom);
-    } else {
-      let res = await this._openOrdersOfPerpetual(traderAddr, symbol, overrides);
+    const symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    for (let k = 0; k < symbols.length; k++) {
+      let res = await this._openOrdersOfPerpetual(traderAddr, symbols[k], overrides);
       resArray.push(res!);
     }
     return resArray;
@@ -252,17 +244,9 @@ export default class MarketData extends PerpetualDataHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let resArray: Array<MarginAccount> = [];
-    if (symbol.split("-").length == 1) {
-      // pool symbol
-      const symbols = this.getPerpetualSymbolsInPool(symbol);
-      let prom: Array<Promise<MarginAccount>> = [];
-      for (let k = 0; k < symbols.length; k++) {
-        let p = this._positionRiskForTraderInPerpetual(traderAddr, symbols[k], overrides);
-        prom.push(p);
-      }
-      resArray = await Promise.all(prom);
-    } else {
-      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbol, overrides);
+    let symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    for (let k = 0; k < symbols.length; k++) {
+      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[k], overrides);
       resArray.push(res!);
     }
     return resArray;
