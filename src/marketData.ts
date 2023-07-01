@@ -209,11 +209,9 @@ export default class MarketData extends PerpetualDataHandler {
     overrides?: CallOverrides
   ): Promise<{ orders: Order[]; orderIds: string[] }> {
     // open orders requested only for given symbol
-    let orderBookContract = this.getOrderBookContract(symbol);
-    let [orders, digests] = await Promise.all([
-      this.openOrdersOnOrderBook(traderAddr, orderBookContract, overrides),
-      MarketData.orderIdsOfTrader(traderAddr, orderBookContract, overrides),
-    ]);
+    const orderBookContract = this.getOrderBookContract(symbol);
+    const orders = await this.openOrdersOnOrderBook(traderAddr, orderBookContract, overrides);
+    const digests = await MarketData.orderIdsOfTrader(traderAddr, orderBookContract, overrides);
     return { orders: orders, orderIds: digests };
   }
 
