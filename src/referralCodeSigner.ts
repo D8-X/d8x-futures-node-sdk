@@ -17,20 +17,19 @@ import { Wallet } from "@ethersproject/wallet";
  * one chain, unless the backend employs code transferrals
  */
 export default class ReferralCodeSigner {
-  private privateKey: string;
   private provider: Provider | undefined;
   private rpcURL: string;
-  private signer: ethers.Wallet | undefined;
+  private signer: Signer;
 
-  constructor(_privateKey: string, _rpcURL: string) {
-    this.privateKey = _privateKey;
+  constructor(signer: Signer, _rpcURL: string) {
+    this.signer = signer;
     this.rpcURL = _rpcURL;
   }
 
-  public async createSignerInstance() {
+  public async createSignerInstance(_privateKey: string): Promise<Signer> {
     this.provider = new StaticJsonRpcProvider(this.rpcURL);
-    const wallet = new Wallet(this.privateKey!);
-    this.signer = wallet.connect(this.provider);
+    const wallet = new Wallet(_privateKey);
+    return wallet.connect(this.provider);
   }
 
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
