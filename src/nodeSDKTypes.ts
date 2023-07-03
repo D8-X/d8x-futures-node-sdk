@@ -329,3 +329,27 @@ for (let config of constConfig) {
 }
 
 export const DEFAULT_CONFIG: NodeSDKConfig[] = constConfig;
+
+// Payload to be sent to backend when creating
+// a new referral code. Intended for trader-
+// backends that have an active referral system
+export interface APIReferralCodePayload {
+  code: string;
+  referrerAddr: string;
+  agencyAddr: string;
+  createdOn: number;
+  traderRebatePerc: number;
+  agencyRebatePerc: number;
+  referrerRebatePerc: number;
+  signature: string;
+}
+
+// Payload to be sent to backend when the trader
+// selects a new referral code. Intended for trader-
+// backends that have an active referral system
+export interface APIReferralCodeSelectionPayload {
+  code: string;
+  traderAddr: string;
+  createdOn: number;
+  signature: string;
+}
