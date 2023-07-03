@@ -8,7 +8,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 **Extends**: <code>WriteAccessHandler</code>  
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ <code>WriteAccessHandler</code>
-    * [new LiquidatorTool(config, privateKey, signer)](#new_LiquidatorTool_new)
+    * [new LiquidatorTool(config, signer)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData)](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr, indexPrices)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
@@ -17,15 +17,14 @@ and executes smart-contract interactions that require gas-payments.</p>
 
 <a name="new_LiquidatorTool_new"></a>
 
-### new LiquidatorTool(config, privateKey, signer)
+### new LiquidatorTool(config, signer)
 <p>Constructs a LiquidatorTool instance for a given configuration and private key.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
-| signer | <code>Signer</code> | <p>Signer that liquidates (ignored if a private key is provided)</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 **Example**  
 ```js

@@ -9,7 +9,7 @@ gas-payments.</p>
 **Extends**: <code>WriteAccessHandler</code>  
 
 * [OrderReferrerTool](#OrderReferrerTool) ⇐ <code>WriteAccessHandler</code>
-    * [new OrderReferrerTool(config, privateKey, signer)](#new_OrderReferrerTool_new)
+    * [new OrderReferrerTool(config, signer)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
@@ -22,15 +22,14 @@ gas-payments.</p>
 
 <a name="new_OrderReferrerTool_new"></a>
 
-### new OrderReferrerTool(config, privateKey, signer)
+### new OrderReferrerTool(config, signer)
 <p>Constructor.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>Private key of the wallet that executes the conditional orders.</p> |
-| signer | <code>Signer</code> | <p>Signer that executes orders (ignored if a private key is provided)</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 **Example**  
 ```js
