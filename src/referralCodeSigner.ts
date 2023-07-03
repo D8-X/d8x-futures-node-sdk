@@ -5,6 +5,7 @@ import { defaultAbiCoder } from "@ethersproject/abi";
 import { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
+import { sign } from "crypto";
 
 /**
  * This is a 'standalone' class that deals with signatures
@@ -21,12 +22,16 @@ export default class ReferralCodeSigner {
   private rpcURL: string;
   private signer: Signer;
 
-  constructor(signer: Signer, _rpcURL: string) {
-    this.signer = signer;
+  constructor(signer: Signer | string, _rpcURL: string) {
     this.rpcURL = _rpcURL;
+    if (typeof signer == "string") {
+      this.signer = this.createSignerInstance(signer);
+    } else {
+      this.signer = signer;
+    }
   }
 
-  public async createSignerInstance(_privateKey: string): Promise<Signer> {
+  public createSignerInstance(_privateKey: string): Signer {
     this.provider = new StaticJsonRpcProvider(this.rpcURL);
     const wallet = new Wallet(_privateKey);
     return wallet.connect(this.provider);
