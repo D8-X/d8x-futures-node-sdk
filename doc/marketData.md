@@ -34,6 +34,7 @@ No gas required for the queries here.</p>
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
+        * [.getPoolState(symbol, indexPrices)](#MarketData+getPoolState) ⇒
         * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
@@ -468,6 +469,19 @@ main();
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+
+<a name="MarketData+getPoolState"></a>
+
+### marketData.getPoolState(symbol, indexPrices) ⇒
+<p>Query recent pool state from blockchain, not including perpetual states</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>PoolState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form USDC</p> |
 | indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
 
 <a name="MarketData+getPerpetualStaticInfo"></a>

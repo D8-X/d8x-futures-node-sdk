@@ -13,6 +13,7 @@ import LiquidatorTool from "./liquidatorTool";
 import TraderInterface from "./traderInterface";
 import PerpetualEventHandler from "./perpetualEventHandler";
 import PriceFeeds from "./priceFeeds";
+import ReferralCodeSigner from "./referralCodeSigner";
 
 export {
   AccountTrade,
@@ -26,6 +27,7 @@ export {
   TraderInterface,
   PerpetualEventHandler,
   PriceFeeds,
+  ReferralCodeSigner,
 };
 
 export * from "./version";

@@ -65,6 +65,16 @@ Send event variables to event handler &quot;on<EventName>&quot; - this updates m
 <dd><p>This class communicates with the REST API that provides price-data that is
 to be submitted to the smart contracts for certain functions such as
 trader liquidations, trade executions, change of trader margin amount.</p></dd>
+<dt><a href="#ReferralCodeSigner">ReferralCodeSigner</a></dt>
+<dd><p>This is a 'standalone' class that deals with signatures
+required for referral codes:</p>
+<ul>
+<li>referrer creates a new referral code for trader (no agency involved)</li>
+<li>agency creates a new referral code for a referrer and their trader</li>
+<li>trader selects a referral code to trade with</li>
+</ul>
+<p>Note that since the back-end is chain specific, the referral code is typically bound to
+one chain, unless the backend employs code transferrals</p></dd>
 <dt><a href="#TraderInterface">TraderInterface</a> ⇐ <code><a href="#MarketData">MarketData</a></code></dt>
 <dd><p>Interface that can be used by front-end that wraps all private functions
 so that signatures can be handled in frontend via wallet</p></dd>
@@ -119,6 +129,7 @@ bytes brokerSignature; // signature, can be empty if no brokerAddr provided
     * [~dec18ToFloat(x)](#module_d8xMath..dec18ToFloat) ⇒ <code>number</code>
     * [~floatToABK64x64(x)](#module_d8xMath..floatToABK64x64) ⇒ <code>BigNumber</code>
     * [~floatToDec18(x)](#module_d8xMath..floatToDec18) ⇒ <code>BigNumber</code>
+    * [~floatToDecN(x, decimals)](#module_d8xMath..floatToDecN) ⇒ <code>BigNumber</code>
     * [~countDecimalsOf(x, precision)](#module_d8xMath..countDecimalsOf) ⇒
     * [~roundToLotString(x, lot, precision)](#module_d8xMath..roundToLotString) ⇒
     * [~mul64x64(x, y)](#module_d8xMath..mul64x64) ⇒ <code>BigNumber</code>
@@ -198,6 +209,17 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | x | <code>number</code> | <p>number (float)</p> |
+
+<a name="module_d8xMath..floatToDecN"></a>
+
+### d8xMath~floatToDecN(x, decimals) ⇒ <code>BigNumber</code>
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <code>BigNumber</code> - <p>x as a BigNumber in Dec18 format</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| x | <code>number</code> | <p>number (float)</p> |
+| decimals | <code>number</code> | <p>number of decimals</p> |
 
 <a name="module_d8xMath..countDecimalsOf"></a>
 
@@ -469,7 +491,7 @@ require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [AccountTrade](#AccountTrade) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new AccountTrade(config, privateKey, signer)](#new_AccountTrade_new)
+    * [new AccountTrade(config, signer)](#new_AccountTrade_new)
     * [.cancelOrder(symbol, orderId)](#AccountTrade+cancelOrder) ⇒ <code>ContractTransaction</code>
     * [.order(order)](#AccountTrade+order) ⇒ <code>ContractTransaction</code>
     * [.queryExchangeFee(poolSymbolName, [brokerAddr])](#AccountTrade+queryExchangeFee) ⇒
@@ -493,19 +515,20 @@ require gas-payments.</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_AccountTrade_new"></a>
 
-### new AccountTrade(config, privateKey, signer)
+### new AccountTrade(config, signer)
 <p>Constructor</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>Private key of account that trades.</p> |
-| signer | <code>Signer</code> | <p>Signer that trades (ignored if a private key is provided)</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 **Example**  
 ```js
@@ -929,6 +952,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### accountTrade.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### accountTrade.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### accountTrade.getABI(contract) ⇒
@@ -981,6 +1026,8 @@ require gas-payments.</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_BrokerTool_new"></a>
@@ -1564,6 +1611,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### brokerTool.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### brokerTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### brokerTool.getABI(contract) ⇒
@@ -1587,7 +1656,7 @@ and executes smart-contract interactions that require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [LiquidatorTool](#LiquidatorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new LiquidatorTool(config, privateKey, signer)](#new_LiquidatorTool_new)
+    * [new LiquidatorTool(config, signer)](#new_LiquidatorTool_new)
     * [.liquidateTrader(symbol, traderAddr, [liquidatorAddr], priceFeedData)](#LiquidatorTool+liquidateTrader) ⇒
     * [.isMaintenanceMarginSafe(symbol, traderAddr, indexPrices)](#LiquidatorTool+isMaintenanceMarginSafe) ⇒ <code>boolean</code>
     * [.countActivePerpAccounts(symbol)](#LiquidatorTool+countActivePerpAccounts) ⇒ <code>number</code>
@@ -1609,19 +1678,20 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidatorTool_new"></a>
 
-### new LiquidatorTool(config, privateKey, signer)
+### new LiquidatorTool(config, signer)
 <p>Constructs a LiquidatorTool instance for a given configuration and private key.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>Private key of account that liquidates.</p> |
-| signer | <code>Signer</code> | <p>Signer that liquidates (ignored if a private key is provided)</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 **Example**  
 ```js
@@ -1993,6 +2063,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### liquidatorTool.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### liquidatorTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### liquidatorTool.getABI(contract) ⇒
@@ -2016,7 +2108,7 @@ smart-contract interactions that require gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [LiquidityProviderTool](#LiquidityProviderTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new LiquidityProviderTool(config, privateKey, signer)](#new_LiquidityProviderTool_new)
+    * [new LiquidityProviderTool(config, signer)](#new_LiquidityProviderTool_new)
     * [.addLiquidity(poolSymbolName, amountCC)](#LiquidityProviderTool+addLiquidity) ⇒
     * [.initiateLiquidityWithdrawal(poolSymbolName, amountPoolShares)](#LiquidityProviderTool+initiateLiquidityWithdrawal) ⇒
     * [.executeLiquidityWithdrawal(poolSymbolName)](#LiquidityProviderTool+executeLiquidityWithdrawal) ⇒
@@ -2036,19 +2128,20 @@ smart-contract interactions that require gas-payments.</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
 
-### new LiquidityProviderTool(config, privateKey, signer)
+### new LiquidityProviderTool(config, signer)
 <p>Constructor</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>private key of account that trades</p> |
-| signer | <code>Signer</code> | <p>Signer that provides liquidity (ignored if a private key is provided)</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 **Example**  
 ```js
@@ -2359,6 +2452,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### liquidityProviderTool.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### liquidityProviderTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### liquidityProviderTool.getABI(contract) ⇒
@@ -2408,6 +2523,7 @@ No gas required for the queries here.</p>
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
+        * [.getPoolState(symbol, indexPrices)](#MarketData+getPoolState) ⇒
         * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
@@ -2425,6 +2541,8 @@ No gas required for the queries here.</p>
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+        * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
@@ -2857,6 +2975,19 @@ main();
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 | indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
 
+<a name="MarketData+getPoolState"></a>
+
+### marketData.getPoolState(symbol, indexPrices) ⇒
+<p>Query recent pool state from blockchain, not including perpetual states</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>PoolState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form USDC</p> |
+| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+
 <a name="MarketData+getPerpetualStaticInfo"></a>
 
 ### marketData.getPerpetualStaticInfo(symbol) ⇒
@@ -3090,6 +3221,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### marketData.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### marketData.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### marketData.getABI(contract) ⇒
@@ -3143,7 +3296,7 @@ gas-payments.</p>
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
 * [OrderReferrerTool](#OrderReferrerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new OrderReferrerTool(config, privateKey, signer)](#new_OrderReferrerTool_new)
+    * [new OrderReferrerTool(config, signer)](#new_OrderReferrerTool_new)
     * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
     * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
@@ -3169,19 +3322,20 @@ gas-payments.</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_OrderReferrerTool_new"></a>
 
-### new OrderReferrerTool(config, privateKey, signer)
+### new OrderReferrerTool(config, signer)
 <p>Constructor.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>Private key of the wallet that executes the conditional orders.</p> |
-| signer | <code>Signer</code> | <p>Signer that executes orders (ignored if a private key is provided)</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 **Example**  
 ```js
@@ -3633,6 +3787,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### orderReferrerTool.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### orderReferrerTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### orderReferrerTool.getABI(contract) ⇒
@@ -3668,6 +3844,8 @@ common data and chain operations.</p>
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+        * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
@@ -3826,6 +4004,26 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### perpetualDataHandler.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### perpetualDataHandler.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -4505,6 +4703,66 @@ return a triangulated price</p>
 | --- | --- |
 | config | <p>configuration for the selected network</p> |
 
+<a name="ReferralCodeSigner"></a>
+
+## ReferralCodeSigner
+<p>This is a 'standalone' class that deals with signatures
+required for referral codes:</p>
+<ul>
+<li>referrer creates a new referral code for trader (no agency involved)</li>
+<li>agency creates a new referral code for a referrer and their trader</li>
+<li>trader selects a referral code to trade with</li>
+</ul>
+<p>Note that since the back-end is chain specific, the referral code is typically bound to
+one chain, unless the backend employs code transferrals</p>
+
+**Kind**: global class  
+
+* [ReferralCodeSigner](#ReferralCodeSigner)
+    * [._referralCodeNewCodePayloadToMessage(rc)](#ReferralCodeSigner._referralCodeNewCodePayloadToMessage) ⇒
+    * [._codeSelectionPayloadToMessage(rc)](#ReferralCodeSigner._codeSelectionPayloadToMessage) ⇒
+    * [.checkNewCodeSignature(rc)](#ReferralCodeSigner.checkNewCodeSignature) ⇒
+
+<a name="ReferralCodeSigner._referralCodeNewCodePayloadToMessage"></a>
+
+### ReferralCodeSigner.\_referralCodeNewCodePayloadToMessage(rc) ⇒
+<p>Create digest for referralCodePayload that is to be signed</p>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>the hex-string to be signed</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>payload</p> |
+
+<a name="ReferralCodeSigner._codeSelectionPayloadToMessage"></a>
+
+### ReferralCodeSigner.\_codeSelectionPayloadToMessage(rc) ⇒
+<p>Create digest for APIReferralCodeSelectionPayload that is to be signed</p>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>the hex-string to be signed</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>payload</p> |
+
+<a name="ReferralCodeSigner.checkNewCodeSignature"></a>
+
+### ReferralCodeSigner.checkNewCodeSignature(rc) ⇒
+<p>Check whether signature is correct on payload:</p>
+<ul>
+<li>either the agency signed</li>
+<li>or the referrer signed and the agency is 'set to 0'</li>
+</ul>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>true if correctly signed, false otherwise</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>referralcode payload with a signature</p> |
+
 <a name="TraderInterface"></a>
 
 ## TraderInterface ⇐ [<code>MarketData</code>](#MarketData)
@@ -4547,6 +4805,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
+    * [.getPoolState(symbol, indexPrices)](#MarketData+getPoolState) ⇒
     * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
     * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
@@ -4564,6 +4823,8 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_TraderInterface_new"></a>
@@ -5106,6 +5367,20 @@ main();
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 | indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
 
+<a name="MarketData+getPoolState"></a>
+
+### traderInterface.getPoolState(symbol, indexPrices) ⇒
+<p>Query recent pool state from blockchain, not including perpetual states</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPoolState</code>](#MarketData+getPoolState)  
+**Returns**: <p>PoolState reference</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form USDC</p> |
+| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+
 <a name="MarketData+getPerpetualStaticInfo"></a>
 
 ### traderInterface.getPerpetualStaticInfo(symbol) ⇒
@@ -5344,6 +5619,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### traderInterface.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### traderInterface.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### traderInterface.getABI(contract) ⇒
@@ -5369,7 +5666,7 @@ require gas-payments.</p>
 **Extends**: [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 
 * [WriteAccessHandler](#WriteAccessHandler) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
-    * [new WriteAccessHandler(config, privateKey)](#new_WriteAccessHandler_new)
+    * [new WriteAccessHandler(signer)](#new_WriteAccessHandler_new)
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -5386,18 +5683,19 @@ require gas-payments.</p>
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_WriteAccessHandler_new"></a>
 
-### new WriteAccessHandler(config, privateKey)
+### new WriteAccessHandler(signer)
 <p>Constructor</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| config | <code>NodeSDKConfig</code> | <p>configuration</p> |
-| privateKey | <code>string</code> | <p>private key of account that trades</p> |
+| signer | <code>string</code> \| <code>Signer</code> | <p>Private key or ethers Signer of the account</p> |
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
@@ -5599,6 +5897,28 @@ and corresponding price information</p>
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
+
+### writeAccessHandler.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
+
+### writeAccessHandler.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form USDC</p> |
+
 <a name="PerpetualDataHandler+getABI"></a>
 
 ### writeAccessHandler.getABI(contract) ⇒
@@ -5659,7 +5979,6 @@ bytes brokerSignature; // signature, can be empty if no brokerAddr provided
 | poolShareTokenAddr | <code>string</code> | <p>Address of the pool share token. This is the token issued to external liquidity providers.</p> |
 | defaultFundCashCC | <code>number</code> | <p>Amount of cash in the default fund of this pool, denominated in margin tokens.</p> |
 | pnlParticipantCashCC | <code>number</code> | <p>Amount of cash in the PnL participation pool, i.e. cash deposited by external liquidity providers.</p> |
-| totalAMMFundCashCC | <code>number</code> | <p>Amount of cash aggregated across all perpetual AMM funds in this pool.</p> |
 | totalTargetAMMFundSizeCC | <code>number</code> | <p>Target AMM funds aggregated across all perpetuals in this pool.</p> |
 | brokerCollateralLotSize | <code>number</code> | <p>Price of one lot for brokers who wish to participate in this pool. Denominated in margin tokens.</p> |
 | perpetuals | <code>Array.&lt;PerpetualState&gt;</code> | <p>Array of all perpetuals in this pool.</p> |
