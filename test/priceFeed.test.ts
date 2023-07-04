@@ -24,7 +24,7 @@ describe("priceFeed", () => {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("testnet");
+    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -32,30 +32,33 @@ describe("priceFeed", () => {
     await mktData.createProxyInstance();
   });
   it("get recent prices and submission info for perpetual", async () => {
-    let priceFeeds = new PriceFeeds(mktData, "testnet");
-    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("ETH-USD-MATIC");
+    let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("ETH-USDC-USDC");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
   it("get recent prices for perpetual", async () => {
-    let priceFeeds = new PriceFeeds(mktData, "testnet");
-    let prices = await priceFeeds.fetchPricesForPerpetual("ETH-USD-MATIC");
+    let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+    let symbolSet = new Set<string>();
+    symbolSet.add("ETH-USDC");
+    priceFeeds.initializeTriangulations(symbolSet);
+    let prices = await priceFeeds.fetchPricesForPerpetual("ETH-USDC-USDC");
     console.log("pyth price info = ", prices);
   });
   it("get recent prices", async () => {
-    let priceFeeds = new PriceFeeds(mktData, "testnet");
+    let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
     //let query = "https://pyth.testnet.quantena.tech/api/latest_price_feeds?ids[]=0x796d24444ff50728b58e94b1f53dc3a406b2f1ba9d0d0b91d4406c37491a6feb&ids[]=0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b";
     let prices = await priceFeeds.fetchAllFeedPrices();
     console.log("pyth price info = ", prices);
   });
 
   it("get recent prices from market data directly", async () => {
-    let prices = await mktData.fetchLatestFeedPriceInfo("MATIC-USD-MATIC");
+    let prices = await mktData.fetchLatestFeedPriceInfo("MATIC-USDC-USDC");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
   it("triangulation test", async () => {
-    let priceFeeds = new PriceFeeds(mktData, "testnet");
+    let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
     let symbolSet = new Set<string>();
     symbolSet.add("BTC-USD");
     symbolSet.add("BTC-USDC");
@@ -79,7 +82,7 @@ describe("priceFeed", () => {
     expect(px[1][2]).toBeTruthy(); // market closed
   });
   it("fetch info from data handler", async () => {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("MATIC-USD-MATIC");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("MATIC-USDC-USDC");
     console.log(l);
   });
 });
