@@ -1,5 +1,6 @@
-import { CallOverrides, Contract } from "@ethersproject/contracts";
-import { ABK64x64ToFloat } from "./d8XMath";
+import { Signer } from "@ethersproject/abstract-signer";
+import { CallOverrides, Contract, ContractTransaction, Overrides } from "@ethersproject/contracts";
+import { ABK64x64ToFloat, floatToDec18, floatToDecN } from "./d8XMath";
 import MarketData from "./marketData";
 import { ClientOrder, NodeSDKConfig, Order, SmartContractOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -11,6 +12,7 @@ import TraderDigests from "./traderDigests";
  */
 export default class TraderInterface extends MarketData {
   public digestTool: TraderDigests;
+  protected gasLimit: number = 1_000_000;
 
   // accTrade.order(order)
   // cancelOrder(symbol: string, orderId: string)
@@ -168,5 +170,122 @@ export default class TraderInterface extends MarketData {
       obOrders[2] = PerpetualDataHandler.fromSmartContratOrderToClientOrder(orders[2], [ZERO_ORDER_ID, ids[0]]);
     }
     return obOrders;
+  }
+
+  /**
+   *  Add liquidity to the PnL participant fund. The address gets pool shares in return.
+   * @param {Signer} signer Signer that will deposit liquidity
+   * @param {string} poolSymbolName  Name of pool symbol (e.g. MATIC)
+   * @param {number} amountCC  Amount in pool-collateral currency
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance();
+   *   // add liquidity
+   *   await lqudtProviderTool.setAllowance("MATIC");
+   *   let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
+   *   console.log(respAddLiquidity);
+   * }
+   * main();
+   *
+   * @return Transaction object
+   */
+  public async addLiquidity(
+    signer: Signer,
+    poolSymbolName: string,
+    amountCC: number,
+    overrides?: Overrides
+  ): Promise<ContractTransaction> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let decimals = this.getMarginTokenDecimalsFromSymbol(poolSymbolName);
+    let tx = await this.proxyContract
+      .connect(signer)
+      .addLiquidity(poolId, floatToDecN(amountCC, decimals!), overrides || { gasLimit: this.gasLimit });
+    return tx;
+  }
+
+  /**
+   * Initiates a liquidity withdrawal from the pool
+   * It triggers a time-delayed unlocking of the given number of pool shares.
+   * The amount of pool shares to be unlocked is fixed by this call, but not their value in pool currency.
+   * @param {Signer} signer Signer that will initiate liquidity withdrawal
+   * @param {string} poolSymbolName Name of pool symbol (e.g. MATIC).
+   * @param {string} amountPoolShares Amount in pool-shares, removes everything if > available amount.
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance();
+   *   // initiate withdrawal
+   *   let respRemoveLiquidity = await lqudtProviderTool.initiateLiquidityWithdrawal("MATIC", 0.1);
+   *   console.log(respRemoveLiquidity);
+   * }
+   * main();
+   *
+   * @return Transaction object.
+   */
+  public async initiateLiquidityWithdrawal(
+    signer: Signer,
+    poolSymbolName: string,
+    amountPoolShares: number,
+    overrides?: Overrides
+  ): Promise<ContractTransaction> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let tx = await this.proxyContract
+      .connect(signer)
+      .withdrawLiquidity(poolId, floatToDec18(amountPoolShares), overrides || { gasLimit: this.gasLimit });
+    return tx;
+  }
+
+  /**
+   * Withdraws as much liquidity as there is available after a call to initiateLiquidityWithdrawal.
+   * The address loses pool shares in return.
+   * @param {Signer} signer Signer that will execute the liquidity withdrawal
+   * @param poolSymbolName
+   * @example
+   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(LiquidityProviderTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+   *   await lqudtProviderTool.createProxyInstance();
+   *   // remove liquidity
+   *   let respRemoveLiquidity = await lqudtProviderTool.executeLiquidityWithdrawal("MATIC", 0.1);
+   *   console.log(respRemoveLiquidity);
+   * }
+   * main();
+   *
+   * @returns Transaction object.
+   */
+  public async executeLiquidityWithdrawal(
+    signer: Signer,
+    poolSymbolName: string,
+    overrides?: Overrides
+  ): Promise<ContractTransaction> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
+    let tx = await this.proxyContract
+      .connect(signer)
+      .executeLiquidityWithdrawal(poolId, await signer.getAddress(), overrides || { gasLimit: this.gasLimit });
+    return tx;
   }
 }
