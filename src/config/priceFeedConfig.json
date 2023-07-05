@@ -57,10 +57,7 @@
         "origin": "FX.USD/JPY"
       }
     ],
-    "endpoints": [
-      { "type": "pyth", "endpoint": "https://xc-testnet.pyth.network/api" },
-      { "type": "pyth", "endpoint": "https://pyth.testnet.quantena.tech/api" }
-    ]
+    "endpoints": [{ "type": "pyth", "endpoint": "https://xc-testnet.pyth.network/api" }]
   },
   {
     "network": "testnet",
@@ -120,10 +117,7 @@
         "origin": "FX.USD/JPY"
       }
     ],
-    "endpoints": [
-      { "type": "pyth", "endpoint": "https://hermes-beta.pyth.network/api" },
-      { "type": "pyth", "endpoint": "https://pyth.testnet.quantena.tech/api" }
-    ]
+    "endpoints": [{ "type": "pyth", "endpoint": "https://hermes-beta.pyth.network/api" }]
   },
   {
     "network": "mainnet",

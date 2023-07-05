@@ -77,7 +77,7 @@ export default class PerpetualDataHandler {
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
-  protected chainId: number;
+  public chainId: number;
   protected proxyContract: IPerpetualManager | null = null;
   protected proxyABI: ContractInterface;
   protected proxyAddr: string;
