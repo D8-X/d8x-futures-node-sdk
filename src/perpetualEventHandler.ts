@@ -283,14 +283,14 @@ export default class PerpetualEventHandler {
    * event PerpetualLimitOrderCreated(
    *    uint24 indexed perpetualId,
    *    address indexed trader,
-   *    address referrerAddr,
+   *    address executorAddr,
    *    address brokerAddr,
    *    Order order,
    *    bytes32 digest
    *)
    * @param perpetualId id of the perpetual
    * @param trader address of the trader
-   * @param referrerAddr address of the referrer
+   * @param executorAddr address of the executor
    * @param brokerAddr address of the broker
    * @param Order order struct
    * @param digest order id
@@ -298,7 +298,7 @@ export default class PerpetualEventHandler {
   public onPerpetualLimitOrderCreated(
     perpetualId: number,
     trader: string,
-    _referrerAddr: string,
+    _executorAddr: string,
     _brokerAddr: string,
     Order: SmartContractOrder,
     digest: string

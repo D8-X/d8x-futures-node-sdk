@@ -6,7 +6,7 @@ import MarketData from "../src/marketData";
 import { toBytes4 } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
-import OrderReferrerTool from "../src/orderReferrerTool";
+import OrderExecutorTool from "../src/orderExecutorTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
@@ -23,7 +23,7 @@ let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
 let brokerTool: BrokerTool;
-let refTool: OrderReferrerTool;
+let refTool: OrderExecutorTool;
 let accTrade: AccountTrade;
 let orderIds: string[];
 let apiInterface: TraderInterface;
@@ -518,10 +518,10 @@ describe("readOnly", () => {
     });
   });
 
-  describe("Referrer", () => {
+  describe("Executor", () => {
     beforeAll(async () => {
       expect(pk == undefined).toBeFalsy;
-      refTool = new OrderReferrerTool(config, pk);
+      refTool = new OrderExecutorTool(config, pk);
       await refTool.createProxyInstance();
     });
     it("get order by id/digest", async () => {

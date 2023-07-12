@@ -216,7 +216,7 @@ export interface TradeEvent {
         uint32 submittedTimestamp;
         uint32 flags; // order flags
         uint32 iDeadline; //deadline for price (seconds timestamp)
-        address referrerAddr; // address of the referrer set by contract
+        address executorAddr; // address of the executor set by contract
         int128 fAmount; // amount in base currency to be traded
         int128 fLimitPrice; // limit price
         int128 fTriggerPrice; //trigger price. Non-zero for stop orders.
@@ -229,7 +229,7 @@ export interface SmartContractOrder {
   brokerFeeTbps: number;
   traderAddr: string;
   brokerAddr: string;
-  referrerAddr: string;
+  executorAddr: string;
   brokerSignature: BytesLike;
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;
@@ -256,7 +256,7 @@ export interface SmartContractOrder {
         bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
         uint16 brokerFeeTbps; // broker fee in tenth of a basis point
         bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-        //address referrerAddr; <- will be set by LimitOrderBook
+        //address executorAddr; <- will be set by LimitOrderBook
         //uint64 submittedBlock <- will be set by LimitOrderBook
     }
  */
@@ -266,7 +266,7 @@ export interface ClientOrder {
   brokerFeeTbps: BigNumberish;
   traderAddr: string;
   brokerAddr: string;
-  referrerAddr: string;
+  executorAddr: string;
   brokerSignature: BytesLike;
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;
@@ -335,7 +335,7 @@ export const DEFAULT_CONFIG: NodeSDKConfig[] = constConfig;
 // backends that have an active referral system
 export interface APIReferralCodePayload {
   code: string;
-  referrerAddr: string;
+  executorAddr: string;
   agencyAddr: string;
   createdOn: number;
   traderRebatePerc: number;

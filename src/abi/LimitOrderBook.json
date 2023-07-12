@@ -126,7 +126,7 @@
                     },
                     {
                         "internalType": "address",
-                        "name": "referrerAddr",
+                        "name": "executorAddr",
                         "type": "address"
                     },
                     {
@@ -301,7 +301,7 @@
             },
             {
                 "internalType": "address",
-                "name": "_referrerAddr",
+                "name": "_executorAddr",
                 "type": "address"
             },
             {
@@ -329,7 +329,7 @@
             },
             {
                 "internalType": "address",
-                "name": "_referrerAddr",
+                "name": "_executorAddr",
                 "type": "address"
             },
             {
@@ -719,7 +719,7 @@
             },
             {
                 "internalType": "address",
-                "name": "referrerAddr",
+                "name": "executorAddr",
                 "type": "address"
             },
             {
