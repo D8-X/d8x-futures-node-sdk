@@ -48,7 +48,7 @@ describe("broker tools that spend gas and tokens", () => {
     let lotsBefore = await brokerTool.getBrokerDesignation(symbol);
     let feeBefore = await brokerTool.getFeeForBrokerDesignation(symbol);
     console.log(`current broker designation is ${lotsBefore} lots, with an induced fee of ${feeBefore * 10_000} bps`);
-    let tx = await brokerTool.brokerDepositToDefaultFund(symbol, lotsDeposit);
+    let tx = await brokerTool.depositBrokerLots(symbol, lotsDeposit);
     console.log(`broker deposit transaction hash = ${tx.hash}`);
     // need to wait before next test to see lots increase
     await tx.wait();

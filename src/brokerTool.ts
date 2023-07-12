@@ -336,16 +336,16 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // deposit to default fund
+   *   // deposit to perpetuals
    *   await brokTool.setAllowance("MATIC");
-   *   let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
+   *   let respDeposit = await brokTool.depositBrokerLots("MATIC",1);
    *   console.log(respDeposit);
    * }
    * main();
    *
    * @returns {ContractTransaction} ContractTransaction object.
    */
-  public async brokerDepositToDefaultFund(
+  public async depositBrokerLots(
     poolSymbolName: string,
     lots: number,
     overrides?: Overrides
@@ -354,7 +354,7 @@ export default class BrokerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
-    let tx = await this.proxyContract.brokerDepositToDefaultFund(poolId, lots, overrides || {});
+    let tx = await this.proxyContract.depositBrokerLots(poolId, lots, overrides || {});
     return tx;
   }
 
