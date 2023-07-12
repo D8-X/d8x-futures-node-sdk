@@ -4782,6 +4782,9 @@ so that signatures can be handled in frontend via wallet</p>
     * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
     * [.getProxyABI(method)](#TraderInterface+getProxyABI) ⇒
     * [.getOrderBookABI(symbol, method)](#TraderInterface+getOrderBookABI) ⇒
+    * [.addLiquidity(signer, poolSymbolName, amountCC)](#TraderInterface+addLiquidity) ⇒
+    * [.initiateLiquidityWithdrawal(signer, poolSymbolName, amountPoolShares)](#TraderInterface+initiateLiquidityWithdrawal) ⇒
+    * [.executeLiquidityWithdrawal(signer, poolSymbolName)](#TraderInterface+executeLiquidityWithdrawal) ⇒
     * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
     * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
@@ -4941,6 +4944,99 @@ Order must contain broker fee and broker address if there is supposed to be a br
 | symbol | <p>Symbol of the form MATIC-USD-MATIC</p> |
 | method | <p>Name of the method</p> |
 
+<a name="TraderInterface+addLiquidity"></a>
+
+### traderInterface.addLiquidity(signer, poolSymbolName, amountCC) ⇒
+<p>Add liquidity to the PnL participant fund. The address gets pool shares in return.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>Transaction object</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| signer | <code>Signer</code> | <p>Signer that will deposit liquidity</p> |
+| poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC)</p> |
+| amountCC | <code>number</code> | <p>Amount in pool-collateral currency</p> |
+
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance();
+  // add liquidity
+  await lqudtProviderTool.setAllowance("MATIC");
+  let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
+  console.log(respAddLiquidity);
+}
+main();
+```
+<a name="TraderInterface+initiateLiquidityWithdrawal"></a>
+
+### traderInterface.initiateLiquidityWithdrawal(signer, poolSymbolName, amountPoolShares) ⇒
+<p>Initiates a liquidity withdrawal from the pool
+It triggers a time-delayed unlocking of the given number of pool shares.
+The amount of pool shares to be unlocked is fixed by this call, but not their value in pool currency.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>Transaction object.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| signer | <code>Signer</code> | <p>Signer that will initiate liquidity withdrawal</p> |
+| poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC).</p> |
+| amountPoolShares | <code>string</code> | <p>Amount in pool-shares, removes everything if &gt; available amount.</p> |
+
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance();
+  // initiate withdrawal
+  let respRemoveLiquidity = await lqudtProviderTool.initiateLiquidityWithdrawal("MATIC", 0.1);
+  console.log(respRemoveLiquidity);
+}
+main();
+```
+<a name="TraderInterface+executeLiquidityWithdrawal"></a>
+
+### traderInterface.executeLiquidityWithdrawal(signer, poolSymbolName) ⇒
+<p>Withdraws as much liquidity as there is available after a call to initiateLiquidityWithdrawal.
+The address loses pool shares in return.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>Transaction object.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| signer | <code>Signer</code> | <p>Signer that will execute the liquidity withdrawal</p> |
+| poolSymbolName |  |  |
+
+**Example**  
+```js
+import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(LiquidityProviderTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const pk: string = <string>process.env.PK;
+  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
+  await lqudtProviderTool.createProxyInstance();
+  // remove liquidity
+  let respRemoveLiquidity = await lqudtProviderTool.executeLiquidityWithdrawal("MATIC", 0.1);
+  console.log(respRemoveLiquidity);
+}
+main();
+```
 <a name="MarketData+createProxyInstance"></a>
 
 ### traderInterface.createProxyInstance(provider)

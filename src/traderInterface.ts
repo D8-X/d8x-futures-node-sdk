@@ -177,21 +177,6 @@ export default class TraderInterface extends MarketData {
    * @param {Signer} signer Signer that will deposit liquidity
    * @param {string} poolSymbolName  Name of pool symbol (e.g. MATIC)
    * @param {number} amountCC  Amount in pool-collateral currency
-   * @example
-   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(LiquidityProviderTool);
-   *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;
-   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-   *   await lqudtProviderTool.createProxyInstance();
-   *   // add liquidity
-   *   await lqudtProviderTool.setAllowance("MATIC");
-   *   let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
-   *   console.log(respAddLiquidity);
-   * }
-   * main();
    *
    * @return Transaction object
    */
@@ -219,20 +204,6 @@ export default class TraderInterface extends MarketData {
    * @param {Signer} signer Signer that will initiate liquidity withdrawal
    * @param {string} poolSymbolName Name of pool symbol (e.g. MATIC).
    * @param {string} amountPoolShares Amount in pool-shares, removes everything if > available amount.
-   * @example
-   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(LiquidityProviderTool);
-   *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;
-   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-   *   await lqudtProviderTool.createProxyInstance();
-   *   // initiate withdrawal
-   *   let respRemoveLiquidity = await lqudtProviderTool.initiateLiquidityWithdrawal("MATIC", 0.1);
-   *   console.log(respRemoveLiquidity);
-   * }
-   * main();
    *
    * @return Transaction object.
    */
@@ -257,20 +228,6 @@ export default class TraderInterface extends MarketData {
    * The address loses pool shares in return.
    * @param {Signer} signer Signer that will execute the liquidity withdrawal
    * @param poolSymbolName
-   * @example
-   * import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(LiquidityProviderTool);
-   *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   const pk: string = <string>process.env.PK;
-   *   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-   *   await lqudtProviderTool.createProxyInstance();
-   *   // remove liquidity
-   *   let respRemoveLiquidity = await lqudtProviderTool.executeLiquidityWithdrawal("MATIC", 0.1);
-   *   console.log(respRemoveLiquidity);
-   * }
-   * main();
    *
    * @returns Transaction object.
    */
