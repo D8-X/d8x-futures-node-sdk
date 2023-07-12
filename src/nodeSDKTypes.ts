@@ -335,7 +335,7 @@ export const DEFAULT_CONFIG: NodeSDKConfig[] = constConfig;
 // backends that have an active referral system
 export interface APIReferralCodePayload {
   code: string;
-  executorAddr: string;
+  referrerAddr: string;
   agencyAddr: string;
   createdOn: number;
   traderRebatePerc: number;
