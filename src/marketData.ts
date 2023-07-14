@@ -243,7 +243,9 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let resArray: Array<MarginAccount> = [];
     let symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
-    if (symbols.length == 1) {
+    if (symbols.length < 1) {
+      throw new Error(`No perpetuals found for symbol ${symbol}`);
+    } else if (symbols.length < 2) {
       let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[0], overrides);
       resArray.push(res!);
     } else {
