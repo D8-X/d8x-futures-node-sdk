@@ -50,6 +50,7 @@ export interface NodeSDKConfig {
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
   shareTokenABI?: ContractInterface | undefined;
+  priceFeedConfig?: PriceFeedConfig;
 }
 
 export interface MarginAccount {

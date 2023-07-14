@@ -20,7 +20,7 @@ export default class PriceFeeds {
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
-    let configs = <PriceFeedConfig[]>require("./config/priceFeedConfig.json");
+    let configs = <PriceFeedConfig[]>(dataHandler.config.priceFeedConfig ?? require("./config/priceFeedConfig.json"));
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config);
     this.dataHandler = dataHandler;

@@ -77,6 +77,8 @@ export default class PerpetualDataHandler {
   protected poolStaticInfos: Array<PoolStaticInfo>;
   protected symbolList: Map<string, string>; //mapping 4-digit symbol <-> long format
 
+  // config
+  public config: NodeSDKConfig;
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
@@ -106,6 +108,7 @@ export default class PerpetualDataHandler {
   protected nestedPerpetualIDs: number[][];
 
   public constructor(config: NodeSDKConfig) {
+    this.config = config;
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
