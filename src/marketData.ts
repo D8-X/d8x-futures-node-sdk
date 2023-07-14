@@ -2,7 +2,7 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { CallOverrides, Contract } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { formatUnits } from "@ethersproject/units";
-import { ERC20__factory, LimitOrderBook } from "./contracts";
+import { ERC20__factory, LimitOrderBook, Multicall3 } from "./contracts";
 import { IClientOrder } from "./contracts/LimitOrderBook";
 import {
   ABK64x64ToFloat,
@@ -33,6 +33,7 @@ import {
   SELL_SIDE,
   SmartContractOrder,
   ZERO_ADDRESS,
+  ZERO_ORDER_ID,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import PriceFeeds from "./priceFeeds";
@@ -190,9 +191,13 @@ export default class MarketData extends PerpetualDataHandler {
     // open orders requested only for given symbol
     let resArray: Array<{ orders: Order[]; orderIds: string[] }> = [];
     const symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
-    for (let k = 0; k < symbols.length; k++) {
-      let res = await this._openOrdersOfPerpetual(traderAddr, symbols[k], overrides);
+    if (symbols.length < 1) {
+      throw new Error(`No perpetuals found for symbol ${symbol}`);
+    } else if (symbols.length < 2) {
+      let res = await this._openOrdersOfPerpetual(traderAddr, symbols[0], overrides);
       resArray.push(res!);
+    } else {
+      resArray = await this._openOrdersOfPerpetuals(traderAddr, symbols, overrides);
     }
     return resArray;
   }
@@ -213,6 +218,24 @@ export default class MarketData extends PerpetualDataHandler {
     const orders = await this.openOrdersOnOrderBook(traderAddr, orderBookContract, overrides);
     const digests = await MarketData.orderIdsOfTrader(traderAddr, orderBookContract, overrides);
     return { orders: orders, orderIds: digests };
+  }
+
+  /**
+   * All open orders for a trader-address and a given perpetual symbol.
+   * @param {string} traderAddr Address of the trader for which we get the open orders.
+   * @param {string} symbol perpetual-symbol of the form ETH-USD-MATIC
+   * @returns open orders and order ids
+   */
+  private async _openOrdersOfPerpetuals(
+    traderAddr: string,
+    symbols: string[],
+    overrides?: CallOverrides
+  ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
+    // open orders requested only for given symbol
+    const orderBookContracts = symbols.map((symbol) => this.getOrderBookContract(symbol));
+    const orders = await this._openOrdersOnOrderBooks(traderAddr, orderBookContracts, overrides);
+    const digests = await this._orderIdsOfTrader(traderAddr, orderBookContracts, overrides);
+    return symbols.map((_symbol, i) => ({ orders: orders[i], orderIds: digests[i] }));
   }
 
   /**
@@ -249,7 +272,7 @@ export default class MarketData extends PerpetualDataHandler {
       let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[0], overrides);
       resArray.push(res!);
     } else {
-      resArray = await this._positionRiskForTraderInPool(traderAddr, symbols, overrides);
+      resArray = await this._positionRiskForTraderInPerpetuals(traderAddr, symbols, overrides);
     }
     return resArray;
   }
@@ -283,7 +306,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {string} symbol perpetual symbol of the form ETH-USD-MATIC
    * @returns MarginAccount struct for the trader
    */
-  protected async _positionRiskForTraderInPool(
+  protected async _positionRiskForTraderInPerpetuals(
     traderAddr: string,
     symbols: string[],
     overrides?: CallOverrides
@@ -1002,6 +1025,105 @@ export default class MarketData extends PerpetualDataHandler {
       from = from + bulkSize;
     }
     return userFriendlyOrders;
+  }
+
+  /**
+   * Query smart contract to get user orders and convert to user friendly order format.
+   * @param {string} traderAddr Address of trader.
+   * @param {ethers.Contract} orderBookContract Instance of order book.
+   * @returns {Order[]} Array of user friendly order struct.
+   * @ignore
+   */
+  protected async _openOrdersOnOrderBooks(
+    traderAddr: string,
+    orderBookContracts: LimitOrderBook[],
+    overrides?: CallOverrides
+  ): Promise<Order[][]> {
+    // eliminate empty orders and map to user friendly orders
+    const numOBs = orderBookContracts.length;
+
+    let userFriendlyOrders = new Array(numOBs).fill(0).map(() => new Array<Order>());
+
+    let haveMoreOrders = new Array(numOBs).fill(true);
+    let from = new Array(numOBs).fill(0);
+    const bulkSize = 15;
+
+    while (haveMoreOrders.some((x) => x)) {
+      // filter by books with some orders left
+      const contracts = orderBookContracts.filter((_c, i) => haveMoreOrders[i]);
+      // prepare calls
+      const ordersCalls: Multicall3.Call3Struct[] = contracts.map((c, i) => ({
+        target: c.address,
+        allowFailure: true,
+        callData: c.interface.encodeFunctionData("getOrders", [traderAddr, from[i], bulkSize]),
+      }));
+      // call
+      const encodedOrders = await this.multicall!.callStatic.aggregate3(ordersCalls, overrides || {});
+      // parse
+      const allOrders: IClientOrder.ClientOrderStructOutput[][] = encodedOrders.map(({ success, returnData }, i) => {
+        if (!success) throw new Error(`Failed to get orders for order book ${contracts[i].address}`);
+        return contracts[i].interface.decodeFunctionResult("getOrders", returnData)[0];
+      });
+      // arrange
+      for (let j = 0; j < contracts.length; j++) {
+        let orders = allOrders[j].filter((o) => o.traderAddr != ZERO_ADDRESS);
+        let i = orderBookContracts.findIndex((c) => c.address == contracts[j].address);
+        let k = 0;
+        while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
+          userFriendlyOrders[i].push(PerpetualDataHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
+          k++;
+        }
+        haveMoreOrders[i] = orders.length > 0 && orders[orders.length - 1].traderAddr != ZERO_ADDRESS;
+        from[i] = from[i] + bulkSize;
+      }
+    }
+    return userFriendlyOrders;
+  }
+
+  protected async _orderIdsOfTrader(
+    traderAddr: string,
+    orderBookContracts: LimitOrderBook[],
+    overrides?: CallOverrides
+  ): Promise<string[][]> {
+    // eliminate empty orders and map to user friendly orders
+    const numOBs = orderBookContracts.length;
+
+    let orderDigests = new Array(numOBs).fill(0).map(() => new Array<string>());
+
+    let haveMoreOrders = new Array(numOBs).fill(true);
+    let from = new Array(numOBs).fill(0);
+    const bulkSize = 15;
+
+    while (haveMoreOrders.some((x) => x)) {
+      // filter by books with some orders left
+      const contracts = orderBookContracts.filter((_c, i) => haveMoreOrders[i]);
+      // prepare alls
+      const digestsCalls: Multicall3.Call3Struct[] = contracts.map((c, i) => ({
+        target: c.address,
+        allowFailure: true,
+        callData: c.interface.encodeFunctionData("limitDigestsOfTrader", [traderAddr, from[i], bulkSize]),
+      }));
+      // call
+      const encodedDigests = await this.multicall!.callStatic.aggregate3(digestsCalls, overrides || {});
+      // parse
+      const allDigests: string[][] = encodedDigests.map(({ success, returnData }, i) => {
+        if (!success) throw new Error(`Failed to get orders for order book ${contracts[i].address}`);
+        return contracts[i].interface.decodeFunctionResult("limitDigestsOfTrader", returnData)[0];
+      });
+      // arrange
+      for (let j = 0; j < contracts.length; j++) {
+        let digests = allDigests[j].filter((d) => d != ZERO_ORDER_ID);
+        let i = orderBookContracts.findIndex((c) => c.address == contracts[j].address);
+        let k = 0;
+        while (k < digests.length && digests[k] != ZERO_ORDER_ID) {
+          orderDigests[i].push(digests[k]);
+          k++;
+        }
+        haveMoreOrders[i] = digests.length > 0 && digests[digests.length - 1] != ZERO_ORDER_ID;
+        from[i] = from[i] + bulkSize;
+      }
+    }
+    return orderDigests;
   }
 
   /**

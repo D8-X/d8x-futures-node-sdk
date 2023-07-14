@@ -256,13 +256,13 @@ describe("readOnly", () => {
     });
     it("openOrders in perpetual", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
-      console.log("order ids=", ordersStruct[0].orderIds);
-      console.log("orders   =", ordersStruct[0].orders);
+      console.log("order ids in perpetual=", ordersStruct[0].orderIds);
+      console.log("orders in perpetual  =", ordersStruct[0].orders);
       orderIds = ordersStruct[0].orderIds;
     });
     it("openOrders in pool", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC");
-      console.log("order =", ordersStruct);
+      console.log("orders in pool =", ordersStruct);
     });
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
