@@ -12,6 +12,8 @@ import {
   LimitOrderBookFactory,
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
+  Multicall3,
+  Multicall3__factory,
 } from "./contracts";
 import { IPerpetualOrder } from "./contracts/IPerpetualManager";
 import { IClientOrder } from "./contracts/LimitOrderBook";
@@ -40,6 +42,7 @@ import {
   MASK_MARKET_ORDER,
   MASK_STOP_ORDER,
   MAX_64x64,
+  MULTICALL_ADDRESS,
   NodeSDKConfig,
   Order,
   ORDER_MAX_DURATION_SEC,
@@ -86,7 +89,11 @@ export default class PerpetualDataHandler {
   protected lobFactoryABI: ContractInterface;
   protected lobFactoryAddr: string | undefined;
   protected lobABI: ContractInterface;
+  // share token
   protected shareTokenABI: ContractInterface;
+  // multicall
+  protected multicall: Multicall3 | null = null;
+  // provider
   protected nodeURL: string;
   protected provider: Provider | null = null;
 
@@ -133,9 +140,9 @@ export default class PerpetualDataHandler {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
-
     this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides || {});
     this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, signerOrProvider);
+    this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
 
@@ -516,6 +523,16 @@ export default class PerpetualDataHandler {
     return mgn;
   }
 
+  /**
+   * Get trader state from the blockchain and parse into a human-readable margin account
+   * @param traderAddr Trader address
+   * @param symbol Perpetual symbol
+   * @param symbolToPerpStaticInfo Symbol to perp static info mapping
+   * @param _proxyContract Proxy contract instance
+   * @param _pxS2S3 Prices [S2, S3]
+   * @param overrides Optional overrides for eth_call
+   * @returns A Margin account
+   */
   public static async getMarginAccount(
     traderAddr: string,
     symbol: string,
@@ -535,6 +552,55 @@ export default class PerpetualDataHandler {
       overrides || {}
     );
     return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
+  }
+
+  /**
+   * Get trader states from the blockchain and parse into a list of human-readable margin accounts
+   * @param traderAddrs List of trader addresses
+   * @param symbols List of symbols
+   * @param symbolToPerpStaticInfo Symbol to perp static info mapping
+   * @param _multicall Multicall3 contract instance
+   * @param _proxyContract Proxy contract instance
+   * @param _pxS2S3s  List of price pairs, [[S2, S3] (1st perp), [S2, S3] (2nd perp), ... ]
+   * @param overrides Optional eth_call overrides
+   * @returns List of margin accounts
+   */
+  public static async getMarginAccounts(
+    traderAddrs: string[],
+    symbols: string[],
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _multicall: Multicall3,
+    _proxyContract: IPerpetualManager,
+    _pxS2S3s: number[][],
+    overrides?: CallOverrides
+  ): Promise<MarginAccount[]> {
+    if (
+      traderAddrs.length != symbols.length ||
+      traderAddrs.length != _pxS2S3s.length ||
+      symbols.length != _pxS2S3s.length
+    ) {
+      throw new Error("traderAddr, symbol and pxS2S3 should all have the same length");
+    }
+    const proxyCalls: Multicall3.Call3Struct[] = traderAddrs.map((_addr, i) => ({
+      target: _proxyContract.address,
+      allowFailure: true,
+      callData: _proxyContract.interface.encodeFunctionData("getTraderState", [
+        PerpetualDataHandler.symbolToPerpetualId(symbols[i], symbolToPerpStaticInfo),
+        _addr,
+        _pxS2S3s[i].map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      ]),
+    }));
+    const encodedResults = await _multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const traderStates: BigNumber[][] = encodedResults.map(({ success, returnData }, i) => {
+      if (!success) throw new Error(`Failed to get perp info for ${symbols[i]}`);
+      return _proxyContract.interface.decodeFunctionResult("getTraderState", returnData)[0];
+    });
+    return traderStates.map((traderState, i) =>
+      PerpetualDataHandler.buildMarginAccountFromState(symbols[i], traderState, symbolToPerpStaticInfo, [
+        _pxS2S3s[i][0],
+        _pxS2S3s[i][1],
+      ])
+    );
   }
 
   protected static async _queryPerpetualPrice(
@@ -579,7 +645,6 @@ export default class PerpetualDataHandler {
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
-    let ccy = symbol.split("-");
     let [S2, S3] = [indexPrices[0], indexPrices[1]];
     if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
       S3 = S2;
@@ -591,6 +656,24 @@ export default class PerpetualDataHandler {
       [S2, S3].map(floatToABK64x64) as [BigNumber, BigNumber],
       overrides || {}
     );
+    return PerpetualDataHandler._parseAMMState(symbol, ammState, indexPrices, symbolToPerpStaticInfo);
+  }
+
+  protected static _parseAMMState(
+    symbol: string,
+    ammState: BigNumber[],
+    indexPrices: [number, number, boolean, boolean],
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ) {
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
+    let ccy = symbol.split("-");
+    let [S2, S3] = [indexPrices[0], indexPrices[1]];
+    if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
+      S3 = S2;
+    } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
+      S3 = 1;
+    }
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state: PerpetualState = {
       id: perpId,

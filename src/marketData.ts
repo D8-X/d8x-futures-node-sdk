@@ -243,9 +243,11 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let resArray: Array<MarginAccount> = [];
     let symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
-    for (let k = 0; k < symbols.length; k++) {
-      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[k], overrides);
+    if (symbols.length == 1) {
+      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[0], overrides);
       resArray.push(res!);
+    } else {
+      resArray = await this._positionRiskForTraderInPool(traderAddr, symbols, overrides);
     }
     return resArray;
   }
@@ -256,7 +258,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {string} symbol perpetual symbol of the form ETH-USD-MATIC
    * @returns MarginAccount struct for the trader
    */
-  private async _positionRiskForTraderInPerpetual(
+  protected async _positionRiskForTraderInPerpetual(
     traderAddr: string,
     symbol: string,
     overrides?: CallOverrides
@@ -268,6 +270,35 @@ export default class MarketData extends PerpetualDataHandler {
       this.symbolToPerpStaticInfo,
       this.proxyContract!,
       [obj.idxPrices[0], obj.idxPrices[1]],
+      overrides
+    );
+    return mgnAcct;
+  }
+
+  /**
+   * Information about the position open by a given trader in a given perpetual contract.
+   * @param {string} traderAddr Address of the trader for which we get the position risk.
+   * @param {string} symbol perpetual symbol of the form ETH-USD-MATIC
+   * @returns MarginAccount struct for the trader
+   */
+  protected async _positionRiskForTraderInPool(
+    traderAddr: string,
+    symbols: string[],
+    overrides?: CallOverrides
+  ): Promise<MarginAccount[]> {
+    let S2S3 = await Promise.all(
+      symbols.map(async (symbol) => {
+        let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+        return [obj.idxPrices[0], obj.idxPrices[1]];
+      })
+    );
+    let mgnAcct = await PerpetualDataHandler.getMarginAccounts(
+      Array(symbols.length).fill(traderAddr),
+      symbols,
+      this.symbolToPerpStaticInfo,
+      this.multicall!,
+      this.proxyContract!,
+      S2S3,
       overrides
     );
     return mgnAcct;
@@ -1286,8 +1317,7 @@ export default class MarketData extends PerpetualDataHandler {
       overrides
     );
     // put together all info
-    for (let k = 0; k < perpStateInfos.length; k++) {
-      const perp = perpStateInfos[k];
+    for (const perp of perpStateInfos) {
       let symbol3s = _perpetualIdToSymbol.get(perp.id);
       let info = _symbolToPerpStaticInfo.get(symbol3s!);
       const idxPriceS2Pair = idxPriceMap.get(info!.S2Symbol);

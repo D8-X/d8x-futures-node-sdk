@@ -12,7 +12,7 @@ export const COLLATERAL_CURRENCY_QUANTO = 2;
 export const PERP_STATE_STR = ["INVALID", "INITIALIZING", "NORMAL", "EMERGENCY", "CLEARED"];
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_ORDER_ID = HashZero;
-
+export const MULTICALL_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
 export const ONE_64x64 = BigNumber.from("0x010000000000000000");
 export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 export const MAX_UINT_256 = BigNumber.from(2).pow(256).sub(BigNumber.from(1));
