@@ -344,28 +344,101 @@ export default class MarketData extends PerpetualDataHandler {
     indexPriceInfo?: [number, number, boolean, boolean],
     overrides?: CallOverrides
   ): Promise<{ newPositionRisk: MarginAccount; orderCost: number }> {
-    if (this.proxyContract == null) {
+    if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    // fetch undefined data
-    if (account == undefined) {
-      account = (await this.positionRisk(traderAddr, order.symbol, overrides))[0];
-    }
+
+    // fetch prices
     if (indexPriceInfo == undefined) {
-      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(account.symbol);
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
       indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
     }
 
-    let lotSizeBC = MarketData._getLotSize(account.symbol, this.symbolToPerpStaticInfo);
+    // signed trade amount
+    let tradeAmountBC = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
+
+    // create all calls
+    const poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
+    const perpId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, this.symbolToPerpStaticInfo);
+    const fS2S3 = [indexPriceInfo[0], indexPriceInfo[1]].map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber];
+    const proxyCalls: Multicall3.Call3Struct[] = [
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("getTraderState", [perpId, traderAddr, fS2S3]),
+      },
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, fS2S3]),
+      },
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("queryExchangeFee", [
+          poolId,
+          traderAddr,
+          order.brokerAddr ?? ZERO_ADDRESS,
+        ]),
+      },
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [
+          perpId,
+          floatToABK64x64(tradeAmountBC),
+          fS2S3,
+        ]),
+      },
+    ];
+    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+
+    // positionRisk to apply this trade on: if not given, defaults to the current trader's position
+    if (!account) {
+      const traderState = this.proxyContract.interface.decodeFunctionResult(
+        "getTraderState",
+        encodedResults[0].returnData
+      )[0];
+      account = MarketData.buildMarginAccountFromState(order.symbol, traderState, this.symbolToPerpStaticInfo, [
+        indexPriceInfo[0],
+        indexPriceInfo[1],
+      ]);
+    }
+
+    // perpetualState, for prices
+    const ammState = this.proxyContract.interface.decodeFunctionResult("getAMMState", encodedResults[1].returnData)[0];
+    const perpetualState = PerpetualDataHandler._parseAMMState(
+      order.symbol,
+      ammState,
+      indexPriceInfo,
+      this.symbolToPerpStaticInfo
+    );
+    const [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
+
+    // exchange fee based on this trader's address (volume, token holding, etc) and his broker address (if any)
+    const exchangeFeeTbps = this.proxyContract.interface.decodeFunctionResult(
+      "queryExchangeFee",
+      encodedResults[2].returnData
+    )[0];
+
+    // price for this order = limit price (conservative) if given, else the current perp price
+    let tradePrice: number;
+    if (order.limitPrice == undefined) {
+      const fPrice = this.proxyContract.interface.decodeFunctionResult(
+        "queryPerpetualPrice",
+        encodedResults[3].returnData
+      )[0];
+      tradePrice = ABK64x64ToFloat(fPrice);
+    } else {
+      tradePrice = order.limitPrice;
+    }
+
+    // Current state:
+    let lotSizeBC = MarketData._getLotSize(order.symbol, this.symbolToPerpStaticInfo);
     // Too small, no change to account
     if (Math.abs(order.quantity) < lotSizeBC) {
       return { newPositionRisk: account, orderCost: 0 };
     }
-
-    // Current state:
-    // perp (for FXs and such)
-    let perpetualState = await this.getPerpetualState(order.symbol, indexPriceInfo, overrides);
-    let [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
     // cash in margin account: upon trading, unpaid funding will be realized
     let currentMarginCashCC = account.collateralCC;
     // signed position, still correct if side is closed (==0)
@@ -374,8 +447,6 @@ export default class MarketData extends PerpetualDataHandler {
     let currentLockedInQC = account.entryPrice * currentPositionBC;
 
     // New trader state:
-    // signed trade amount
-    let tradeAmountBC = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
     // signed position
     let newPositionBC = currentPositionBC + tradeAmountBC;
     if (Math.abs(newPositionBC) < 10 * lotSizeBC) {
@@ -385,19 +456,6 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let newSide = newPositionBC > 0 ? BUY_SIDE : newPositionBC < 0 ? SELL_SIDE : CLOSED_SIDE;
 
-    // price for this order = limit price (conservative) if given, else the current perp price
-    let tradePrice =
-      order.limitPrice ??
-      (await this.getPerpetualPrice(order.symbol, tradeAmountBC, [indexPriceInfo[0], indexPriceInfo[1]], overrides));
-
-    // fees
-    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
-    let exchangeFeeTbps = await this.proxyContract.queryExchangeFee(
-      poolId,
-      traderAddr,
-      order.brokerAddr ?? ZERO_ADDRESS,
-      overrides || {}
-    );
     let exchangeFeeCC = (Math.abs(tradeAmountBC) * exchangeFeeTbps * 1e-5 * S2) / S3;
     let brokerFeeCC = (Math.abs(tradeAmountBC) * (order.brokerFeeTbps ?? 0) * 1e-5 * S2) / S3;
     let referralFeeCC = this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
@@ -423,7 +481,7 @@ export default class MarketData extends PerpetualDataHandler {
       let initialMarginRate = this.symbolToPerpStaticInfo.get(account.symbol)!.initialMarginRate;
       targetLvg = isFlip || isOpen ? order.leverage ?? 1 / initialMarginRate : 0;
       let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
-      traderDepositCC = getDepositAmountForLvgTrade(b0, pos0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
+      traderDepositCC = getDepositAmountForLvgTrade(pos0, b0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
       // fees are paid from wallet in this case
       traderDepositCC += exchangeFeeCC + brokerFeeCC + referralFeeCC;
     }
