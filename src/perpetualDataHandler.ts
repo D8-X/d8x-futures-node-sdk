@@ -1,4 +1,4 @@
-import { FormatTypes } from "@ethersproject/abi";
+import { FormatTypes, Interface } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
@@ -15,6 +15,7 @@ import {
   Multicall3,
   Multicall3__factory,
 } from "./contracts";
+import { ERC20Interface } from "./contracts/ERC20";
 import { IPerpetualOrder } from "./contracts/IPerpetualManager";
 import { IClientOrder } from "./contracts/LimitOrderBook";
 import {
@@ -34,6 +35,7 @@ import {
   COLLATERAL_CURRENCY_QUOTE,
   CollaterlCCY,
   DEFAULT_CONFIG,
+  ERC20_ABI,
   loadABIs,
   MarginAccount,
   MASK_CLOSE_ONLY,
@@ -136,15 +138,13 @@ export default class PerpetualDataHandler {
         network = await signerOrProvider.getNetwork();
       }
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       throw new Error(`Unable to connect to network.`);
     }
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
-    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides || {});
-    this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, signerOrProvider);
     this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
@@ -169,15 +169,32 @@ export default class PerpetualDataHandler {
    *
    */
   protected async _fillSymbolMaps(overrides?: CallOverrides) {
-    if (!this.proxyContract || !this.lobFactoryContract) {
-      throw Error("proxy or limit order book not defined");
+    if (this.proxyContract == null || this.multicall == null || this.signerOrProvider == null) {
+      throw new Error("proxy or multicall not defined");
     }
     let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(this.proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
 
+    const IERC20 = new Interface(ERC20_ABI) as ERC20Interface;
+
+    const proxyCalls: Multicall3.Call3Struct[] = poolInfo.poolMarginTokenAddr.map((tokenAddr) => ({
+      target: tokenAddr,
+      allowFailure: false,
+      callData: IERC20.encodeFunctionData("decimals"),
+    }));
+    proxyCalls.push({
+      target: this.proxyAddr,
+      allowFailure: false,
+      callData: this.proxyContract.interface.encodeFunctionData("getOrderBookFactoryAddress"),
+    });
+
+    // multicall
+    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+
+    // decimals
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
-      let decimals = await ERC20__factory.connect(poolInfo.poolMarginTokenAddr[j], this.provider!).decimals();
+      const decimals = IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number;
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
@@ -189,6 +206,14 @@ export default class PerpetualDataHandler {
       };
       this.poolStaticInfos.push(info);
     }
+
+    // order book factory
+    this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
+      "getOrderBookFactoryAddress",
+      encodedResults[0].returnData
+    )[0] as string;
+    this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, this.signerOrProvider);
+
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
       this.proxyContract,
       this.nestedPerpetualIDs,

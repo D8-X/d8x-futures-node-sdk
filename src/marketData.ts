@@ -2,7 +2,8 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { CallOverrides, Contract } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { formatUnits } from "@ethersproject/units";
-import { ERC20__factory, LimitOrderBook, Multicall3 } from "./contracts";
+import { ERC20__factory, IPerpetualManager, LimitOrderBook, Multicall3 } from "./contracts";
+import { PerpStorage } from "./contracts/IPerpetualManager";
 import { IClientOrder } from "./contracts/LimitOrderBook";
 import {
   ABK64x64ToFloat,
@@ -147,11 +148,12 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns {ExchangeInfo} Array of static data for all the pools and perpetuals in the system.
    */
   public async exchangeInfo(overrides?: CallOverrides): Promise<ExchangeInfo> {
-    if (this.proxyContract == null) {
+    if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     return await MarketData._exchangeInfo(
       this.proxyContract,
+      this.multicall,
       this.poolStaticInfos,
       this.symbolToPerpStaticInfo,
       this.perpetualIdToSymbol,
@@ -1359,7 +1361,8 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns perpetual symbol to mid-prices mapping
    */
   private static async _queryMidPrices(
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
+    _multicall: Multicall3,
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _perpetualIdToSymbol: Map<number, string>,
@@ -1372,7 +1375,8 @@ export default class MarketData extends PerpetualDataHandler {
       chunkSize,
       _nestedPerpetualIDs
     );
-
+    // prepare calls
+    const proxyCalls: Multicall3.Call3Struct[] = [];
     let midPriceMap = new Map<string, number>();
     for (let k = 0; k < perpetualIDChunks.length; k++) {
       let indexPrices: BigNumber[] = [];
@@ -1389,7 +1393,20 @@ export default class MarketData extends PerpetualDataHandler {
         indexPrices.push(S2);
         indexPrices.push(S3);
       }
-      let fMidPrice = await _proxyContract.queryMidPrices(perpetualIDChunks[k], indexPrices, overrides || {});
+      proxyCalls.push({
+        target: _proxyContract.address,
+        allowFailure: false,
+        callData: _proxyContract.interface.encodeFunctionData("queryMidPrices", [perpetualIDChunks[k], indexPrices]),
+      });
+    }
+    // multicall
+    const encodedResults = await _multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    // apply results
+    for (let k = 0; k < perpetualIDChunks.length; k++) {
+      let fMidPrice = _proxyContract.interface.decodeFunctionResult(
+        "queryMidPrices",
+        encodedResults[k].returnData
+      )[0] as BigNumber[];
       for (let j = 0; j < fMidPrice.length; j++) {
         let id = perpetualIDChunks[k][j];
         let symbol3s = _perpetualIdToSymbol.get(id);
@@ -1399,74 +1416,98 @@ export default class MarketData extends PerpetualDataHandler {
     return midPriceMap;
   }
 
-  private static async _queryPoolStates(
-    _proxyContract: Contract,
+  private static async _queryPoolAndPerpetualStates(
+    _proxyContract: IPerpetualManager,
+    _multicall: Multicall3,
     _poolStaticInfos: PoolStaticInfo[],
-    _numPools: number,
+    _symbolList: Map<string, string>,
+    _nestedPerpetualIDs: Array<Array<number>>,
     overrides?: CallOverrides
-  ): Promise<Array<PoolState>> {
+  ): Promise<{ pools: Array<PoolState>; perpetuals: Array<PerpetualState> }> {
     const chunkSize = 5;
+    const numPools = _nestedPerpetualIDs.length;
     let iFrom = 1;
     let poolStates: Array<PoolState> = [];
-    while (iFrom <= _numPools) {
-      let pools = await _proxyContract.getLiquidityPools(iFrom, iFrom + chunkSize, overrides || {});
-      for (let k = 0; k < pools.length; k++) {
-        let poolSymbol = _poolStaticInfos[iFrom + k - 1].poolMarginSymbol;
-        let poolState: PoolState = {
-          isRunning: pools[k].isRunning,
-          poolSymbol: poolSymbol,
-          marginTokenAddr: pools[k].marginTokenAddress,
-          poolShareTokenAddr: pools[k].shareTokenAddress,
-          defaultFundCashCC: ABK64x64ToFloat(pools[k].fDefaultFundCashCC),
-          pnlParticipantCashCC: ABK64x64ToFloat(pools[k].fPnLparticipantsCashCC),
-          totalTargetAMMFundSizeCC: ABK64x64ToFloat(pools[k].fTargetAMMFundSize),
-          brokerCollateralLotSize: ABK64x64ToFloat(pools[k].fBrokerCollateralLotSize),
-          perpetuals: [],
-        };
-        poolStates.push(poolState);
-      }
+    let perpStates: Array<PerpetualState> = [];
+    while (iFrom <= numPools) {
+      const proxyCalls: Multicall3.Call3Struct[] = [
+        // getLiquidityPools
+        {
+          target: _proxyContract.address,
+          allowFailure: false,
+          callData: _proxyContract.interface.encodeFunctionData("getLiquidityPools", [iFrom, iFrom + chunkSize - 1]), // from-to includes "to"
+        },
+        // getPerpetuals
+        {
+          target: _proxyContract.address,
+          allowFailure: false,
+          callData: _proxyContract.interface.encodeFunctionData("getPerpetuals", [
+            _nestedPerpetualIDs.slice(iFrom - 1, iFrom + chunkSize - 1).flat(), // from-to does not include "to"
+          ]),
+        },
+      ];
+      // multicall
+      const encodedResults = await _multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+      const pools = _proxyContract.interface.decodeFunctionResult(
+        "getLiquidityPools",
+        encodedResults[0].returnData
+      )[0] as PerpStorage.LiquidityPoolDataStructOutput[];
+      const perps = _proxyContract.interface.decodeFunctionResult(
+        "getPerpetuals",
+        encodedResults[1].returnData
+      )[0] as PerpStorage.PerpetualDataStructOutput[];
+
+      poolStates = poolStates.concat(MarketData._poolDataToPoolState(pools, _poolStaticInfos));
+      perpStates = perpStates.concat(MarketData._perpetualDataToPerpetualState(perps, _symbolList));
       iFrom = iFrom + chunkSize + 1;
     }
+    return { pools: poolStates, perpetuals: perpStates };
+  }
+
+  protected static _poolDataToPoolState(
+    _liquidityPools: PerpStorage.LiquidityPoolDataStructOutput[],
+    _poolStaticInfos: PoolStaticInfo[]
+  ): PoolState[] {
+    const poolStates = _liquidityPools.map(
+      (pool, k) =>
+        ({
+          isRunning: pool.isRunning,
+          poolSymbol: _poolStaticInfos[k].poolMarginSymbol,
+          marginTokenAddr: pool.marginTokenAddress,
+          poolShareTokenAddr: pool.shareTokenAddress,
+          defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC),
+          pnlParticipantCashCC: ABK64x64ToFloat(pool.fPnLparticipantsCashCC),
+          totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize),
+          brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
+          perpetuals: [],
+        } as PoolState)
+    );
     return poolStates;
   }
 
-  private static async _queryPerpetualStates(
-    _proxyContract: Contract,
-    _nestedPerpetualIDs: Array<Array<number>>,
-    _symbolList: Map<string, string>,
-    overrides?: CallOverrides
-  ) {
-    // what is the maximal number of queries at once?
-    const chunkSize = 10;
-    let perpetualIDChunks: Array<Array<number>> = PerpetualDataHandler.nestedIDsToChunks(
-      chunkSize,
-      _nestedPerpetualIDs
-    );
-    let perpStateInfos = new Array<PerpetualState>();
-    for (let k = 0; k < perpetualIDChunks.length; k++) {
-      let perps = await _proxyContract.getPerpetuals(perpetualIDChunks[k], overrides || {});
-      for (let j = 0; j < perps.length; j++) {
-        let PerpetualState: PerpetualState = {
-          id: perps[j].id,
-          state: PERP_STATE_STR[perps[j].state],
-          baseCurrency: contractSymbolToSymbol(perps[j].S2BaseCCY, _symbolList)!,
-          quoteCurrency: contractSymbolToSymbol(perps[j].S2QuoteCCY, _symbolList)!,
-          indexPrice: 0, //fill later
-          collToQuoteIndexPrice: 0, //fill later
-          markPrice: ABK64x64ToFloat(perps[j].currentMarkPremiumRate.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
-          midPrice: 0, // fill later
-          currentFundingRateBps: 1e4 * ABK64x64ToFloat(perps[j].fCurrentFundingRate),
-          openInterestBC: ABK64x64ToFloat(perps[j].fOpenInterest),
-          isMarketClosed: false, //fill later
-        };
-        perpStateInfos.push(PerpetualState);
-      }
-    }
-    return perpStateInfos;
+  protected static _perpetualDataToPerpetualState(
+    _perpetuals: PerpStorage.PerpetualDataStructOutput[],
+    _symbolList: Map<string, string>
+  ): PerpetualState[] {
+    const perpStates = _perpetuals.map((perp) => ({
+      id: perp.id,
+      state: PERP_STATE_STR[perp.state],
+      baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY, _symbolList)!,
+      quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY, _symbolList)!,
+      indexPrice: 0, //fill later
+      collToQuoteIndexPrice: 0, //fill later
+      markPrice: ABK64x64ToFloat(perp.currentMarkPremiumRate.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
+      midPrice: 0, // fill later
+      currentFundingRateBps: 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate),
+      openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
+      isMarketClosed: false, //fill later
+    }));
+    return perpStates;
   }
 
   public static async _exchangeInfo(
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
+    _multicall: Multicall3,
     _poolStaticInfos: Array<PoolStaticInfo>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _perpetualIdToSymbol: Map<number, string>,
@@ -1478,24 +1519,25 @@ export default class MarketData extends PerpetualDataHandler {
     // get the factory address (shared among all pools)
     let factory = _poolStaticInfos[0].oracleFactoryAddr;
     let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
-    const numPools = _nestedPerpetualIDs.length;
 
-    // get all prices from off-chain price-sources
+    // get all prices from off-chain price-sources: no RPC calls
     let idxPriceMap = await MarketData._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter);
     // query mid-prices from on-chain conditional on the off-chain prices
     let midPriceMap: Map<string, number> = await MarketData._queryMidPrices(
       _proxyContract,
+      _multicall,
       _nestedPerpetualIDs,
       _symbolToPerpStaticInfo,
       _perpetualIdToSymbol,
       idxPriceMap,
       overrides
     );
-    let poolStateInfos = await MarketData._queryPoolStates(_proxyContract, _poolStaticInfos, numPools, overrides);
-    let perpStateInfos = await MarketData._queryPerpetualStates(
+    const { pools: poolStateInfos, perpetuals: perpStateInfos } = await MarketData._queryPoolAndPerpetualStates(
       _proxyContract,
-      _nestedPerpetualIDs,
+      _multicall,
+      _poolStaticInfos,
       _symbolList,
+      _nestedPerpetualIDs,
       overrides
     );
     // put together all info
