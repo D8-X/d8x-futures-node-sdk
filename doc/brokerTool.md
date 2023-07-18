@@ -18,7 +18,7 @@ require gas-payments.</p>
     * [.getCurrentBrokerVolume(poolSymbolName)](#BrokerTool+getCurrentBrokerVolume) ⇒ <code>number</code>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
-    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ContractTransaction</code>
+    * [.depositBrokerLots(poolSymbolName, lots)](#BrokerTool+depositBrokerLots) ⇒ <code>ContractTransaction</code>
     * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ContractTransaction</code>
 
@@ -298,9 +298,9 @@ async function main() {
 }
 main();
 ```
-<a name="BrokerTool+brokerDepositToDefaultFund"></a>
+<a name="BrokerTool+depositBrokerLots"></a>
 
-### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ContractTransaction</code>
+### brokerTool.depositBrokerLots(poolSymbolName, lots) ⇒ <code>ContractTransaction</code>
 <p>Deposit lots to the default fund of a given pool.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -321,9 +321,9 @@ async function main() {
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // deposit to default fund
+  // deposit to perpetuals
   await brokTool.setAllowance("MATIC");
-  let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
+  let respDeposit = await brokTool.depositBrokerLots("MATIC",1);
   console.log(respDeposit);
 }
 main();

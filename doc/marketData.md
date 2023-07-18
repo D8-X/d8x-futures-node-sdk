@@ -18,8 +18,10 @@ No gas required for the queries here.</p>
         * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
         * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
         * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
+        * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
         * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
         * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
+        * [._positionRiskForTraderInPerpetuals(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetuals) ⇒
         * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
         * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
         * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
@@ -27,7 +29,7 @@ No gas required for the queries here.</p>
         * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
         * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
-        * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
         * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
@@ -38,7 +40,7 @@ No gas required for the queries here.</p>
         * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-        * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
     * _static_
         * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
@@ -186,6 +188,19 @@ main();
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
 | symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
 
+<a name="MarketData+_openOrdersOfPerpetuals"></a>
+
+### marketData.\_openOrdersOfPerpetuals(traderAddr, symbol) ⇒
+<p>All open orders for a trader-address and a given perpetual symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>open orders and order ids</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
@@ -219,6 +234,19 @@ main();
 <a name="MarketData+_positionRiskForTraderInPerpetual"></a>
 
 ### marketData.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>MarginAccount struct for the trader</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+_positionRiskForTraderInPerpetuals"></a>
+
+### marketData.\_positionRiskForTraderInPerpetuals(traderAddr, symbol) ⇒
 <p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -339,18 +367,18 @@ main();
 ```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
-### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
+### marketData.maxOrderSizeForTrader(traderAddr, symbol) ⇒
 <p>Gets the maximal order size to open positions (increase size),
 considering the existing position, state of the perpetual
-Ignores users wallet balance.</p>
+Accoutns for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Maximal trade size, not signed</p>  
 
 | Param | Description |
 | --- | --- |
-| side | <p>BUY or SELL</p> |
-| positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
+| traderAddr | <p>Address of trader</p> |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData+maxSignedPosition"></a>
 
@@ -541,7 +569,7 @@ Result is in collateral currency</p>
 
 <a name="MarketData+getTraderLoyalityScore"></a>
 
-### marketData.getTraderLoyalityScore(traderAddr, brokerAddr) ⇒
+### marketData.getTraderLoyalityScore(traderAddr) ⇒
 <p>Calculate a type of exchange loyality score based on trader volume</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -550,7 +578,6 @@ Result is in collateral currency</p>
 | Param | Description |
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
-| brokerAddr | <p>address of the trader's broker or undefined</p> |
 
 <a name="MarketData+isMarketClosed"></a>
 

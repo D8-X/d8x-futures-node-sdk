@@ -28,7 +28,7 @@ smart-contract interactions that require gas-payments.</p></dd>
 <dd><p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
 This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p></dd>
-<dt><a href="#OrderReferrerTool">OrderReferrerTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
+<dt><a href="#OrderExecutorTool">OrderExecutorTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
 gas-payments.</p></dd>
@@ -104,7 +104,7 @@ address traderAddr; // address of the trader
 bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
 uint16 brokerFeeTbps; // broker fee in tenth of a basis point
 bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-//address referrerAddr; &lt;- will be set by LimitOrderBook
+//address executorAddr; &lt;- will be set by LimitOrderBook
 //uint64 submittedBlock &lt;- will be set by LimitOrderBook
 }</p></dd>
 </dl>
@@ -1007,7 +1007,7 @@ require gas-payments.</p>
     * [.getCurrentBrokerVolume(poolSymbolName)](#BrokerTool+getCurrentBrokerVolume) ⇒ <code>number</code>
     * [.getLotSize(poolSymbolName)](#BrokerTool+getLotSize) ⇒ <code>number</code>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
-    * [.brokerDepositToDefaultFund(poolSymbolName, lots)](#BrokerTool+brokerDepositToDefaultFund) ⇒ <code>ContractTransaction</code>
+    * [.depositBrokerLots(poolSymbolName, lots)](#BrokerTool+depositBrokerLots) ⇒ <code>ContractTransaction</code>
     * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ContractTransaction</code>
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
@@ -1306,9 +1306,9 @@ async function main() {
 }
 main();
 ```
-<a name="BrokerTool+brokerDepositToDefaultFund"></a>
+<a name="BrokerTool+depositBrokerLots"></a>
 
-### brokerTool.brokerDepositToDefaultFund(poolSymbolName, lots) ⇒ <code>ContractTransaction</code>
+### brokerTool.depositBrokerLots(poolSymbolName, lots) ⇒ <code>ContractTransaction</code>
 <p>Deposit lots to the default fund of a given pool.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
@@ -1329,9 +1329,9 @@ async function main() {
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // deposit to default fund
+  // deposit to perpetuals
   await brokTool.setAllowance("MATIC");
-  let respDeposit = await brokTool.brokerDepositToDefaultFund("MATIC",1);
+  let respDeposit = await brokTool.depositBrokerLots("MATIC",1);
   console.log(respDeposit);
 }
 main();
@@ -2507,8 +2507,10 @@ No gas required for the queries here.</p>
         * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
         * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
         * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
+        * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
         * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
         * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
+        * [._positionRiskForTraderInPerpetuals(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetuals) ⇒
         * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
         * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
         * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
@@ -2516,7 +2518,7 @@ No gas required for the queries here.</p>
         * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
         * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
-        * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
         * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
@@ -2527,7 +2529,7 @@ No gas required for the queries here.</p>
         * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
         * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-        * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+        * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
@@ -2690,6 +2692,19 @@ main();
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
 | symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
 
+<a name="MarketData+_openOrdersOfPerpetuals"></a>
+
+### marketData.\_openOrdersOfPerpetuals(traderAddr, symbol) ⇒
+<p>All open orders for a trader-address and a given perpetual symbol.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>open orders and order ids</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
@@ -2723,6 +2738,19 @@ main();
 <a name="MarketData+_positionRiskForTraderInPerpetual"></a>
 
 ### marketData.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>MarginAccount struct for the trader</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+_positionRiskForTraderInPerpetuals"></a>
+
+### marketData.\_positionRiskForTraderInPerpetuals(traderAddr, symbol) ⇒
 <p>Information about the position open by a given trader in a given perpetual contract.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -2843,18 +2871,18 @@ main();
 ```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
-### marketData.maxOrderSizeForTrader(side, positionRisk) ⇒
+### marketData.maxOrderSizeForTrader(traderAddr, symbol) ⇒
 <p>Gets the maximal order size to open positions (increase size),
 considering the existing position, state of the perpetual
-Ignores users wallet balance.</p>
+Accoutns for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Maximal trade size, not signed</p>  
 
 | Param | Description |
 | --- | --- |
-| side | <p>BUY or SELL</p> |
-| positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
+| traderAddr | <p>Address of trader</p> |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData+maxSignedPosition"></a>
 
@@ -3045,7 +3073,7 @@ Result is in collateral currency</p>
 
 <a name="MarketData+getTraderLoyalityScore"></a>
 
-### marketData.getTraderLoyalityScore(traderAddr, brokerAddr) ⇒
+### marketData.getTraderLoyalityScore(traderAddr) ⇒
 <p>Calculate a type of exchange loyality score based on trader volume</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -3054,7 +3082,6 @@ Result is in collateral currency</p>
 | Param | Description |
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
-| brokerAddr | <p>address of the trader's broker or undefined</p> |
 
 <a name="MarketData+isMarketClosed"></a>
 
@@ -3285,9 +3312,9 @@ and corresponding price information</p>
 | _perpetualIdToSymbol | <p>maps perpetual id to symbol of the form BTC-USD-MATIC</p> |
 | _idxPriceMap | <p>symbol to price/market closed</p> |
 
-<a name="OrderReferrerTool"></a>
+<a name="OrderExecutorTool"></a>
 
-## OrderReferrerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
+## OrderExecutorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
 <p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
 gas-payments.</p>
@@ -3295,17 +3322,17 @@ gas-payments.</p>
 **Kind**: global class  
 **Extends**: [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 
-* [OrderReferrerTool](#OrderReferrerTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-    * [new OrderReferrerTool(config, signer)](#new_OrderReferrerTool_new)
-    * [.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission])](#OrderReferrerTool+executeOrder) ⇒
-    * [.getAllOpenOrders(symbol)](#OrderReferrerTool+getAllOpenOrders) ⇒
-    * [.numberOfOpenOrders(symbol)](#OrderReferrerTool+numberOfOpenOrders) ⇒ <code>number</code>
-    * [.getOrderById(symbol, digest)](#OrderReferrerTool+getOrderById) ⇒
-    * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderReferrerTool+pollLimitOrders) ⇒
-    * [.isTradeable(order, indexPrices)](#OrderReferrerTool+isTradeable) ⇒
-    * [.isTradeableBatch(orders, indexPrice)](#OrderReferrerTool+isTradeableBatch) ⇒
-    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderReferrerTool+_isTradeable) ⇒
-    * [.smartContractOrderToOrder(scOrder)](#OrderReferrerTool+smartContractOrderToOrder) ⇒
+* [OrderExecutorTool](#OrderExecutorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
+    * [new OrderExecutorTool(config, signer)](#new_OrderExecutorTool_new)
+    * [.executeOrder(symbol, orderId, [executorAddr], [nonce], [submission])](#OrderExecutorTool+executeOrder) ⇒
+    * [.getAllOpenOrders(symbol)](#OrderExecutorTool+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#OrderExecutorTool+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.getOrderById(symbol, digest)](#OrderExecutorTool+getOrderById) ⇒
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderExecutorTool+pollLimitOrders) ⇒
+    * [.isTradeable(order, indexPrices)](#OrderExecutorTool+isTradeable) ⇒
+    * [.isTradeableBatch(orders, indexPrice)](#OrderExecutorTool+isTradeableBatch) ⇒
+    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
+    * [.smartContractOrderToOrder(scOrder)](#OrderExecutorTool+smartContractOrderToOrder) ⇒
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -3326,9 +3353,9 @@ gas-payments.</p>
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
-<a name="new_OrderReferrerTool_new"></a>
+<a name="new_OrderExecutorTool_new"></a>
 
-### new OrderReferrerTool(config, signer)
+### new OrderExecutorTool(config, signer)
 <p>Constructor.</p>
 
 
@@ -3339,45 +3366,45 @@ gas-payments.</p>
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // load configuration for testnet
   const config = PerpetualDataHandler.readSDKConfig("testnet");
-  // OrderReferrerTool (authentication required, PK is an environment variable with a private key)
+  // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   // Create a proxy instance to access the blockchain
   await orderTool.createProxyInstance();
 }
 main();
 ```
-<a name="OrderReferrerTool+executeOrder"></a>
+<a name="OrderExecutorTool+executeOrder"></a>
 
-### orderReferrerTool.executeOrder(symbol, orderId, [referrerAddr], [nonce], [submission]) ⇒
+### orderExecutorTool.executeOrder(symbol, orderId, [executorAddr], [nonce], [submission]) ⇒
 <p>Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>Transaction object.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | orderId | <code>string</code> | <p>ID of the order to be executed.</p> |
-| [referrerAddr] | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| [executorAddr] | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
 | [nonce] | <code>number</code> | <p>optional nonce</p> |
 | [submission] | <code>PriceFeedSubmission</code> | <p>optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual</p> |
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
   // get some open orders
   const maxOrdersToGet = 5;
@@ -3395,12 +3422,12 @@ async function main() {
 }
 main();
 ```
-<a name="OrderReferrerTool+getAllOpenOrders"></a>
+<a name="OrderExecutorTool+getAllOpenOrders"></a>
 
-### orderReferrerTool.getAllOpenOrders(symbol) ⇒
+### orderExecutorTool.getAllOpenOrders(symbol) ⇒
 <p>All the orders in the order book for a given symbol that are currently open.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>Array with all open orders and their IDs.</p>  
 
 | Param | Type | Description |
@@ -3409,13 +3436,13 @@ main();
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
@@ -3423,12 +3450,12 @@ async function main() {
 }
 main();
 ```
-<a name="OrderReferrerTool+numberOfOpenOrders"></a>
+<a name="OrderExecutorTool+numberOfOpenOrders"></a>
 
-### orderReferrerTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+### orderExecutorTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
 <p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <code>number</code> - <p>Number of open orders.</p>  
 
 | Param | Type | Description |
@@ -3437,13 +3464,13 @@ main();
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
@@ -3451,12 +3478,12 @@ async function main() {
 }
 main();
 ```
-<a name="OrderReferrerTool+getOrderById"></a>
+<a name="OrderExecutorTool+getOrderById"></a>
 
-### orderReferrerTool.getOrderById(symbol, digest) ⇒
+### orderExecutorTool.getOrderById(symbol, digest) ⇒
 <p>Get order from the digest (=id)</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>order or undefined</p>  
 
 | Param | Description |
@@ -3466,13 +3493,13 @@ main();
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
   // get order by ID
   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
@@ -3481,13 +3508,13 @@ async function main() {
 }
 main();
 ```
-<a name="OrderReferrerTool+pollLimitOrders"></a>
+<a name="OrderExecutorTool+pollLimitOrders"></a>
 
-### orderReferrerTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+### orderExecutorTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
 <p>Get a list of active conditional orders in the order book.
 This a read-only action and does not incur in gas costs.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>Array of orders and corresponding order IDs</p>  
 
 | Param | Type | Description |
@@ -3498,13 +3525,13 @@ This a read-only action and does not incur in gas costs.</p>
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
   // get all open orders
   let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
@@ -3512,12 +3539,12 @@ async function main() {
 }
 main();
 ```
-<a name="OrderReferrerTool+isTradeable"></a>
+<a name="OrderExecutorTool+isTradeable"></a>
 
-### orderReferrerTool.isTradeable(order, indexPrices) ⇒
+### orderExecutorTool.isTradeable(order, indexPrices) ⇒
 <p>Check if a conditional order can be executed</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>true if order can be executed for the current state of the perpetuals</p>  
 
 | Param | Description |
@@ -3527,13 +3554,13 @@ main();
 
 **Example**  
 ```js
-import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
-  console.log(OrderReferrerTool);
+  console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
   const config = PerpetualDataHandler.readSDKConfig("testnet");
   const pk: string = <string>process.env.PK;
-  let orderTool = new OrderReferrerTool(config, pk);
+  let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
   // check if tradeable
   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
@@ -3542,12 +3569,12 @@ async function main() {
 }
 main();
 ```
-<a name="OrderReferrerTool+isTradeableBatch"></a>
+<a name="OrderExecutorTool+isTradeableBatch"></a>
 
-### orderReferrerTool.isTradeableBatch(orders, indexPrice) ⇒
+### orderExecutorTool.isTradeableBatch(orders, indexPrice) ⇒
 <p>Check for a batch of orders on the same perpetual whether they can be traded</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>array of tradeable boolean</p>  
 
 | Param | Description |
@@ -3555,12 +3582,12 @@ main();
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
 
-<a name="OrderReferrerTool+_isTradeable"></a>
+<a name="OrderExecutorTool+_isTradeable"></a>
 
-### orderReferrerTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
+### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
 <p>Can the order be executed?</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>true if trading conditions met, false otherwise</p>  
 
 | Param | Description |
@@ -3571,12 +3598,12 @@ main();
 | blockTimestamp | <p>last observed block timestamp (hence already in past)</p> |
 | symbolToPerpInfoMap | <p>metadata</p> |
 
-<a name="OrderReferrerTool+smartContractOrderToOrder"></a>
+<a name="OrderExecutorTool+smartContractOrderToOrder"></a>
 
-### orderReferrerTool.smartContractOrderToOrder(scOrder) ⇒
+### orderExecutorTool.smartContractOrderToOrder(scOrder) ⇒
 <p>Wrapper of static method to use after mappings have been loaded into memory.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Returns**: <p>A user-friendly order struct.</p>  
 
 | Param | Description |
@@ -3585,12 +3612,12 @@ main();
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
-### orderReferrerTool.createProxyInstance(provider)
+### orderExecutorTool.createProxyInstance(provider)
 <p>Initialize the writeAccessHandler-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>createProxyInstance</code>](#WriteAccessHandler+createProxyInstance)  
 
 | Param | Description |
@@ -3599,10 +3626,10 @@ about perpetual currencies</p>
 
 <a name="WriteAccessHandler+setAllowance"></a>
 
-### orderReferrerTool.setAllowance(symbol, amount) ⇒
+### orderExecutorTool.setAllowance(symbol, amount) ⇒
 <p>Set allowance for ar margin token (e.g., MATIC, ETH, USDC)</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>setAllowance</code>](#WriteAccessHandler+setAllowance)  
 **Returns**: <p>ContractTransaction</p>  
 
@@ -3613,19 +3640,19 @@ about perpetual currencies</p>
 
 <a name="WriteAccessHandler+getAddress"></a>
 
-### orderReferrerTool.getAddress() ⇒ <code>string</code>
+### orderExecutorTool.getAddress() ⇒ <code>string</code>
 <p>Address corresponding to the private key used to instantiate this class.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getAddress</code>](#WriteAccessHandler+getAddress)  
 **Returns**: <code>string</code> - <p>Address of this wallet.</p>  
 <a name="WriteAccessHandler+swapForMockToken"></a>
 
-### orderReferrerTool.swapForMockToken(symbol, amountToPay) ⇒
+### orderExecutorTool.swapForMockToken(symbol, amountToPay) ⇒
 <p>Converts a given amount of chain native currency (test MATIC)
 into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>swapForMockToken</code>](#WriteAccessHandler+swapForMockToken)  
 **Returns**: <p>Transaction object</p>  
 
@@ -3636,10 +3663,10 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
-### orderReferrerTool.getOrderBookContract(symbol) ⇒
+### orderExecutorTool.getOrderBookContract(symbol) ⇒
 <p>Returns the order-book contract for the symbol if found or fails</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getOrderBookContract</code>](#PerpetualDataHandler+getOrderBookContract)  
 **Returns**: <p>order book contract for the perpetual</p>  
 
@@ -3649,18 +3676,18 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
-### orderReferrerTool.\_fillSymbolMaps()
+### orderExecutorTool.\_fillSymbolMaps()
 <p>Called when initializing. This function fills this.symbolToTokenAddrMap,
 and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
-### orderReferrerTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
+### orderExecutorTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
 <p>Get pool symbol given a pool Id.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getSymbolFromPoolId</code>](#PerpetualDataHandler+getSymbolFromPoolId)  
 **Returns**: <code>symbol</code> - <p>Pool symbol, e.g. &quot;USDC&quot;.</p>  
 
@@ -3670,10 +3697,10 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getPoolIdFromSymbol"></a>
 
-### orderReferrerTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
+### orderExecutorTool.getPoolIdFromSymbol(symbol) ⇒ <code>number</code>
 <p>Get pool Id given a pool symbol. Pool IDs start at 1.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getPoolIdFromSymbol</code>](#PerpetualDataHandler+getPoolIdFromSymbol)  
 **Returns**: <code>number</code> - <p>Pool Id.</p>  
 
@@ -3683,10 +3710,10 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getPerpIdFromSymbol"></a>
 
-### orderReferrerTool.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
+### orderExecutorTool.getPerpIdFromSymbol(symbol) ⇒ <code>number</code>
 <p>Get perpetual Id given a perpetual symbol.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getPerpIdFromSymbol</code>](#PerpetualDataHandler+getPerpIdFromSymbol)  
 **Returns**: <code>number</code> - <p>Perpetual Id.</p>  
 
@@ -3696,10 +3723,10 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### orderReferrerTool.getSymbolFromPerpId(perpId)
+### orderExecutorTool.getSymbolFromPerpId(perpId)
 <p>Get the symbol in long format of the perpetual id</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
 
 | Param | Description |
@@ -3708,11 +3735,11 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
-### orderReferrerTool.fetchPriceSubmissionInfoForPerpetual(symbol) ⇒
+### orderExecutorTool.fetchPriceSubmissionInfoForPerpetual(symbol) ⇒
 <p>Get PriceFeedSubmission data required for blockchain queries that involve price data, and the corresponding
 triangulated prices for the indices S2 and S3</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>fetchPriceSubmissionInfoForPerpetual</code>](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual)  
 **Returns**: <p>PriceFeedSubmission and prices for S2 and S3. [S2price, 0] if S3 not defined.</p>  
 
@@ -3722,10 +3749,10 @@ triangulated prices for the indices S2 and S3</p>
 
 <a name="PerpetualDataHandler+getIndexSymbols"></a>
 
-### orderReferrerTool.getIndexSymbols(symbol) ⇒
+### orderExecutorTool.getIndexSymbols(symbol) ⇒
 <p>Get the symbols required as indices for the given perpetual</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getIndexSymbols</code>](#PerpetualDataHandler+getIndexSymbols)  
 **Returns**: <p>name of underlying index prices, e.g. [&quot;MATIC-USD&quot;, &quot;&quot;]</p>  
 
@@ -3735,11 +3762,11 @@ triangulated prices for the indices S2 and S3</p>
 
 <a name="PerpetualDataHandler+fetchLatestFeedPriceInfo"></a>
 
-### orderReferrerTool.fetchLatestFeedPriceInfo(symbol) ⇒
+### orderExecutorTool.fetchLatestFeedPriceInfo(symbol) ⇒
 <p>Get the latest prices for a given perpetual from the offchain oracle
 networks</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>fetchLatestFeedPriceInfo</code>](#PerpetualDataHandler+fetchLatestFeedPriceInfo)  
 **Returns**: <p>array of price feed updates that can be submitted to the smart contract
 and corresponding price information</p>  
@@ -3750,10 +3777,10 @@ and corresponding price information</p>
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
-### orderReferrerTool.getPriceIds(symbol) ⇒
+### orderExecutorTool.getPriceIds(symbol) ⇒
 <p>Get list of required pyth price source IDs for given perpetual</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getPriceIds</code>](#PerpetualDataHandler+getPriceIds)  
 **Returns**: <p>list of required pyth price sources for this perpetual</p>  
 
@@ -3763,10 +3790,10 @@ and corresponding price information</p>
 
 <a name="PerpetualDataHandler+getPerpetualSymbolsInPool"></a>
 
-### orderReferrerTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
+### orderExecutorTool.getPerpetualSymbolsInPool(poolSymbol) ⇒
 <p>Get perpetual symbols for a given pool</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getPerpetualSymbolsInPool</code>](#PerpetualDataHandler+getPerpetualSymbolsInPool)  
 **Returns**: <p>array of perpetual symbols in this pool</p>  
 
@@ -3776,10 +3803,10 @@ and corresponding price information</p>
 
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
-### orderReferrerTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
+### orderExecutorTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
 <p>Gets the pool index (starting at 0 in exchangeInfo, not ID!) corresponding to a given symbol.</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getPoolStaticInfoIndexFromSymbol</code>](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol)  
 **Returns**: <p>Pool index</p>  
 
@@ -3789,8 +3816,8 @@ and corresponding price information</p>
 
 <a name="PerpetualDataHandler+getMarginTokenFromSymbol"></a>
 
-### orderReferrerTool.getMarginTokenFromSymbol(symbol) ⇒
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+### orderExecutorTool.getMarginTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
 **Returns**: <p>Address of the corresponding token</p>  
 
@@ -3800,8 +3827,8 @@ and corresponding price information</p>
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
-### orderReferrerTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+### orderExecutorTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
 **Returns**: <p>Decimals of the corresponding token</p>  
 
@@ -3811,10 +3838,10 @@ and corresponding price information</p>
 
 <a name="PerpetualDataHandler+getABI"></a>
 
-### orderReferrerTool.getABI(contract) ⇒
+### orderExecutorTool.getABI(contract) ⇒
 <p>Get ABI for LimitOrderBook, Proxy, or Share Pool Token</p>
 
-**Kind**: instance method of [<code>OrderReferrerTool</code>](#OrderReferrerTool)  
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getABI</code>](#PerpetualDataHandler+getABI)  
 **Returns**: <p>ABI for the requested contract</p>  
 
@@ -3850,6 +3877,8 @@ common data and chain operations.</p>
     * _static_
         * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
         * [.nestedIDsToChunks(chunkSize, nestedIDs)](#PerpetualDataHandler.nestedIDsToChunks) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
+        * [.getMarginAccount(traderAddr, symbol, symbolToPerpStaticInfo, _proxyContract, _pxS2S3, overrides)](#PerpetualDataHandler.getMarginAccount) ⇒
+        * [.getMarginAccounts(traderAddrs, symbols, symbolToPerpStaticInfo, _multicall, _proxyContract, _pxS2S3s, overrides)](#PerpetualDataHandler.getMarginAccounts) ⇒
         * [._calculateLiquidationPrice(symbol, traderState, S2, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
         * [.symbolToPerpetualId(symbol, symbolToPerpStaticInfo)](#PerpetualDataHandler.symbolToPerpetualId) ⇒
         * [.toSmartContractOrder(order, traderAddr, symbolToPerpetualMap)](#PerpetualDataHandler.toSmartContractOrder) ⇒
@@ -4063,6 +4092,41 @@ and corresponding price information</p>
 | --- | --- | --- |
 | chunkSize | <code>number</code> | <p>The size of each chunk.</p> |
 | nestedIDs | <code>Array.&lt;Array.&lt;number&gt;&gt;</code> | <p>The array of nested arrays to chunk.</p> |
+
+<a name="PerpetualDataHandler.getMarginAccount"></a>
+
+### PerpetualDataHandler.getMarginAccount(traderAddr, symbol, symbolToPerpStaticInfo, _proxyContract, _pxS2S3, overrides) ⇒
+<p>Get trader state from the blockchain and parse into a human-readable margin account</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>A Margin account</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>Trader address</p> |
+| symbol | <p>Perpetual symbol</p> |
+| symbolToPerpStaticInfo | <p>Symbol to perp static info mapping</p> |
+| _proxyContract | <p>Proxy contract instance</p> |
+| _pxS2S3 | <p>Prices [S2, S3]</p> |
+| overrides | <p>Optional overrides for eth_call</p> |
+
+<a name="PerpetualDataHandler.getMarginAccounts"></a>
+
+### PerpetualDataHandler.getMarginAccounts(traderAddrs, symbols, symbolToPerpStaticInfo, _multicall, _proxyContract, _pxS2S3s, overrides) ⇒
+<p>Get trader states from the blockchain and parse into a list of human-readable margin accounts</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>List of margin accounts</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddrs | <p>List of trader addresses</p> |
+| symbols | <p>List of symbols</p> |
+| symbolToPerpStaticInfo | <p>Symbol to perp static info mapping</p> |
+| _multicall | <p>Multicall3 contract instance</p> |
+| _proxyContract | <p>Proxy contract instance</p> |
+| _pxS2S3s | <p>List of price pairs, [[S2, S3] (1st perp), [S2, S3] (2nd perp), ... ]</p> |
+| overrides | <p>Optional eth_call overrides</p> |
 
 <a name="PerpetualDataHandler._calculateLiquidationPrice"></a>
 
@@ -4281,7 +4345,7 @@ Send event variables to event handler &quot;on<EventName>&quot; - this updates m
         * [.onUpdateUpdateFundingRate(fFundingRate)](#PerpetualEventHandler+onUpdateUpdateFundingRate)
         * [.onExecutionFailed(perpetualId, trader, digest, reason)](#PerpetualEventHandler+onExecutionFailed)
         * [.onPerpetualLimitOrderCancelled(orderId)](#PerpetualEventHandler+onPerpetualLimitOrderCancelled)
-        * [.onPerpetualLimitOrderCreated(perpetualId, trader, referrerAddr, brokerAddr, Order, digest)](#PerpetualEventHandler+onPerpetualLimitOrderCreated)
+        * [.onPerpetualLimitOrderCreated(perpetualId, trader, executorAddr, brokerAddr, Order, digest)](#PerpetualEventHandler+onPerpetualLimitOrderCreated)
         * [.onUpdateMarginAccount(perpetualId, trader, positionId, fPositionBC, fCashCC, fLockedInValueQC, fFundingPaymentCC, fOpenInterestBC)](#PerpetualEventHandler+onUpdateMarginAccount)
         * [.onTrade(perpetualId, trader, positionId, order, orderDigest, newPositionSizeBC, price)](#PerpetualEventHandler+onTrade) ⇒
     * _static_
@@ -4418,11 +4482,11 @@ event PerpetualLimitOrderCancelled(bytes32 indexed orderHash);</p>
 
 <a name="PerpetualEventHandler+onPerpetualLimitOrderCreated"></a>
 
-### perpetualEventHandler.onPerpetualLimitOrderCreated(perpetualId, trader, referrerAddr, brokerAddr, Order, digest)
+### perpetualEventHandler.onPerpetualLimitOrderCreated(perpetualId, trader, executorAddr, brokerAddr, Order, digest)
 <p>event PerpetualLimitOrderCreated(
 uint24 indexed perpetualId,
 address indexed trader,
-address referrerAddr,
+address executorAddr,
 address brokerAddr,
 Order order,
 bytes32 digest
@@ -4434,7 +4498,7 @@ bytes32 digest
 | --- | --- |
 | perpetualId | <p>id of the perpetual</p> |
 | trader | <p>address of the trader</p> |
-| referrerAddr | <p>address of the referrer</p> |
+| executorAddr | <p>address of the executor</p> |
 | brokerAddr | <p>address of the broker</p> |
 | Order | <p>order struct</p> |
 | digest | <p>order id</p> |
@@ -4792,8 +4856,10 @@ so that signatures can be handled in frontend via wallet</p>
     * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
     * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
+    * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
     * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
     * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
+    * [._positionRiskForTraderInPerpetuals(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetuals) ⇒
     * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
     * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
     * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
@@ -4801,7 +4867,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
     * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
     * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
-    * [.maxOrderSizeForTrader(side, positionRisk)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
     * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
@@ -4812,7 +4878,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
     * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
     * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-    * [.getTraderLoyalityScore(traderAddr, brokerAddr)](#MarketData+getTraderLoyalityScore) ⇒
+    * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
     * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
@@ -4958,23 +5024,6 @@ Order must contain broker fee and broker address if there is supposed to be a br
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC)</p> |
 | amountCC | <code>number</code> | <p>Amount in pool-collateral currency</p> |
 
-**Example**  
-```js
-import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(LiquidityProviderTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance();
-  // add liquidity
-  await lqudtProviderTool.setAllowance("MATIC");
-  let respAddLiquidity = await lqudtProviderTool.addLiquidity("MATIC", 0.1);
-  console.log(respAddLiquidity);
-}
-main();
-```
 <a name="TraderInterface+initiateLiquidityWithdrawal"></a>
 
 ### traderInterface.initiateLiquidityWithdrawal(signer, poolSymbolName, amountPoolShares) ⇒
@@ -4991,22 +5040,6 @@ The amount of pool shares to be unlocked is fixed by this call, but not their va
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC).</p> |
 | amountPoolShares | <code>string</code> | <p>Amount in pool-shares, removes everything if &gt; available amount.</p> |
 
-**Example**  
-```js
-import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(LiquidityProviderTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance();
-  // initiate withdrawal
-  let respRemoveLiquidity = await lqudtProviderTool.initiateLiquidityWithdrawal("MATIC", 0.1);
-  console.log(respRemoveLiquidity);
-}
-main();
-```
 <a name="TraderInterface+executeLiquidityWithdrawal"></a>
 
 ### traderInterface.executeLiquidityWithdrawal(signer, poolSymbolName) ⇒
@@ -5021,22 +5054,6 @@ The address loses pool shares in return.</p>
 | signer | <code>Signer</code> | <p>Signer that will execute the liquidity withdrawal</p> |
 | poolSymbolName |  |  |
 
-**Example**  
-```js
-import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(LiquidityProviderTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
-  const pk: string = <string>process.env.PK;
-  let lqudtProviderTool = new LiquidityProviderTool(config, pk);
-  await lqudtProviderTool.createProxyInstance();
-  // remove liquidity
-  let respRemoveLiquidity = await lqudtProviderTool.executeLiquidityWithdrawal("MATIC", 0.1);
-  console.log(respRemoveLiquidity);
-}
-main();
-```
 <a name="MarketData+createProxyInstance"></a>
 
 ### traderInterface.createProxyInstance(provider)
@@ -5162,6 +5179,20 @@ main();
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
 | symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
 
+<a name="MarketData+_openOrdersOfPerpetuals"></a>
+
+### traderInterface.\_openOrdersOfPerpetuals(traderAddr, symbol) ⇒
+<p>All open orders for a trader-address and a given perpetual symbol.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>\_openOrdersOfPerpetuals</code>](#MarketData+_openOrdersOfPerpetuals)  
+**Returns**: <p>open orders and order ids</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
+| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
+
 <a name="MarketData+positionRisk"></a>
 
 ### traderInterface.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
@@ -5200,6 +5231,20 @@ main();
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>\_positionRiskForTraderInPerpetual</code>](#MarketData+_positionRiskForTraderInPerpetual)  
+**Returns**: <p>MarginAccount struct for the trader</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+_positionRiskForTraderInPerpetuals"></a>
+
+### traderInterface.\_positionRiskForTraderInPerpetuals(traderAddr, symbol) ⇒
+<p>Information about the position open by a given trader in a given perpetual contract.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>\_positionRiskForTraderInPerpetuals</code>](#MarketData+_positionRiskForTraderInPerpetuals)  
 **Returns**: <p>MarginAccount struct for the trader</p>  
 
 | Param | Type | Description |
@@ -5324,10 +5369,10 @@ main();
 ```
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
-### traderInterface.maxOrderSizeForTrader(side, positionRisk) ⇒
+### traderInterface.maxOrderSizeForTrader(traderAddr, symbol) ⇒
 <p>Gets the maximal order size to open positions (increase size),
 considering the existing position, state of the perpetual
-Ignores users wallet balance.</p>
+Accoutns for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>maxOrderSizeForTrader</code>](#MarketData+maxOrderSizeForTrader)  
@@ -5335,8 +5380,8 @@ Ignores users wallet balance.</p>
 
 | Param | Description |
 | --- | --- |
-| side | <p>BUY or SELL</p> |
-| positionRisk | <p>Current position risk (as seen in positionRisk)</p> |
+| traderAddr | <p>Address of trader</p> |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData+maxSignedPosition"></a>
 
@@ -5537,7 +5582,7 @@ Result is in collateral currency</p>
 
 <a name="MarketData+getTraderLoyalityScore"></a>
 
-### traderInterface.getTraderLoyalityScore(traderAddr, brokerAddr) ⇒
+### traderInterface.getTraderLoyalityScore(traderAddr) ⇒
 <p>Calculate a type of exchange loyality score based on trader volume</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
@@ -5547,7 +5592,6 @@ Result is in collateral currency</p>
 | Param | Description |
 | --- | --- |
 | traderAddr | <p>address of the trader</p> |
-| brokerAddr | <p>address of the trader's broker or undefined</p> |
 
 <a name="MarketData+isMarketClosed"></a>
 
@@ -6046,7 +6090,7 @@ address traderAddr; // address of the trader
 bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
 uint16 brokerFeeTbps; // broker fee in tenth of a basis point
 bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-//address referrerAddr; &lt;- will be set by LimitOrderBook
+//address executorAddr; &lt;- will be set by LimitOrderBook
 //uint64 submittedBlock &lt;- will be set by LimitOrderBook
 }</p>
 
