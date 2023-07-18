@@ -6,7 +6,7 @@ import MarketData from "../src/marketData";
 import { toBytes4 } from "../src/utils";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import LiquidatorTool from "../src/liquidatorTool";
-import OrderReferrerTool from "../src/orderReferrerTool";
+import OrderExecutorTool from "../src/orderExecutorTool";
 import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
@@ -23,7 +23,7 @@ let mktData: MarketData;
 let liqProvTool: LiquidityProviderTool;
 let liqTool: LiquidatorTool;
 let brokerTool: BrokerTool;
-let refTool: OrderReferrerTool;
+let refTool: OrderExecutorTool;
 let accTrade: AccountTrade;
 let orderIds: string[];
 let apiInterface: TraderInterface;
@@ -239,30 +239,30 @@ describe("readOnly", () => {
       let score2 = await mktData.getTraderLoyalityScore(wallet.address, "");
       console.log(`loyality score of ${wallet.address} without broker: ${score2}`);
     });
-    it("maxOrderSizeForTrader (long)", async () => {
-      let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(BUY_SIDE, pos[0]);
-      console.log(`max long trade size w/o   wallet: ${maxTradeSize}`);
-    });
     it("position risk in pool", async () => {
       let pos = await mktData.positionRisk(wallet.address, "MATIC");
       console.log(`Position risk in MATIC pool`);
       console.log(pos);
     });
-    it("maxOrderSizeForTrader (short)", async () => {
+    it("maxOrderSizeForTrader MATIC", async () => {
       let pos = await mktData.positionRisk(wallet.address, "ETH-USD-MATIC");
-      let maxTradeSize = await mktData.maxOrderSizeForTrader(SELL_SIDE, pos[0]);
-      console.log(`max short trade size w/o  wallet: ${maxTradeSize}`);
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(wallet.address, "ETH-USD-MATIC");
+      console.log(`max trade sizes for symbol ETH-USD-MATIC`, maxTradeSize);
+    });
+    it("maxOrderSizeForTrader USDC", async () => {
+      let pos = await mktData.positionRisk(wallet.address, "MATIC-USDC-USDC");
+      let maxTradeSize = await mktData.maxOrderSizeForTrader(wallet.address, "MATIC-USDC-USDC");
+      console.log(`max trade sizes for symbol MATIC-USDC-USDC`, maxTradeSize);
     });
     it("openOrders in perpetual", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");
-      console.log("order ids=", ordersStruct[0].orderIds);
-      console.log("orders   =", ordersStruct[0].orders);
+      console.log("order ids in perpetual=", ordersStruct[0].orderIds);
+      console.log("orders in perpetual  =", ordersStruct[0].orders);
       orderIds = ordersStruct[0].orderIds;
     });
     it("openOrders in pool", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC");
-      console.log("order =", ordersStruct);
+      console.log("orders in pool =", ordersStruct);
     });
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
@@ -279,9 +279,14 @@ describe("readOnly", () => {
         leverage: 2,
         executionTimestamp: Date.now() / 1000,
       };
-      let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
+      let { newPositionRisk, orderCost, maxLongTrade, maxShortTrade } = await mktData.positionRiskOnTrade(
+        wallet.address,
+        order
+      );
       console.log("mgn before opening=", mgnBefore, "\norder=", order);
       console.log("mgn after  opening=", newPositionRisk, "\ndeposit =", orderCost);
+      console.log("max long", maxLongTrade);
+      console.log("max short", maxShortTrade);
     });
 
     it("get margin info if a closing trade was performed", async () => {
@@ -294,9 +299,14 @@ describe("readOnly", () => {
         leverage: 5,
         executionTimestamp: Date.now() / 1000,
       };
-      let { newPositionRisk, orderCost } = await mktData.positionRiskOnTrade(wallet.address, order);
+      let { newPositionRisk, orderCost, maxLongTrade, maxShortTrade } = await mktData.positionRiskOnTrade(
+        wallet.address,
+        order
+      );
       console.log("mgn before closing=", mgnBefore, "\norder=", order);
       console.log("mgn after  closing=", newPositionRisk, "\ndeposit =", orderCost);
+      console.log("max long", maxLongTrade);
+      console.log("max short", maxShortTrade);
     });
     it("get margin info if collateral is added", async () => {
       let mgnBefore = (await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC"))[0];
@@ -518,10 +528,10 @@ describe("readOnly", () => {
     });
   });
 
-  describe("Referrer", () => {
+  describe("Executor", () => {
     beforeAll(async () => {
       expect(pk == undefined).toBeFalsy;
-      refTool = new OrderReferrerTool(config, pk);
+      refTool = new OrderExecutorTool(config, pk);
       await refTool.createProxyInstance();
     });
     it("get order by id/digest", async () => {

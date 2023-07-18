@@ -24,20 +24,20 @@ import WriteAccessHandler from "./writeAccessHandler";
  * gas-payments.
  * @extends WriteAccessHandler
  */
-export default class OrderReferrerTool extends WriteAccessHandler {
+export default class OrderExecutorTool extends WriteAccessHandler {
   static TRADE_DELAY = 4;
   /**
    * Constructor.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // load configuration for testnet
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *   // OrderReferrerTool (authentication required, PK is an environment variable with a private key)
+   *   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   // Create a proxy instance to access the blockchain
    *   await orderTool.createProxyInstance();
    * }
@@ -55,18 +55,18 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
-   * @param {string=} referrerAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {string=} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
    * @param {number=} nonce optional nonce
    * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+   * import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
    *   const symbol = "ETH-USD-MATIC";
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get some open orders
    *   const maxOrdersToGet = 5;
@@ -88,7 +88,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   public async executeOrder(
     symbol: string,
     orderId: string,
-    referrerAddr?: string,
+    executorAddr?: string,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
@@ -96,8 +96,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    if (typeof referrerAddr == "undefined") {
-      referrerAddr = this.traderAddr;
+    if (typeof executorAddr == "undefined") {
+      executorAddr = this.traderAddr;
     }
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
@@ -111,7 +111,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     }
     return await orderBookSC.executeOrder(
       orderId,
-      referrerAddr,
+      executorAddr,
       submission.priceFeedVaas,
       submission.timestamps,
       overrides
@@ -121,7 +121,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
   public async executeOrders(
     symbol: string,
     orderIds: string[],
-    referrerAddr?: string,
+    executorAddr?: string,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
@@ -129,8 +129,8 @@ export default class OrderReferrerTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    if (typeof referrerAddr == "undefined") {
-      referrerAddr = this.traderAddr;
+    if (typeof executorAddr == "undefined") {
+      executorAddr = this.traderAddr;
     }
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
@@ -144,7 +144,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     }
     return await orderBookSC.executeOrders(
       orderIds,
-      referrerAddr,
+      executorAddr,
       submission?.priceFeedVaas,
       submission?.timestamps,
       overrides
@@ -155,13 +155,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * All the orders in the order book for a given symbol that are currently open.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get all open orders
    *   let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
@@ -180,13 +180,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * Total number of limit orders for this symbol, excluding those that have been cancelled/removed.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get all open orders
    *   let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
@@ -210,13 +210,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param symbol symbol of order book, e.g. ETH-USD-MATIC
    * @param digest digest of the order (=order ID)
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get order by ID
    *   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
@@ -233,7 +233,7 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
     }
-    let order = OrderReferrerTool.fromSmartContractOrder(smartContractOrder, this.symbolToPerpStaticInfo);
+    let order = OrderExecutorTool.fromSmartContractOrder(smartContractOrder, this.symbolToPerpStaticInfo);
     return order;
   }
 
@@ -244,13 +244,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param {number} numElements Maximum number of orders to poll.
    * @param {string=} startAfter Optional order ID from where to start polling. Defaults to the first order.
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get all open orders
    *   let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
@@ -295,13 +295,13 @@ export default class OrderReferrerTool extends WriteAccessHandler {
    * @param indexPrices pair of index prices S2 and S3. S3 set to zero if not required. If undefined
    * the function will fetch the latest prices from the REST API
    * @example
-   * import { OrderReferrerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   console.log(OrderReferrerTool);
+   *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("testnet");
    *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderReferrerTool(config, pk);
+   *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // check if tradeable
    *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
@@ -444,11 +444,11 @@ export default class OrderReferrerTool extends WriteAccessHandler {
     }
     if (
       order.submittedTimestamp != undefined &&
-      nextBlockTimestamp < order.submittedTimestamp + OrderReferrerTool.TRADE_DELAY
+      nextBlockTimestamp < order.submittedTimestamp + OrderExecutorTool.TRADE_DELAY
     ) {
       // next block should be in ~2 seconds, so + 2
       console.log(
-        `on hold for ${OrderReferrerTool.TRADE_DELAY + order.submittedTimestamp - nextBlockTimestamp} more seconds`
+        `on hold for ${OrderExecutorTool.TRADE_DELAY + order.submittedTimestamp - nextBlockTimestamp} more seconds`
       );
       return false;
     }

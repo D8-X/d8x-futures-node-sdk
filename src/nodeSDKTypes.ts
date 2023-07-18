@@ -12,7 +12,7 @@ export const COLLATERAL_CURRENCY_QUANTO = 2;
 export const PERP_STATE_STR = ["INVALID", "INITIALIZING", "NORMAL", "EMERGENCY", "CLEARED"];
 export const ZERO_ADDRESS = AddressZero;
 export const ZERO_ORDER_ID = HashZero;
-
+export const MULTICALL_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
 export const ONE_64x64 = BigNumber.from("0x010000000000000000");
 export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 export const MAX_UINT_256 = BigNumber.from(2).pow(256).sub(BigNumber.from(1));
@@ -50,6 +50,7 @@ export interface NodeSDKConfig {
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
   shareTokenABI?: ContractInterface | undefined;
+  priceFeedConfig?: PriceFeedConfig;
 }
 
 export interface MarginAccount {
@@ -216,7 +217,7 @@ export interface TradeEvent {
         uint32 submittedTimestamp;
         uint32 flags; // order flags
         uint32 iDeadline; //deadline for price (seconds timestamp)
-        address referrerAddr; // address of the referrer set by contract
+        address executorAddr; // address of the executor set by contract
         int128 fAmount; // amount in base currency to be traded
         int128 fLimitPrice; // limit price
         int128 fTriggerPrice; //trigger price. Non-zero for stop orders.
@@ -229,7 +230,7 @@ export interface SmartContractOrder {
   brokerFeeTbps: number;
   traderAddr: string;
   brokerAddr: string;
-  referrerAddr: string;
+  executorAddr: string;
   brokerSignature: BytesLike;
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;
@@ -256,7 +257,7 @@ export interface SmartContractOrder {
         bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
         uint16 brokerFeeTbps; // broker fee in tenth of a basis point
         bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-        //address referrerAddr; <- will be set by LimitOrderBook
+        //address executorAddr; <- will be set by LimitOrderBook
         //uint64 submittedBlock <- will be set by LimitOrderBook
     }
  */
@@ -266,7 +267,7 @@ export interface ClientOrder {
   brokerFeeTbps: BigNumberish;
   traderAddr: string;
   brokerAddr: string;
-  referrerAddr: string;
+  executorAddr: string;
   brokerSignature: BytesLike;
   fAmount: BigNumberish;
   fLimitPrice: BigNumberish;

@@ -127,14 +127,14 @@ describe("Front-end-like functionality", () => {
           (
             perpetualId: number,
             trader: string,
-            referrerAddr: string,
+            executorAddr: string,
             brokerAddr: string,
             Order: SmartContractOrder,
             digest: string
           ) => {
             if (trader == accTrade1.getAddress()) {
               // console.log(`PerpetualLimitOrderCreated event for connected trader caught, perpetualId = ${perpetualId}`);
-              eventHandler.onPerpetualLimitOrderCreated(perpetualId, trader, referrerAddr, brokerAddr, Order, digest);
+              eventHandler.onPerpetualLimitOrderCreated(perpetualId, trader, executorAddr, brokerAddr, Order, digest);
             }
           }
         );

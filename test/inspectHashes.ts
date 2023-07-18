@@ -72,7 +72,7 @@ function toSCOrder(order: Order, traderAddr: string): SmartContractOrder {
     brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
     traderAddr: traderAddr,
     brokerAddr: order.brokerAddr == undefined ? ethers.constants.AddressZero : order.brokerAddr,
-    referrerAddr: ethers.constants.AddressZero,
+    executorAddr: ethers.constants.AddressZero,
     brokerSignature: [],
     fAmount: floatToABK64x64(order.quantity),
     fLimitPrice: floatToABK64x64(order.limitPrice!),

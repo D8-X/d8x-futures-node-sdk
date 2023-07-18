@@ -6,7 +6,7 @@ import AccountTrade from "./accountTrade";
 import BrokerTool from "./brokerTool";
 import LiquidityProviderTool from "./liquidityProviderTool";
 import MarketData from "./marketData";
-import OrderReferrerTool from "./orderReferrerTool";
+import OrderExecutorTool from "./orderExecutorTool";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 import LiquidatorTool from "./liquidatorTool";
@@ -20,7 +20,7 @@ export {
   BrokerTool,
   LiquidityProviderTool,
   MarketData,
-  OrderReferrerTool,
+  OrderExecutorTool,
   PerpetualDataHandler,
   WriteAccessHandler,
   LiquidatorTool,

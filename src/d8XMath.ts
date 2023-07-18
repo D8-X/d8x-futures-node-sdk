@@ -333,11 +333,14 @@ export function getMaxSignedPositionSize(
   // we solve for new position in:
   // |new position| * Sm / leverage + fee rate * |trade amount| * S2 = margin * S3 + current position * Sm - L + trade amount * (Sm - entry price)
   // |trade amount| = (new position - current position) * direction
-  let availableCash = marginCollateral * indexPriceS3 + currentPosition * markPrice - currentLockedInValue;
-  let effectiveMarginRate =
-    markPrice * initialMarginRate + feeRate * indexPriceS2 + direction * (limitPrice - markPrice);
-
-  return availableCash / effectiveMarginRate;
+  let numerator =
+    marginCollateral * indexPriceS3 +
+    currentPosition * markPrice -
+    currentLockedInValue -
+    Math.abs(currentPosition) * markPrice * initialMarginRate;
+  let denominator =
+    markPrice * initialMarginRate + feeRate * indexPriceS2 + Math.max(0, direction * (limitPrice - markPrice));
+  return currentPosition + (numerator > 0 ? direction * (numerator / denominator) : 0);
 }
 
 /**

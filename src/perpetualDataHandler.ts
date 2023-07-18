@@ -1,4 +1,4 @@
-import { FormatTypes } from "@ethersproject/abi";
+import { FormatTypes, Interface } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
@@ -12,7 +12,10 @@ import {
   LimitOrderBookFactory,
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
+  Multicall3,
+  Multicall3__factory,
 } from "./contracts";
+import { ERC20Interface } from "./contracts/ERC20";
 import { IPerpetualOrder } from "./contracts/IPerpetualManager";
 import { IClientOrder } from "./contracts/LimitOrderBook";
 import {
@@ -32,6 +35,7 @@ import {
   COLLATERAL_CURRENCY_QUOTE,
   CollaterlCCY,
   DEFAULT_CONFIG,
+  ERC20_ABI,
   loadABIs,
   MarginAccount,
   MASK_CLOSE_ONLY,
@@ -40,6 +44,7 @@ import {
   MASK_MARKET_ORDER,
   MASK_STOP_ORDER,
   MAX_64x64,
+  MULTICALL_ADDRESS,
   NodeSDKConfig,
   Order,
   ORDER_MAX_DURATION_SEC,
@@ -74,6 +79,8 @@ export default class PerpetualDataHandler {
   protected poolStaticInfos: Array<PoolStaticInfo>;
   protected symbolList: Map<string, string>; //mapping 4-digit symbol <-> long format
 
+  // config
+  public config: NodeSDKConfig;
   //map margin token of the form MATIC or ETH or USDC into
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
@@ -86,7 +93,11 @@ export default class PerpetualDataHandler {
   protected lobFactoryABI: ContractInterface;
   protected lobFactoryAddr: string | undefined;
   protected lobABI: ContractInterface;
+  // share token
   protected shareTokenABI: ContractInterface;
+  // multicall
+  protected multicall: Multicall3 | null = null;
+  // provider
   protected nodeURL: string;
   protected provider: Provider | null = null;
 
@@ -99,6 +110,7 @@ export default class PerpetualDataHandler {
   protected nestedPerpetualIDs: number[][];
 
   public constructor(config: NodeSDKConfig) {
+    this.config = config;
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
     this.symbolToTokenAddrMap = new Map<string, string>();
@@ -126,16 +138,14 @@ export default class PerpetualDataHandler {
         network = await signerOrProvider.getNetwork();
       }
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       throw new Error(`Unable to connect to network.`);
     }
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
-
-    this.lobFactoryAddr = await this.proxyContract.getOrderBookFactoryAddress(overrides || {});
-    this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, signerOrProvider);
+    this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
 
@@ -159,15 +169,32 @@ export default class PerpetualDataHandler {
    *
    */
   protected async _fillSymbolMaps(overrides?: CallOverrides) {
-    if (!this.proxyContract || !this.lobFactoryContract) {
-      throw Error("proxy or limit order book not defined");
+    if (this.proxyContract == null || this.multicall == null || this.signerOrProvider == null) {
+      throw new Error("proxy or multicall not defined");
     }
     let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(this.proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
 
+    const IERC20 = new Interface(ERC20_ABI) as ERC20Interface;
+
+    const proxyCalls: Multicall3.Call3Struct[] = poolInfo.poolMarginTokenAddr.map((tokenAddr) => ({
+      target: tokenAddr,
+      allowFailure: false,
+      callData: IERC20.encodeFunctionData("decimals"),
+    }));
+    proxyCalls.push({
+      target: this.proxyAddr,
+      allowFailure: false,
+      callData: this.proxyContract.interface.encodeFunctionData("getOrderBookFactoryAddress"),
+    });
+
+    // multicall
+    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+
+    // decimals
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
-      let decimals = await ERC20__factory.connect(poolInfo.poolMarginTokenAddr[j], this.provider!).decimals();
+      const decimals = IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number;
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
@@ -179,6 +206,14 @@ export default class PerpetualDataHandler {
       };
       this.poolStaticInfos.push(info);
     }
+
+    // order book factory
+    this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
+      "getOrderBookFactoryAddress",
+      encodedResults[0].returnData
+    )[0] as string;
+    this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, this.signerOrProvider);
+
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
       this.proxyContract,
       this.nestedPerpetualIDs,
@@ -516,6 +551,16 @@ export default class PerpetualDataHandler {
     return mgn;
   }
 
+  /**
+   * Get trader state from the blockchain and parse into a human-readable margin account
+   * @param traderAddr Trader address
+   * @param symbol Perpetual symbol
+   * @param symbolToPerpStaticInfo Symbol to perp static info mapping
+   * @param _proxyContract Proxy contract instance
+   * @param _pxS2S3 Prices [S2, S3]
+   * @param overrides Optional overrides for eth_call
+   * @returns A Margin account
+   */
   public static async getMarginAccount(
     traderAddr: string,
     symbol: string,
@@ -535,6 +580,55 @@ export default class PerpetualDataHandler {
       overrides || {}
     );
     return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
+  }
+
+  /**
+   * Get trader states from the blockchain and parse into a list of human-readable margin accounts
+   * @param traderAddrs List of trader addresses
+   * @param symbols List of symbols
+   * @param symbolToPerpStaticInfo Symbol to perp static info mapping
+   * @param _multicall Multicall3 contract instance
+   * @param _proxyContract Proxy contract instance
+   * @param _pxS2S3s  List of price pairs, [[S2, S3] (1st perp), [S2, S3] (2nd perp), ... ]
+   * @param overrides Optional eth_call overrides
+   * @returns List of margin accounts
+   */
+  public static async getMarginAccounts(
+    traderAddrs: string[],
+    symbols: string[],
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    _multicall: Multicall3,
+    _proxyContract: IPerpetualManager,
+    _pxS2S3s: number[][],
+    overrides?: CallOverrides
+  ): Promise<MarginAccount[]> {
+    if (
+      traderAddrs.length != symbols.length ||
+      traderAddrs.length != _pxS2S3s.length ||
+      symbols.length != _pxS2S3s.length
+    ) {
+      throw new Error("traderAddr, symbol and pxS2S3 should all have the same length");
+    }
+    const proxyCalls: Multicall3.Call3Struct[] = traderAddrs.map((_addr, i) => ({
+      target: _proxyContract.address,
+      allowFailure: true,
+      callData: _proxyContract.interface.encodeFunctionData("getTraderState", [
+        PerpetualDataHandler.symbolToPerpetualId(symbols[i], symbolToPerpStaticInfo),
+        _addr,
+        _pxS2S3s[i].map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      ]),
+    }));
+    const encodedResults = await _multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const traderStates: BigNumber[][] = encodedResults.map(({ success, returnData }, i) => {
+      if (!success) throw new Error(`Failed to get perp info for ${symbols[i]}`);
+      return _proxyContract.interface.decodeFunctionResult("getTraderState", returnData)[0];
+    });
+    return traderStates.map((traderState, i) =>
+      PerpetualDataHandler.buildMarginAccountFromState(symbols[i], traderState, symbolToPerpStaticInfo, [
+        _pxS2S3s[i][0],
+        _pxS2S3s[i][1],
+      ])
+    );
   }
 
   protected static async _queryPerpetualPrice(
@@ -579,7 +673,6 @@ export default class PerpetualDataHandler {
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
-    let ccy = symbol.split("-");
     let [S2, S3] = [indexPrices[0], indexPrices[1]];
     if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
       S3 = S2;
@@ -591,6 +684,24 @@ export default class PerpetualDataHandler {
       [S2, S3].map(floatToABK64x64) as [BigNumber, BigNumber],
       overrides || {}
     );
+    return PerpetualDataHandler._parseAMMState(symbol, ammState, indexPrices, symbolToPerpStaticInfo);
+  }
+
+  protected static _parseAMMState(
+    symbol: string,
+    ammState: BigNumber[],
+    indexPrices: [number, number, boolean, boolean],
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+  ) {
+    let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
+    let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
+    let ccy = symbol.split("-");
+    let [S2, S3] = [indexPrices[0], indexPrices[1]];
+    if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
+      S3 = S2;
+    } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
+      S3 = 1;
+    }
     let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state: PerpetualState = {
       id: perpId,
@@ -798,7 +909,7 @@ export default class PerpetualDataHandler {
       brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
       traderAddr: traderAddr,
       brokerAddr: order.brokerAddr == undefined ? ZERO_ADDRESS : order.brokerAddr,
-      referrerAddr: ZERO_ADDRESS,
+      executorAddr: ZERO_ADDRESS,
       brokerSignature: brokerSig,
       fAmount: fAmount,
       fLimitPrice: fLimitPrice,
@@ -827,7 +938,7 @@ export default class PerpetualDataHandler {
       brokerFeeTbps: scOrder.brokerFeeTbps,
       traderAddr: scOrder.traderAddr,
       brokerAddr: scOrder.brokerAddr,
-      referrerAddr: scOrder.referrerAddr,
+      executorAddr: scOrder.executorAddr,
       brokerSignature: scOrder.brokerSignature,
       fAmount: scOrder.fAmount,
       fLimitPrice: scOrder.fLimitPrice,

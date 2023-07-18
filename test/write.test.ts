@@ -6,7 +6,7 @@ import AccountTrade from "../src/accountTrade";
 import MarketData from "../src/marketData";
 // import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidatorTool from "../src/liquidatorTool";
-import OrderReferrerTool from "../src/orderReferrerTool";
+import OrderExecutorTool from "../src/orderExecutorTool";
 import { Wallet } from "ethers";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -101,7 +101,7 @@ describe("write and spoil gas and tokens", () => {
     console.log("order submitted");
   });
   it("post & execute market order", async () => {
-    let refTool = new OrderReferrerTool(config, pk);
+    let refTool = new OrderExecutorTool(config, pk);
     await refTool.createProxyInstance();
     let order: Order = {
       symbol: "ETH-USD-MATIC",
