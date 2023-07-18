@@ -1406,29 +1406,15 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Calculate a type of exchange loyality score based on trader volume
    * @param traderAddr address of the trader
-   * @param brokerAddr address of the trader's broker or undefined
    * @returns a loyality score (4 worst, 1 best)
    */
-  public async getTraderLoyalityScore(
-    traderAddr: string,
-    brokerAddr?: string,
-    overrides?: CallOverrides
-  ): Promise<number> {
+  public async getTraderLoyalityScore(traderAddr: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     // loop over all pools and query volumes
-    let brokerProm: Array<Promise<BigNumber>> = [];
     let traderProm: Array<Promise<BigNumber>> = [];
     for (let k = 0; k < this.poolStaticInfos.length; k++) {
-      if (brokerAddr != "" && brokerAddr != undefined) {
-        let brkrVol = this.proxyContract.getCurrentBrokerVolume(
-          this.poolStaticInfos[k].poolId,
-          brokerAddr,
-          overrides || {}
-        );
-        brokerProm.push(brkrVol);
-      }
       let trdrVol = this.proxyContract.getCurrentTraderVolume(
         this.poolStaticInfos[k].poolId,
         traderAddr,
@@ -1439,12 +1425,8 @@ export default class MarketData extends PerpetualDataHandler {
     // sum
     let totalBrokerVolume = 0;
     let totalTraderVolume = 0;
-    let brkrVol = await Promise.all(brokerProm);
     let trdrVol = await Promise.all(traderProm);
     for (let k = 0; k < this.poolStaticInfos.length; k++) {
-      if (brokerAddr != "" && brokerAddr != undefined) {
-        totalBrokerVolume += ABK64x64ToFloat(brkrVol[k]);
-      }
       totalTraderVolume += ABK64x64ToFloat(trdrVol[k]);
     }
     const volumeCap = 500_000;

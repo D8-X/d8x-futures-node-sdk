@@ -234,10 +234,8 @@ describe("readOnly", () => {
       console.log(`balance of ${wallet.address}: ${bal}`);
     });
     it("loyality score", async () => {
-      let score = await mktData.getTraderLoyalityScore(wallet.address, wallet.address);
-      console.log(`loyality score of ${wallet.address} with same broker: ${score}`);
-      let score2 = await mktData.getTraderLoyalityScore(wallet.address, "");
-      console.log(`loyality score of ${wallet.address} without broker: ${score2}`);
+      let score = await mktData.getTraderLoyalityScore(wallet.address);
+      console.log(`loyality score of ${wallet.address}: ${score}`);
     });
     it("position risk in pool", async () => {
       let pos = await mktData.positionRisk(wallet.address, "MATIC");
