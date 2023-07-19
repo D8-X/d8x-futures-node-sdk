@@ -74,6 +74,13 @@ export enum CollaterlCCY {
   QUANTO,
 }
 
+export enum OrderStatus {
+  CANCELED = 0,
+  EXECUTED,
+  OPEN,
+  UNKNOWN,
+}
+
 export interface PoolStaticInfo {
   poolId: number;
   poolMarginSymbol: string;

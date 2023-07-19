@@ -555,7 +555,7 @@ describe("readOnly", () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
       if (openOrders[0].length > 0) {
-        let isTradeable = await refTool.isTradeable(openOrders[0][0]);
+        let isTradeable = await refTool.isTradeable(openOrders[0][0], openOrders[1][0]);
         console.log(isTradeable);
       } else {
         console.warn("no orders to check");
@@ -565,7 +565,10 @@ describe("readOnly", () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
       if (openOrders[0].length > 0) {
-        let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
+        let isTradeable = await refTool.isTradeableBatch(
+          [openOrders[0][0], openOrders[0][1]],
+          [openOrders[1][0], openOrders[1][1]]
+        );
         console.log(isTradeable);
       }
     });
