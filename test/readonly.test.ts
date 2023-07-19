@@ -355,14 +355,21 @@ describe("readOnly", () => {
       await accTrade.createProxyInstance();
     });
     it("getOrderIds", async () => {
-      let ids = await accTrade.getOrderIds("ETH-USD-MATIC");
+      let ids = await accTrade.getOrderIds("MATIC-USD-MATIC");
       console.log("Order Ids for trader:");
       console.log(ids);
     });
     it("getOrderStatus", async () => {
-      let ids = await accTrade.getOrderIds("ETH-USD-MATIC");
+      let ids = await accTrade.getOrderIds("MATIC-USD-MATIC");
       if (ids.length > 0) {
-        let status = await mktData.getOrderStatus("ETH-USD-MATIC", ids[0]);
+        let status = await mktData.getOrderStatus("MATIC-USD-MATIC", ids[0]);
+        console.log(status);
+      }
+    });
+    it("getOrdersStatus", async () => {
+      let ids = await accTrade.getOrderIds("MATIC-USD-MATIC");
+      if (ids.length > 0) {
+        let status = await mktData.getOrdersStatus("MATIC-USD-MATIC", ids);
         console.log(status);
       }
     });

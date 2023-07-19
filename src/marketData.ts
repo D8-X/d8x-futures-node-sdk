@@ -30,6 +30,7 @@ import {
   MarginAccount,
   NodeSDKConfig,
   Order,
+  OrderStatus,
   PerpetualState,
   PerpetualStaticInfo,
   PERP_STATE_STR,
@@ -1042,13 +1043,40 @@ export default class MarketData extends PerpetualDataHandler {
    * @param overrides
    * @returns Order status ()
    */
-  public async getOrderStatus(symbol: string, orderId: string, overrides?: CallOverrides): Promise<number> {
+  public async getOrderStatus(symbol: string, orderId: string, overrides?: CallOverrides): Promise<OrderStatus> {
     if (!this.proxyContract) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const orderBookContract = this.getOrderBookContract(symbol);
-    let status = await orderBookContract.getOrderStatus(orderId, overrides || {});
+    const status = (await orderBookContract.getOrderStatus(orderId, overrides || {})) as OrderStatus;
     return status;
+  }
+
+  /**
+   *
+   * @param symbol Symbol of the form ETH-USD-MATIC
+   * @param orderId Array of order Ids
+   * @param overrides
+   * @returns Array of order status
+   */
+  public async getOrdersStatus(symbol: string, orderId: string[], overrides?: CallOverrides): Promise<OrderStatus[]> {
+    if (!this.proxyContract || !this.multicall) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    const orderBookContract = this.getOrderBookContract(symbol);
+
+    const statusCalls: Multicall3.Call3Struct[] = orderId.map((id) => ({
+      target: orderBookContract.address,
+      allowFailure: false,
+      callData: orderBookContract.interface.encodeFunctionData("getOrderStatus", [id]),
+    }));
+    // multicall
+    const encodedResults = await this.multicall.callStatic.aggregate3(statusCalls, overrides || {});
+    // order status
+    return encodedResults.map(
+      (encodedResult) =>
+        orderBookContract.interface.decodeFunctionResult("getOrderStatus", encodedResult.returnData)[0] as OrderStatus
+    );
   }
 
   /**
