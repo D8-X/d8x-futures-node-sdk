@@ -327,7 +327,10 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
 
-    const fS2S3 = indexPrices.map(floatToABK64x64) as [BigNumber, BigNumber];
+    const fS2S3 = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
+      BigNumber,
+      BigNumber
+    ];
     const perpId = this.getPerpIdFromSymbol(order.symbol);
     const fAmount = floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1));
     const orderBook = this.getOrderBookContract(order.symbol);

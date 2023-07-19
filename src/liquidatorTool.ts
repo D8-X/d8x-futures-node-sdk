@@ -132,7 +132,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let traderState = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [BigNumber, BigNumber],
       overrides || {}
     );
     if (traderState[idx_notional].eq(0)) {
