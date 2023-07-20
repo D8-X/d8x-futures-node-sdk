@@ -4832,55 +4832,6 @@
     {
         "inputs": [
             {
-                "internalType": "int128",
-                "name": "_fDeltaPos",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fTreasuryFeeRate",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fPnLPartRate",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fReferralRebate",
-                "type": "int128"
-            },
-            {
-                "internalType": "address",
-                "name": "_executorAddr",
-                "type": "address"
-            }
-        ],
-        "name": "relativeFeeToCCAmount",
-        "outputs": [
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            }
-        ],
-        "stateMutability": "pure",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "uint8",
                 "name": "_liqPoolID",
                 "type": "uint8"

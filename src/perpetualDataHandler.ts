@@ -180,7 +180,7 @@ export default class PerpetualDataHandler {
 
     const proxyCalls: Multicall3.Call3Struct[] = poolInfo.poolMarginTokenAddr.map((tokenAddr) => ({
       target: tokenAddr,
-      allowFailure: false,
+      allowFailure: true,
       callData: IERC20.encodeFunctionData("decimals"),
     }));
     proxyCalls.push({
@@ -194,7 +194,10 @@ export default class PerpetualDataHandler {
 
     // decimals
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
-      const decimals = IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number;
+      const decimals =
+        poolInfo.poolMarginTokenAddr[j] == ZERO_ADDRESS
+          ? undefined
+          : (IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number);
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
@@ -206,11 +209,10 @@ export default class PerpetualDataHandler {
       };
       this.poolStaticInfos.push(info);
     }
-
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
       "getOrderBookFactoryAddress",
-      encodedResults[0].returnData
+      encodedResults[encodedResults.length - 1].returnData
     )[0] as string;
     this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, this.signerOrProvider);
 
