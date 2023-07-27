@@ -183,9 +183,9 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint64",
+                "internalType": "uint8",
                 "name": "poolId",
-                "type": "uint64"
+                "type": "uint8"
             },
             {
                 "indexed": true,
@@ -270,9 +270,9 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint64",
+                "internalType": "uint8",
                 "name": "poolId",
-                "type": "uint64"
+                "type": "uint8"
             },
             {
                 "indexed": true,
@@ -301,9 +301,9 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint64",
+                "internalType": "uint8",
                 "name": "poolId",
-                "type": "uint64"
+                "type": "uint8"
             },
             {
                 "indexed": true,
@@ -2623,6 +2623,11 @@
             {
                 "internalType": "int128",
                 "name": "_fS3",
+                "type": "int128"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fS2",
                 "type": "int128"
             }
         ],
