@@ -110,13 +110,25 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         ...overrides,
       } as PayableOverrides;
     }
-    return await orderBookSC.executeOrder(
+
+    const txData = await orderBookSC.interface.encodeFunctionData("executeOrder", [
       orderId,
       executorAddr,
       submission.priceFeedVaas,
       submission.timestamps,
-      overrides
-    );
+    ]);
+
+    let unsignedTx = {
+      to: orderBookSC.address,
+      from: this.traderAddr,
+      nonce: overrides.nonce, // populated by provider if undefined
+      data: txData,
+      value: overrides.value,
+      gasLimit: overrides.gasLimit, // always defined at this point
+      gasPrice: overrides.gasPrice, // populated by the provider if not specified
+      chainId: this.chainId,
+    };
+    return await this.signer.sendTransaction(unsignedTx);
   }
 
   public async executeOrders(
@@ -138,18 +150,44 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     if (!overrides || overrides.value == undefined) {
       overrides = {
-        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        value: overrides?.value ?? submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
-    return await orderBookSC.executeOrders(
+    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [
       orderIds,
       executorAddr,
-      submission?.priceFeedVaas,
-      submission?.timestamps,
-      overrides
-    );
+      submission.priceFeedVaas,
+      submission.timestamps,
+    ]);
+
+    // const gasInfo = await fetch("https://gasstation-testnet.polygon.technology/zkevm")
+    //   .then((res) => res.json())
+    //   .then((info) => info as GasInfo);
+
+    // const gasPrice = typeof gasInfo.standard == "number" ? gasInfo.standard : (gasInfo.standard as GasPriceV2).maxfee;
+
+    let unsignedTx = {
+      to: orderBookSC.address,
+      from: this.traderAddr,
+      nonce: overrides.nonce ?? (await this.signer.getTransactionCount()),
+      data: txData,
+      value: overrides.value,
+      gasLimit: overrides.gasLimit,
+      // gas price is populated by the provider if not specified
+      gasPrice: overrides.gasPrice,
+      // gasPrice: overrides.gasPrice ?? parseUnits(gasPrice.toString(), "gwei"),
+      chainId: this.chainId,
+    };
+    return await this.signer.sendTransaction(unsignedTx);
+    // return await orderBookSC.executeOrders(
+    //   orderIds,
+    //   executorAddr,
+    //   submission?.priceFeedVaas,
+    //   submission?.timestamps,
+    //   overrides
+    // );
   }
 
   /**

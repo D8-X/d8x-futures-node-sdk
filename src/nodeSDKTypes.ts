@@ -50,7 +50,7 @@ export interface NodeSDKConfig {
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
   shareTokenABI?: ContractInterface | undefined;
-  priceFeedConfig?: PriceFeedConfig;
+  priceFeedEndpoints?: Array<{ type: string; endpoint: string }>;
 }
 
 export interface MarginAccount {
@@ -360,4 +360,19 @@ export interface APIReferralCodeSelectionPayload {
   traderAddr: string;
   createdOn: number;
   signature: string;
+}
+
+export interface GasPriceV2 {
+  maxPriorityFee: number;
+  maxfee: number;
+}
+
+export interface GasInfo {
+  safeLow: number | GasPriceV2;
+  standard: number | GasPriceV2;
+  fast: number | GasPriceV2;
+  fastest?: number;
+  estimatedBaseFee?: number;
+  blockTime: number;
+  blockNumber: number;
 }

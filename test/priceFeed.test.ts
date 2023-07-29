@@ -24,10 +24,11 @@ describe("priceFeed", () => {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    config = PerpetualDataHandler.readSDKConfig("testnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
+    config.priceFeedEndpoints = [{ type: "pyth", endpoint: "https://pyth.testnet.quantena.tech/api" }];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });
