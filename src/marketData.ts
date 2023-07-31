@@ -371,13 +371,13 @@ export default class MarketData extends PerpetualDataHandler {
       // 0: traderState
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("getTraderState", [perpId, traderAddr, fS2S3]),
       },
       // 1: ammState
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, fS2S3]),
       },
       // 2: exchangeFee
@@ -393,7 +393,7 @@ export default class MarketData extends PerpetualDataHandler {
       // 3: perpetual price
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [
           perpId,
           floatToABK64x64(tradeAmountBC),
@@ -427,10 +427,15 @@ export default class MarketData extends PerpetualDataHandler {
 
     // positionRisk to apply this trade on: if not given, defaults to the current trader's position
     if (!account) {
-      const traderState = this.proxyContract.interface.decodeFunctionResult(
-        "getTraderState",
-        encodedResults[0].returnData
-      )[0];
+      let traderState: BigNumber[];
+      if (encodedResults[0].success) {
+        traderState = this.proxyContract.interface.decodeFunctionResult(
+          "getTraderState",
+          encodedResults[0].returnData
+        )[0];
+      } else {
+        traderState = await this.proxyContract.getTraderState(perpId, traderAddr, fS2S3);
+      }
       account = MarketData.buildMarginAccountFromState(order.symbol, traderState, this.symbolToPerpStaticInfo, [
         indexPriceInfo[0],
         indexPriceInfo[1],
@@ -438,7 +443,12 @@ export default class MarketData extends PerpetualDataHandler {
     }
 
     // perpetualState, for prices
-    const ammState = this.proxyContract.interface.decodeFunctionResult("getAMMState", encodedResults[1].returnData)[0];
+    let ammState: BigNumber[];
+    if (encodedResults[1].success) {
+      ammState = this.proxyContract.interface.decodeFunctionResult("getAMMState", encodedResults[1].returnData)[0];
+    } else {
+      ammState = await this.proxyContract.getAMMState(perpId, fS2S3);
+    }
     const perpetualState = PerpetualDataHandler._parseAMMState(
       order.symbol,
       ammState,
@@ -456,10 +466,15 @@ export default class MarketData extends PerpetualDataHandler {
     // price for this order = limit price (conservative) if given, else the current perp price
     let tradePrice: number;
     if (order.limitPrice == undefined) {
-      const fPrice = this.proxyContract.interface.decodeFunctionResult(
-        "queryPerpetualPrice",
-        encodedResults[3].returnData
-      )[0];
+      let fPrice: BigNumber;
+      if (encodedResults[3].success) {
+        fPrice = this.proxyContract.interface.decodeFunctionResult(
+          "queryPerpetualPrice",
+          encodedResults[3].returnData
+        )[0];
+      } else {
+        fPrice = await this.proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmountBC), fS2S3);
+      }
       tradePrice = ABK64x64ToFloat(fPrice);
     } else {
       tradePrice = order.limitPrice;

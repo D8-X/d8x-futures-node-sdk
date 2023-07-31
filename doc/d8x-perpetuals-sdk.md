@@ -88,7 +88,7 @@ require gas-payments.</p></dd>
 ## Members
 
 <dl>
-<dt><a href="#CollaterlCCY">CollaterlCCY</a></dt>
+<dt><a href="#OrderStatus">OrderStatus</a></dt>
 <dd><p>struct ClientOrder {
 uint24 iPerpetualId; // unique id of the perpetual
 int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
@@ -2522,6 +2522,7 @@ No gas required for the queries here.</p>
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
         * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
+        * [.getOrdersStatus(symbol, orderId, overrides)](#MarketData+getOrdersStatus) ⇒
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -2935,6 +2936,18 @@ main();
 | orderId | <p>Order Id</p> |
 | overrides |  |
 
+<a name="MarketData+getOrdersStatus"></a>
+
+### marketData.getOrdersStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Array of order status</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Array of order Ids</p> |
+| overrides |  |
+
 <a name="MarketData+getMarkPrice"></a>
 
 ### marketData.getMarkPrice(symbol) ⇒
@@ -3331,7 +3344,7 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderExecutorTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderExecutorTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderExecutorTool+isTradeableBatch) ⇒
-    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
+    * [._isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderExecutorTool+smartContractOrderToOrder) ⇒
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
@@ -3584,7 +3597,7 @@ main();
 
 <a name="OrderExecutorTool+_isTradeable"></a>
 
-### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
+### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap) ⇒
 <p>Can the order be executed?</p>
 
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
@@ -3595,7 +3608,7 @@ main();
 | order | <p>order struct</p> |
 | tradePrice | <p>&quot;preview&quot; price of this order</p> |
 | markPrice | <p>current mark price</p> |
-| blockTimestamp | <p>last observed block timestamp (hence already in past)</p> |
+| atBlockTimestamp | <p>block timestamp when execution would take place</p> |
 | symbolToPerpInfoMap | <p>metadata</p> |
 
 <a name="OrderExecutorTool+smartContractOrderToOrder"></a>
@@ -4871,6 +4884,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
     * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
     * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
+    * [.getOrdersStatus(symbol, orderId, overrides)](#MarketData+getOrdersStatus) ⇒
     * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
     * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
     * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -5435,6 +5449,19 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 | orderId | <p>Order Id</p> |
+| overrides |  |
+
+<a name="MarketData+getOrdersStatus"></a>
+
+### traderInterface.getOrdersStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getOrdersStatus</code>](#MarketData+getOrdersStatus)  
+**Returns**: <p>Array of order status</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Array of order Ids</p> |
 | overrides |  |
 
 <a name="MarketData+getMarkPrice"></a>
@@ -6072,9 +6099,9 @@ and corresponding price information</p>
 | --- | --- |
 | contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
-<a name="CollaterlCCY"></a>
+<a name="OrderStatus"></a>
 
-## CollaterlCCY
+## OrderStatus
 <p>struct ClientOrder {
 uint24 iPerpetualId; // unique id of the perpetual
 int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
