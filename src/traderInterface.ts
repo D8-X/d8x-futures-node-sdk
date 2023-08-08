@@ -1,8 +1,9 @@
 import { Signer } from "@ethersproject/abstract-signer";
-import { CallOverrides, Contract, ContractTransaction, Overrides } from "@ethersproject/contracts";
+import type { CallOverrides, ContractTransaction, Overrides } from "@ethersproject/contracts";
+import { ZERO_ORDER_ID } from "./constants";
 import { ABK64x64ToFloat, floatToDec18, floatToDecN } from "./d8XMath";
 import MarketData from "./marketData";
-import { ClientOrder, NodeSDKConfig, Order, SmartContractOrder, ZERO_ORDER_ID } from "./nodeSDKTypes";
+import type { ClientOrder, NodeSDKConfig, Order, SmartContractOrder } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
 /**
@@ -97,7 +98,7 @@ export default class TraderInterface extends MarketData {
    * @returns order book address for the perpetual
    */
   public getOrderBookAddress(symbol: string): string {
-    let orderBookContract: Contract = this.getOrderBookContract(symbol);
+    let orderBookContract = this.getOrderBookContract(symbol);
     return orderBookContract.address;
   }
 
@@ -149,7 +150,7 @@ export default class TraderInterface extends MarketData {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    let orderBookContract: Contract = this.getOrderBookContract(symbol);
+    let orderBookContract = this.getOrderBookContract(symbol);
     return PerpetualDataHandler._getABIFromContract(orderBookContract, method);
   }
 

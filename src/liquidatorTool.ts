@@ -1,8 +1,8 @@
-import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
+import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
-import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
+import type { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
 
 /**

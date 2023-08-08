@@ -3,7 +3,7 @@ import { concat } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { toUtf8Bytes } from "@ethersproject/strings";
 import { Buffer } from "buffer";
-import { SmartContractOrder } from "./nodeSDKTypes";
+import { type SmartContractOrder } from "./nodeSDKTypes";
 
 export default class TraderDigests {
   /**

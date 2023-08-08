@@ -1,12 +1,13 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
-import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import type { CallOverrides, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
-import { ERC20__factory } from "./contracts";
+import { MAX_UINT_256, MOCK_TOKEN_SWAP_ABI } from "./constants";
+import { ERC20__factory, MockTokenSwap__factory } from "./contracts";
 import { floatToDecN } from "./d8XMath";
-import { MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, NodeSDKConfig } from "./nodeSDKTypes";
+import { type NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 
 /**
@@ -124,7 +125,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     if (swapAddress == undefined) {
       throw Error("No swap contract found for symbol.");
     }
-    let contract = new Contract(swapAddress, MOCK_TOKEN_SWAP_ABI, this.signer);
+    let contract = MockTokenSwap__factory.connect(swapAddress, this.signer);
     if (overrides && overrides.value !== undefined) {
       throw Error("Pass value to send in function call, not overrides.");
     }

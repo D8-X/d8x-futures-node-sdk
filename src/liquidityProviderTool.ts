@@ -1,7 +1,7 @@
-import { ContractTransaction, Overrides } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
+import type { ContractTransaction, Overrides } from "@ethersproject/contracts";
 import { floatToDec18, floatToDecN } from "./d8XMath";
-import { NodeSDKConfig } from "./nodeSDKTypes";
+import type { NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 /**

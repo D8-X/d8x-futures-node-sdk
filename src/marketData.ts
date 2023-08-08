@@ -1,45 +1,46 @@
 import { Interface } from "@ethersproject/abi";
 import { BigNumber } from "@ethersproject/bignumber";
-import { CallOverrides, Contract } from "@ethersproject/contracts";
+import type { CallOverrides, Contract } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { formatUnits } from "@ethersproject/units";
-import { ERC20__factory, IPerpetualManager, LimitOrderBook, Multicall3 } from "./contracts";
-import { ERC20Interface } from "./contracts/ERC20";
-import { PerpStorage } from "./contracts/IPerpetualManager";
-import { IClientOrder } from "./contracts/LimitOrderBook";
-import {
-  ABK64x64ToFloat,
-  calculateLiquidationPriceCollateralBase,
-  calculateLiquidationPriceCollateralQuanto,
-  calculateLiquidationPriceCollateralQuote,
-  floatToABK64x64,
-  getDepositAmountForLvgTrade,
-  dec18ToFloat,
-  decNToFloat,
-  getMaxSignedPositionSize,
-} from "./d8XMath";
 import {
   BUY_SIDE,
-  ClientOrder,
   CLOSED_SIDE,
   COLLATERAL_CURRENCY_BASE,
   COLLATERAL_CURRENCY_QUANTO,
   CollaterlCCY,
   ERC20_ABI,
-  ExchangeInfo,
-  MarginAccount,
-  NodeSDKConfig,
-  Order,
   OrderStatus,
-  PerpetualState,
-  PerpetualStaticInfo,
   PERP_STATE_STR,
-  PoolState,
-  PoolStaticInfo,
   SELL_SIDE,
-  SmartContractOrder,
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
+} from "./constants";
+import { ERC20__factory, type IPerpetualManager, type LimitOrderBook, type Multicall3 } from "./contracts";
+import { type ERC20Interface } from "./contracts/ERC20";
+import { type PerpStorage } from "./contracts/IPerpetualManager";
+import { type IClientOrder } from "./contracts/LimitOrderBook";
+import {
+  ABK64x64ToFloat,
+  calculateLiquidationPriceCollateralBase,
+  calculateLiquidationPriceCollateralQuanto,
+  calculateLiquidationPriceCollateralQuote,
+  dec18ToFloat,
+  decNToFloat,
+  floatToABK64x64,
+  getDepositAmountForLvgTrade,
+  getMaxSignedPositionSize,
+} from "./d8XMath";
+import {
+  type ExchangeInfo,
+  type MarginAccount,
+  type NodeSDKConfig,
+  type Order,
+  type PerpetualState,
+  type PerpetualStaticInfo,
+  type PoolState,
+  type PoolStaticInfo,
+  type SmartContractOrder,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import PriceFeeds from "./priceFeeds";

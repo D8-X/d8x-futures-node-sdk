@@ -1,5 +1,5 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { DECIMALS, ONE_64x64 } from "./nodeSDKTypes";
+import { DECIMALS, ONE_64x64 } from "./constants";
 
 /**
  * @module d8xMath

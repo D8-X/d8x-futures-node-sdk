@@ -18,7 +18,7 @@
     "esModuleInterop": true,
     "declaration": true,
     "moduleResolution": "node",
-    "jsx": "react",
+    "jsx": "preserve",
     "outDir": "./dist/esm",
     "rootDir": "./src",
     "strict": true,

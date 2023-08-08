@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo, BUY_SIDE, SELL_SIDE } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
@@ -11,6 +11,7 @@ import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
 import { IPerpetualManager, IPerpetualManager__factory } from "../src/contracts";
+import { BUY_SIDE, SELL_SIDE } from "../src/constants";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -31,7 +32,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeEach(() => {
-    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    config = PerpetualDataHandler.readSDKConfig("testnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -81,7 +82,7 @@ describe("readOnly", () => {
 
   describe("APIInterface", () => {
     beforeAll(async () => {
-      config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+      config = PerpetualDataHandler.readSDKConfig("testnet");
       if (RPC != undefined) {
         config.nodeURL = RPC;
       }

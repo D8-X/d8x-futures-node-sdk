@@ -1,24 +1,20 @@
+import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
-import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import { BlockTag, Provider } from "@ethersproject/providers";
-import { Signer } from "@ethersproject/abstract-signer";
+import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
+import type { BlockTag } from "@ethersproject/providers";
+import { BUY_SIDE, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
+import type { Multicall3 } from "./contracts";
+import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
-  BUY_SIDE,
-  NodeSDKConfig,
-  Order,
-  OrderStatus,
-  PerpetualStaticInfo,
-  PriceFeedSubmission,
-  SELL_SIDE,
-  SmartContractOrder,
-  ZERO_ADDRESS,
-  ZERO_ORDER_ID,
+  type NodeSDKConfig,
+  type Order,
+  type PerpetualStaticInfo,
+  type PriceFeedSubmission,
+  type SmartContractOrder,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
-import { Multicall3 } from "./contracts";
-import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 
 /**
  * Functions to execute existing conditional orders from the limit order book. This class

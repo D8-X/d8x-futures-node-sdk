@@ -1,9 +1,9 @@
 import { BigNumber } from "@ethersproject/bignumber";
+import { Buffer } from "buffer";
+import { decNToFloat } from "./d8XMath";
+import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
-import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat, PythLatestPriceFeed } from "./nodeSDKTypes";
-import { decNToFloat } from "./d8XMath";
-import { Buffer } from "buffer";
 
 /**
  * This class communicates with the REST API that provides price-data that is

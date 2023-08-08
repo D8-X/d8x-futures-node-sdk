@@ -1,11 +1,10 @@
+import { defaultAbiCoder } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { keccak256 } from "@ethersproject/keccak256";
-import { BigNumber, ethers } from "ethers";
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Wallet } from "@ethersproject/wallet";
-import { sign } from "crypto";
+import { ethers } from "ethers";
+import type { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 
 /**
  * This is a 'standalone' class that deals with signatures

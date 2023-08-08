@@ -1,31 +1,30 @@
+import { BigNumber } from "ethers";
 import {
-  NodeSDKConfig,
-  Order,
-  ORDER_TYPE_STOP_LIMIT,
+  MASK_CLOSE_ONLY,
+  MASK_KEEP_POS_LEVERAGE,
+  MASK_LIMIT_ORDER,
+  MASK_MARKET_ORDER,
+  MASK_STOP_ORDER,
   ORDER_TYPE_LIMIT,
   ORDER_TYPE_MARKET,
+  ORDER_TYPE_STOP_LIMIT,
   ORDER_TYPE_STOP_MARKET,
-  MASK_LIMIT_ORDER,
-  MASK_STOP_ORDER,
-  MASK_KEEP_POS_LEVERAGE,
-  MASK_CLOSE_ONLY,
-  MASK_MARKET_ORDER,
   SYMBOL_LIST,
-} from "../src/nodeSDKTypes";
+} from "../src/constants";
+import { countDecimalsOf, roundToLotString } from "../src/d8XMath";
+import { NodeSDKConfig, Order } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import {
-  to4Chars,
-  symbol4BToLongSymbol,
-  toBytes4,
+  combineFlags,
+  containsFlag,
+  contractSymbolToSymbol,
   fromBytes4,
   fromBytes4HexString,
-  containsFlag,
-  combineFlags,
+  symbol4BToLongSymbol,
   symbolToContractSymbol,
-  contractSymbolToSymbol,
+  to4Chars,
+  toBytes4,
 } from "../src/utils";
-import { roundToLotString, countDecimalsOf } from "../src/d8XMath";
-import { BigNumber } from "ethers";
 
 let RPC: string = <string>process.env.RPC;
 jest.setTimeout(150000);

@@ -1,14 +1,14 @@
 import { defaultAbiCoder } from "@ethersproject/abi";
-import { BigNumber } from "ethers";
-import { ethers } from "ethers";
-import { Wallet } from "@ethersproject/wallet";
-import TraderDigests from "../src/traderDigests";
-import { BUY_SIDE, ORDER_TYPE_MARKET, Order, SmartContractOrder, MASK_MARKET_ORDER } from "../src/nodeSDKTypes";
-import { ABDK29ToFloat, ABK64x64ToFloat, floatToABK64x64 } from "../src/d8XMath";
-import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Bytes, concat } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
+import { StaticJsonRpcProvider } from "@ethersproject/providers";
 import { toUtf8Bytes } from "@ethersproject/strings";
+import { Wallet } from "@ethersproject/wallet";
+import { ethers } from "ethers";
+import { BUY_SIDE, MASK_MARKET_ORDER, ORDER_TYPE_MARKET } from "../src/constants";
+import { floatToABK64x64 } from "../src/d8XMath";
+import { Order, SmartContractOrder } from "../src/nodeSDKTypes";
+import TraderDigests from "../src/traderDigests";
 async function BrokerDigest(
   chainId: number,
   proxyAddress: string,

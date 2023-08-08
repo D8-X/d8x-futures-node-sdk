@@ -1,38 +1,8 @@
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { BytesLike } from "@ethersproject/bytes";
-import { AddressZero, HashZero } from "@ethersproject/constants";
-import { ContractInterface, ContractTransaction } from "@ethersproject/contracts";
+import { BigNumber, type BigNumberish } from "@ethersproject/bignumber";
+import type { BytesLike } from "@ethersproject/bytes";
+import type { ContractInterface, ContractTransaction } from "@ethersproject/contracts";
+import { CollaterlCCY } from "./constants";
 
-export const ERC20_ABI = require("./abi/ERC20.json");
-export const MOCK_TOKEN_SWAP_ABI = require("./abi/MockTokenSwap.json");
-export const SYMBOL_LIST = new Map<string, string>(Object.entries(require(`./config/symbolList.json`)));
-export const COLLATERAL_CURRENCY_QUOTE = 0;
-export const COLLATERAL_CURRENCY_BASE = 1;
-export const COLLATERAL_CURRENCY_QUANTO = 2;
-export const PERP_STATE_STR = ["INVALID", "INITIALIZING", "NORMAL", "EMERGENCY", "CLEARED"];
-export const ZERO_ADDRESS = AddressZero;
-export const ZERO_ORDER_ID = HashZero;
-export const MULTICALL_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
-export const ONE_64x64 = BigNumber.from("0x010000000000000000");
-export const MAX_64x64 = BigNumber.from("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
-export const MAX_UINT_256 = BigNumber.from(2).pow(256).sub(BigNumber.from(1));
-export const DECIMALS = BigNumber.from(10).pow(BigNumber.from(18));
-
-export const ORDER_MAX_DURATION_SEC = 60 * 60 * 24 * 30 * 4;
-
-export const MASK_CLOSE_ONLY = BigNumber.from("0x80000000");
-export const MASK_LIMIT_ORDER = BigNumber.from("0x04000000");
-export const MASK_MARKET_ORDER = BigNumber.from("0x40000000");
-export const MASK_STOP_ORDER = BigNumber.from("0x20000000");
-export const MASK_KEEP_POS_LEVERAGE = BigNumber.from("0x08000000");
-
-export const ORDER_TYPE_LIMIT = "LIMIT";
-export const ORDER_TYPE_MARKET = "MARKET";
-export const ORDER_TYPE_STOP_MARKET = "STOP_MARKET";
-export const ORDER_TYPE_STOP_LIMIT = "STOP_LIMIT";
-export const BUY_SIDE = "BUY";
-export const SELL_SIDE = "SELL";
-export const CLOSED_SIDE = "CLOSED";
 export interface NodeSDKConfig {
   name: string | undefined;
   chainId: number;
@@ -66,19 +36,6 @@ export interface MarginAccount {
   liquidationPrice: [number, number | undefined];
   liquidationLvg: number;
   collToQuoteConversion: number;
-}
-
-export enum CollaterlCCY {
-  QUOTE = 0,
-  BASE,
-  QUANTO,
-}
-
-export enum OrderStatus {
-  CANCELED = 0,
-  EXECUTED,
-  OPEN,
-  UNKNOWN,
 }
 
 export interface PoolStaticInfo {
@@ -318,25 +275,6 @@ export interface PythLatestPriceFeed {
   price: PriceFeedFormat;
   vaa: string;
 }
-
-export const DEFAULT_CONFIG_MAINNET_NAME = "mainnet";
-export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
-
-export function loadABIs(config: NodeSDKConfig) {
-  if (config.proxyABILocation.length > 0) {
-    config.proxyABI = require(`./abi/${config.proxyABILocation}`);
-    config.lobFactoryABI = require(`./abi/${config.limitOrderBookFactoryABILocation}`);
-    config.lobABI = require(`./abi/${config.limitOrderBookABILocation}`);
-    config.shareTokenABI = require(`./abi/${config.shareTokenABILocation}`);
-  }
-}
-
-let constConfig = require("./config/defaultConfig.json") as NodeSDKConfig[];
-for (let config of constConfig) {
-  loadABIs(config);
-}
-
-export const DEFAULT_CONFIG: NodeSDKConfig[] = constConfig;
 
 // Payload to be sent to backend when creating
 // a new referral code. Intended for trader-

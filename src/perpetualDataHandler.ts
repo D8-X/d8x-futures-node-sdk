@@ -2,22 +2,47 @@ import { FormatTypes, Interface } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
-import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
-import { Network, Provider } from "@ethersproject/providers";
+import type { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
+import { Provider, type Network } from "@ethersproject/providers";
 import {
-  ERC20__factory,
-  IPerpetualManager,
+  BUY_SIDE,
+  CLOSED_SIDE,
+  COLLATERAL_CURRENCY_BASE,
+  COLLATERAL_CURRENCY_QUOTE,
+  CollaterlCCY,
+  DEFAULT_CONFIG,
+  ERC20_ABI,
+  MASK_CLOSE_ONLY,
+  MASK_KEEP_POS_LEVERAGE,
+  MASK_LIMIT_ORDER,
+  MASK_MARKET_ORDER,
+  MASK_STOP_ORDER,
+  MAX_64x64,
+  MULTICALL_ADDRESS,
+  ORDER_MAX_DURATION_SEC,
+  ORDER_TYPE_LIMIT,
+  ORDER_TYPE_MARKET,
+  ORDER_TYPE_STOP_LIMIT,
+  ORDER_TYPE_STOP_MARKET,
+  PERP_STATE_STR,
+  SELL_SIDE,
+  SYMBOL_LIST,
+  ZERO_ADDRESS,
+  ZERO_ORDER_ID,
+} from "./constants";
+import {
   IPerpetualManager__factory,
-  LimitOrderBook,
-  LimitOrderBookFactory,
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
-  Multicall3,
   Multicall3__factory,
+  type IPerpetualManager,
+  type LimitOrderBook,
+  type LimitOrderBookFactory,
+  type Multicall3,
 } from "./contracts";
-import { ERC20Interface } from "./contracts/ERC20";
-import { IPerpetualOrder } from "./contracts/IPerpetualManager";
-import { IClientOrder } from "./contracts/LimitOrderBook";
+import { type ERC20Interface } from "./contracts/ERC20";
+import { type IPerpetualOrder } from "./contracts/IPerpetualManager";
+import { type IClientOrder } from "./contracts/LimitOrderBook";
 import {
   ABDK29ToFloat,
   ABK64x64ToFloat,
@@ -28,43 +53,25 @@ import {
   floatToABK64x64,
 } from "./d8XMath";
 import {
-  BUY_SIDE,
-  ClientOrder,
-  CLOSED_SIDE,
-  COLLATERAL_CURRENCY_BASE,
-  COLLATERAL_CURRENCY_QUOTE,
-  CollaterlCCY,
-  DEFAULT_CONFIG,
-  ERC20_ABI,
-  loadABIs,
-  MarginAccount,
-  MASK_CLOSE_ONLY,
-  MASK_KEEP_POS_LEVERAGE,
-  MASK_LIMIT_ORDER,
-  MASK_MARKET_ORDER,
-  MASK_STOP_ORDER,
-  MAX_64x64,
-  MULTICALL_ADDRESS,
-  NodeSDKConfig,
-  Order,
-  ORDER_MAX_DURATION_SEC,
-  ORDER_TYPE_LIMIT,
-  ORDER_TYPE_MARKET,
-  ORDER_TYPE_STOP_LIMIT,
-  ORDER_TYPE_STOP_MARKET,
-  PerpetualState,
-  PerpetualStaticInfo,
-  PERP_STATE_STR,
-  PoolStaticInfo,
-  PriceFeedSubmission,
-  SELL_SIDE,
-  SmartContractOrder,
-  SYMBOL_LIST,
-  ZERO_ADDRESS,
-  ZERO_ORDER_ID,
+  type ClientOrder,
+  type MarginAccount,
+  type NodeSDKConfig,
+  type Order,
+  type PerpetualState,
+  type PerpetualStaticInfo,
+  type PoolStaticInfo,
+  type PriceFeedSubmission,
+  type SmartContractOrder,
 } from "./nodeSDKTypes";
 import PriceFeeds from "./priceFeeds";
-import { combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol, to4Chars } from "./utils";
+import {
+  combineFlags,
+  containsFlag,
+  contractSymbolToSymbol,
+  loadConfigAbis,
+  symbol4BToLongSymbol,
+  to4Chars,
+} from "./utils";
 
 /**
  * Parent class for MarketData and WriteAccessHandler that handles
@@ -1143,7 +1150,7 @@ export default class PerpetualDataHandler {
     // file path: this throws a warning during build - that's ok, it just won't work in react apps
     // eslint-disable-next-line
     let configFile = require(filename) as NodeSDKConfig;
-    loadABIs(configFile);
+    loadConfigAbis(configFile);
     return configFile;
   }
 
