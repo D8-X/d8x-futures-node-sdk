@@ -53,6 +53,7 @@ import {
   floatToABK64x64,
 } from "./d8XMath";
 import {
+  TypeSafeOrder,
   type ClientOrder,
   type MarginAccount,
   type NodeSDKConfig,
@@ -1304,5 +1305,30 @@ export default class PerpetualDataHandler {
     if (order.stopPrice != undefined && order.stopPrice < 0) {
       throw Error(`invalid stop price: ${order.stopPrice}`);
     }
+  }
+
+  /**
+   * Converts a client order (with BigNumberish types) to a type-safe order (with number/bigint types)
+   * @param order Client order
+   * @returns Order that can be submitted to the corresponding LOB via ethers v6 or viem
+   */
+  public static fromClientOrderToTypeSafeOrder(order: ClientOrder): TypeSafeOrder {
+    return {
+      flags: +order.flags.toString(),
+      iPerpetualId: +order.iPerpetualId.toString(),
+      brokerFeeTbps: +order.brokerFeeTbps.toString(),
+      traderAddr: order.traderAddr,
+      brokerAddr: order.brokerAddr,
+      executorAddr: order.executorAddr,
+      brokerSignature: order.brokerSignature.toString(),
+      fAmount: BigInt(order.fAmount.toString()),
+      fLimitPrice: BigInt(order.fLimitPrice.toString()),
+      fTriggerPrice: BigInt(order.fTriggerPrice.toString()),
+      leverageTDR: +order.leverageTDR.toString(),
+      iDeadline: +order.iDeadline.toString(),
+      executionTimestamp: +order.executionTimestamp.toString(),
+      parentChildDigest1: order.parentChildDigest1,
+      parentChildDigest2: order.parentChildDigest2,
+    };
   }
 }

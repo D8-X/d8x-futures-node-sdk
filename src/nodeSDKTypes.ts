@@ -243,6 +243,24 @@ export interface ClientOrder {
   parentChildDigest2: string;
 }
 
+export interface TypeSafeOrder {
+  flags: number;
+  iPerpetualId: number;
+  brokerFeeTbps: number;
+  traderAddr: string;
+  brokerAddr: string;
+  executorAddr: string;
+  brokerSignature: string;
+  fAmount: bigint;
+  fLimitPrice: bigint;
+  fTriggerPrice: bigint;
+  leverageTDR: number;
+  iDeadline: number;
+  executionTimestamp: number;
+  parentChildDigest1: string;
+  parentChildDigest2: string;
+}
+
 export interface PriceFeedConfig {
   network: string;
   ids: Array<{ symbol: string; id: string; type: string; origin: string }>;
