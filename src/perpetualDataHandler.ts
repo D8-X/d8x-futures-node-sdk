@@ -1314,21 +1314,20 @@ export default class PerpetualDataHandler {
    */
   public static fromClientOrderToTypeSafeOrder(order: ClientOrder): TypeSafeOrder {
     return {
-      flags: +order.flags.toString(),
       iPerpetualId: +order.iPerpetualId.toString(),
-      brokerFeeTbps: +order.brokerFeeTbps.toString(),
-      traderAddr: order.traderAddr,
-      brokerAddr: order.brokerAddr,
-      executorAddr: order.executorAddr,
-      brokerSignature: order.brokerSignature.toString(),
-      fAmount: BigInt(BigNumber.from(order.fAmount).toString()),
       fLimitPrice: BigInt(BigNumber.from(order.fLimitPrice).toString()),
-      fTriggerPrice: BigInt(BigNumber.from(order.fTriggerPrice).toString()),
       leverageTDR: +order.leverageTDR.toString(),
-      iDeadline: +order.iDeadline.toString(),
       executionTimestamp: +order.executionTimestamp.toString(),
+      flags: BigInt(BigNumber.from(order.flags).toString()),
+      iDeadline: +order.iDeadline.toString(),
+      brokerAddr: order.brokerAddr,
+      fTriggerPrice: BigInt(BigNumber.from(order.fTriggerPrice).toString()),
+      fAmount: BigInt(BigNumber.from(order.fAmount).toString()),
       parentChildDigest1: order.parentChildDigest1,
+      traderAddr: order.traderAddr,
       parentChildDigest2: order.parentChildDigest2,
+      brokerFeeTbps: +order.brokerFeeTbps.toString(),
+      brokerSignature: order.brokerSignature.toString(),
     };
   }
 }

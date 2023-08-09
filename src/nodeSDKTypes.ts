@@ -244,12 +244,11 @@ export interface ClientOrder {
 }
 
 export interface TypeSafeOrder {
-  flags: number;
+  flags: bigint;
   iPerpetualId: number;
   brokerFeeTbps: number;
   traderAddr: string;
   brokerAddr: string;
-  executorAddr: string;
   brokerSignature: string;
   fAmount: bigint;
   fLimitPrice: bigint;
