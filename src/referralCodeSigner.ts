@@ -19,14 +19,22 @@ import type { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./
 export default class ReferralCodeSigner {
   private provider: Provider | undefined;
   private rpcURL: string;
-  private signer: Signer;
+  private signingFun: (x: string | Uint8Array) => Promise<string>;
+  private address: string;
 
-  constructor(signer: Signer | string, _rpcURL: string) {
+  constructor(
+    signer: Signer | string | ((x: string | Uint8Array) => Promise<string>),
+    address: string,
+    _rpcURL: string
+  ) {
     this.rpcURL = _rpcURL;
+    this.address = address;
     if (typeof signer == "string") {
-      this.signer = this.createSignerInstance(signer);
+      this.signingFun = this.createSignerInstance(signer).signMessage;
+    } else if (Signer.isSigner(signer)) {
+      this.signingFun = signer.signMessage;
     } else {
-      this.signer = signer;
+      this.signingFun = signer;
     }
   }
 
@@ -37,39 +45,42 @@ export default class ReferralCodeSigner {
   }
 
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
-    if (this.signer == undefined) {
+    if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signer);
+    return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signingFun);
   }
 
   public async getSignatureForCodeSelection(rc: APIReferralCodeSelectionPayload): Promise<string> {
-    if (this.signer == undefined) {
+    if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signer);
+    return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signingFun);
   }
 
   public async getAddress(): Promise<string> {
-    if (this.signer == undefined) {
+    if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await this.signer.getAddress();
+    return this.address;
   }
 
-  public static async getSignatureForNewCode(rc: APIReferralCodePayload, signer: Signer): Promise<string> {
+  public static async getSignatureForNewCode(
+    rc: APIReferralCodePayload,
+    signingFun: (x: string | Uint8Array) => Promise<string>
+  ): Promise<string> {
     let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-    return await signer.signMessage(digestBuffer);
+    return await signingFun(digestBuffer);
   }
 
   public static async getSignatureForCodeSelection(
     rc: APIReferralCodeSelectionPayload,
-    signer: Signer
+    signingFun: (x: string | Uint8Array) => Promise<string>
   ): Promise<string> {
     let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-    return await signer.signMessage(digestBuffer);
+    return await signingFun(digestBuffer);
   }
 
   /**
