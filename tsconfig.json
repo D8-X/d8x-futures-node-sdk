@@ -8,7 +8,7 @@
     "target": "ES2020",
     "module": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "importHelpers": true,
+    "importHelpers": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
