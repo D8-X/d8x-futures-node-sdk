@@ -2,7 +2,6 @@ export * from "./version";
 export * from "./nodeSDKTypes";
 export * from "./utils";
 export * from "./d8XMath";
-export * from "./contracts";
 export * from "./constants";
 
 import AccountTrade from "./accountTrade";
