@@ -1329,6 +1329,7 @@ export default class PerpetualDataHandler {
       parentChildDigest2: order.parentChildDigest2,
       brokerFeeTbps: +order.brokerFeeTbps.toString(),
       brokerSignature: order.brokerSignature.toString(),
+      callbackTarget: order.callbackTarget,
     };
   }
 }

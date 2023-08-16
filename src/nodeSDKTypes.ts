@@ -260,6 +260,7 @@ export interface TypeSafeOrder {
   executionTimestamp: number;
   parentChildDigest1: string;
   parentChildDigest2: string;
+  callbackTarget: string;
 }
 
 export interface PriceFeedConfig {
