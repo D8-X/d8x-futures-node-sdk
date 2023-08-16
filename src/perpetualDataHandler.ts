@@ -958,6 +958,7 @@ export default class PerpetualDataHandler {
       executionTimestamp: scOrder.executionTimestamp,
       parentChildDigest1: parentChildIds ? parentChildIds[0] : ZERO_ORDER_ID,
       parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
+      callbackTarget: ZERO_ADDRESS,
     };
   }
 

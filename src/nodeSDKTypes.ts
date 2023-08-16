@@ -221,6 +221,7 @@ export interface SmartContractOrder {
         bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
         uint16 brokerFeeTbps; // broker fee in tenth of a basis point
         bytes brokerSignature; // signature, can be empty if no brokerAddr provided
+        address callbackTarget; // address of contract implementing callback function
         //address executorAddr; <- will be set by LimitOrderBook
         //uint64 submittedBlock <- will be set by LimitOrderBook
     }
@@ -241,6 +242,7 @@ export interface ClientOrder {
   executionTimestamp: BigNumberish;
   parentChildDigest1: string;
   parentChildDigest2: string;
+  callbackTarget: string;
 }
 
 export interface TypeSafeOrder {
