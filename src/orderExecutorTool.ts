@@ -385,7 +385,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       // 2: order status to see if it's still open
       {
         target: orderBook.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: orderBook.interface.encodeFunctionData("getOrderStatus", [orderId]),
       },
       // 3: block timestamp
@@ -405,7 +405,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       // 4: order has a parent, one more call needed:
       proxyCalls.push({
         target: orderBook.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: orderBook.interface.encodeFunctionData("getOrderStatus", [order.parentChildOrderIds![1]]),
       });
     }
@@ -414,18 +414,29 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // order status
-    const iOrderStatus = orderBook.interface.decodeFunctionResult("getOrderStatus", encodedResults[2].returnData)[0];
+    let iOrderStatus: number;
+    if (encodedResults[2].success) {
+      iOrderStatus = orderBook.interface.decodeFunctionResult("getOrderStatus", encodedResults[2].returnData)[0];
+    } else {
+      iOrderStatus = await orderBook.getOrderStatus(orderId);
+    }
     if (iOrderStatus != OrderStatus.OPEN) {
       // no need to continue - order is no longer open
       return false;
     }
+
     // parent status
     if (hasParent) {
-      const iParentOrderStatus = orderBook.interface.decodeFunctionResult(
-        "getOrderStatus",
-        encodedResults[4].returnData
-      )[0];
-      if (iParentOrderStatus != OrderStatus.EXECUTED || iParentOrderStatus != OrderStatus.CANCELED) {
+      let iParentOrderStatus: number;
+      if (encodedResults[4].success) {
+        iParentOrderStatus = orderBook.interface.decodeFunctionResult(
+          "getOrderStatus",
+          encodedResults[4].returnData
+        )[0];
+      } else {
+        iParentOrderStatus = await orderBook.getOrderStatus(order.parentChildOrderIds![1]);
+      }
+      if (iParentOrderStatus != OrderStatus.EXECUTED && iParentOrderStatus != OrderStatus.CANCELED) {
         // no need to continue - parent order is still pending
         return false;
       }
