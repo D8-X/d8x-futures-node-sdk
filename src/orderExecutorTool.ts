@@ -552,7 +552,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       });
     proxyCalls = proxyCalls.concat(parentStatusCalls);
 
-    // multicall
+    // --- multicall ---
     const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // mark price
@@ -589,12 +589,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     });
 
     // check parent status
-    console.log("parentStatusCalls.length", parentStatusCalls.length);
-    console.log("encodedResults.length", encodedResults.length);
-    console.log(
-      "encodedResults.slice(2 + 2* orders.length).length",
-      encodedResults.slice(2 + 2 * orders.length).length
-    );
     let idxInResults = 2 + 2 * orders.length;
     let isParentReady: boolean[] = new Array<boolean>(orders.length).fill(true);
     for (let i = 0; i < orders.length; i++) {
