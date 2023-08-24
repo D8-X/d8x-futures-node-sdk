@@ -214,7 +214,7 @@ for all perpetuals in a pool</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in pool, or undefined to get all positions.</p> |
 
 **Example**  
 ```js

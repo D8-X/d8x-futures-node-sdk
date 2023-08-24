@@ -238,9 +238,14 @@ describe("readOnly", () => {
       let score = await mktData.getTraderLoyalityScore(wallet.address);
       console.log(`loyality score of ${wallet.address}: ${score}`);
     });
-    it("position risk in pool", async () => {
+    it("position risks in pool", async () => {
       let pos = await mktData.positionRisk(wallet.address, "MATIC");
-      console.log(`Position risk in MATIC pool`);
+      console.log(`Position risks in MATIC pool`);
+      console.log(pos);
+    });
+    it("position risks in exchange", async () => {
+      let pos = await mktData.positionRisk(wallet.address);
+      console.log(`All position risks`);
       console.log(pos);
     });
     it("maxOrderSizeForTrader MATIC", async () => {

@@ -85,39 +85,6 @@ This class requires a private key and executes smart-contract interaction that
 require gas-payments.</p></dd>
 </dl>
 
-## Members
-
-<dl>
-<dt><a href="#OrderStatus">OrderStatus</a></dt>
-<dd><p>struct ClientOrder {
-uint24 iPerpetualId; // unique id of the perpetual
-int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
-uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -&gt; 1234)
-uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
-uint32 flags; // Order-flags are specified in OrderFlags.sol
-uint32 iDeadline; // order will not be executed after this deadline
-address brokerAddr; // can be empty, address of the broker
-int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
-int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
-bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
-address traderAddr; // address of the trader
-bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
-uint16 brokerFeeTbps; // broker fee in tenth of a basis point
-bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-//address executorAddr; &lt;- will be set by LimitOrderBook
-//uint64 submittedBlock &lt;- will be set by LimitOrderBook
-}</p></dd>
-</dl>
-
-## Typedefs
-
-<dl>
-<dt><a href="#ExchangeInfo">ExchangeInfo</a> : <code>Object</code></dt>
-<dd></dd>
-<dt><a href="#PoolState">PoolState</a> : <code>Object</code></dt>
-<dd></dd>
-</dl>
-
 <a name="module_d8xMath"></a>
 
 ## d8xMath
@@ -2504,7 +2471,7 @@ No gas required for the queries here.</p>
         * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
         * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
         * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-        * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
+        * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
         * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
         * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
         * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
@@ -2631,11 +2598,11 @@ main();
 ```
 <a name="MarketData+exchangeInfo"></a>
 
-### marketData.exchangeInfo() ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
+### marketData.exchangeInfo() ⇒ <code>ExchangeInfo</code>
 <p>Information about the products traded in the exchange.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: [<code>ExchangeInfo</code>](#ExchangeInfo) - <p>Array of static data for all the pools and perpetuals in the system.</p>  
+**Returns**: <code>ExchangeInfo</code> - <p>Array of static data for all the pools and perpetuals in the system.</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -2718,7 +2685,7 @@ for all perpetuals in a pool</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in pool, or undefined to get all positions.</p> |
 
 **Example**  
 ```js
@@ -3905,6 +3872,7 @@ common data and chain operations.</p>
         * [.getConfigByChainId(chainId, version)](#PerpetualDataHandler.getConfigByChainId) ⇒
         * [._getABIFromContract(contract, functionName)](#PerpetualDataHandler._getABIFromContract) ⇒
         * [.checkOrder(order, traderAccount, perpStaticInfo)](#PerpetualDataHandler.checkOrder)
+        * [.fromClientOrderToTypeSafeOrder(order)](#PerpetualDataHandler.fromClientOrderToTypeSafeOrder) ⇒
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
@@ -4313,6 +4281,18 @@ Checks for some misspecifications.</p>
 | order | <p>Order struct</p> |
 | traderAccount | <p>Trader account</p> |
 | perpStaticInfo | <p>Symbol to perpetual info map</p> |
+
+<a name="PerpetualDataHandler.fromClientOrderToTypeSafeOrder"></a>
+
+### PerpetualDataHandler.fromClientOrderToTypeSafeOrder(order) ⇒
+<p>Converts a client order (with BigNumberish types) to a type-safe order (with number/bigint types)</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Order that can be submitted to the corresponding LOB via ethers v6 or viem</p>  
+
+| Param | Description |
+| --- | --- |
+| order | <p>Client order</p> |
 
 <a name="PerpetualEventHandler"></a>
 
@@ -4866,7 +4846,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
     * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
     * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
+    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
     * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
     * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
     * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
@@ -5128,12 +5108,12 @@ main();
 ```
 <a name="MarketData+exchangeInfo"></a>
 
-### traderInterface.exchangeInfo() ⇒ [<code>ExchangeInfo</code>](#ExchangeInfo)
+### traderInterface.exchangeInfo() ⇒ <code>ExchangeInfo</code>
 <p>Information about the products traded in the exchange.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>exchangeInfo</code>](#MarketData+exchangeInfo)  
-**Returns**: [<code>ExchangeInfo</code>](#ExchangeInfo) - <p>Array of static data for all the pools and perpetuals in the system.</p>  
+**Returns**: <code>ExchangeInfo</code> - <p>Array of static data for all the pools and perpetuals in the system.</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -5220,7 +5200,7 @@ for all perpetuals in a pool</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in pool, or undefined to get all positions.</p> |
 
 **Example**  
 ```js
@@ -6098,55 +6078,4 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | contract | <p>name of contract: proxy|lob|sharetoken</p> |
-
-<a name="OrderStatus"></a>
-
-## OrderStatus
-<p>struct ClientOrder {
-uint24 iPerpetualId; // unique id of the perpetual
-int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
-uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -&gt; 1234)
-uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
-uint32 flags; // Order-flags are specified in OrderFlags.sol
-uint32 iDeadline; // order will not be executed after this deadline
-address brokerAddr; // can be empty, address of the broker
-int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
-int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
-bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
-address traderAddr; // address of the trader
-bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
-uint16 brokerFeeTbps; // broker fee in tenth of a basis point
-bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-//address executorAddr; &lt;- will be set by LimitOrderBook
-//uint64 submittedBlock &lt;- will be set by LimitOrderBook
-}</p>
-
-**Kind**: global variable  
-<a name="ExchangeInfo"></a>
-
-## ExchangeInfo : <code>Object</code>
-**Kind**: global typedef  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| pools | [<code>Array.&lt;PoolState&gt;</code>](#PoolState) | <p>Array of state objects for all pools in the exchange.</p> |
-| oracleFactoryAddr | <code>string</code> | <p>Address of the oracle factory used by the pools in the exchange.</p> |
-
-<a name="PoolState"></a>
-
-## PoolState : <code>Object</code>
-**Kind**: global typedef  
-**Properties**
-
-| Name | Type | Description |
-| --- | --- | --- |
-| isRunning | <code>boolean</code> | <p>True if the pool is running.</p> |
-| marginTokenAddr | <code>string</code> | <p>Address of the token used by the pool. This is the token used for margin deposits, liquidity provision, and trading fees.</p> |
-| poolShareTokenAddr | <code>string</code> | <p>Address of the pool share token. This is the token issued to external liquidity providers.</p> |
-| defaultFundCashCC | <code>number</code> | <p>Amount of cash in the default fund of this pool, denominated in margin tokens.</p> |
-| pnlParticipantCashCC | <code>number</code> | <p>Amount of cash in the PnL participation pool, i.e. cash deposited by external liquidity providers.</p> |
-| totalTargetAMMFundSizeCC | <code>number</code> | <p>Target AMM funds aggregated across all perpetuals in this pool.</p> |
-| brokerCollateralLotSize | <code>number</code> | <p>Price of one lot for brokers who wish to participate in this pool. Denominated in margin tokens.</p> |
-| perpetuals | <code>Array.&lt;PerpetualState&gt;</code> | <p>Array of all perpetuals in this pool.</p> |
 

@@ -249,7 +249,9 @@ export default class MarketData extends PerpetualDataHandler {
    * Information about the position open by a given trader in a given perpetual contract, or
    * for all perpetuals in a pool
    * @param {string} traderAddr Address of the trader for which we get the position risk.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC or pool symbol ("MATIC")
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC,
+   * or pool symbol ("MATIC") to get all positions in pool,
+   * or undefined to get all positions.
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -267,12 +269,20 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns {MarginAccount[]} Array of position risks of trader.
    */
-  public async positionRisk(traderAddr: string, symbol: string, overrides?: CallOverrides): Promise<MarginAccount[]> {
+  public async positionRisk(traderAddr: string, symbol?: string, overrides?: CallOverrides): Promise<MarginAccount[]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     let resArray: Array<MarginAccount> = [];
-    let symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    let symbols: Array<string>;
+    if (symbol) {
+      symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    } else {
+      symbols = this.poolStaticInfos.reduce(
+        (syms, pool) => syms.concat(this.getPerpetualSymbolsInPool(pool.poolMarginSymbol)),
+        new Array<string>()
+      );
+    }
     if (symbols.length < 1) {
       throw new Error(`No perpetuals found for symbol ${symbol}`);
     } else if (symbols.length < 2) {
@@ -318,21 +328,28 @@ export default class MarketData extends PerpetualDataHandler {
     symbols: string[],
     overrides?: CallOverrides
   ): Promise<MarginAccount[]> {
+    const MAX_SYMBOLS_PER_CALL = 10;
     let S2S3 = await Promise.all(
       symbols.map(async (symbol) => {
         let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
         return [obj.idxPrices[0], obj.idxPrices[1]];
       })
     );
-    let mgnAcct = await PerpetualDataHandler.getMarginAccounts(
-      Array(symbols.length).fill(traderAddr),
-      symbols,
-      this.symbolToPerpStaticInfo,
-      this.multicall!,
-      this.proxyContract!,
-      S2S3,
-      overrides
-    );
+    let mgnAcct: MarginAccount[] = [];
+    let callSymbols = symbols.slice(0, MAX_SYMBOLS_PER_CALL);
+    while (callSymbols.length > 0) {
+      let acc = await PerpetualDataHandler.getMarginAccounts(
+        Array(callSymbols.length).fill(traderAddr),
+        callSymbols,
+        this.symbolToPerpStaticInfo,
+        this.multicall!,
+        this.proxyContract!,
+        S2S3,
+        overrides
+      );
+      mgnAcct = mgnAcct.concat(acc);
+      callSymbols = symbols.slice(mgnAcct.length, mgnAcct.length + MAX_SYMBOLS_PER_CALL);
+    }
     return mgnAcct;
   }
 
