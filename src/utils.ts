@@ -131,7 +131,7 @@ export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {
 }
 
 export function containsFlag(f1: BigNumber, f2: BigNumber): boolean {
-  return (parseInt(f1.toString()) & parseInt(f2.toString())) > 0;
+  return (BigInt(f1.toString()) & BigInt(f2.toString())) > 0;
 }
 
 export function loadConfigAbis(config: NodeSDKConfig) {
