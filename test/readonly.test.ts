@@ -268,6 +268,10 @@ describe("readOnly", () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC");
       console.log("orders in pool =", ordersStruct);
     });
+    it("openOrders in exchange", async () => {
+      let ordersStruct = await mktData.openOrders(wallet.address);
+      console.log("all orders =", ordersStruct);
+    });
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
       console.log("mgn=", mgn);

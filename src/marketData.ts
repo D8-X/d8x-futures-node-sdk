@@ -193,12 +193,20 @@ export default class MarketData extends PerpetualDataHandler {
    */
   public async openOrders(
     traderAddr: string,
-    symbol: string,
+    symbol?: string,
     overrides?: CallOverrides
   ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
     // open orders requested only for given symbol
     let resArray: Array<{ orders: Order[]; orderIds: string[] }> = [];
-    const symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    let symbols: Array<string>;
+    if (symbol) {
+      symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    } else {
+      symbols = this.poolStaticInfos.reduce(
+        (syms, pool) => syms.concat(this.getPerpetualSymbolsInPool(pool.poolMarginSymbol)),
+        new Array<string>()
+      );
+    }
     if (symbols.length < 1) {
       throw new Error(`No perpetuals found for symbol ${symbol}`);
     } else if (symbols.length < 2) {
@@ -1354,7 +1362,7 @@ export default class MarketData extends PerpetualDataHandler {
 
     let haveMoreOrders = new Array(numOBs).fill(true);
     let from = new Array(numOBs).fill(0);
-    const bulkSize = 25;
+    const bulkSize = 10;
 
     while (haveMoreOrders.some((x) => x)) {
       // filter by books with some orders left
