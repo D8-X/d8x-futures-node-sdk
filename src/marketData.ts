@@ -173,7 +173,7 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * All open orders for a trader-address and a symbol.
    * @param {string} traderAddr Address of the trader for which we get the open orders.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC or a pool symbol.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC or a pool symbol, or undefined.
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
