@@ -9,6 +9,7 @@ import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Bytes, concat } from "@ethersproject/bytes";
 import { keccak256 } from "@ethersproject/keccak256";
 import { toUtf8Bytes } from "@ethersproject/strings";
+
 async function BrokerDigest(
   chainId: number,
   proxyAddress: string,
@@ -16,7 +17,7 @@ async function BrokerDigest(
   iPerpetualId: number,
   traderAddr: string,
   iDeadline: number
-): Promise<string> {
+): Promise<[string, string, string]> {
   const NAME = "Perpetual Trade Manager";
   const DOMAIN_TYPEHASH = keccak256(Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)"));
   let abiCoder = defaultAbiCoder;
@@ -43,14 +44,19 @@ async function BrokerDigest(
 
   // get private key
   let pk: string = <string>process.env.PK;
-  let provider = new StaticJsonRpcProvider("https://polygon-mumbai.blockpi.network/v1/rpc/public");
+  let provider = new StaticJsonRpcProvider("https://polygon-mumbai.gateway.tenderly.co");
   const wallet = new Wallet(pk);
   let signer = wallet.connect(provider);
   let toHash = hashMessage(digestBuffer);
   console.log("hash=", toHash);
   let signature = await signer.signMessage(digestBuffer);
   console.log("sig=", signature);
-  return signature;
+  console.log("wallet addr=", wallet.address);
+
+  let addr = ethers.utils.recoverAddress(digestBuffer, signature);
+  let addr2 = ethers.utils.verifyMessage(digestBuffer, signature);
+  let addr3 = ethers.utils.verifyMessage(digest, signature);
+  return [signature, digest, wallet.address];
 }
 
 export const messagePrefix = "\x19Ethereum Signed Message:\n";
@@ -129,14 +135,54 @@ async function main() {
     [123, "0x9d5aaB428e98678d0E645ea4AeBd25f744341a05", -1211, DOMAIN_TYPEHASH]
   );
   console.log(V);*/
-  let dgst = await BrokerDigest(
+}
+
+async function brokerDigest() {
+  let [sig, dgst, addr] = await BrokerDigest(
     80001,
-    "0x7Fb76c91e4950bD48Ed1C812EdE98A5Db96cb4e7",
-    110,
+    "0xCdd7C9e07689d1B3D558A714fAa5Cc4B6bA654bD",
+    410,
     10001,
     "0x9d5aaB428e98678d0E645ea4AeBd25f744341a05",
-    1684863656
+    1691249493
   );
+  console.log("Sig = ", sig);
   console.log("Digest = ", dgst);
+  let dgstB = Buffer.from(dgst.substring(2, dgst.length), "hex");
+  let recoveredAddr1 = ethers.utils.verifyMessage(dgstB, sig);
+  let recoveredAddr = ethers.utils.recoverAddress(dgst, sig);
+  console.log("recovered1 = ", recoveredAddr1);
+  //console.log("recovered = ", recoveredAddr);
+  console.log("addr = ", addr);
 }
-main();
+
+async function brokerDigest2() {
+  let sig =
+    "0x8b42c7be1f20e8bffc4c13eb2263e56a72d89eafb3d424bfa708b652ff9ec54e5c340ba94c5214dd169b9b66ed97af20546efea849deb9e0c627a99f92c30bce1c";
+  let dgst = "0x67ea569dd56486634411bee7c5ea9e6d28da78fb70ba8c1f830aa4e74f0a65c9";
+  console.log("Sig = ", sig);
+  console.log("Digest = ", dgst);
+  let recoveredAddr = ethers.utils.recoverAddress(dgst, sig);
+  console.log("recovered = ", recoveredAddr);
+}
+
+async function brokerDigest3() {
+  let [sig, dgst, addr] = await BrokerDigest(
+    80001,
+    "0xCdd7C9e07689d1B3D558A714fAa5Cc4B6bA654bD",
+    60,
+    10001,
+    "0x9d5aaB428e98678d0E645ea4AeBd25f744341a05",
+    1688347462
+  );
+
+  console.log("Sig = ", sig);
+  console.log("Digest = ", dgst);
+  let dgstB = Buffer.from(dgst.substring(2, dgst.length), "hex");
+  let recoveredAddr = ethers.utils.verifyMessage(dgstB, sig);
+  console.log("recovered = ", recoveredAddr);
+}
+//main();
+//brokerDigest();
+//brokerDigest2();
+brokerDigest3();
