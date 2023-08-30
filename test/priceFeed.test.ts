@@ -1,14 +1,7 @@
-import PriceFeeds from "../src/priceFeeds";
 import MarketData from "../src/marketData";
+import { NodeSDKConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
-import {
-  NodeSDKConfig,
-  PriceFeedSubmission,
-  Order,
-  PerpetualStaticInfo,
-  BUY_SIDE,
-  SELL_SIDE,
-} from "../src/nodeSDKTypes";
+import PriceFeeds from "../src/priceFeeds";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -28,6 +21,7 @@ describe("priceFeed", () => {
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
+    // config.priceFeedEndpoints = [{ type: "pyth", endpoint: "https://pyth.testnet.quantena.tech/api" }];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });
@@ -82,7 +76,7 @@ describe("priceFeed", () => {
     expect(px[1][2]).toBeTruthy(); // market closed
   });
   it("fetch info from data handler", async () => {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("MATIC-USDC-USDC");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("ETH-USD-MATIC");
     console.log(l);
   });
 });

@@ -1,11 +1,10 @@
+import { defaultAbiCoder } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { keccak256 } from "@ethersproject/keccak256";
-import { BigNumber, ethers } from "ethers";
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
-import { Wallet } from "@ethersproject/wallet";
-import { sign } from "crypto";
+import { Wallet, verifyMessage } from "@ethersproject/wallet";
+import { ZERO_ADDRESS } from "./constants";
+import type { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 
 /**
  * This is a 'standalone' class that deals with signatures
@@ -20,14 +19,22 @@ import { sign } from "crypto";
 export default class ReferralCodeSigner {
   private provider: Provider | undefined;
   private rpcURL: string;
-  private signer: Signer;
+  private signingFun: (x: string | Uint8Array) => Promise<string>;
+  private address: string;
 
-  constructor(signer: Signer | string, _rpcURL: string) {
+  constructor(
+    signer: Signer | string | ((x: string | Uint8Array) => Promise<string>),
+    address: string,
+    _rpcURL: string
+  ) {
     this.rpcURL = _rpcURL;
+    this.address = address;
     if (typeof signer == "string") {
-      this.signer = this.createSignerInstance(signer);
+      this.signingFun = this.createSignerInstance(signer).signMessage;
+    } else if (Signer.isSigner(signer)) {
+      this.signingFun = signer.signMessage;
     } else {
-      this.signer = signer;
+      this.signingFun = signer;
     }
   }
 
@@ -38,39 +45,42 @@ export default class ReferralCodeSigner {
   }
 
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
-    if (this.signer == undefined) {
+    if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signer);
+    return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signingFun);
   }
 
   public async getSignatureForCodeSelection(rc: APIReferralCodeSelectionPayload): Promise<string> {
-    if (this.signer == undefined) {
+    if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signer);
+    return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signingFun);
   }
 
   public async getAddress(): Promise<string> {
-    if (this.signer == undefined) {
+    if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await this.signer.getAddress();
+    return this.address;
   }
 
-  public static async getSignatureForNewCode(rc: APIReferralCodePayload, signer: Signer): Promise<string> {
+  public static async getSignatureForNewCode(
+    rc: APIReferralCodePayload,
+    signingFun: (x: string | Uint8Array) => Promise<string>
+  ): Promise<string> {
     let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-    return await signer.signMessage(digestBuffer);
+    return await signingFun(digestBuffer);
   }
 
   public static async getSignatureForCodeSelection(
     rc: APIReferralCodeSelectionPayload,
-    signer: Signer
+    signingFun: (x: string | Uint8Array) => Promise<string>
   ): Promise<string> {
     let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-    return await signer.signMessage(digestBuffer);
+    return await signingFun(digestBuffer);
   }
 
   /**
@@ -83,7 +93,7 @@ export default class ReferralCodeSigner {
     const traderRebateInt = Math.round(rc.traderRebatePerc * 100);
     const referrerRebateInt = Math.round(rc.referrerRebatePerc * 100);
     const agencyRebateInt = Math.round(rc.agencyRebatePerc * 100);
-    const agencyAddrForSignature = rc.agencyAddr == "" ? ethers.constants.AddressZero : rc.agencyAddr;
+    const agencyAddrForSignature = rc.agencyAddr == "" ? ZERO_ADDRESS : rc.agencyAddr;
     let digest = keccak256(
       abiCoder.encode(
         ["string", "address", "address", "uint256", "uint32", "uint32", "uint32"],
@@ -128,12 +138,12 @@ export default class ReferralCodeSigner {
     try {
       let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
       let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-      const signerAddress = await ethers.utils.verifyMessage(digestBuffer, rc.signature);
+      const signerAddress = await verifyMessage(digestBuffer, rc.signature);
       if (rc.agencyAddr.toLowerCase() == signerAddress.toLowerCase()) {
         return true;
       } else if (rc.referrerAddr == signerAddress) {
         // without agency. We ensure agency-address is zero and no rebate for the agency
-        const zeroAgencyAddr = rc.agencyAddr == "" || ethers.constants.AddressZero == rc.agencyAddr;
+        const zeroAgencyAddr = rc.agencyAddr == "" || ZERO_ADDRESS == rc.agencyAddr;
         const zeroAgencyRebate = rc.agencyRebatePerc == 0;
         return zeroAgencyAddr && zeroAgencyRebate;
       } else {
@@ -151,7 +161,7 @@ export default class ReferralCodeSigner {
     try {
       let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
       let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-      const signerAddress = await ethers.utils.verifyMessage(digestBuffer, rc.signature);
+      const signerAddress = await verifyMessage(digestBuffer, rc.signature);
       return rc.traderAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
       return false;

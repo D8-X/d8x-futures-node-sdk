@@ -1,13 +1,12 @@
 import { ethers } from "ethers";
 import { NodeSDKConfig, Order, OrderResponse } from "../src/nodeSDKTypes";
 // import { ABK64x64ToFloat, floatToABK64x64 } from "../src/d8XMath";
-import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import MarketData from "../src/marketData";
+import PerpetualDataHandler from "../src/perpetualDataHandler";
 // import { to4Chars, toBytes4, fromBytes4, fromBytes4HexString } from "../src/utils";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderExecutorTool from "../src/orderExecutorTool";
-import { Wallet } from "ethers";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
@@ -26,7 +25,7 @@ let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("testnet");
+    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -100,28 +99,32 @@ describe("write and spoil gas and tokens", () => {
     }
     console.log("order submitted");
   });
+
   it("post & execute market order", async () => {
     let refTool = new OrderExecutorTool(config, pk);
     await refTool.createProxyInstance();
+    let symbol = "BTC-USD-MATIC";
     let order: Order = {
-      symbol: "ETH-USD-MATIC",
+      symbol: symbol,
       side: "BUY",
       type: "MARKET",
       quantity: 0.1,
       leverage: 10,
       executionTimestamp: Date.now() / 1000,
     };
-    let resp = await accTrade.order(order);
-    await delay(4000);
-    let tx = await refTool.executeOrder("ETH-USD-MATIC", resp.orderId);
+    // let resp = await accTrade.order(order);
+    // await delay(4000);
+    let orderId = "0x9cd4c44471636a7b7c8e3caab55a0a8af54b66fafe9fa8a828b54b1bf92ed953"; // resp.orderId;
+    let tx = await refTool.executeOrder(symbol, orderId);
     console.log("tx hash = ", tx.hash);
     wallet = new ethers.Wallet(pk);
-    let pos = (await mktData.positionRisk(wallet.address, "ETH-USD-MATIC"))[0];
-    if (Math.abs(pos.leverage - 10) > 0.1) {
+    let pos = (await mktData.positionRisk(wallet.address, symbol))[0];
+    if (Math.abs(pos.leverage - order.leverage!) > 0.1) {
       console.log(`Leverage expected ${10}, leverage realized ${pos.leverage}`);
     }
     expect(pos.leverage).toBeCloseTo(10, 0);
   });
+
   // it("post limit order", async () => {
   //   let order: Order = {
   //     symbol: "MATIC-USD-MATIC",

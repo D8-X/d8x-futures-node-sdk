@@ -1,11 +1,11 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { emitWarning } from "process";
+import { ONE_64x64 } from "./constants";
 import { ABK64x64ToFloat, mul64x64 } from "./d8XMath";
 import MarketData from "./marketData";
-import {
+import type {
   ExchangeInfo,
   MarginAccount,
-  ONE_64x64,
   Order,
   OrderStruct,
   PerpetualState,

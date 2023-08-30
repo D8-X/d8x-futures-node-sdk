@@ -1,8 +1,8 @@
-import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
+import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
-import { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
+import type { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
 
 /**
@@ -132,7 +132,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let traderState = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber],
+      indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [BigNumber, BigNumber],
       overrides || {}
     );
     if (traderState[idx_notional].eq(0)) {

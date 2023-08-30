@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo, BUY_SIDE, SELL_SIDE } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo } from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
@@ -11,6 +11,7 @@ import BrokerTool from "../src/brokerTool";
 import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
 import { IPerpetualManager, IPerpetualManager__factory } from "../src/contracts";
+import { BUY_SIDE, SELL_SIDE } from "../src/constants";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
@@ -237,9 +238,14 @@ describe("readOnly", () => {
       let score = await mktData.getTraderLoyalityScore(wallet.address);
       console.log(`loyality score of ${wallet.address}: ${score}`);
     });
-    it("position risk in pool", async () => {
+    it("position risks in pool", async () => {
       let pos = await mktData.positionRisk(wallet.address, "MATIC");
-      console.log(`Position risk in MATIC pool`);
+      console.log(`Position risks in MATIC pool`);
+      console.log(pos);
+    });
+    it("position risks in exchange", async () => {
+      let pos = await mktData.positionRisk(wallet.address);
+      console.log(`All position risks`);
       console.log(pos);
     });
     it("maxOrderSizeForTrader MATIC", async () => {
@@ -261,6 +267,10 @@ describe("readOnly", () => {
     it("openOrders in pool", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC");
       console.log("orders in pool =", ordersStruct);
+    });
+    it("openOrders in exchange", async () => {
+      let ordersStruct = await mktData.openOrders(wallet.address);
+      console.log("all orders =", ordersStruct);
     });
     it("get margin info", async () => {
       let mgn = await mktData.positionRisk(wallet.address, "MATIC-USD-MATIC");
@@ -355,14 +365,21 @@ describe("readOnly", () => {
       await accTrade.createProxyInstance();
     });
     it("getOrderIds", async () => {
-      let ids = await accTrade.getOrderIds("ETH-USD-MATIC");
+      let ids = await accTrade.getOrderIds("MATIC-USD-MATIC");
       console.log("Order Ids for trader:");
       console.log(ids);
     });
     it("getOrderStatus", async () => {
-      let ids = await accTrade.getOrderIds("ETH-USD-MATIC");
+      let ids = await accTrade.getOrderIds("MATIC-USD-MATIC");
       if (ids.length > 0) {
-        let status = await mktData.getOrderStatus("ETH-USD-MATIC", ids[0]);
+        let status = await mktData.getOrderStatus("MATIC-USD-MATIC", ids[0]);
+        console.log(status);
+      }
+    });
+    it("getOrdersStatus", async () => {
+      let ids = await accTrade.getOrderIds("MATIC-USD-MATIC");
+      if (ids.length > 0) {
+        let status = await mktData.getOrdersStatus("MATIC-USD-MATIC", ids);
         console.log(status);
       }
     });
@@ -555,7 +572,7 @@ describe("readOnly", () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
       if (openOrders[0].length > 0) {
-        let isTradeable = await refTool.isTradeable(openOrders[0][0]);
+        let isTradeable = await refTool.isTradeable(openOrders[0][0], openOrders[1][0]);
         console.log(isTradeable);
       } else {
         console.warn("no orders to check");
@@ -565,7 +582,10 @@ describe("readOnly", () => {
       let symbol = "MATIC-USD-MATIC";
       let openOrders = await refTool.getAllOpenOrders(symbol);
       if (openOrders[0].length > 0) {
-        let isTradeable = await refTool.isTradeableBatch([openOrders[0][0], openOrders[0][1]]);
+        let isTradeable = await refTool.isTradeableBatch(
+          [openOrders[0][0], openOrders[0][1]],
+          [openOrders[1][0], openOrders[1][1]]
+        );
         console.log(isTradeable);
       }
     });

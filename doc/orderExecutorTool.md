@@ -17,7 +17,7 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderExecutorTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderExecutorTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderExecutorTool+isTradeableBatch) ⇒
-    * [._isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
+    * [._isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderExecutorTool+smartContractOrderToOrder) ⇒
 
 <a name="new_OrderExecutorTool_new"></a>
@@ -251,7 +251,7 @@ main();
 
 <a name="OrderExecutorTool+_isTradeable"></a>
 
-### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, blockTimestamp, symbolToPerpInfoMap) ⇒
+### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap) ⇒
 <p>Can the order be executed?</p>
 
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
@@ -262,7 +262,7 @@ main();
 | order | <p>order struct</p> |
 | tradePrice | <p>&quot;preview&quot; price of this order</p> |
 | markPrice | <p>current mark price</p> |
-| blockTimestamp | <p>last observed block timestamp (hence already in past)</p> |
+| atBlockTimestamp | <p>block timestamp when execution would take place</p> |
 | symbolToPerpInfoMap | <p>metadata</p> |
 
 <a name="OrderExecutorTool+smartContractOrderToOrder"></a>

@@ -1,6 +1,9 @@
+export * from "./version";
 export * from "./nodeSDKTypes";
 export * from "./utils";
 export * from "./d8XMath";
+export * from "./constants";
+export * from "./contracts";
 
 import AccountTrade from "./accountTrade";
 import BrokerTool from "./brokerTool";
@@ -29,5 +32,3 @@ export {
   PriceFeeds,
   ReferralCodeSigner,
 };
-
-export * from "./version";

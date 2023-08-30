@@ -1,19 +1,17 @@
+import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
-import { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import { BlockTag } from "@ethersproject/providers";
-import { Signer } from "@ethersproject/abstract-signer";
+import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
+import type { BlockTag } from "@ethersproject/providers";
+import { BUY_SIDE, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
+import type { Multicall3 } from "./contracts";
+import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
-  BUY_SIDE,
-  ClientOrder,
-  NodeSDKConfig,
-  Order,
-  PerpetualStaticInfo,
-  PriceFeedSubmission,
-  SELL_SIDE,
-  SmartContractOrder,
-  ZERO_ADDRESS,
-  ZERO_ORDER_ID,
+  type NodeSDKConfig,
+  type Order,
+  type PerpetualStaticInfo,
+  type PriceFeedSubmission,
+  type SmartContractOrder,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -25,7 +23,6 @@ import WriteAccessHandler from "./writeAccessHandler";
  * @extends WriteAccessHandler
  */
 export default class OrderExecutorTool extends WriteAccessHandler {
-  static TRADE_DELAY = 4;
   /**
    * Constructor.
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.readSDKConfig.
@@ -109,13 +106,25 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         ...overrides,
       } as PayableOverrides;
     }
-    return await orderBookSC.executeOrder(
+
+    const txData = await orderBookSC.interface.encodeFunctionData("executeOrder", [
       orderId,
       executorAddr,
       submission.priceFeedVaas,
       submission.timestamps,
-      overrides
-    );
+    ]);
+
+    let unsignedTx = {
+      to: orderBookSC.address,
+      from: this.traderAddr,
+      nonce: overrides.nonce, // populated by provider if undefined
+      data: txData,
+      value: overrides.value,
+      gasLimit: overrides.gasLimit, // always defined at this point
+      gasPrice: overrides.gasPrice, // populated by the provider if not specified
+      chainId: this.chainId,
+    };
+    return await this.signer.sendTransaction(unsignedTx);
   }
 
   public async executeOrders(
@@ -137,18 +146,44 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     if (!overrides || overrides.value == undefined) {
       overrides = {
-        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        value: overrides?.value ?? submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
-    return await orderBookSC.executeOrders(
+    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [
       orderIds,
       executorAddr,
-      submission?.priceFeedVaas,
-      submission?.timestamps,
-      overrides
-    );
+      submission.priceFeedVaas,
+      submission.timestamps,
+    ]);
+
+    // const gasInfo = await fetch("https://gasstation-testnet.polygon.technology/zkevm")
+    //   .then((res) => res.json())
+    //   .then((info) => info as GasInfo);
+
+    // const gasPrice = typeof gasInfo.standard == "number" ? gasInfo.standard : (gasInfo.standard as GasPriceV2).maxfee;
+
+    let unsignedTx = {
+      to: orderBookSC.address,
+      from: this.traderAddr,
+      nonce: overrides.nonce ?? (await this.signer.getTransactionCount()),
+      data: txData,
+      value: overrides.value,
+      gasLimit: overrides.gasLimit,
+      // gas price is populated by the provider if not specified
+      gasPrice: overrides.gasPrice,
+      // gasPrice: overrides.gasPrice ?? parseUnits(gasPrice.toString(), "gwei"),
+      chainId: this.chainId,
+    };
+    return await this.signer.sendTransaction(unsignedTx);
+    // return await orderBookSC.executeOrders(
+    //   orderIds,
+    //   executorAddr,
+    //   submission?.priceFeedVaas,
+    //   submission?.timestamps,
+    //   overrides
+    // );
   }
 
   /**
@@ -313,44 +348,122 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    */
   public async isTradeable(
     order: Order,
+    orderId: string,
     blockTimestamp?: number,
     indexPrices?: [number, number],
     overrides?: CallOverrides
   ): Promise<boolean> {
-    if (this.proxyContract == null) {
+    if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (indexPrices == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
-    let orderPrice = await PerpetualDataHandler._queryPerpetualPrice(
-      order.symbol,
-      order.quantity,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract,
-      indexPrices,
-      overrides
-    );
-    let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
-      order.symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract,
-      indexPrices,
-      overrides
-    );
-    if (blockTimestamp == undefined) {
-      const currentBlock = await this.provider!.getBlockNumber();
-      blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
+
+    const fS2S3 = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
+      BigNumber,
+      BigNumber
+    ];
+    const perpId = this.getPerpIdFromSymbol(order.symbol);
+    const fAmount = floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1));
+    const orderBook = this.getOrderBookContract(order.symbol);
+
+    const proxyCalls: Multicall3.Call3Struct[] = [
+      // 0: trade amount price
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [perpId, fAmount, fS2S3]),
+      },
+      // 1: amm state to get the mark price
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, fS2S3]),
+      },
+      // 2: order status to see if it's still open
+      {
+        target: orderBook.address,
+        allowFailure: true,
+        callData: orderBook.interface.encodeFunctionData("getOrderStatus", [orderId]),
+      },
+      // 3: block timestamp
+      {
+        target: this.multicall.address,
+        allowFailure: false,
+        callData: this.multicall.interface.encodeFunctionData("getCurrentBlockTimestamp"),
+      },
+    ];
+
+    const hasParent =
+      order.parentChildOrderIds != undefined &&
+      order.parentChildOrderIds[0] == HashZero &&
+      order.parentChildOrderIds[1] != HashZero;
+
+    if (hasParent) {
+      // 4: order has a parent, one more call needed:
+      proxyCalls.push({
+        target: orderBook.address,
+        allowFailure: true,
+        callData: orderBook.interface.encodeFunctionData("getOrderStatus", [order.parentChildOrderIds![1]]),
+      });
     }
-    return await this._isTradeable(
-      order,
-      orderPrice,
-      markPrice,
-      blockTimestamp,
-      this.symbolToPerpStaticInfo,
-      overrides
+
+    // multicall
+    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+
+    // order status
+    let iOrderStatus: number;
+    if (encodedResults[2].success) {
+      iOrderStatus = orderBook.interface.decodeFunctionResult("getOrderStatus", encodedResults[2].returnData)[0];
+    } else {
+      iOrderStatus = await orderBook.getOrderStatus(orderId);
+    }
+    if (iOrderStatus != OrderStatus.OPEN) {
+      // no need to continue - order is no longer open
+      return false;
+    }
+
+    // parent status
+    if (hasParent) {
+      let iParentOrderStatus: number;
+      if (encodedResults[4].success) {
+        iParentOrderStatus = orderBook.interface.decodeFunctionResult(
+          "getOrderStatus",
+          encodedResults[4].returnData
+        )[0];
+      } else {
+        iParentOrderStatus = await orderBook.getOrderStatus(order.parentChildOrderIds![1]);
+      }
+      if (iParentOrderStatus != OrderStatus.EXECUTED && iParentOrderStatus != OrderStatus.CANCELED) {
+        // no need to continue - parent order is still pending
+        return false;
+      }
+    }
+    // price
+    const orderPrice = ABK64x64ToFloat(
+      this.proxyContract.interface.decodeFunctionResult(
+        "queryPerpetualPrice",
+        encodedResults[0].returnData
+      )[0] as BigNumber
     );
+    // mark price
+    const ammState = this.proxyContract.interface.decodeFunctionResult(
+      "getAMMState",
+      encodedResults[1].returnData
+    )[0] as BigNumber[];
+    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+
+    // block timestamp
+    const ts = (
+      this.multicall.interface.decodeFunctionResult(
+        "getCurrentBlockTimestamp",
+        encodedResults[3].returnData
+      )[0] as BigNumber
+    ).toNumber();
+    blockTimestamp = Math.max(ts + 1, blockTimestamp ?? 0);
+    return this._isTradeable(order, orderPrice, markPrice, blockTimestamp, this.symbolToPerpStaticInfo);
   }
 
   /**
@@ -362,6 +475,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    */
   public async isTradeableBatch(
     orders: Order[],
+    orderIds: string[],
     blockTimestamp?: number,
     indexPrices?: [number, number, boolean, boolean],
     overrides?: CallOverrides
@@ -369,7 +483,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     if (orders.length == 0) {
       return [];
     }
-    if (this.proxyContract == null) {
+    if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (orders.filter((o) => o.symbol == orders[0].symbol).length < orders.length) {
@@ -384,34 +498,122 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       return orders.map(() => false);
     }
 
-    let orderPrice = await Promise.all(
-      orders.map((o) =>
-        PerpetualDataHandler._queryPerpetualPrice(
-          o.symbol,
-          o.quantity,
-          this.symbolToPerpStaticInfo,
-          this.proxyContract!,
-          [indexPrices![0], indexPrices![1]],
-          overrides
-        )
+    const fS2S3 = [indexPrices[0], indexPrices[1]].map(floatToABK64x64) as [BigNumber, BigNumber];
+    const perpId = this.getPerpIdFromSymbol(orders[0].symbol);
+    const fAmounts = orders.map((order) => floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1)));
+    const orderBook = this.getOrderBookContract(orders[0].symbol);
+
+    // mark price and timestamp
+    let proxyCalls: Multicall3.Call3Struct[] = [
+      // 0: amm state to get the mark price
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, fS2S3]),
+      },
+      // 1: block timestamp
+      {
+        target: this.multicall.address,
+        allowFailure: false,
+        callData: this.multicall.interface.encodeFunctionData("getCurrentBlockTimestamp"),
+      },
+    ];
+
+    // status calls
+    const statusCalls: Multicall3.Call3Struct[] = orderIds.map((orderId) => ({
+      target: orderBook.address,
+      allowFailure: false,
+      callData: orderBook.interface.encodeFunctionData("getOrderStatus", [orderId]),
+    }));
+    proxyCalls = proxyCalls.concat(statusCalls);
+
+    // price calls
+    const priceCalls: Multicall3.Call3Struct[] = fAmounts.map((fAmount) => ({
+      target: this.proxyContract!.address,
+      allowFailure: false,
+      callData: this.proxyContract!.interface.encodeFunctionData("queryPerpetualPrice", [perpId, fAmount, fS2S3]),
+    }));
+    proxyCalls = proxyCalls.concat(priceCalls);
+
+    // possibly also get parent orders' status
+    const parentStatusCalls: Multicall3.Call3Struct[] = orders
+      .filter(
+        (order) =>
+          order.parentChildOrderIds != undefined &&
+          order.parentChildOrderIds[0] == HashZero &&
+          order.parentChildOrderIds[1] != HashZero
       )
-    );
-    let markPrice = await PerpetualDataHandler._queryPerpetualMarkPrice(
-      orders[0].symbol,
-      this.symbolToPerpStaticInfo,
-      this.proxyContract,
-      [indexPrices![0], indexPrices![1]],
-      overrides
-    );
-    if (blockTimestamp == undefined) {
-      const currentBlock = await this.provider!.getBlockNumber();
-      blockTimestamp = (await this.provider!.getBlock(currentBlock)).timestamp;
+      .map((order) => {
+        return {
+          target: orderBook.address,
+          allowFailure: false,
+          callData: orderBook.interface.encodeFunctionData("getOrderStatus", [order.parentChildOrderIds![1]]),
+        };
+      });
+    proxyCalls = proxyCalls.concat(parentStatusCalls);
+
+    // --- multicall ---
+    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+
+    // mark price
+    const ammState = this.proxyContract.interface.decodeFunctionResult(
+      "getAMMState",
+      encodedResults[0].returnData
+    )[0] as BigNumber[];
+    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+
+    // block timestamp
+    const ts = (
+      this.multicall.interface.decodeFunctionResult(
+        "getCurrentBlockTimestamp",
+        encodedResults[1].returnData
+      )[0] as BigNumber
+    ).toNumber();
+    blockTimestamp = Math.max(ts + 1, blockTimestamp ?? 0);
+
+    // order status
+    const isOrderOpen = encodedResults.slice(2, 2 + orders.length).map((encodedResult) => {
+      const iOrderStatus = orderBook.interface.decodeFunctionResult("getOrderStatus", encodedResult.returnData)[0];
+      return iOrderStatus == OrderStatus.OPEN;
+    });
+
+    // order prices
+    const orderPrices = encodedResults.slice(2 + orders.length, 2 + 2 * orders.length).map((encodedResult) => {
+      const orderPrice = ABK64x64ToFloat(
+        this.proxyContract!.interface.decodeFunctionResult(
+          "queryPerpetualPrice",
+          encodedResult.returnData
+        )[0] as BigNumber
+      );
+      return orderPrice;
+    });
+
+    // check parent status
+    let idxInResults = 2 + 2 * orders.length;
+    let isParentReady: boolean[] = new Array<boolean>(orders.length).fill(true);
+    for (let i = 0; i < orders.length; i++) {
+      const order = orders[i];
+      const hasParent =
+        order.parentChildOrderIds != undefined &&
+        order.parentChildOrderIds[0] == HashZero &&
+        order.parentChildOrderIds[1] != HashZero;
+      if (hasParent) {
+        const iParentStatus = orderBook.interface.decodeFunctionResult(
+          "getOrderStatus",
+          encodedResults[idxInResults].returnData
+        )[0];
+        isParentReady[i] = iParentStatus == OrderStatus.EXECUTED || iParentStatus == OrderStatus.CANCELED;
+        idxInResults += 1;
+      }
     }
-    return await Promise.all(
-      orders.map((o, idx) =>
-        this._isTradeable(o, orderPrice[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo, overrides)
-      )
-    );
+
+    // sync checks
+    return orders.map((o, idx) => {
+      if (!isOrderOpen[idx] || !isParentReady[idx]) {
+        return false;
+      }
+      return this._isTradeable(o, orderPrices[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo);
+    });
   }
 
   /**
@@ -419,37 +621,30 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @param order order struct
    * @param tradePrice "preview" price of this order
    * @param markPrice current mark price
-   * @param blockTimestamp last observed block timestamp (hence already in past)
+   * @param atBlockTimestamp block timestamp when execution would take place
    * @param symbolToPerpInfoMap metadata
    * @returns true if trading conditions met, false otherwise
    */
-  protected async _isTradeable(
+  protected _isTradeable(
     order: Order,
     tradePrice: number,
     markPrice: number,
-    blockTimestamp: number,
-    symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>,
-    overrides?: CallOverrides
-  ): Promise<boolean> {
+    atBlockTimestamp: number,
+    symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
+  ): boolean {
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
       console.log("order expired");
       return false;
     }
-    const nextBlockTimestamp = blockTimestamp + 2;
-    // TODO: replace 2 by a chain-dependent constant - 1 for zkEVM
-    if (nextBlockTimestamp < order.executionTimestamp) {
-      console.log(`execution deferred to ${order.executionTimestamp - nextBlockTimestamp} more seconds`);
+    // check execution timestamp
+    if (atBlockTimestamp < order.executionTimestamp) {
+      console.log(`execution deferred by ${order.executionTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
-    if (
-      order.submittedTimestamp != undefined &&
-      nextBlockTimestamp < order.submittedTimestamp + OrderExecutorTool.TRADE_DELAY
-    ) {
+    if (order.submittedTimestamp != undefined && atBlockTimestamp < order.submittedTimestamp) {
       // next block should be in ~2 seconds, so + 2
-      console.log(
-        `on hold for ${OrderExecutorTool.TRADE_DELAY + order.submittedTimestamp - nextBlockTimestamp} more seconds`
-      );
+      console.log(`on hold for ${order.submittedTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
 
@@ -477,22 +672,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     ) {
       // console.log("stop price not met");
       return false;
-    }
-    //check dependency
-    if (
-      order.parentChildOrderIds != undefined &&
-      order.parentChildOrderIds[0] == HashZero &&
-      order.parentChildOrderIds[1] != HashZero
-    ) {
-      // order has a parent
-      const orderBookContract = this.getOrderBookContract(order.symbol);
-      const parentStatus = await orderBookContract.getOrderStatus(order.parentChildOrderIds[1], overrides || {});
-      if (parentStatus == 2 || parentStatus == 3) {
-        // console.log("parent not executed/cancelled");
-        // parent is open or unknown
-        return false;
-      }
-      return true;
     }
 
     // all checks passed -> order is tradeable

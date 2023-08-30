@@ -1,6 +1,6 @@
 {
   "name": "@d8x/perpetuals-sdk",
-  "version": "0.8.9",
+  "version": "0.8.38",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
   "author": "D8X",
   "homepage": "https://github.com/D8-X/d8x-futures-node-sdk#readme",
@@ -20,7 +20,7 @@
     "api"
   ],
   "scripts": {
-    "build": "yarn build:esm && yarn build:cjs",
+    "build": "yarn run typechain && yarn build:esm && yarn build:cjs",
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
     "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderExecutorTool.ts --configure ./jsdoc2md.json > ./doc/orderExecutorTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
@@ -29,7 +29,7 @@
     "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublish": "yarn build",
     "prepare": "npm run build",
-    "postinstall": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'"
+    "typechain": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -50,8 +50,9 @@
     "@ethersproject/strings": "^5.7.0",
     "@ethersproject/units": "^5.7.0",
     "@ethersproject/wallet": "^5.7.0",
-    "@typechain/ethers-v5": "^11.0.0",
+    "@typechain/ethers-v5": "^11.1.1",
     "buffer": "^6.0.3",
+    "ethers": "^5.7.2",
     "process": "^0.11.10",
     "typechain": "^8.2.0"
   },
@@ -64,16 +65,14 @@
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
     "babel-jest": "^29.3.1",
-    "ethers": "5.7.0",
     "jest": "^29.3.1",
     "jsdoc-babel": "^0.5.0",
     "jsdoc-to-markdown": "^7.1.1",
     "json2md": "^2.0.0",
     "prettier": "^2.8.7",
-    "source-map-explorer": "^2.5.3",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tslib": "^2.5.0",
-    "typescript": "^4.9.3"
+    "typescript": "^4.9.5"
   }
 }

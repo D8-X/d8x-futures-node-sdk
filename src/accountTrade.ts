@@ -1,17 +1,17 @@
 import { Signer } from "@ethersproject/abstract-signer";
-import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import type { CallOverrides, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
 import { Buffer } from "buffer";
+import { ZERO_ADDRESS } from "./constants";
 import { IPerpetualManager, LimitOrderBook } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
-import {
+import type {
   NodeSDKConfig,
   Order,
   OrderResponse,
   PerpetualStaticInfo,
   PriceFeedSubmission,
   SmartContractOrder,
-  ZERO_ADDRESS,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
@@ -292,10 +292,26 @@ export default class AccountTrade extends WriteAccessHandler {
     let clientOrder = AccountTrade.fromSmartContratOrderToClientOrder(scOrder, parentChildIds);
     // if we are here, we have a clean order
     // decide whether to send order to Limit Order Book or AMM based on order type
-    let tx: ContractTransaction;
+    // let tx: ContractTransaction;
     // all orders are sent to the order-book
     let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
-    tx = await orderBookContract.postOrder(clientOrder, signature, overrides || { gasLimit: this.gasLimit });
+
+    const txData = await orderBookContract.interface.encodeFunctionData("postOrder", [clientOrder, signature]);
+    let unsignedTx = {
+      to: orderBookContract.address,
+      from: this.traderAddr,
+      nonce: overrides?.nonce,
+      data: txData,
+      gasLimit: overrides?.gasLimit ?? this.gasLimit,
+      // gas price is populated by the provider if not specified
+      gasPrice: overrides?.gasPrice,
+      // gasPrice: overrides.gasPrice ?? parseUnits(gasPrice.toString(), "gwei"),
+      chainId: this.chainId,
+    };
+    let tx = await signer.sendTransaction(unsignedTx);
+
+    // tx = await orderBookContract.postOrder(clientOrder, signature, overrides || { gasLimit: this.gasLimit });
+
     let id = await this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };
   }

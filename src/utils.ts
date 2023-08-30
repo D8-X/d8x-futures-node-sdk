@@ -1,5 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
+import { NodeSDKConfig } from "./nodeSDKTypes";
 
 /**
  * @module utils
@@ -130,5 +131,12 @@ export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {
 }
 
 export function containsFlag(f1: BigNumber, f2: BigNumber): boolean {
-  return (parseInt(f1.toString()) & parseInt(f2.toString())) > 0;
+  return (BigInt(f1.toString()) & BigInt(f2.toString())) > 0;
+}
+
+export function loadConfigAbis(config: NodeSDKConfig) {
+  config.proxyABI = require(config.proxyABILocation);
+  config.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
+  config.lobABI = require(config.limitOrderBookABILocation);
+  config.shareTokenABI = require(config.shareTokenABILocation);
 }

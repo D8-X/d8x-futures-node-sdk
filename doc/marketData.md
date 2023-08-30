@@ -33,6 +33,7 @@ No gas required for the queries here.</p>
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
         * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
+        * [.getOrdersStatus(symbol, orderId, overrides)](#MarketData+getOrdersStatus) ⇒
         * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
         * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
         * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
@@ -157,7 +158,7 @@ main();
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol, or undefined.</p> |
 
 **Example**  
 ```js
@@ -213,7 +214,7 @@ for all perpetuals in a pool</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or pool symbol (&quot;MATIC&quot;)</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in pool, or undefined to get all positions.</p> |
 
 **Example**  
 ```js
@@ -429,6 +430,18 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 | orderId | <p>Order Id</p> |
+| overrides |  |
+
+<a name="MarketData+getOrdersStatus"></a>
+
+### marketData.getOrdersStatus(symbol, orderId, overrides) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Array of order status</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| orderId | <p>Array of order Ids</p> |
 | overrides |  |
 
 <a name="MarketData+getMarkPrice"></a>

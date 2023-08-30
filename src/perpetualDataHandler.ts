@@ -2,22 +2,47 @@ import { FormatTypes, Interface } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
-import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
-import { Network, Provider } from "@ethersproject/providers";
+import type { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
+import { Provider, type Network } from "@ethersproject/providers";
 import {
-  ERC20__factory,
-  IPerpetualManager,
+  BUY_SIDE,
+  CLOSED_SIDE,
+  COLLATERAL_CURRENCY_BASE,
+  COLLATERAL_CURRENCY_QUOTE,
+  CollaterlCCY,
+  DEFAULT_CONFIG,
+  ERC20_ABI,
+  MASK_CLOSE_ONLY,
+  MASK_KEEP_POS_LEVERAGE,
+  MASK_LIMIT_ORDER,
+  MASK_MARKET_ORDER,
+  MASK_STOP_ORDER,
+  MAX_64x64,
+  MULTICALL_ADDRESS,
+  ORDER_MAX_DURATION_SEC,
+  ORDER_TYPE_LIMIT,
+  ORDER_TYPE_MARKET,
+  ORDER_TYPE_STOP_LIMIT,
+  ORDER_TYPE_STOP_MARKET,
+  PERP_STATE_STR,
+  SELL_SIDE,
+  SYMBOL_LIST,
+  ZERO_ADDRESS,
+  ZERO_ORDER_ID,
+} from "./constants";
+import {
   IPerpetualManager__factory,
-  LimitOrderBook,
-  LimitOrderBookFactory,
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
-  Multicall3,
   Multicall3__factory,
+  type IPerpetualManager,
+  type LimitOrderBook,
+  type LimitOrderBookFactory,
+  type Multicall3,
 } from "./contracts";
-import { ERC20Interface } from "./contracts/ERC20";
-import { IPerpetualOrder } from "./contracts/IPerpetualManager";
-import { IClientOrder } from "./contracts/LimitOrderBook";
+import { type ERC20Interface } from "./contracts/ERC20";
+import { type IPerpetualOrder } from "./contracts/IPerpetualManager";
+import { type IClientOrder } from "./contracts/LimitOrderBook";
 import {
   ABDK29ToFloat,
   ABK64x64ToFloat,
@@ -28,43 +53,26 @@ import {
   floatToABK64x64,
 } from "./d8XMath";
 import {
-  BUY_SIDE,
-  ClientOrder,
-  CLOSED_SIDE,
-  COLLATERAL_CURRENCY_BASE,
-  COLLATERAL_CURRENCY_QUOTE,
-  CollaterlCCY,
-  DEFAULT_CONFIG,
-  ERC20_ABI,
-  loadABIs,
-  MarginAccount,
-  MASK_CLOSE_ONLY,
-  MASK_KEEP_POS_LEVERAGE,
-  MASK_LIMIT_ORDER,
-  MASK_MARKET_ORDER,
-  MASK_STOP_ORDER,
-  MAX_64x64,
-  MULTICALL_ADDRESS,
-  NodeSDKConfig,
-  Order,
-  ORDER_MAX_DURATION_SEC,
-  ORDER_TYPE_LIMIT,
-  ORDER_TYPE_MARKET,
-  ORDER_TYPE_STOP_LIMIT,
-  ORDER_TYPE_STOP_MARKET,
-  PerpetualState,
-  PerpetualStaticInfo,
-  PERP_STATE_STR,
-  PoolStaticInfo,
-  PriceFeedSubmission,
-  SELL_SIDE,
-  SmartContractOrder,
-  SYMBOL_LIST,
-  ZERO_ADDRESS,
-  ZERO_ORDER_ID,
+  TypeSafeOrder,
+  type ClientOrder,
+  type MarginAccount,
+  type NodeSDKConfig,
+  type Order,
+  type PerpetualState,
+  type PerpetualStaticInfo,
+  type PoolStaticInfo,
+  type PriceFeedSubmission,
+  type SmartContractOrder,
 } from "./nodeSDKTypes";
 import PriceFeeds from "./priceFeeds";
-import { combineFlags, containsFlag, contractSymbolToSymbol, symbol4BToLongSymbol, to4Chars } from "./utils";
+import {
+  combineFlags,
+  containsFlag,
+  contractSymbolToSymbol,
+  loadConfigAbis,
+  symbol4BToLongSymbol,
+  to4Chars,
+} from "./utils";
 
 /**
  * Parent class for MarketData and WriteAccessHandler that handles
@@ -180,7 +188,7 @@ export default class PerpetualDataHandler {
 
     const proxyCalls: Multicall3.Call3Struct[] = poolInfo.poolMarginTokenAddr.map((tokenAddr) => ({
       target: tokenAddr,
-      allowFailure: false,
+      allowFailure: true,
       callData: IERC20.encodeFunctionData("decimals"),
     }));
     proxyCalls.push({
@@ -194,7 +202,10 @@ export default class PerpetualDataHandler {
 
     // decimals
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
-      const decimals = IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number;
+      const decimals =
+        poolInfo.poolMarginTokenAddr[j] == ZERO_ADDRESS
+          ? undefined
+          : (IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number);
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
@@ -206,11 +217,10 @@ export default class PerpetualDataHandler {
       };
       this.poolStaticInfos.push(info);
     }
-
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
       "getOrderBookFactoryAddress",
-      encodedResults[0].returnData
+      encodedResults[encodedResults.length - 1].returnData
     )[0] as string;
     this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, this.signerOrProvider);
 
@@ -532,7 +542,7 @@ export default class PerpetualDataHandler {
       );
       fLockedIn = traderState[idx_locked_in];
       side = traderState[idx_locked_in].gt(0) ? BUY_SIDE : SELL_SIDE;
-      entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]));
+      entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]).abs());
     }
     let mgn: MarginAccount = {
       symbol: symbol,
@@ -948,6 +958,7 @@ export default class PerpetualDataHandler {
       executionTimestamp: scOrder.executionTimestamp,
       parentChildDigest1: parentChildIds ? parentChildIds[0] : ZERO_ORDER_ID,
       parentChildDigest2: parentChildIds ? parentChildIds[1] : ZERO_ORDER_ID,
+      callbackTarget: ZERO_ADDRESS,
     };
   }
 
@@ -1141,7 +1152,7 @@ export default class PerpetualDataHandler {
     // file path: this throws a warning during build - that's ok, it just won't work in react apps
     // eslint-disable-next-line
     let configFile = require(filename) as NodeSDKConfig;
-    loadABIs(configFile);
+    loadConfigAbis(configFile);
     return configFile;
   }
 
@@ -1295,5 +1306,30 @@ export default class PerpetualDataHandler {
     if (order.stopPrice != undefined && order.stopPrice < 0) {
       throw Error(`invalid stop price: ${order.stopPrice}`);
     }
+  }
+
+  /**
+   * Converts a client order (with BigNumberish types) to a type-safe order (with number/bigint types)
+   * @param order Client order
+   * @returns Order that can be submitted to the corresponding LOB via ethers v6 or viem
+   */
+  public static fromClientOrderToTypeSafeOrder(order: ClientOrder): TypeSafeOrder {
+    return {
+      iPerpetualId: +order.iPerpetualId.toString(),
+      fLimitPrice: BigInt(BigNumber.from(order.fLimitPrice).toString()),
+      leverageTDR: +order.leverageTDR.toString(),
+      executionTimestamp: +order.executionTimestamp.toString(),
+      flags: BigInt(BigNumber.from(order.flags).toString()),
+      iDeadline: +order.iDeadline.toString(),
+      brokerAddr: order.brokerAddr,
+      fTriggerPrice: BigInt(BigNumber.from(order.fTriggerPrice).toString()),
+      fAmount: BigInt(BigNumber.from(order.fAmount).toString()),
+      parentChildDigest1: order.parentChildDigest1,
+      traderAddr: order.traderAddr,
+      parentChildDigest2: order.parentChildDigest2,
+      brokerFeeTbps: +order.brokerFeeTbps.toString(),
+      brokerSignature: order.brokerSignature.toString(),
+      callbackTarget: order.callbackTarget,
+    };
   }
 }

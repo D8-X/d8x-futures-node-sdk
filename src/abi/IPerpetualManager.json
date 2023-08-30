@@ -183,9 +183,9 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint64",
+                "internalType": "uint8",
                 "name": "poolId",
-                "type": "uint64"
+                "type": "uint8"
             },
             {
                 "indexed": true,
@@ -270,9 +270,9 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint64",
+                "internalType": "uint8",
                 "name": "poolId",
-                "type": "uint64"
+                "type": "uint8"
             },
             {
                 "indexed": true,
@@ -301,9 +301,9 @@
         "inputs": [
             {
                 "indexed": true,
-                "internalType": "uint64",
+                "internalType": "uint8",
                 "name": "poolId",
-                "type": "uint64"
+                "type": "uint8"
             },
             {
                 "indexed": true,
@@ -760,6 +760,19 @@
             }
         ],
         "name": "SettleState",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint24",
+                "name": "perpetualId",
+                "type": "uint24"
+            }
+        ],
+        "name": "SettlementComplete",
         "type": "event"
     },
     {
@@ -2624,6 +2637,11 @@
                 "internalType": "int128",
                 "name": "_fS3",
                 "type": "int128"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fS2",
+                "type": "int128"
             }
         ],
         "name": "getDepositAmountForLvgPosition",
@@ -3971,6 +3989,35 @@
         "type": "function"
     },
     {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "uint256",
+                "name": "start",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "count",
+                "type": "uint256"
+            }
+        ],
+        "name": "getSettleableAccounts",
+        "outputs": [
+            {
+                "internalType": "address[]",
+                "name": "",
+                "type": "address[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
         "inputs": [],
         "name": "getShareTokenFactory",
         "outputs": [
@@ -4827,55 +4874,6 @@
         "name": "reduceMarginCollateral",
         "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "int128",
-                "name": "_fDeltaPos",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fTreasuryFeeRate",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fPnLPartRate",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fReferralRebate",
-                "type": "int128"
-            },
-            {
-                "internalType": "address",
-                "name": "_executorAddr",
-                "type": "address"
-            }
-        ],
-        "name": "relativeFeeToCCAmount",
-        "outputs": [
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            },
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            }
-        ],
-        "stateMutability": "pure",
         "type": "function"
     },
     {

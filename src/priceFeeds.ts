@@ -1,9 +1,9 @@
 import { BigNumber } from "@ethersproject/bignumber";
+import { Buffer } from "buffer";
+import { decNToFloat } from "./d8XMath";
+import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
-import { PriceFeedConfig, PriceFeedSubmission, PriceFeedFormat, PythLatestPriceFeed } from "./nodeSDKTypes";
-import { decNToFloat } from "./d8XMath";
-import { Buffer } from "buffer";
 
 /**
  * This class communicates with the REST API that provides price-data that is
@@ -20,8 +20,12 @@ export default class PriceFeeds {
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
-    let configs = <PriceFeedConfig[]>(dataHandler.config.priceFeedConfig ?? require("./config/priceFeedConfig.json"));
+    let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
+    // if SDK config contains custom price feed endpoints, these override the public/default ones
+    if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
+      this.config.endpoints = dataHandler.config.priceFeedEndpoints;
+    }
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config);
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();

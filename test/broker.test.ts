@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, Order } from "../src/nodeSDKTypes";
-import PerpetualDataHandler from "../src/perpetualDataHandler";
 import AccountTrade from "../src/accountTrade";
 import BrokerTool from "../src/brokerTool";
+import { NodeSDKConfig, Order } from "../src/nodeSDKTypes";
+import PerpetualDataHandler from "../src/perpetualDataHandler";
 import TraderInterface from "../src/traderInterface";
 
 const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
