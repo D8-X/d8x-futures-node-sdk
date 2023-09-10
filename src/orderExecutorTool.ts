@@ -107,8 +107,8 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       } as PayableOverrides;
     }
 
-    const txData = await orderBookSC.interface.encodeFunctionData("executeOrder", [
-      orderId,
+    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [
+      [orderId],
       executorAddr,
       submission.priceFeedVaas,
       submission.timestamps,

@@ -296,7 +296,7 @@ export default class AccountTrade extends WriteAccessHandler {
     // all orders are sent to the order-book
     let [signature, digest] = await this._createSignature(scOrder, chainId, true, signer, proxyContract.address);
 
-    const txData = await orderBookContract.interface.encodeFunctionData("postOrder", [clientOrder, signature]);
+    const txData = await orderBookContract.interface.encodeFunctionData("postOrders", [[clientOrder], [signature]]);
     let unsignedTx = {
       to: orderBookContract.address,
       from: this.traderAddr,
@@ -309,8 +309,6 @@ export default class AccountTrade extends WriteAccessHandler {
       chainId: this.chainId,
     };
     let tx = await signer.sendTransaction(unsignedTx);
-
-    // tx = await orderBookContract.postOrder(clientOrder, signature, overrides || { gasLimit: this.gasLimit });
 
     let id = await this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };

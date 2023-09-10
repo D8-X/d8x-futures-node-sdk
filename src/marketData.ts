@@ -1779,4 +1779,47 @@ export default class MarketData extends PerpetualDataHandler {
     info.pools = poolStateInfos;
     return info;
   }
+
+  /**
+   * Get the latest on-chain price of a perpetual base index in USD.
+   * @param symbol Symbol of the form ETH-USDC-MATIC.
+   * If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool.
+   * If no argument is provided, it returns the all prices of all the indices in the pools of the exchange.
+   * @return Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.
+   */
+  public async getPriceInUSD(symbol?: string): Promise<Map<string, number>> {
+    if (!this.proxyContract || !this.multicall) {
+      throw new Error("Proxy contract not initialized.");
+    }
+    let symbols: string[];
+    if (symbol) {
+      symbols = symbol.split("-").length == 1 ? this.getPerpetualSymbolsInPool(symbol) : [symbol];
+    } else {
+      symbols = this.poolStaticInfos.reduce(
+        (syms, pool) => syms.concat(this.getPerpetualSymbolsInPool(pool.poolMarginSymbol)),
+        new Array<string>()
+      );
+    }
+    if (symbols.length < 1 || symbols.some((s) => s == undefined)) {
+      throw new Error(`No perpetuals found for symbol ${symbol}`);
+    }
+    const proxyCalls: Multicall3.Call3Struct[] = symbols.map((s) => ({
+      target: this.proxyAddr,
+      allowFailure: false,
+      callData: this.proxyContract!.interface.encodeFunctionData("getLastPerpetualBaseToUSDConversion", [
+        this.getPerpIdFromSymbol(s),
+      ]),
+    }));
+    const encodedResults = await this.multicall!.callStatic.aggregate3(proxyCalls);
+    const prices = encodedResults.map(
+      (result) =>
+        this.proxyContract!.interface.decodeFunctionResult(
+          "getLastPerpetualBaseToUSDConversion",
+          result.returnData
+        )[0] as BigNumber
+    );
+    let res: Map<string, number> = new Map();
+    prices.forEach((px, i) => res.set(`${symbols[i].split("-")[0]}-USD`, ABK64x64ToFloat(px)));
+    return res;
+  }
 }

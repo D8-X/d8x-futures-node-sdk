@@ -1438,62 +1438,6 @@
     {
         "inputs": [
             {
-                "components": [
-                    {
-                        "internalType": "int128",
-                        "name": "fLockedValue1",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fPoolM1",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fPoolM2",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fPoolM3",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fAMM_K2",
-                        "type": "int128"
-                    },
-                    {
-                        "internalType": "int128",
-                        "name": "fCurrentTraderExposureEMA",
-                        "type": "int128"
-                    }
-                ],
-                "internalType": "struct AMMPerpLogic.AMMVariables",
-                "name": "_ammVars",
-                "type": "tuple"
-            },
-            {
-                "internalType": "int128",
-                "name": "_fTradeAmount",
-                "type": "int128"
-            }
-        ],
-        "name": "calculateBoundedSlippage",
-        "outputs": [
-            {
-                "internalType": "int128",
-                "name": "",
-                "type": "int128"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
                 "internalType": "int128[2]",
                 "name": "_fK2AMM",
                 "type": "int128[2]"
@@ -3186,6 +3130,25 @@
                 "internalType": "int128",
                 "name": "fPrice",
                 "type": "int128"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            }
+        ],
+        "name": "getOracleUpdateTime",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",
@@ -5560,12 +5523,7 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_iPerpetualId0",
-                "type": "uint24"
-            },
-            {
-                "internalType": "uint24",
-                "name": "_iPerpetualId1",
+                "name": "_iPerpetualId",
                 "type": "uint24"
             }
         ],
@@ -5578,12 +5536,7 @@
         "inputs": [
             {
                 "internalType": "uint24",
-                "name": "_iPerpetualId0",
-                "type": "uint24"
-            },
-            {
-                "internalType": "uint24",
-                "name": "_iPerpetualId1",
+                "name": "_iPerpetualId",
                 "type": "uint24"
             }
         ],
