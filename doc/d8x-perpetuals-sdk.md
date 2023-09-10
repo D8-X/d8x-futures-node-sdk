@@ -2499,6 +2499,7 @@ No gas required for the queries here.</p>
         * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
         * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
+        * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -3074,6 +3075,18 @@ Result is in collateral currency</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPriceInUSD"></a>
+
+### marketData.getPriceInUSD(symbol) ⇒
+<p>Get the latest on-chain price of a perpetual base index in USD.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USDC-MATIC. If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool. If no argument is provided, it returns the all prices of all the indices in the pools of the exchange.</p> |
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
@@ -4874,6 +4887,7 @@ so that signatures can be handled in frontend via wallet</p>
     * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
     * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
     * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
+    * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -5612,6 +5626,19 @@ Result is in collateral currency</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
+
+<a name="MarketData+getPriceInUSD"></a>
+
+### traderInterface.getPriceInUSD(symbol) ⇒
+<p>Get the latest on-chain price of a perpetual base index in USD.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPriceInUSD</code>](#MarketData+getPriceInUSD)  
+**Returns**: <p>Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USDC-MATIC. If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool. If no argument is provided, it returns the all prices of all the indices in the pools of the exchange.</p> |
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
