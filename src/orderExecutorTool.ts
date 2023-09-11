@@ -236,7 +236,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    let numOrders = await orderBookSC.numberOfOrderBookDigests(overrides || {});
+    let numOrders = await orderBookSC.orderCount(overrides || {});
     return Number(numOrders);
   }
 
