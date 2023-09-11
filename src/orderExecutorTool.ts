@@ -3,8 +3,9 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import type { BlockTag } from "@ethersproject/providers";
+import { ethers } from "ethers";
 import { BUY_SIDE, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
-import type { Multicall3 } from "./contracts";
+import { IPyth__factory, Multicall3 } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
   type NodeSDKConfig,
@@ -101,18 +102,26 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     if (!overrides || overrides.value == undefined) {
       overrides = {
-        value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        // value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,s
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
 
-    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [
-      [orderId],
-      executorAddr,
-      submission.priceFeedVaas,
-      submission.timestamps,
-    ]);
+    const pyth = IPyth__factory.connect(this.pythAddr!, this.signer);
+
+    // update first
+    const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+    try {
+      await pyth.updatePriceFeedsIfNecessary(submission.priceFeedVaas, priceIds, submission.timestamps, {
+        value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+
+    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [[orderId], executorAddr, [], []]);
 
     let unsignedTx = {
       to: orderBookSC.address,
@@ -146,17 +155,26 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     if (!overrides || overrides.value == undefined) {
       overrides = {
-        value: overrides?.value ?? submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        // value: overrides?.value ?? submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
-    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [
-      orderIds,
-      executorAddr,
-      submission.priceFeedVaas,
-      submission.timestamps,
-    ]);
+
+    const pyth = IPyth__factory.connect(this.pythAddr!, this.signer);
+
+    // update first
+    const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+    try {
+      await pyth.updatePriceFeedsIfNecessary(submission.priceFeedVaas, priceIds, submission.timestamps, {
+        value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+
+    const txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
 
     // const gasInfo = await fetch("https://gasstation-testnet.polygon.technology/zkevm")
     //   .then((res) => res.json())

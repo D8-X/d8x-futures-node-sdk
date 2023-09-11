@@ -2,7 +2,7 @@ import { FormatTypes, Interface } from "@ethersproject/abi";
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { AddressZero } from "@ethersproject/constants";
-import type { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
+import { CallOverrides, Contract, ContractInterface } from "@ethersproject/contracts";
 import { Provider, type Network } from "@ethersproject/providers";
 import {
   BUY_SIDE,
@@ -35,6 +35,7 @@ import {
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
   Multicall3__factory,
+  OracleFactory__factory,
   type IPerpetualManager,
   type LimitOrderBook,
   type LimitOrderBookFactory,
@@ -108,6 +109,8 @@ export default class PerpetualDataHandler {
   // provider
   protected nodeURL: string;
   protected provider: Provider | null = null;
+  // pyth
+  protected pythAddr: string | undefined;
 
   private signerOrProvider: Signer | Provider | null = null;
   protected priceFeedGetter: PriceFeeds;
@@ -217,6 +220,10 @@ export default class PerpetualDataHandler {
       };
       this.poolStaticInfos.push(info);
     }
+    //pyth
+    const oracle = OracleFactory__factory.connect(poolInfo.oracleFactory, this.signerOrProvider);
+    this.pythAddr = await oracle.pyth();
+
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
       "getOrderBookFactoryAddress",
