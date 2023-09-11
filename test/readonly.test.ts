@@ -353,6 +353,23 @@ describe("readOnly", () => {
       let pxMark = await mktData.getMarkPrice(perpSymbol);
       console.log(`Perp mark price ${pxMark}`);
     });
+
+    it("get price in USD: perp", async () => {
+      let symbol = "ETH-USD-MATIC";
+      let pxMap = await mktData.getPriceInUSD(symbol);
+      console.log(pxMap);
+    });
+
+    it("get price in USD: pool", async () => {
+      let symbol = "USDC";
+      let pxMap = await mktData.getPriceInUSD(symbol);
+      console.log(pxMap);
+    });
+
+    it("get price in USD: all", async () => {
+      let pxMap = await mktData.getPriceInUSD();
+      console.log(pxMap);
+    });
   });
 
   describe("Account and Trade", () => {

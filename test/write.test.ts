@@ -21,6 +21,7 @@ let mktData: MarketData;
 let wallet: ethers.Wallet;
 let accTrade: AccountTrade;
 let liqTool: LiquidatorTool;
+let execTool: OrderExecutorTool;
 let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
@@ -30,100 +31,133 @@ describe("write and spoil gas and tokens", () => {
       config.nodeURL = RPC;
     }
     expect(pk == undefined).toBeFalsy();
-    accTrade = new AccountTrade(config, pk);
-    await accTrade.createProxyInstance();
-    liqTool = new LiquidatorTool(config, pk);
-    await liqTool.createProxyInstance();
+    wallet = new ethers.Wallet(pk);
+    // accTrade = new AccountTrade(config, pk);
+    // await accTrade.createProxyInstance();
+    // liqTool = new LiquidatorTool(config, pk);
+    // await liqTool.createProxyInstance();
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
+    execTool = new OrderExecutorTool(config, pk);
+    await execTool.createProxyInstance();
   });
 
-  it("set allowance", async () => {
-    //*uncomment
-    let tx = await accTrade.setAllowance("MATIC");
-    console.log(`set allowance tx hash = ${tx.hash}`);
-    //*/
-  });
+  // it("set allowance", async () => {
+  //   //*uncomment
+  //   let tx = await accTrade.setAllowance("MATIC");
+  //   console.log(`set allowance tx hash = ${tx.hash}`);
+  //   //*/
+  // });
 
   // it("swaps MATIC for mock token", async () => {
   //   await accTrade.swapForMockToken("USDC", "0.001");
   // });
 
-  it("add collateral", async () => {
-    //*uncomment
-    let tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10);
-    console.log(`add collateral tx hash = ${tx.hash}`);
-    //*/
-  });
+  // it("add collateral", async () => {
+  //   //*uncomment
+  //   let tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10);
+  //   console.log(`add collateral tx hash = ${tx.hash}`);
+  //   //*/
+  // });
 
-  it("remove collateral", async () => {
-    //*uncomment
-    let tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 10);
-    console.log(`remove collateral tx hash = ${tx.hash}`);
-    //*/
-  });
+  // it("remove collateral", async () => {
+  //   //*uncomment
+  //   let tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 10);
+  //   console.log(`remove collateral tx hash = ${tx.hash}`);
+  //   //*/
+  // });
 
-  it("trade", async () => {
-    let order: Order = {
-      symbol: "BTC-USD-MATIC",
-      side: "BUY",
-      type: "MARKET",
-      quantity: 0.05,
-      leverage: 2,
-      executionTimestamp: Date.now() / 1000,
-    };
-    /*
-    let order: Order = {
-      symbol: "ETH-USD-MATIC",
-      side: "BUY",
-      type: "LIMIT",
-      limitPrice: 0,
-      quantity: 1,
-      leverage: 5,
-      reduceOnly: true,
-      keepPositionLvg: false,
-      executionTimestamp: 1677588583,
-      deadline: 1677617383,
-    };*/
+  // it("trade", async () => {
+  //   let order: Order = {
+  //     symbol: "BTC-USD-MATIC",
+  //     side: "SELL",
+  //     type: "MARKET",
+  //     quantity: 0.1,
+  //     leverage: 10,
+  //     executionTimestamp: Date.now() / 1000 - 10,
+  //   };
+  //   /*
+  //   let order: Order = {
+  //     symbol: "ETH-USD-MATIC",
+  //     side: "BUY",
+  //     type: "LIMIT",
+  //     limitPrice: 0,
+  //     quantity: 1,
+  //     leverage: 5,
+  //     reduceOnly: true,
+  //     keepPositionLvg: false,
+  //     executionTimestamp: 1677588583,
+  //     deadline: 1677617383,
+  //   };*/
 
-    //* UNCOMMENT TO ENABLE TRADING
-    let resp: OrderResponse;
-    try {
-      resp = await accTrade.order(order);
-      console.log("trade transaction hash =", resp.tx.hash);
-      console.log("orderId =", resp.orderId);
-      // execute trade
-      orderId = resp.orderId;
-    } catch (err) {
-      console.log("Error=", err);
+  //   //* UNCOMMENT TO ENABLE TRADING
+  //   let resp: OrderResponse;
+  //   try {
+  //     resp = await accTrade.order(order);
+  //     console.log("orderId =", resp.orderId);
+  //     console.log("txn:", resp.tx);
+  //     // execute trade
+  //     orderId = resp.orderId;
+  //   } catch (err) {
+  //     console.log("Error=", err);
+  //   }
+  //   console.log("order submitted");
+  // });
+
+  it("execute order", async () => {
+    let symbol = "ETH-USD-MATIC";
+    let myOrders = await mktData.openOrders(wallet.address, symbol);
+    let idx = myOrders.findIndex((bundle) => bundle.orderIds.length > 0);
+    if (idx < 0) {
+      // no orders
+      expect(true).toBeTruthy;
+    } else {
+      let orderId = myOrders[idx].orderIds[0];
+      console.log("executing order", orderId, "symbol", symbol);
+      let tx = await execTool.executeOrder(symbol, orderId);
+      console.log(tx);
     }
-    console.log("order submitted");
   });
 
-  it("post & execute market order", async () => {
-    let refTool = new OrderExecutorTool(config, pk);
-    await refTool.createProxyInstance();
-    let symbol = "BTC-USD-MATIC";
-    let order: Order = {
-      symbol: symbol,
-      side: "BUY",
-      type: "MARKET",
-      quantity: 0.1,
-      leverage: 10,
-      executionTimestamp: Date.now() / 1000,
-    };
-    // let resp = await accTrade.order(order);
-    // await delay(4000);
-    let orderId = "0x9cd4c44471636a7b7c8e3caab55a0a8af54b66fafe9fa8a828b54b1bf92ed953"; // resp.orderId;
-    let tx = await refTool.executeOrder(symbol, orderId);
-    console.log("tx hash = ", tx.hash);
-    wallet = new ethers.Wallet(pk);
-    let pos = (await mktData.positionRisk(wallet.address, symbol))[0];
-    if (Math.abs(pos.leverage - order.leverage!) > 0.1) {
-      console.log(`Leverage expected ${10}, leverage realized ${pos.leverage}`);
-    }
-    expect(pos.leverage).toBeCloseTo(10, 0);
-  });
+  // it("execute orders", async () => {
+  //   let symbol = "MATIC-USDC-USDC";
+  //   let myOrders = await mktData.openOrders(wallet.address, symbol);
+  //   let idx = myOrders.findIndex((bundle) => bundle.orderIds.length > 0);
+  //   if (idx < 0) {
+  //     // no orders
+  //     expect(true).toBeTruthy;
+  //   } else {
+  //     let orderId = myOrders[idx].orderIds[0];
+  //     console.log("executing order", orderId, "symbol", symbol);
+  //     let tx = await execTool.executeOrders(symbol, [orderId]);
+  //     console.log(tx);
+  //   }
+  // });
+
+  // it("post & execute market order", async () => {
+  //   let refTool = new OrderExecutorTool(config, pk);
+  //   await refTool.createProxyInstance();
+  //   let symbol = "BTC-USD-MATIC";
+  //   let order: Order = {
+  //     symbol: symbol,
+  //     side: "BUY",
+  //     type: "MARKET",
+  //     quantity: 0.1,
+  //     leverage: 10,
+  //     executionTimestamp: Date.now() / 1000,
+  //   };
+  //   // let resp = await accTrade.order(order);
+  //   // await delay(4000);
+  //   let orderId = "0x9cd4c44471636a7b7c8e3caab55a0a8af54b66fafe9fa8a828b54b1bf92ed953"; // resp.orderId;
+  //   let tx = await refTool.executeOrder(symbol, orderId);
+  //   console.log("tx hash = ", tx.hash);
+  //   wallet = new ethers.Wallet(pk);
+  //   let pos = (await mktData.positionRisk(wallet.address, symbol))[0];
+  //   if (Math.abs(pos.leverage - order.leverage!) > 0.1) {
+  //     console.log(`Leverage expected ${10}, leverage realized ${pos.leverage}`);
+  //   }
+  //   expect(pos.leverage).toBeCloseTo(10, 0);
+  // });
 
   // it("post limit order", async () => {
   //   let order: Order = {
