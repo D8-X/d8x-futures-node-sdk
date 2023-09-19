@@ -4,7 +4,7 @@ import BrokerTool from "../src/brokerTool";
 import { NodeSDKConfig, Order } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import TraderInterface from "../src/traderInterface";
-
+import TraderDigests from "../src/traderDigests";
 const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
 
 /**
@@ -35,7 +35,13 @@ describe("broker tools that spend gas and tokens", () => {
     traderInterface = new TraderInterface(config);
     traderInterface.createProxyInstance();
   });
-
+  it("digest to order id test", async () => {
+    let orderDigest = "0xacf4d1549d91d92d21f53979e8cb09b9277badc99d3303680d23c36f8cf10a02";
+    let td = new TraderDigests();
+    let d = td.createOrderId(orderDigest);
+    console.log("orderid = ", d);
+    console.log("--");
+  });
   it("should set allowance to deposit n lots", async () => {
     lotsDeposit = 1;
     lotSize = await brokerTool.getLotSize("MATIC");
