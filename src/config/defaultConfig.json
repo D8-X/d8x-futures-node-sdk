@@ -1,33 +1,9 @@
 [
   {
-    "name": "testnet",
-    "chainId": 80001,
-    "version": 10,
-    "proxyAddr": "0xCdd7C9e07689d1B3D558A714fAa5Cc4B6bA654bD",
-    "nodeURL": "https://rpc-mumbai.maticvigil.com",
-    "priceFeedConfigNetwork": "mumbai",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
-  },
-  {
-    "name": "mainnet",
-    "chainId": 137,
-    "version": 0,
-    "proxyAddr": "",
-    "nodeURL": "",
-    "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
-  },
-  {
     "name": "zkevmTestnet",
     "chainId": 1442,
     "version": 1,
-    "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "proxyAddr": "0x0e23619704556945B1C7CB550Dee6D428f7d2E2B",
     "nodeURL": "https://rpc.public.zkevm-test.net",
     "priceFeedConfigNetwork": "testnet",
     "shareTokenABILocation": "ShareToken.json",

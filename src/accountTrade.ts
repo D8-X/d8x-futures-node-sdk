@@ -398,6 +398,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     return await this.proxyContract.deposit(
       perpId,
+      this.traderAddr,
       fAmountCC,
       submission.priceFeedVaas,
       submission.timestamps,
@@ -433,6 +434,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     return await this.proxyContract.withdraw(
       perpId,
+      this.traderAddr,
       fAmountCC,
       submission.priceFeedVaas,
       submission.timestamps,
