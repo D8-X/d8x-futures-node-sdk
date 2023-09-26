@@ -193,7 +193,8 @@ export default class OrderExecutorTool extends WriteAccessHandler {
 
     // const gasPrice = typeof gasInfo.standard == "number" ? gasInfo.standard : (gasInfo.standard as GasPriceV2).maxfee;
     if (overrides?.nonce !== undefined) {
-      overrides.nonce = new Promise(async () => BigNumber.from(await overrides!.nonce).add(nonceInc));
+      const nonce = await overrides!.nonce;
+      overrides.nonce = BigNumber.from(nonce).add(nonceInc);
     }
     let unsignedTx = {
       to: orderBookSC.address,
