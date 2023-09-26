@@ -172,11 +172,14 @@ export default class OrderExecutorTool extends WriteAccessHandler {
 
     // update first
     const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+    let nonceInc = 0;
     try {
       const pythTx = await pyth.updatePriceFeedsIfNecessary(submission.priceFeedVaas, priceIds, submission.timestamps, {
         value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        nonce: overrides.nonce,
       });
+      nonceInc += 1;
       // await pythTx.wait();
     } catch (e) {
       console.log(e);
@@ -189,7 +192,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     //   .then((info) => info as GasInfo);
 
     // const gasPrice = typeof gasInfo.standard == "number" ? gasInfo.standard : (gasInfo.standard as GasPriceV2).maxfee;
-
+    if (overrides?.nonce !== undefined) {
+      overrides.nonce = new Promise(async () => BigNumber.from(await overrides!.nonce).add(nonceInc));
+    }
     let unsignedTx = {
       to: orderBookSC.address,
       from: this.traderAddr,
