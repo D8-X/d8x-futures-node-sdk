@@ -238,7 +238,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *
    * @returns Array with all open orders and their IDs.
    */
-  public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[]]> {
+  public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
     return await this.pollLimitOrders(symbol, totalOrders, ZERO_ORDER_ID, overrides);
   }
@@ -332,7 +332,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     numElements: number,
     startAfter?: string,
     overrides?: CallOverrides
-  ): Promise<[Order[], string[]]> {
+  ): Promise<[Order[], string[], string[]]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -346,14 +346,16 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       overrides || {}
     );
     let userFriendlyOrders: Order[] = new Array<Order>();
+    let traderAddr: string[] = [];
     let orderIdsOut = [];
     let k = 0;
     while (k < numElements && k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
       userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
+      traderAddr.push(orders[k].traderAddr);
       k++;
     }
-    return [userFriendlyOrders, orderIdsOut];
+    return [userFriendlyOrders, orderIdsOut, traderAddr];
   }
 
   /**
