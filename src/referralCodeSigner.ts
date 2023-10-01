@@ -30,9 +30,10 @@ export default class ReferralCodeSigner {
     this.rpcURL = _rpcURL;
     this.address = address;
     if (typeof signer == "string") {
-      this.signingFun = this.createSignerInstance(signer).signMessage;
+      const wallet = this.createSignerInstance(signer);
+      this.signingFun = (x: string | Uint8Array) => wallet.signMessage(x);
     } else if (Signer.isSigner(signer)) {
-      this.signingFun = signer.signMessage;
+      this.signingFun = (x: string | Uint8Array) => signer.signMessage(x);
     } else {
       this.signingFun = signer;
     }
