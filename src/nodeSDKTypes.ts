@@ -308,6 +308,16 @@ export interface APIReferralCodePayload {
   signature: string;
 }
 
+// Payload to be sent to backend when an agency/broker
+// assigns a "partner".
+export interface APIReferPayload {
+  parentAddr: string;
+  referToAddr: string;
+  PassOnPercTDF: number;
+  createdOn: number;
+  signature: string;
+}
+
 // Payload to be sent to backend when the trader
 // selects a new referral code. Intended for trader-
 // backends that have an active referral system

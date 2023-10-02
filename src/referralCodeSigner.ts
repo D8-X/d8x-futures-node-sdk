@@ -4,7 +4,7 @@ import { keccak256 } from "@ethersproject/keccak256";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Wallet, verifyMessage } from "@ethersproject/wallet";
 import { ZERO_ADDRESS } from "./constants";
-import type { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
+import type { APIReferPayload, APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 import { BigNumber } from "ethers";
 
 /**
@@ -46,6 +46,13 @@ export default class ReferralCodeSigner {
     return wallet.connect(this.provider);
   }
 
+  public async getSignatureForNewReferral(rp: APIReferPayload): Promise<string> {
+    if (this.signingFun == undefined) {
+      throw Error("no signer defined, call createSignerInstance()");
+    }
+    return await ReferralCodeSigner.getSignatureForNewReferral(rp, this.signingFun);
+  }
+
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
     if (this.signingFun == undefined) {
       throw Error("no signer defined, call createSignerInstance()");
@@ -68,6 +75,26 @@ export default class ReferralCodeSigner {
   }
 
   /**
+   * New agency/broker to agency referral
+   * rc.PassOnPercTDF must be in 100*percentage unit
+   * @param rc
+   * @param signingFun
+   * @returns
+   */
+  public static async getSignatureForNewReferral(
+    rp: APIReferPayload,
+    signingFun: (x: string | Uint8Array) => Promise<string>
+  ): Promise<string> {
+    if (Math.abs(rp.PassOnPercTDF - Math.round(rp.PassOnPercTDF)) > 1e-4) {
+      throw Error("PassOnPercTDF must be in 100*percentage unit, e.g., 2.25% -> 225");
+    }
+    let digest = ReferralCodeSigner._referralNewToMessage(rp);
+    let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+    return await signingFun(digestBuffer);
+  }
+
+  /**
+   * New code
    * rc.PassOnPercTDF must be in 100*percentage unit
    * @param rc APIReferralCodePayload without signature
    * @param signingFun function that signs
@@ -78,7 +105,7 @@ export default class ReferralCodeSigner {
     signingFun: (x: string | Uint8Array) => Promise<string>
   ): Promise<string> {
     if (Math.abs(rc.PassOnPercTDF - Math.round(rc.PassOnPercTDF)) > 1e-4) {
-      throw Error("rc.PassOnPercTDF must be in 100*percentage unit, e.g., 2.25% -> 225");
+      throw Error("PassOnPercTDF must be in 100*percentage unit, e.g., 2.25% -> 225");
     }
     let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
@@ -92,6 +119,18 @@ export default class ReferralCodeSigner {
     let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     return await signingFun(digestBuffer);
+  }
+
+  private static _referralNewToMessage(rc: APIReferPayload): string {
+    let abiCoder = defaultAbiCoder;
+    const passOnPercTwoDigitsFormat = Math.round(rc.PassOnPercTDF);
+    let digest = keccak256(
+      abiCoder.encode(
+        ["address", "address", "uint32", "uint256"],
+        [rc.parentAddr, rc.referToAddr, passOnPercTwoDigitsFormat, BigNumber.from(Math.round(rc.createdOn))]
+      )
+    );
+    return digest;
   }
 
   /**
