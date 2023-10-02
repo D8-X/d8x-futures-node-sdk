@@ -302,7 +302,6 @@ export interface PythLatestPriceFeed {
 export interface APIReferralCodePayload {
   code: string;
   referrerAddr: string;
-  agencyAddr: string;
   createdOn: number;
   PassOnPercTDF: number;
   signature: string;

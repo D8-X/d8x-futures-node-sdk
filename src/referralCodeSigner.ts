@@ -141,11 +141,10 @@ export default class ReferralCodeSigner {
   private static _referralCodeNewCodePayloadToMessage(rc: APIReferralCodePayload): string {
     let abiCoder = defaultAbiCoder;
     const passOnPercTwoDigitsFormat = Math.round(rc.PassOnPercTDF);
-    const agencyAddr = rc.agencyAddr == "" ? ZERO_ADDRESS : rc.agencyAddr;
     let digest = keccak256(
       abiCoder.encode(
-        ["string", "address", "address", "uint32", "uint256"],
-        [rc.code, rc.referrerAddr, agencyAddr, passOnPercTwoDigitsFormat, BigNumber.from(Math.round(rc.createdOn))]
+        ["string", "address", "uint32", "uint256"],
+        [rc.code, rc.referrerAddr, passOnPercTwoDigitsFormat, BigNumber.from(Math.round(rc.createdOn))]
       )
     );
     return digest;
