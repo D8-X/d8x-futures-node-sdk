@@ -28,7 +28,7 @@ describe("referralCodeSigner", () => {
     wallet = new ethers.Wallet(pk);
     rc = {
       code: "ABCD",
-      traderAddr: "0x9d5aaB428e98678d0E645ea4AeBd25f744341a05",
+      traderAddr: wallet.address,
       createdOn: 1696166434,
       signature: "",
     };
@@ -38,6 +38,10 @@ describe("referralCodeSigner", () => {
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
     let S = await codeSigner.getSignatureForCodeSelection(rc);
     console.log(S);
+    rc.signature = S;
+    if (!(await ReferralCodeSigner.checkCodeSelectionSignature(rc))) {
+      throw Error("ops didn't fly");
+    }
   });
 
   it("init with signer", async () => {
