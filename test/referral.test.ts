@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { ethers } from "ethers";
-import { APIReferralCodeSelectionPayload } from "../src/nodeSDKTypes";
+import { APIReferralCodeSelectionPayload, APIReferralCodePayload } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import ReferralCodeSigner from "../src/referralCodeSigner";
 
@@ -56,6 +56,19 @@ describe("referralCodeSigner", () => {
     const signingFun = (x: string | Uint8Array) => signer.signMessage(x);
     codeSigner = new ReferralCodeSigner(signingFun, wallet.address, RPC);
     let S = await codeSigner.getSignatureForCodeSelection(rc);
+    console.log(S);
+  });
+  it("isignature for new code", async () => {
+    let rcp: APIReferralCodePayload = {
+      code: "ABCD",
+      referrerAddr: wallet.address,
+      agencyAddr: "0x9d5aaB428e98678d0E645ea4AeBd25f744341a05",
+      createdOn: 1696166434,
+      PassOnPercTDF: 225,
+      signature: "",
+    };
+    codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let S = await codeSigner.getSignatureForNewCode(rcp);
     console.log(S);
   });
 });

@@ -304,9 +304,7 @@ export interface APIReferralCodePayload {
   referrerAddr: string;
   agencyAddr: string;
   createdOn: number;
-  traderRebatePerc: number;
-  agencyRebatePerc: number;
-  referrerRebatePerc: number;
+  PassOnPercTDF: number;
   signature: string;
 }
 

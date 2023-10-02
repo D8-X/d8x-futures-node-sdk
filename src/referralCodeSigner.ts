@@ -5,6 +5,7 @@ import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Wallet, verifyMessage } from "@ethersproject/wallet";
 import { ZERO_ADDRESS } from "./constants";
 import type { APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
+import { BigNumber } from "ethers";
 
 /**
  * This is a 'standalone' class that deals with signatures
@@ -66,10 +67,19 @@ export default class ReferralCodeSigner {
     return this.address;
   }
 
+  /**
+   * rc.PassOnPercTDF must be in 100*percentage unit
+   * @param rc APIReferralCodePayload without signature
+   * @param signingFun function that signs
+   * @returns signature string
+   */
   public static async getSignatureForNewCode(
     rc: APIReferralCodePayload,
     signingFun: (x: string | Uint8Array) => Promise<string>
   ): Promise<string> {
+    if (Math.abs(rc.PassOnPercTDF - Math.round(rc.PassOnPercTDF)) > 1e-4) {
+      throw Error("rc.PassOnPercTDF must be in 100*percentage unit, e.g., 2.25% -> 225");
+    }
     let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     return await signingFun(digestBuffer);
@@ -91,22 +101,12 @@ export default class ReferralCodeSigner {
    */
   private static _referralCodeNewCodePayloadToMessage(rc: APIReferralCodePayload): string {
     let abiCoder = defaultAbiCoder;
-    const traderRebateInt = Math.round(rc.traderRebatePerc * 100);
-    const referrerRebateInt = Math.round(rc.referrerRebatePerc * 100);
-    const agencyRebateInt = Math.round(rc.agencyRebatePerc * 100);
-    const agencyAddrForSignature = rc.agencyAddr == "" ? ZERO_ADDRESS : rc.agencyAddr;
+    const passOnPercTwoDigitsFormat = Math.round(rc.PassOnPercTDF);
+    const agencyAddr = rc.agencyAddr == "" ? ZERO_ADDRESS : rc.agencyAddr;
     let digest = keccak256(
       abiCoder.encode(
-        ["string", "address", "address", "uint256", "uint32", "uint32", "uint32"],
-        [
-          rc.code,
-          rc.referrerAddr,
-          agencyAddrForSignature,
-          Math.round(rc.createdOn),
-          traderRebateInt,
-          agencyRebateInt,
-          referrerRebateInt,
-        ]
+        ["string", "address", "address", "uint32", "uint256"],
+        [rc.code, rc.referrerAddr, agencyAddr, passOnPercTwoDigitsFormat, BigNumber.from(Math.round(rc.createdOn))]
       )
     );
     return digest;
@@ -127,8 +127,8 @@ export default class ReferralCodeSigner {
 
   /**
    * Check whether signature is correct on payload:
-   * - either the agency signed
-   * - or the referrer signed and the agency is 'set to 0'
+   * - the referrer always signs
+   * - if the agency is not an agency for this referrer, the backend will reject
    * @param rc referralcode payload with a signature
    * @returns true if correctly signed, false otherwise
    */
@@ -140,16 +140,7 @@ export default class ReferralCodeSigner {
       let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
       let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
       const signerAddress = await verifyMessage(digestBuffer, rc.signature);
-      if (rc.agencyAddr.toLowerCase() == signerAddress.toLowerCase()) {
-        return true;
-      } else if (rc.referrerAddr == signerAddress) {
-        // without agency. We ensure agency-address is zero and no rebate for the agency
-        const zeroAgencyAddr = rc.agencyAddr == "" || ZERO_ADDRESS == rc.agencyAddr;
-        const zeroAgencyRebate = rc.agencyRebatePerc == 0;
-        return zeroAgencyAddr && zeroAgencyRebate;
-      } else {
-        return false;
-      }
+      return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
       return false;
     }
