@@ -3,7 +3,6 @@ import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import type { BlockTag } from "@ethersproject/providers";
-import { ethers } from "ethers";
 import { BUY_SIDE, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
 import { IPyth__factory, Multicall3 } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
@@ -340,6 +339,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
+    // first get client orders (incl. dependency info)
     let [orders, orderIds] = await orderBookSC.pollLimitOrders(
       startAfter,
       BigNumber.from(numElements),
@@ -355,6 +355,22 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       traderAddr.push(orders[k].traderAddr);
       k++;
     }
+    // then get perp orders (incl. submitted ts info)
+    const ob = this.getOrderBookContract(symbol);
+    const multicalls: Multicall3.Call3Struct[] = orderIdsOut.map((id) => ({
+      target: ob.address,
+      allowFailure: true,
+      callData: ob.interface.encodeFunctionData("orderOfDigest", [id]),
+    }));
+    const encodedResults = await this.multicall!.callStatic.aggregate3(multicalls, overrides || {});
+
+    // order status
+    encodedResults.map((res, k) => {
+      if (res.success) {
+        const order = ob.interface.decodeFunctionResult("orderOfDigest", res.returnData)[0] as SmartContractOrder;
+        userFriendlyOrders[k].submittedTimestamp = Number(order.submittedTimestamp);
+      }
+    });
     return [userFriendlyOrders, orderIdsOut, traderAddr];
   }
 
