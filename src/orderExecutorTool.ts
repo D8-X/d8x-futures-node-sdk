@@ -238,8 +238,23 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @returns Array with all open orders and their IDs.
    */
   public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
+    const MAX_ORDERS_POLLED = 10;
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
-    return await this.pollLimitOrders(symbol, totalOrders, ZERO_ORDER_ID, overrides);
+    let orderBundles = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, ZERO_ORDER_ID, overrides);
+    let foundNewOrders = orderBundles.length > 0;
+    while (orderBundles[0].length < totalOrders && foundNewOrders) {
+      let res = await this.pollLimitOrders(
+        symbol,
+        MAX_ORDERS_POLLED,
+        orderBundles[1][orderBundles.length - 1],
+        overrides
+      );
+      foundNewOrders = res[0].length > 0;
+      orderBundles[0] = orderBundles[0].concat(res[0]);
+      orderBundles[1] = orderBundles[1].concat(res[1]);
+      orderBundles[2] = orderBundles[2].concat(res[2]);
+    }
+    return orderBundles;
   }
 
   /**
@@ -347,7 +362,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     );
     let userFriendlyOrders: Order[] = new Array<Order>();
     let traderAddr: string[] = [];
-    let orderIdsOut = [];
+    let orderIdsOut: string[] = [];
     let k = 0;
     while (k < numElements && k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
       userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
@@ -356,18 +371,17 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       k++;
     }
     // then get perp orders (incl. submitted ts info)
-    const ob = this.getOrderBookContract(symbol);
     const multicalls: Multicall3.Call3Struct[] = orderIdsOut.map((id) => ({
-      target: ob.address,
+      target: orderBookSC.address,
       allowFailure: true,
-      callData: ob.interface.encodeFunctionData("orderOfDigest", [id]),
+      callData: orderBookSC.interface.encodeFunctionData("orderOfDigest", [id]),
     }));
     const encodedResults = await this.multicall!.callStatic.aggregate3(multicalls, overrides || {});
 
     // order status
     encodedResults.map((res, k) => {
       if (res.success) {
-        const order = ob.interface.decodeFunctionResult("orderOfDigest", res.returnData)[0] as SmartContractOrder;
+        const order = orderBookSC.interface.decodeFunctionResult("orderOfDigest", res.returnData);
         userFriendlyOrders[k].submittedTimestamp = Number(order.submittedTimestamp);
       }
     });
@@ -423,13 +437,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       // 0: trade amount price
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [perpId, fAmount, fS2S3]),
       },
       // 1: amm state to get the mark price
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, fS2S3]),
       },
       // 2: order status to see if it's still open
@@ -491,19 +505,30 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         return false;
       }
     }
+
+    // mark price
+    let ammState: BigNumber[];
+    if (encodedResults[1].success) {
+      ammState = this.proxyContract.interface.decodeFunctionResult(
+        "getAMMState",
+        encodedResults[1].returnData
+      )[0] as BigNumber[];
+    } else {
+      ammState = await this.proxyContract.getAMMState(perpId, fS2S3);
+    }
+    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+
     // price
-    const orderPrice = ABK64x64ToFloat(
-      this.proxyContract.interface.decodeFunctionResult(
+    let fOrderPrice: BigNumber;
+    if (encodedResults[0].success) {
+      fOrderPrice = this.proxyContract.interface.decodeFunctionResult(
         "queryPerpetualPrice",
         encodedResults[0].returnData
-      )[0] as BigNumber
-    );
-    // mark price
-    const ammState = this.proxyContract.interface.decodeFunctionResult(
-      "getAMMState",
-      encodedResults[1].returnData
-    )[0] as BigNumber[];
-    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+      )[0] as BigNumber;
+    } else {
+      fOrderPrice = await this.proxyContract.queryPerpetualPrice(perpId, fAmount, fS2S3);
+    }
+    const orderPrice = ABK64x64ToFloat(fOrderPrice);
 
     // block timestamp
     const ts = (
@@ -524,6 +549,35 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @returns array of tradeable boolean
    */
   public async isTradeableBatch(
+    orders: Order[],
+    orderIds: string[],
+    blockTimestamp?: number,
+    indexPrices?: [number, number, boolean, boolean],
+    overrides?: CallOverrides
+  ): Promise<boolean[]> {
+    const MAX_ORDERS_CHECKED = 10;
+    let totalOrders = orders.length;
+    let checks = await this._isTradeableBatch(
+      orders.slice(0, MAX_ORDERS_CHECKED),
+      orderIds.slice(0, MAX_ORDERS_CHECKED),
+      blockTimestamp,
+      indexPrices,
+      overrides ?? {}
+    );
+    while (checks.length < totalOrders) {
+      let res = await this._isTradeableBatch(
+        orders.slice(checks.length, checks.length + MAX_ORDERS_CHECKED),
+        orderIds.slice(checks.length, checks.length + MAX_ORDERS_CHECKED),
+        blockTimestamp,
+        indexPrices,
+        overrides ?? {}
+      );
+      checks = checks.concat(res);
+    }
+    return checks;
+  }
+
+  private async _isTradeableBatch(
     orders: Order[],
     orderIds: string[],
     blockTimestamp?: number,
