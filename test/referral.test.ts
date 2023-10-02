@@ -63,18 +63,20 @@ describe("referralCodeSigner", () => {
       code: "ABCD",
       referrerAddr: wallet.address,
       createdOn: 1696166434,
-      PassOnPercTDF: 225,
+      passOnPercTDF: 333,
       signature: "",
     };
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
     let S = await codeSigner.getSignatureForNewCode(rcp);
-    console.log(S);
+    rcp.signature = S;
+    console.log("new code");
+    console.log(rcp);
   });
   it("signature for new referral", async () => {
     let rcp: APIReferPayload = {
       parentAddr: wallet.address,
       referToAddr: "0x9d5aaB428e98678d0E645ea4AeBd25f744341a05",
-      PassOnPercTDF: 225,
+      passOnPercTDF: 225,
       createdOn: 1696166434,
       signature: "",
     };

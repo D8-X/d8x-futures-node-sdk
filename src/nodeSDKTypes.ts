@@ -303,7 +303,7 @@ export interface APIReferralCodePayload {
   code: string;
   referrerAddr: string;
   createdOn: number;
-  PassOnPercTDF: number;
+  passOnPercTDF: number;
   signature: string;
 }
 
@@ -312,7 +312,7 @@ export interface APIReferralCodePayload {
 export interface APIReferPayload {
   parentAddr: string;
   referToAddr: string;
-  PassOnPercTDF: number;
+  passOnPercTDF: number;
   createdOn: number;
   signature: string;
 }

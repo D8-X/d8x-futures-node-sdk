@@ -85,7 +85,7 @@ export default class ReferralCodeSigner {
     rp: APIReferPayload,
     signingFun: (x: string | Uint8Array) => Promise<string>
   ): Promise<string> {
-    if (Math.abs(rp.PassOnPercTDF - Math.round(rp.PassOnPercTDF)) > 1e-4) {
+    if (Math.abs(rp.passOnPercTDF - Math.round(rp.passOnPercTDF)) > 1e-4) {
       throw Error("PassOnPercTDF must be in 100*percentage unit, e.g., 2.25% -> 225");
     }
     let digest = ReferralCodeSigner._referralNewToMessage(rp);
@@ -104,7 +104,7 @@ export default class ReferralCodeSigner {
     rc: APIReferralCodePayload,
     signingFun: (x: string | Uint8Array) => Promise<string>
   ): Promise<string> {
-    if (Math.abs(rc.PassOnPercTDF - Math.round(rc.PassOnPercTDF)) > 1e-4) {
+    if (Math.abs(rc.passOnPercTDF - Math.round(rc.passOnPercTDF)) > 1e-4) {
       throw Error("PassOnPercTDF must be in 100*percentage unit, e.g., 2.25% -> 225");
     }
     let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
@@ -123,7 +123,7 @@ export default class ReferralCodeSigner {
 
   private static _referralNewToMessage(rc: APIReferPayload): string {
     let abiCoder = defaultAbiCoder;
-    const passOnPercTwoDigitsFormat = Math.round(rc.PassOnPercTDF);
+    const passOnPercTwoDigitsFormat = Math.round(rc.passOnPercTDF);
     let digest = keccak256(
       abiCoder.encode(
         ["address", "address", "uint32", "uint256"],
@@ -140,7 +140,7 @@ export default class ReferralCodeSigner {
    */
   private static _referralCodeNewCodePayloadToMessage(rc: APIReferralCodePayload): string {
     let abiCoder = defaultAbiCoder;
-    const passOnPercTwoDigitsFormat = Math.round(rc.PassOnPercTDF);
+    const passOnPercTwoDigitsFormat = Math.round(rc.passOnPercTDF);
     let digest = keccak256(
       abiCoder.encode(
         ["string", "address", "uint32", "uint256"],
