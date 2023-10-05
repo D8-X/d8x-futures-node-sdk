@@ -3,9 +3,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { keccak256 } from "@ethersproject/keccak256";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { Wallet, verifyMessage } from "@ethersproject/wallet";
-import { ZERO_ADDRESS } from "./constants";
 import type { APIReferPayload, APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
-import { BigNumber } from "ethers";
 
 /**
  * This is a 'standalone' class that deals with signatures
@@ -127,7 +125,7 @@ export default class ReferralCodeSigner {
     let digest = keccak256(
       abiCoder.encode(
         ["address", "address", "uint32", "uint256"],
-        [rc.parentAddr, rc.referToAddr, passOnPercTwoDigitsFormat, BigNumber.from(Math.round(rc.createdOn))]
+        [rc.parentAddr, rc.referToAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]
       )
     );
     return digest;
@@ -144,7 +142,7 @@ export default class ReferralCodeSigner {
     let digest = keccak256(
       abiCoder.encode(
         ["string", "address", "uint32", "uint256"],
-        [rc.code, rc.referrerAddr, passOnPercTwoDigitsFormat, BigNumber.from(Math.round(rc.createdOn))]
+        [rc.code, rc.referrerAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]
       )
     );
     return digest;
