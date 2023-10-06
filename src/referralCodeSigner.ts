@@ -75,9 +75,9 @@ export default class ReferralCodeSigner {
   /**
    * New agency/broker to agency referral
    * rc.PassOnPercTDF must be in 100*percentage unit
-   * @param rc
-   * @param signingFun
-   * @returns
+   * @param rc payload to sign
+   * @param signingFun signing function
+   * @returns signature
    */
   public static async getSignatureForNewReferral(
     rp: APIReferPayload,

@@ -4789,9 +4789,39 @@ one chain, unless the backend employs code transferrals</p>
 **Kind**: global class  
 
 * [ReferralCodeSigner](#ReferralCodeSigner)
+    * [.getSignatureForNewReferral(rc, signingFun)](#ReferralCodeSigner.getSignatureForNewReferral) ⇒
+    * [.getSignatureForNewCode(rc, signingFun)](#ReferralCodeSigner.getSignatureForNewCode) ⇒
     * [._referralCodeNewCodePayloadToMessage(rc)](#ReferralCodeSigner._referralCodeNewCodePayloadToMessage) ⇒
     * [._codeSelectionPayloadToMessage(rc)](#ReferralCodeSigner._codeSelectionPayloadToMessage) ⇒
     * [.checkNewCodeSignature(rc)](#ReferralCodeSigner.checkNewCodeSignature) ⇒
+
+<a name="ReferralCodeSigner.getSignatureForNewReferral"></a>
+
+### ReferralCodeSigner.getSignatureForNewReferral(rc, signingFun) ⇒
+<p>New agency/broker to agency referral
+rc.PassOnPercTDF must be in 100*percentage unit</p>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>signature</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>payload to sign</p> |
+| signingFun | <p>signing function</p> |
+
+<a name="ReferralCodeSigner.getSignatureForNewCode"></a>
+
+### ReferralCodeSigner.getSignatureForNewCode(rc, signingFun) ⇒
+<p>New code
+rc.PassOnPercTDF must be in 100*percentage unit</p>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>signature string</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>APIReferralCodePayload without signature</p> |
+| signingFun | <p>function that signs</p> |
 
 <a name="ReferralCodeSigner._referralCodeNewCodePayloadToMessage"></a>
 
@@ -4822,8 +4852,8 @@ one chain, unless the backend employs code transferrals</p>
 ### ReferralCodeSigner.checkNewCodeSignature(rc) ⇒
 <p>Check whether signature is correct on payload:</p>
 <ul>
-<li>either the agency signed</li>
-<li>or the referrer signed and the agency is 'set to 0'</li>
+<li>the referrer always signs</li>
+<li>if the agency is not an agency for this referrer, the backend will reject</li>
 </ul>
 
 **Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
