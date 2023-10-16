@@ -1,6 +1,6 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
 import { ethers } from "ethers";
-import { APIReferralCodeSelectionPayload } from "../src/nodeSDKTypes";
+import { APIReferralCodeSelectionPayload, APIReferPayload, APIReferralCodePayload } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import ReferralCodeSigner from "../src/referralCodeSigner";
 
@@ -57,5 +57,45 @@ describe("referralCodeSigner", () => {
     codeSigner = new ReferralCodeSigner(signingFun, wallet.address, RPC);
     let S = await codeSigner.getSignatureForCodeSelection(rc);
     console.log(S);
+  });
+  it("signature for new code", async () => {
+    let rcp: APIReferralCodePayload = {
+      code: "ABCD",
+      referrerAddr: wallet.address,
+      createdOn: 1696166434,
+      passOnPercTDF: 333,
+      signature: "",
+    };
+    codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let S = await codeSigner.getSignatureForNewCode(rcp);
+    rcp.signature = S;
+    console.log("new code");
+    console.log(rcp);
+  });
+  it("signature for new referral", async () => {
+    let rcp: APIReferPayload = {
+      parentAddr: wallet.address,
+      referToAddr: "0x863ad9ce46acf07fd9390147b619893461036194",
+      passOnPercTDF: 225,
+      createdOn: 1696166434,
+      signature: "",
+    };
+    codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let S = await codeSigner.getSignatureForNewReferral(rcp);
+    rcp.signature = S;
+    console.log("new referral = ", rcp);
+  });
+  it("signature for code selection", async () => {
+    let ts = Math.round(Date.now() / 1000);
+    let rcp: APIReferralCodeSelectionPayload = {
+      code: "DOUBLE_AG",
+      traderAddr: wallet.address,
+      createdOn: ts,
+      signature: "",
+    };
+    codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let S = await codeSigner.getSignatureForCodeSelection(rcp);
+    rcp.signature = S;
+    console.log(rcp);
   });
 });

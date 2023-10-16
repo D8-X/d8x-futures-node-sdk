@@ -302,11 +302,18 @@ export interface PythLatestPriceFeed {
 export interface APIReferralCodePayload {
   code: string;
   referrerAddr: string;
-  agencyAddr: string;
   createdOn: number;
-  traderRebatePerc: number;
-  agencyRebatePerc: number;
-  referrerRebatePerc: number;
+  passOnPercTDF: number;
+  signature: string;
+}
+
+// Payload to be sent to backend when an agency/broker
+// assigns a "partner".
+export interface APIReferPayload {
+  parentAddr: string;
+  referToAddr: string;
+  passOnPercTDF: number;
+  createdOn: number;
   signature: string;
 }
 
