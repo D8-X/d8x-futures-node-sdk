@@ -165,6 +165,11 @@ describe("readOnly", () => {
       mktData = new MarketData(config);
       await mktData.createProxyInstance();
     });
+    it("init from instance", async () => {
+      let mktData2 = new MarketData(config);
+      await mktData2.createProxyInstance(mktData);
+      expect(mktData2.getReadOnlyProxyInstance() !== null);
+    });
     it("perpetual symbols in pool", async () => {
       let v = mktData.getPerpetualSymbolsInPool("MATIC");
       console.log("***\nPerpetuals for symbol MATIC:\n", v, "\n***");

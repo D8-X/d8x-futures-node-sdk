@@ -281,6 +281,16 @@ export default class PerpetualDataHandler {
     }
   }
 
+  public getAllMappings() {
+    return {
+      nestedPerpetualIDs: this.nestedPerpetualIDs,
+      poolStaticInfos: this.poolStaticInfos,
+      symbolToTokenAddrMap: this.symbolToTokenAddrMap,
+      symbolToPerpStaticInfo: this.symbolToPerpStaticInfo,
+      perpetualIdToSymbol: this.perpetualIdToSymbol,
+    };
+  }
+
   /**
    * Get pool symbol given a pool Id.
    * @param {number} poolId Pool Id.

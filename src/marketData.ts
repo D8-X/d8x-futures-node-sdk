@@ -103,8 +103,16 @@ export default class MarketData extends PerpetualDataHandler {
       await this.initContractsAndData(this.provider, overrides);
     } else {
       const mktData = providerOrMarketData;
-      // TODO: copy on-chain data from market data
-      console.log("in progress");
+      this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
+      this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
+      this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.provider);
+      ({
+        nestedPerpetualIDs: this.nestedPerpetualIDs,
+        poolStaticInfos: this.poolStaticInfos,
+        symbolToTokenAddrMap: this.symbolToTokenAddrMap,
+        symbolToPerpStaticInfo: this.symbolToPerpStaticInfo,
+        perpetualIdToSymbol: this.perpetualIdToSymbol,
+      } = mktData.getAllMappings());
     }
   }
 
