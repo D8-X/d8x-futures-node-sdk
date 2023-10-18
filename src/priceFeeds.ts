@@ -47,6 +47,21 @@ export default class PriceFeeds {
   }
 
   /**
+   * Returns computed triangulation map
+   * @returns Triangulation map
+   */
+  public getTriangulations() {
+    return this.triangulations;
+  }
+
+  /**
+   * Set pre-computed triangulation map
+   */
+  public setTriangulations(triangulation: Map<string, [string[], boolean[]]>) {
+    this.triangulations = triangulation;
+  }
+
+  /**
    * Get required information to be able to submit a blockchain transaction with price-update
    * such as trade execution, liquidation
    * @param symbol symbol of perpetual, e.g., BTC-USD-MATIC

@@ -113,6 +113,7 @@ export default class MarketData extends PerpetualDataHandler {
         symbolToPerpStaticInfo: this.symbolToPerpStaticInfo,
         perpetualIdToSymbol: this.perpetualIdToSymbol,
       } = mktData.getAllMappings());
+      this.priceFeedGetter.setTriangulations(mktData.priceFeedGetter.getTriangulations());
     }
   }
 
@@ -1867,6 +1868,27 @@ export default class MarketData extends PerpetualDataHandler {
     if (symbols.length < 1 || symbols.some((s) => s == undefined)) {
       throw new Error(`No perpetuals found for symbol ${symbol}`);
     }
+    const res: Map<string, number> = new Map();
+    const feedPrices = await this.priceFeedGetter.fetchAllFeedPrices();
+    let shouldReturn = true;
+
+    for (const symbol of symbols) {
+      const base = symbol.split("-")[0];
+      const s = `${base}-USD`;
+      if (feedPrices.has(s)) {
+        let px = feedPrices.get(s)![0];
+        res.set(s, px);
+      } else if (feedPrices.has(`USD-${base}`)) {
+        let px = 1 / feedPrices.get(`USD-${base}`)![0];
+        res.set(s, px);
+      } else {
+        shouldReturn = false;
+      }
+    }
+    if (shouldReturn) {
+      return res;
+    }
+    // some prices are missing - get them from on chain
     const proxyCalls: Multicall3.Call3Struct[] = symbols.map((s) => ({
       target: this.proxyAddr,
       allowFailure: false,
@@ -1882,8 +1904,13 @@ export default class MarketData extends PerpetualDataHandler {
           result.returnData
         )[0] as BigNumber
     );
-    let res: Map<string, number> = new Map();
-    prices.forEach((px, i) => res.set(`${symbols[i].split("-")[0]}-USD`, ABK64x64ToFloat(px)));
+
+    prices.forEach((px, i) => {
+      const s = `${symbols[i].split("-")[0]}-USD`;
+      if (!res.has(s)) {
+        res.set(s, ABK64x64ToFloat(px));
+      }
+    });
     return res;
   }
 }
