@@ -10,13 +10,22 @@ import {
   COLLATERAL_CURRENCY_QUANTO,
   CollaterlCCY,
   ERC20_ABI,
+  MULTICALL_ADDRESS,
   OrderStatus,
   PERP_STATE_STR,
   SELL_SIDE,
   ZERO_ADDRESS,
   ZERO_ORDER_ID,
 } from "./constants";
-import { ERC20__factory, type IPerpetualManager, type LimitOrderBook, type Multicall3 } from "./contracts";
+import {
+  ERC20__factory,
+  IPerpetualManager__factory,
+  LimitOrderBook__factory,
+  Multicall3__factory,
+  type IPerpetualManager,
+  type LimitOrderBook,
+  type Multicall3,
+} from "./contracts";
 import { type ERC20Interface } from "./contracts/ERC20";
 import { type PerpStorage } from "./contracts/IPerpetualManager";
 import { type IClientOrder } from "./contracts/LimitOrderBook";
@@ -75,19 +84,28 @@ export default class MarketData extends PerpetualDataHandler {
     super(config);
   }
 
+  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides): Promise<void>;
+
+  public async createProxyInstance(marketData: MarketData): Promise<void>;
+
   /**
    * Initialize the marketData-Class with this function
    * to create instance of D8X perpetual contract and gather information
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides): Promise<void> {
-    if (provider == undefined) {
-      this.provider = new StaticJsonRpcProvider(this.nodeURL);
+  public async createProxyInstance(
+    providerOrMarketData?: Provider | MarketData,
+    overrides?: CallOverrides
+  ): Promise<void> {
+    if (providerOrMarketData == undefined || Provider.isProvider(providerOrMarketData)) {
+      this.provider = providerOrMarketData ?? new StaticJsonRpcProvider(this.nodeURL);
+      await this.initContractsAndData(this.provider, overrides);
     } else {
-      this.provider = provider;
+      const mktData = providerOrMarketData;
+      // TODO: copy on-chain data from market data
+      console.log("in progress");
     }
-    await this.initContractsAndData(this.provider, overrides);
   }
 
   /**
@@ -153,20 +171,25 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns {ExchangeInfo} Array of static data for all the pools and perpetuals in the system.
    */
-  public async exchangeInfo(overrides?: CallOverrides): Promise<ExchangeInfo> {
+  public async exchangeInfo(overrides?: CallOverrides & { rpcURL?: string }): Promise<ExchangeInfo> {
     if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
     return await MarketData._exchangeInfo(
-      this.proxyContract,
-      this.multicall,
+      IPerpetualManager__factory.connect(this.proxyAddr, provider),
+      Multicall3__factory.connect(MULTICALL_ADDRESS, provider),
       this.poolStaticInfos,
       this.symbolToPerpStaticInfo,
       this.perpetualIdToSymbol,
       this.nestedPerpetualIDs,
       this.symbolList,
       this.priceFeedGetter,
-      overrides
+      overrides as CallOverrides
     );
   }
 
@@ -194,7 +217,7 @@ export default class MarketData extends PerpetualDataHandler {
   public async openOrders(
     traderAddr: string,
     symbol?: string,
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
     // open orders requested only for given symbol
     let resArray: Array<{ orders: Order[]; orderIds: string[] }> = [];
@@ -207,13 +230,18 @@ export default class MarketData extends PerpetualDataHandler {
         new Array<string>()
       );
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
     if (symbols.length < 1) {
       throw new Error(`No perpetuals found for symbol ${symbol}`);
     } else if (symbols.length < 2) {
-      let res = await this._openOrdersOfPerpetual(traderAddr, symbols[0], overrides);
+      let res = await this._openOrdersOfPerpetual(traderAddr, symbols[0], provider, overrides);
       resArray.push(res!);
     } else {
-      resArray = await this._openOrdersOfPerpetuals(traderAddr, symbols, overrides);
+      resArray = await this._openOrdersOfPerpetuals(traderAddr, symbols, provider, overrides);
     }
     return resArray;
   }
@@ -227,11 +255,17 @@ export default class MarketData extends PerpetualDataHandler {
   private async _openOrdersOfPerpetual(
     traderAddr: string,
     symbol: string,
+    provider: Provider,
     overrides?: CallOverrides
   ): Promise<{ orders: Order[]; orderIds: string[] }> {
     // open orders requested only for given symbol
-    const orderBookContract = this.getOrderBookContract(symbol);
-    const orders = await this.openOrdersOnOrderBook(traderAddr, orderBookContract, overrides);
+    const orderBookContract = LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider);
+    const orders = await MarketData.openOrdersOnOrderBook(
+      traderAddr,
+      orderBookContract,
+      this.symbolToPerpStaticInfo,
+      overrides
+    );
     const digests = await MarketData.orderIdsOfTrader(traderAddr, orderBookContract, overrides);
     return { orders: orders, orderIds: digests };
   }
@@ -245,11 +279,21 @@ export default class MarketData extends PerpetualDataHandler {
   private async _openOrdersOfPerpetuals(
     traderAddr: string,
     symbols: string[],
+    provider: Provider,
     overrides?: CallOverrides
   ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
     // open orders requested only for given symbol
-    const orderBookContracts = symbols.map((symbol) => this.getOrderBookContract(symbol));
-    const { orders, digests } = await this._openOrdersOnOrderBooks(traderAddr, orderBookContracts, overrides);
+    const orderBookContracts = symbols.map((symbol) =>
+      LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider)
+    );
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const { orders, digests } = await MarketData._openOrdersOnOrderBooks(
+      traderAddr,
+      orderBookContracts,
+      multicall,
+      this.symbolToPerpStaticInfo,
+      overrides
+    );
     return symbols.map((_symbol, i) => ({ orders: orders[i], orderIds: digests[i] }));
   }
 
@@ -277,7 +321,11 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns {MarginAccount[]} Array of position risks of trader.
    */
-  public async positionRisk(traderAddr: string, symbol?: string, overrides?: CallOverrides): Promise<MarginAccount[]> {
+  public async positionRisk(
+    traderAddr: string,
+    symbol?: string,
+    overrides?: CallOverrides & { rpcURL?: string }
+  ): Promise<MarginAccount[]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -291,13 +339,19 @@ export default class MarketData extends PerpetualDataHandler {
         new Array<string>()
       );
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+
     if (symbols.length < 1) {
       throw new Error(`No perpetuals found for symbol ${symbol}`);
     } else if (symbols.length < 2) {
-      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[0], overrides);
+      let res = await this._positionRiskForTraderInPerpetual(traderAddr, symbols[0], provider, overrides);
       resArray.push(res!);
     } else {
-      resArray = await this._positionRiskForTraderInPerpetuals(traderAddr, symbols, overrides);
+      resArray = await this._positionRiskForTraderInPerpetuals(traderAddr, symbols, provider, overrides);
     }
     return resArray;
   }
@@ -311,6 +365,7 @@ export default class MarketData extends PerpetualDataHandler {
   protected async _positionRiskForTraderInPerpetual(
     traderAddr: string,
     symbol: string,
+    provider: Provider,
     overrides?: CallOverrides
   ): Promise<MarginAccount> {
     let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
@@ -318,7 +373,7 @@ export default class MarketData extends PerpetualDataHandler {
       traderAddr,
       symbol,
       this.symbolToPerpStaticInfo,
-      this.proxyContract!,
+      IPerpetualManager__factory.connect(this.proxyAddr, provider),
       [obj.idxPrices[0], obj.idxPrices[1]],
       overrides
     );
@@ -334,6 +389,7 @@ export default class MarketData extends PerpetualDataHandler {
   protected async _positionRiskForTraderInPerpetuals(
     traderAddr: string,
     symbols: string[],
+    provider: Provider,
     overrides?: CallOverrides
   ): Promise<MarginAccount[]> {
     const MAX_SYMBOLS_PER_CALL = 10;
@@ -350,8 +406,8 @@ export default class MarketData extends PerpetualDataHandler {
         Array(callSymbols.length).fill(traderAddr),
         callSymbols,
         this.symbolToPerpStaticInfo,
-        this.multicall!,
-        this.proxyContract!,
+        Multicall3__factory.connect(MULTICALL_ADDRESS, provider),
+        IPerpetualManager__factory.connect(this.proxyAddr, provider),
         S2S3,
         overrides
       );
@@ -1314,9 +1370,10 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns {Order[]} Array of user friendly order struct.
    * @ignore
    */
-  protected async openOrdersOnOrderBook(
+  protected static async openOrdersOnOrderBook(
     traderAddr: string,
     orderBookContract: LimitOrderBook,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     overrides?: CallOverrides
   ): Promise<Order[]> {
     //eliminate empty orders and map to user friendly orders
@@ -1333,7 +1390,7 @@ export default class MarketData extends PerpetualDataHandler {
       );
       let k = 0;
       while (k < orders.length && orders[k].traderAddr !== ZERO_ADDRESS) {
-        userFriendlyOrders.push(PerpetualDataHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
+        userFriendlyOrders.push(PerpetualDataHandler.fromClientOrder(orders[k], symbolToPerpStaticInfo));
         k++;
       }
       haveMoreOrders = orders[orders.length - 1].traderAddr !== ZERO_ADDRESS;
@@ -1349,9 +1406,11 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns {Order[]} Array of user friendly order struct.
    * @ignore
    */
-  protected async _openOrdersOnOrderBooks(
+  protected static async _openOrdersOnOrderBooks(
     traderAddr: string,
     orderBookContracts: LimitOrderBook[],
+    multicall: Multicall3,
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     overrides?: CallOverrides
   ): Promise<{ orders: Order[][]; digests: string[][] }> {
     // eliminate empty orders and map to user friendly orders
@@ -1379,10 +1438,7 @@ export default class MarketData extends PerpetualDataHandler {
         callData: c.interface.encodeFunctionData("limitDigestsOfTrader", [traderAddr, from[i], bulkSize]),
       }));
       // call
-      const encodedResults = await this.multicall!.callStatic.aggregate3(
-        ordersCalls.concat(digestsCalls),
-        overrides || {}
-      );
+      const encodedResults = await multicall.callStatic.aggregate3(ordersCalls.concat(digestsCalls), overrides || {});
       const encodedOrders = encodedResults.slice(0, ordersCalls.length);
       const encodedDigests = encodedResults.slice(ordersCalls.length);
       // parse
@@ -1404,7 +1460,7 @@ export default class MarketData extends PerpetualDataHandler {
         let i = orderBookContracts.findIndex((c) => c.address == contracts[j].address);
         let k = 0;
         while (k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
-          userFriendlyOrders[i].push(PerpetualDataHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
+          userFriendlyOrders[i].push(PerpetualDataHandler.fromClientOrder(orders[k], symbolToPerpStaticInfo));
           orderDigests[i].push(digests[k]);
           k++;
         }

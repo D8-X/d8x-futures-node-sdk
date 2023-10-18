@@ -188,6 +188,24 @@ describe("readOnly", () => {
         }
       }
     });
+    it("exchange info: custom provider", async () => {
+      let info: ExchangeInfo = await mktData.exchangeInfo({ rpcURL: "https://rpc.public.zkevm-test.net" });
+      console.log(info);
+      for (var k = 0; k < info.pools.length; k++) {
+        let pool = info.pools[k];
+        console.log(`Perpetuals in ${pool.poolSymbol} pool:\n`, pool.perpetuals);
+        console.log("Closed markets:");
+        for (let j = 0; j < pool.perpetuals.length; j++) {
+          let perp = pool.perpetuals[j];
+          const symbol = perp.baseCurrency + "-" + perp.quoteCurrency + "-" + pool.poolSymbol;
+          if (perp.isMarketClosed) {
+            console.log(perp.baseCurrency + "-" + perp.quoteCurrency + ":" + perp.state + " - " + perp.isMarketClosed);
+          }
+          let isClosedDirect = await mktData.isMarketClosed(symbol);
+          expect(isClosedDirect).toEqual(perp.isMarketClosed);
+        }
+      }
+    });
     it("mark price", async () => {
       // base, quote, quanto
       for (let symbol of ["MATIC-USD-MATIC", "MATIC-USDC-USDC", "ETH-USD-MATIC"]) {
