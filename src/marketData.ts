@@ -115,6 +115,7 @@ export default class MarketData extends PerpetualDataHandler {
         perpetualIdToSymbol: this.perpetualIdToSymbol,
       } = mktData.getAllMappings());
       this.priceFeedGetter.setTriangulations(mktData.getTriangulations());
+      this.signerOrProvider = this.provider;
     }
   }
 

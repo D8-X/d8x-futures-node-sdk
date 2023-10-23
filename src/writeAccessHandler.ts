@@ -71,6 +71,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
         perpetualIdToSymbol: this.perpetualIdToSymbol,
       } = mktData.getAllMappings());
       this.priceFeedGetter.setTriangulations(mktData.getTriangulations());
+      this.signerOrProvider = this.provider;
     }
     if (!this.signer) {
       const wallet = new Wallet(this.privateKey!);

@@ -587,7 +587,7 @@ describe("readOnly", () => {
     beforeAll(async () => {
       expect(pk == undefined).toBeFalsy;
       refTool = new OrderExecutorTool(config, pk);
-      await refTool.createProxyInstance();
+      await refTool.createProxyInstance(mktData);
     });
     it("get order by id/digest", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "MATIC-USD-MATIC");

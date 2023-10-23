@@ -112,7 +112,7 @@ export default class PerpetualDataHandler {
   // pyth
   protected pythAddr: string | undefined;
 
-  private signerOrProvider: Signer | Provider | null = null;
+  protected signerOrProvider: Signer | Provider | null = null;
   protected priceFeedGetter: PriceFeeds;
 
   // pools are numbered consecutively starting at 1
@@ -167,6 +167,7 @@ export default class PerpetualDataHandler {
    */
   public getOrderBookContract(symbol: string): Contract & LimitOrderBook {
     let orderBookAddr = this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr;
+    console.log("orderBookAddr", orderBookAddr);
     if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
       throw Error(`no limit order book found for ${symbol} or no signer`);
     }
