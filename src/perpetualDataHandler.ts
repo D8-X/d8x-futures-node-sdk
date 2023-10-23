@@ -167,7 +167,6 @@ export default class PerpetualDataHandler {
    */
   public getOrderBookContract(symbol: string): Contract & LimitOrderBook {
     let orderBookAddr = this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr;
-    console.log("orderBookAddr", orderBookAddr);
     if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
       throw Error(`no limit order book found for ${symbol} or no signer`);
     }

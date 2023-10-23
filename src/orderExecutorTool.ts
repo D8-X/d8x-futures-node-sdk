@@ -147,14 +147,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderIds: string[],
     executorAddr?: string,
     submission?: PriceFeedSubmission,
-    overrides?: PayableOverrides & { rpcURL?: string }
+    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let rpcURL: string | undefined;
+    let splitTx: boolean | undefined;
     if (overrides) {
-      ({ rpcURL, ...overrides } = overrides);
+      ({ rpcURL, splitTx, ...overrides } = overrides);
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
     const orderBookSC = LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider);
@@ -172,24 +173,40 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       } as PayableOverrides;
     }
 
-    const pyth = IPyth__factory.connect(this.pythAddr!, provider).connect(this.signer);
-
     // update first
-    const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
     let nonceInc = 0;
-    try {
-      const pythTx = await pyth.updatePriceFeedsIfNecessary(submission.priceFeedVaas, priceIds, submission.timestamps, {
-        value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
-        gasLimit: overrides?.gasLimit ?? this.gasLimit,
-        nonce: overrides.nonce,
-      });
-      nonceInc += 1;
-      // await pythTx.wait();
-    } catch (e) {
-      console.log(e);
-    }
+    let txData: string;
+    let value = overrides?.value;
+    if (splitTx) {
+      try {
+        const pyth = IPyth__factory.connect(this.pythAddr!, provider).connect(this.signer);
+        const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+        const pythTx = await pyth.updatePriceFeedsIfNecessary(
+          submission.priceFeedVaas,
+          priceIds,
+          submission.timestamps,
+          {
+            value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
+            gasLimit: overrides?.gasLimit ?? this.gasLimit,
+            nonce: overrides.nonce,
+          }
+        );
+        nonceInc += 1;
+        // await pythTx.wait();
+      } catch (e) {
+        console.log(e);
+      }
 
-    const txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
+      txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
+    } else {
+      txData = orderBookSC.interface.encodeFunctionData("executeOrders", [
+        orderIds,
+        executorAddr,
+        submission.priceFeedVaas,
+        submission.timestamps,
+      ]);
+      value = this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length;
+    }
 
     if (overrides?.nonce !== undefined) {
       const nonce = await overrides!.nonce;
@@ -200,9 +217,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       from: this.traderAddr,
       nonce: overrides.nonce,
       data: txData,
-      value: overrides.value,
+      value: value,
       gasLimit: overrides.gasLimit,
-      // gas price is populated by the provider if not specified
+      // gas price is populated by the provider if undefined
       gasPrice: overrides.gasPrice,
       chainId: this.chainId,
     };
@@ -616,7 +633,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
 
-    const fS2S3 = [indexPrices[0], indexPrices[1]].map(floatToABK64x64) as [BigNumber, BigNumber];
+    const fS2S3 = [indexPrices[0], indexPrices[1]].map((x) =>
+      floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)
+    ) as [BigNumber, BigNumber];
     const perpId = this.getPerpIdFromSymbol(orders[0].symbol);
     const fAmounts = orders.map((order) => floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1)));
     const orderBook = this.getOrderBookContract(orders[0].symbol).connect(provider);
