@@ -14,8 +14,8 @@
   {
     "name": "zkevm",
     "chainId": 1101,
-    "version": 0,
-    "proxyAddr": "",
+    "version": 1,
+    "proxyAddr": "0xaB7794EcD2c8e9Decc6B577864b40eBf9204720f",
     "nodeURL": "https://zkevm-rpc.com",
     "priceFeedConfigNetwork": "mainnet",
     "shareTokenABILocation": "ShareToken.json",
