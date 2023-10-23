@@ -103,6 +103,7 @@ export default class MarketData extends PerpetualDataHandler {
       await this.initContractsAndData(this.provider, overrides);
     } else {
       const mktData = providerOrMarketData;
+      this.nodeURL = mktData.config.nodeURL;
       this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
       this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
       this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.provider);
@@ -113,7 +114,7 @@ export default class MarketData extends PerpetualDataHandler {
         symbolToPerpStaticInfo: this.symbolToPerpStaticInfo,
         perpetualIdToSymbol: this.perpetualIdToSymbol,
       } = mktData.getAllMappings());
-      this.priceFeedGetter.setTriangulations(mktData.priceFeedGetter.getTriangulations());
+      this.priceFeedGetter.setTriangulations(mktData.getTriangulations());
     }
   }
 
@@ -126,6 +127,10 @@ export default class MarketData extends PerpetualDataHandler {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     return this.proxyContract.address;
+  }
+
+  public getTriangulations() {
+    return this.priceFeedGetter.getTriangulations();
   }
 
   /**

@@ -2,9 +2,9 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import type { BlockTag } from "@ethersproject/providers";
-import { BUY_SIDE, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
-import { IPyth__factory, Multicall3 } from "./contracts";
+import { BlockTag, StaticJsonRpcProvider } from "@ethersproject/providers";
+import { BUY_SIDE, MULTICALL_ADDRESS, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
+import { IPyth__factory, LimitOrderBook__factory, Multicall3, Multicall3__factory } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
   type NodeSDKConfig,
@@ -147,12 +147,17 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderIds: string[],
     executorAddr?: string,
     submission?: PriceFeedSubmission,
-    overrides?: PayableOverrides
+    overrides?: PayableOverrides & { rpcURL?: string }
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const orderBookSC = LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider);
     if (typeof executorAddr == "undefined") {
       executorAddr = this.traderAddr;
     }
@@ -167,7 +172,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       } as PayableOverrides;
     }
 
-    const pyth = IPyth__factory.connect(this.pythAddr!, this.signer);
+    const pyth = IPyth__factory.connect(this.pythAddr!, provider).connect(this.signer);
 
     // update first
     const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
@@ -186,11 +191,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
 
     const txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
 
-    // const gasInfo = await fetch("https://gasstation-testnet.polygon.technology/zkevm")
-    //   .then((res) => res.json())
-    //   .then((info) => info as GasInfo);
-
-    // const gasPrice = typeof gasInfo.standard == "number" ? gasInfo.standard : (gasInfo.standard as GasPriceV2).maxfee;
     if (overrides?.nonce !== undefined) {
       const nonce = await overrides!.nonce;
       overrides.nonce = BigNumber.from(nonce).add(nonceInc);
@@ -204,17 +204,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       gasLimit: overrides.gasLimit,
       // gas price is populated by the provider if not specified
       gasPrice: overrides.gasPrice,
-      // gasPrice: overrides.gasPrice ?? parseUnits(gasPrice.toString(), "gwei"),
       chainId: this.chainId,
     };
     return await this.signer.sendTransaction(unsignedTx);
-    // return await orderBookSC.executeOrders(
-    //   orderIds,
-    //   executorAddr,
-    //   submission?.priceFeedVaas,
-    //   submission?.timestamps,
-    //   overrides
-    // );
   }
 
   /**
@@ -277,11 +269,16 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *
    * @returns {number} Number of open orders.
    */
-  public async numberOfOpenOrders(symbol: string, overrides?: CallOverrides): Promise<number> {
+  public async numberOfOpenOrders(symbol: string, overrides?: CallOverrides & { rpcURL?: string }): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const orderBookSC = this.getOrderBookContract(symbol).connect(provider);
     let numOrders = await orderBookSC.orderCount(overrides || {});
     return Number(numOrders);
   }
@@ -309,7 +306,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @returns order or undefined
    */
   public async getOrderById(symbol: string, id: string, overrides?: CallOverrides): Promise<Order | undefined> {
-    let ob = await this.getOrderBookContract(symbol);
+    let ob = this.getOrderBookContract(symbol);
     let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id, overrides || {});
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
@@ -345,12 +342,19 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     symbol: string,
     numElements: number,
     startAfter?: string,
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<[Order[], string[], string[]]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const orderBookSC = this.getOrderBookContract(symbol).connect(provider);
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
@@ -376,7 +380,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       allowFailure: true,
       callData: orderBookSC.interface.encodeFunctionData("orderOfDigest", [id]),
     }));
-    const encodedResults = await this.multicall!.callStatic.aggregate3(multicalls, overrides || {});
+    const encodedResults = await multicall.callStatic.aggregate3(multicalls, overrides || {});
 
     // order status
     encodedResults.map((res, k) => {
@@ -415,7 +419,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderId: string,
     blockTimestamp?: number,
     indexPrices?: [number, number],
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<boolean> {
     if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -424,6 +428,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
 
     const fS2S3 = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
       BigNumber,
@@ -431,7 +440,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     ];
     const perpId = this.getPerpIdFromSymbol(order.symbol);
     const fAmount = floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1));
-    const orderBook = this.getOrderBookContract(order.symbol);
+    const orderBook = this.getOrderBookContract(order.symbol).connect(provider);
 
     const proxyCalls: Multicall3.Call3Struct[] = [
       // 0: trade amount price
@@ -473,9 +482,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         callData: orderBook.interface.encodeFunctionData("getOrderStatus", [order.parentChildOrderIds![1]]),
       });
     }
-
     // multicall
-    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const encodedResults = await multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // order status
     let iOrderStatus: number;
@@ -553,7 +562,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderIds: string[],
     blockTimestamp?: number,
     indexPrices?: [number, number, boolean, boolean],
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<boolean[]> {
     const MAX_ORDERS_CHECKED = 10;
     let totalOrders = orders.length;
@@ -582,7 +591,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderIds: string[],
     blockTimestamp?: number,
     indexPrices?: [number, number, boolean, boolean],
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
@@ -601,11 +610,17 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       // market closed
       return orders.map(() => false);
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
 
     const fS2S3 = [indexPrices[0], indexPrices[1]].map(floatToABK64x64) as [BigNumber, BigNumber];
     const perpId = this.getPerpIdFromSymbol(orders[0].symbol);
     const fAmounts = orders.map((order) => floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1)));
-    const orderBook = this.getOrderBookContract(orders[0].symbol);
+    const orderBook = this.getOrderBookContract(orders[0].symbol).connect(provider);
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
 
     // mark price and timestamp
     let proxyCalls: Multicall3.Call3Struct[] = [
@@ -657,7 +672,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     proxyCalls = proxyCalls.concat(parentStatusCalls);
 
     // --- multicall ---
-    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const encodedResults = await multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // mark price
     const ammState = this.proxyContract.interface.decodeFunctionResult(
