@@ -4598,6 +4598,8 @@ trader liquidations, trade executions, change of trader margin amount.</p>
 * [PriceFeeds](#PriceFeeds)
     * _instance_
         * [.initializeTriangulations(symbols)](#PriceFeeds+initializeTriangulations)
+        * [.getTriangulations()](#PriceFeeds+getTriangulations) ⇒
+        * [.setTriangulations()](#PriceFeeds+setTriangulations)
         * [.fetchFeedPriceInfoAndIndicesForPerpetual(symbol)](#PriceFeeds+fetchFeedPriceInfoAndIndicesForPerpetual) ⇒
         * [.fetchPrices()](#PriceFeeds+fetchPrices) ⇒
         * [.fetchPricesForPerpetual(symbol)](#PriceFeeds+fetchPricesForPerpetual) ⇒
@@ -4623,6 +4625,19 @@ trader liquidations, trade executions, change of trader margin amount.</p>
 | --- | --- |
 | symbols | <p>set of symbols we want to triangulate from price feeds</p> |
 
+<a name="PriceFeeds+getTriangulations"></a>
+
+### priceFeeds.getTriangulations() ⇒
+<p>Returns computed triangulation map</p>
+
+**Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
+**Returns**: <p>Triangulation map</p>  
+<a name="PriceFeeds+setTriangulations"></a>
+
+### priceFeeds.setTriangulations()
+<p>Set pre-computed triangulation map</p>
+
+**Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
 <a name="PriceFeeds+fetchFeedPriceInfoAndIndicesForPerpetual"></a>
 
 ### priceFeeds.fetchFeedPriceInfoAndIndicesForPerpetual(symbol) ⇒
@@ -4663,7 +4678,7 @@ it is a direct price feed.</p>
 <p>Fetch the provided feed prices and bool whether market is closed or open</p>
 <ul>
 <li>requires the feeds to be defined in priceFeedConfig.json</li>
-<li>if undefined, all feeds are queried</li>
+<li>if symbols undefined, all feeds are queried</li>
 </ul>
 
 **Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  

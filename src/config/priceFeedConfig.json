@@ -69,7 +69,7 @@
         "origin": "Crypto.AGEUR/USD"
       }
     ],
-    "endpoints": [{ "type": "pyth", "endpoint": "https://hermes-beta.pyth.network/api" }]
+    "endpoints": [{ "type": "pyth", "endpoints": ["https://hermes-beta.pyth.network/api"] }]
   },
   {
     "network": "mainnet",
@@ -135,6 +135,6 @@
         "origin": "Crypto.AGEUR/USD"
       }
     ],
-    "endpoints": [{ "type": "pyth", "endpoint": "https://hermes.pyth.network/api" }]
+    "endpoints": [{ "type": "pyth", "endpoints": ["https://hermes.pyth.network/api"] }]
   }
 ]

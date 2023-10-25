@@ -26,7 +26,7 @@ export default class PriceFeeds {
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
       this.config.endpoints = dataHandler.config.priceFeedEndpoints;
     }
-    [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config);
+    [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
   }
@@ -139,7 +139,7 @@ export default class PriceFeeds {
   /**
    * Fetch the provided feed prices and bool whether market is closed or open
    * - requires the feeds to be defined in priceFeedConfig.json
-   * - if undefined, all feeds are queried
+   * - if symbols undefined, all feeds are queried
    * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or undefined
    * @returns mapping symbol-> [price, isMarketClosed]
    */
@@ -221,15 +221,32 @@ export default class PriceFeeds {
       idCountPriceFeeds[id] = idCountPriceFeeds[id] + 1;
     }
 
-    let data = await Promise.all(
-      queries.map(async (q) => {
-        if (q != undefined) {
-          return this.fetchVAAQuery(q);
-        } else {
-          return [[], []];
-        }
-      })
-    );
+    let data;
+    try {
+      data = await Promise.all(
+        queries.map(async (q) => {
+          if (q != undefined) {
+            return this.fetchVAAQuery(q);
+          } else {
+            return [[], []];
+          }
+        })
+      );
+    } catch (error) {
+      // try switching endpoints and re-query
+      console.log("fetchVAAQuery failed, selecting random price feed endpoint...");
+      [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, true);
+      data = await Promise.all(
+        queries.map(async (q) => {
+          if (q != undefined) {
+            return this.fetchVAAQuery(q);
+          } else {
+            return [[], []];
+          }
+        })
+      );
+      console.log("success");
+    }
 
     // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
@@ -371,13 +388,21 @@ export default class PriceFeeds {
    * @param config configuration for the selected network
    * @returns feedInfo-map and endPoints-array
    */
-  static _constructFeedInfo(config: PriceFeedConfig): [Map<string, { symbol: string; endpointId: number }>, string[]] {
+  static _constructFeedInfo(
+    config: PriceFeedConfig,
+    shuffleEndpoints: boolean
+  ): [Map<string, { symbol: string; endpointId: number }>, string[]] {
     let feed = new Map<string, { symbol: string; endpointId: number }>();
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
+
     for (let k = 0; k < config.endpoints.length; k++) {
-      feedEndpoints.push(config.endpoints[k].endpoint);
+      const L = config.endpoints[k].endpoints.length;
+      let endpointNr = !shuffleEndpoints ? 0 : 1 + Math.floor(Math.random() * (L - 1));
+      // if config has only one endpoint:
+      endpointNr = Math.min(endpointNr, L - 1);
+      feedEndpoints.push(config.endpoints[k].endpoints[endpointNr]);
     }
     for (let k = 0; k < config.ids.length; k++) {
       if (type != config.ids[k].type) {
