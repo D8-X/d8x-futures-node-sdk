@@ -21,7 +21,9 @@ describe("priceFeed", () => {
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
-    // config.priceFeedEndpoints = [{ type: "pyth", endpoint: "https://pyth.testnet.quantena.tech/api" }];
+    config.priceFeedEndpoints = [
+      { type: "pyth", endpoints: ["https://hermes-beta.pyth.network/api", "https://xc-testnet.pyth.network/api"] },
+    ];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });

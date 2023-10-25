@@ -20,7 +20,7 @@ export interface NodeSDKConfig {
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
   shareTokenABI?: ContractInterface | undefined;
-  priceFeedEndpoints?: Array<{ type: string; endpoint: string }>;
+  priceFeedEndpoints?: Array<{ type: string; endpoints: string[] }>;
 }
 
 export interface MarginAccount {
@@ -266,7 +266,7 @@ export interface TypeSafeOrder {
 export interface PriceFeedConfig {
   network: string;
   ids: Array<{ symbol: string; id: string; type: string; origin: string }>;
-  endpoints: Array<{ type: string; endpoint: string }>;
+  endpoints: Array<{ type: string; endpoints: string[] }>;
 }
 
 export interface PriceFeedSubmission {
