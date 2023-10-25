@@ -396,10 +396,12 @@ export default class PriceFeeds {
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
+
     for (let k = 0; k < config.endpoints.length; k++) {
-      const endpointNr = !shuffleEndpoints
-        ? 0
-        : 1 + Math.floor(Math.random() * (config.endpoints[k].endpoints.length - 1));
+      const L = config.endpoints[k].endpoints.length;
+      let endpointNr = !shuffleEndpoints ? 0 : 1 + Math.floor(Math.random() * (L - 1));
+      // if config has only one endpoint:
+      endpointNr = Math.min(endpointNr, L - 1);
       feedEndpoints.push(config.endpoints[k].endpoints[endpointNr]);
     }
     for (let k = 0; k < config.ids.length; k++) {
