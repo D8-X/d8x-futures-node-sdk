@@ -79,15 +79,15 @@ describe("utils", () => {
   });
   it("read config", async function () {
     // get config by chain id (latest version)
-    const chainId = 80001;
+    const chainId = 1101;
     config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
   });
   it("4Chars", async () => {
-    let examples = ["MATIC", "FEDORA", "A", "AEIOUAEI", "D8X", "ARmAGEDON", "stMATIC"];
-    let solutions = ["MATC", "FEDR", "A\0\0\0", "AEIO", "D8X\0", "RmGD", "stMT"];
+    let examples = ["MATIC", "FEDORA", "A", "AEIOUAEI", "D8X", "ARmAGEDON", "stMATIC", "stETH", "wstETH"];
+    let solutions = ["MATC", "FEDR", "A\0\0\0", "AEIO", "D8X\0", "RmGD", "stMT", "stTH", "wstT"];
     for (let k = 0; k < examples.length; k++) {
       let sol = to4Chars(examples[k]);
       let deencoded = fromBytes4(toBytes4(examples[k]));

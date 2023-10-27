@@ -63,6 +63,12 @@
         "origin": "Crypto.STETH/USD"
       },
       {
+        "symbol": "wstETH-USD",
+        "id": "0xf669e586ebcd8716820498bd430936067b1c69c632eaa8e2a69bc313510c0e3c",
+        "type": "pyth",
+        "origin": "Crypto.WSTETH/USD"
+      },
+      {
         "symbol": "agEUR-USD",
         "id": "0x1c06615b7f8c0373adb47d341a825125c3c8db4c3861f2f0d89404038a0428b7",
         "type": "pyth",
@@ -127,6 +133,12 @@
         "id": "0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5",
         "type": "pyth",
         "origin": "Crypto.STETH/USD"
+      },
+      {
+        "symbol": "wstETH-USD",
+        "id": "0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784",
+        "type": "pyth",
+        "origin": "Crypto.WSTETH/USD"
       },
       {
         "symbol": "agEUR-USD",

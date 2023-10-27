@@ -97,6 +97,8 @@ export default class PerpetualDataHandler {
   protected proxyContract: IPerpetualManager | null = null;
   protected proxyABI: ContractInterface;
   protected proxyAddr: string;
+  // oracle
+  protected oraclefactoryAddr: string | undefined;
   // limit order book
   protected lobFactoryContract: LimitOrderBookFactory | null = null;
   protected lobFactoryABI: ContractInterface;
@@ -199,6 +201,11 @@ export default class PerpetualDataHandler {
       allowFailure: false,
       callData: this.proxyContract.interface.encodeFunctionData("getOrderBookFactoryAddress"),
     });
+    proxyCalls.push({
+      target: this.proxyAddr,
+      allowFailure: false,
+      callData: this.proxyContract.interface.encodeFunctionData("getOracleFactory"),
+    });
 
     // multicall
     const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
@@ -227,9 +234,15 @@ export default class PerpetualDataHandler {
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
       "getOrderBookFactoryAddress",
-      encodedResults[encodedResults.length - 1].returnData
+      encodedResults[encodedResults.length - 2].returnData
     )[0] as string;
     this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, this.signerOrProvider);
+
+    // oracle factory
+    this.oraclefactoryAddr = this.proxyContract.interface.decodeFunctionResult(
+      "getOracleFactory",
+      encodedResults[encodedResults.length - 1].returnData
+    )[0] as string;
 
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
       this.proxyContract,

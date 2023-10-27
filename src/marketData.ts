@@ -204,6 +204,7 @@ export default class MarketData extends PerpetualDataHandler {
       this.nestedPerpetualIDs,
       this.symbolList,
       this.priceFeedGetter,
+      this.oraclefactoryAddr!, // not undefined if proxy contract was initialized
       overrides as CallOverrides
     );
   }
@@ -1796,11 +1797,11 @@ export default class MarketData extends PerpetualDataHandler {
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolList: Map<string, string>,
     _priceFeedGetter: PriceFeeds,
+    _oracleFactoryAddr: string,
     overrides?: CallOverrides
   ): Promise<ExchangeInfo> {
     // get the factory address (shared among all pools)
-    let factory = _poolStaticInfos[0].oracleFactoryAddr;
-    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: factory, proxyAddr: _proxyContract.address };
+    let info: ExchangeInfo = { pools: [], oracleFactoryAddr: _oracleFactoryAddr, proxyAddr: _proxyContract.address };
 
     // get all prices from off-chain price-sources: no RPC calls
     let idxPriceMap = await MarketData._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter);
