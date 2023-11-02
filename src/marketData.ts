@@ -409,12 +409,11 @@ export default class MarketData extends PerpetualDataHandler {
     overrides?: CallOverrides
   ): Promise<MarginAccount[]> {
     const MAX_SYMBOLS_PER_CALL = 10;
-    let S2S3 = await Promise.all(
-      symbols.map(async (symbol) => {
-        let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
-        return [obj.idxPrices[0], obj.idxPrices[1]];
-      })
-    );
+    let S2S3 = new Array<[number, number]>();
+    for (let i = 0; i < symbols.length; i++) {
+      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbols[i]);
+      S2S3.push([obj.idxPrices[0], obj.idxPrices[1]]);
+    }
     let mgnAcct: MarginAccount[] = [];
     let callSymbols = symbols.slice(0, MAX_SYMBOLS_PER_CALL);
     while (callSymbols.length > 0) {
