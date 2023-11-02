@@ -707,7 +707,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         encodedResults[1].returnData
       )[0] as BigNumber
     ).toNumber();
-    blockTimestamp = Math.max(ts + 1, blockTimestamp ?? 0);
+    blockTimestamp = Math.max(ts, blockTimestamp ?? 0);
 
     // order status
     const isOrderOpen = encodedResults.slice(2, 2 + orders.length).map((encodedResult) => {
@@ -776,12 +776,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       return false;
     }
     // check execution timestamp
-    if (atBlockTimestamp < order.executionTimestamp) {
+    if (order.executionTimestamp > 0 && atBlockTimestamp < order.executionTimestamp) {
       console.log(`execution deferred by ${order.executionTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
-    if (order.submittedTimestamp != undefined && atBlockTimestamp < order.submittedTimestamp) {
-      // next block should be in ~2 seconds, so + 2
+    if (order.submittedTimestamp != undefined && atBlockTimestamp <= order.submittedTimestamp) {
       console.log(`on hold for ${order.submittedTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
