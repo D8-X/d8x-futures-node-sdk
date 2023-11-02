@@ -18,6 +18,7 @@ export default class PriceFeeds {
   // store triangulation paths given the price feeds
   private triangulations: Map<string, [string[], boolean[]]>;
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
+  private cache: Map<string, { timestamp: number; values: any }> = new Map();
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -351,12 +352,21 @@ export default class PriceFeeds {
    * @returns vaa and price info
    */
   public async fetchPriceQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
-    const headers = { headers: { "Content-Type": "application/json" } };
-    let response = await fetch(query, headers);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+    let values: any;
+    const cached = this.cache.get(query);
+    const tsNow = Date.now() / 1_000;
+    if (cached && cached.timestamp + 1 > tsNow) {
+      // less than a second has passed since the last query - no need to query again
+      values = cached.values;
+    } else {
+      const headers = { headers: { "Content-Type": "application/json" } };
+      let response = await fetch(query, headers);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+      }
+      values = await response.json();
+      this.cache.set(query, { timestamp: tsNow, values: values });
     }
-    let values = await response.json();
     const priceFeedUpdates = new Array<string>();
     const px = new Array<PriceFeedFormat>();
     for (let k = 0; k < values.length; k++) {
