@@ -10,7 +10,7 @@ import WriteAccessHandler from "./writeAccessHandler";
 import { Buffer } from "buffer";
 import AccountTrade from "./accountTrade";
 /**
- * Functions for brokers to determine fees, deposit lots, and sign-up traders.
+ * Functions for white-label partners to determine fees, deposit lots, and sign-up traders.
  * This class requires a private key and executes smart-contract interactions that
  * require gas-payments.
  * @extends WriteAccessHandler
@@ -20,7 +20,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see PerpetualDataHandler.
    * readSDKConfig.
-   * @param {string} privateKey Private key of a broker.
+   * @param {string} privateKey Private key of a white-label partner.
    * @param {Signer} signer Signer (ignored if a private key is provided)
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -44,8 +44,8 @@ export default class BrokerTool extends WriteAccessHandler {
   // Fee getters
 
   /**
-   * Determine the exchange fee based on lots, traded volume, and D8X balance of this broker.
-   * This is the final exchange fee that this broker can offer to traders that trade through him.
+   * Determine the exchange fee based on lots, traded volume, and D8X balance of this white-label partner.
+   * This is the final exchange fee that this white-label partner can offer to traders that trade through him.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -56,13 +56,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // get broker induced fee
+   *   // get white-label partner induced fee
    *   let brokFee = await brokTool.getBrokerInducedFee("MATIC");
    *   console.log(brokFee);
    * }
    * main();
    *
-   * @returns {number} Exchange fee for this broker, in decimals (i.e. 0.1% is 0.001)
+   * @returns {number} Exchange fee for this white-label partner, in decimals (i.e. 0.1% is 0.001)
    */
   public async getBrokerInducedFee(poolSymbolName: string, overrides?: CallOverrides): Promise<number | undefined> {
     if (this.proxyContract == null || this.signer == null) {
@@ -78,11 +78,11 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Determine the exchange fee based on lots purchased by this broker.
-   * The final exchange fee that this broker can offer to traders that trade through him is equal to
+   * Determine the exchange fee based on lots purchased by this white-label partner.
+   * The final exchange fee that this white-label partner can offer to traders that trade through him is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @param {number=} lots Optional, designation to use if different from this broker's.
+   * @param {number=} lots Optional, designation to use if different from this white-label partner's.
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -92,13 +92,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // get broker fee induced by lots
+   *   // get white-label partner fee induced by lots
    *   let brokFeeLots = await brokTool.getFeeForBrokerDesignation("MATIC");
    *   console.log(brokFeeLots);
    * }
    * main();
    *
-   * @returns {number} Fee based solely on this broker's designation, in decimals (i.e. 0.1% is 0.001).
+   * @returns {number} Fee based solely on this white-label partner's designation, in decimals (i.e. 0.1% is 0.001).
    */
   public async getFeeForBrokerDesignation(
     poolSymbolName: string,
@@ -121,8 +121,8 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Determine the exchange fee based on volume traded under this broker.
-   * The final exchange fee that this broker can offer to traders that trade through him is equal to
+   * Determine the exchange fee based on volume traded under this white-label partner.
+   * The final exchange fee that this white-label partner can offer to traders that trade through him is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example
@@ -134,13 +134,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // get broker fee induced by volume
+   *   // get white-label partner fee induced by volume
    *   let brokFeeVol = await brokTool.getFeeForBrokerVolume("MATIC");
    *   console.log(brokFeeVol);
    * }
    * main();
    *
-   * @returns {number} Fee based solely on a broker's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
+   * @returns {number} Fee based solely on a white-label partner's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
    */
   public async getFeeForBrokerVolume(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -152,10 +152,10 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Determine the exchange fee based on the current D8X balance in a broker's wallet.
-   * The final exchange fee that this broker can offer to traders that trade through him is equal to
+   * Determine the exchange fee based on the current D8X balance in a white-label partner's wallet.
+   * The final exchange fee that this white-label partner can offer to traders that trade through him is equal to
    * maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeForBrokerVolume(symbol), brokerTool.getFeeForBrokerStake)
-   * @param {string=} brokerAddr Address of the broker in question, if different from the one calling this function.
+   * @param {string=} brokerAddr Address of the white-label partner in question, if different from the one calling this function.
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -165,13 +165,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // get broker fee induced by staked d8x
+   *   // get white-label partner fee induced by staked d8x
    *   let brokFeeStake = await brokTool.getFeeForBrokerStake("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(brokFeeStake);
    * }
    * main();
    *
-   * @returns {number} Fee based solely on a broker's D8X balance, in decimals (i.e. 0.1% is 0.001).
+   * @returns {number} Fee based solely on a white-label partner's D8X balance, in decimals (i.e. 0.1% is 0.001).
    */
   public async getFeeForBrokerStake(brokerAddr?: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -186,11 +186,11 @@ export default class BrokerTool extends WriteAccessHandler {
 
   /**
    * Determine exchange fee based on an order and a trader.
-   * This is the fee charged by the exchange only, excluding the broker fee,
-   * and it takes into account whether the order given here has been signed by a broker or not.
+   * This is the fee charged by the exchange only, excluding the white-label partner fee,
+   * and it takes into account whether the order given here has been signed by a white-label partner or not.
    * Use this, for instance, to verify that the fee to be charged for a given order is as expected,
    * before and after signing it with brokerTool.signOrder.
-   * This fee is equal or lower than the broker induced fee, provided the order is properly signed.
+   * This fee is equal or lower than the white-label partner induced fee, provided the order is properly signed.
    * @param {Order} order Order structure. As a minimum the structure needs to
    * specify symbol, side, type and quantity.
    * @param {string} traderAddr Address of the trader for whom to determine the fee.
@@ -231,7 +231,7 @@ export default class BrokerTool extends WriteAccessHandler {
   // Volume
 
   /**
-   * Exponentially weighted EMA of the total trading volume of all trades performed under this broker.
+   * Exponentially weighted EMA of the total trading volume of all trades performed under this white-label partner.
    * The weights are chosen so that in average this coincides with the 30 day volume.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example
@@ -243,13 +243,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // get 30 day volume for broker
+   *   // get 30 day volume for white-label partner
    *   let brokVolume = await brokTool.getCurrentBrokerVolume("MATIC");
    *   console.log(brokVolume);
    * }
    * main();
    *
-   * @returns {number} Current trading volume for this broker, in USD.
+   * @returns {number} Current trading volume for this white-label partner, in USD.
    */
   public async getCurrentBrokerVolume(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -263,7 +263,7 @@ export default class BrokerTool extends WriteAccessHandler {
   // Lots
 
   /**
-   * Total amount of collateral currency a broker has to deposit into the default fund to purchase one lot.
+   * Total amount of collateral currency a white-label partner has to deposit into the default fund to purchase one lot.
    * This is equivalent to the price of a lot expressed in a given pool's currency (e.g. MATIC, USDC, etc).
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example
@@ -281,7 +281,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @returns {number} Broker lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.
+   * @returns {number} White-label partner lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.
    */
   public async getLotSize(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null) {
@@ -294,8 +294,8 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Provides information on how many lots a broker purchased for a given pool.
-   * This is relevant to determine the broker's fee tier.
+   * Provides information on how many lots a white-label partner purchased for a given pool.
+   * This is relevant to determine the white-label partner's fee tier.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -306,13 +306,13 @@ export default class BrokerTool extends WriteAccessHandler {
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
-   *   // get broker designation
+   *   // get white-label partner designation
    *   let brokDesignation = await brokTool.getBrokerDesignation("MATIC");
    *   console.log(brokDesignation);
    * }
    * main();
    *
-   * @returns {number} Number of lots purchased by this broker.
+   * @returns {number} Number of lots purchased by this white-label partner.
    */
   public async getBrokerDesignation(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
@@ -361,9 +361,9 @@ export default class BrokerTool extends WriteAccessHandler {
   // Signatures
 
   /**
-   * Adds this broker's signature to an order. An order signed by a broker is considered
-   * to be routed through this broker and benefits from the broker's fee conditions.
-   * @param {Order} order Order to sign. It must contain valid broker fee, broker address, and order deadline.
+   * Adds this white-label partner's signature to an order. An order signed by a white-label partner is considered
+   * to be routed through this white-label partner and benefits from the white-label partner's fee conditions.
+   * @param {Order} order Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.
    * @param {string} traderAddr Address of trader submitting the order.
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -390,7 +390,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * }
    * main();
    *
-   * @returns {Order} An order signed by this broker, which can be submitted directly with AccountTrade.order.
+   * @returns {Order} An order signed by this white-label partner, which can be submitted directly with AccountTrade.order.
    */
   public async signOrder(order: Order, traderAddr: string): Promise<Order> {
     if (this.proxyContract == null || this.signer == null) {
@@ -426,13 +426,13 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   /**
-   * Creates a signature that a trader can use to place orders with this broker.
+   * Creates a signature that a trader can use to place orders with this white-label partner.
    * This signature can be used to pass on to a trader who wishes to trade via this SDK or directly on the blockchain.
-   * @param {string} traderAddr Address of the trader signing up with this broker.
+   * @param {string} traderAddr Address of the trader signing up with this white-label partner.
    * @param {string} symbol Perpetual that this trader will be trading, of the form ETH-USD-MATIC.
-   * @param {number} brokerFee Broker fee for this trader, in decimals (i.e. 0.1% is 0.001).
+   * @param {number} brokerFee White-label partner fee for this trader, in decimals (i.e. 0.1% is 0.001).
    * @param {number} deadline Deadline for the order to be executed.
-   * @returns {string} Broker signature approving this trader's fee, symbol, and deadline.
+   * @returns {string} White-label partner signature approving this trader's fee, symbol, and deadline.
    * @ignore
    */
   public async createSignatureForTrader(
@@ -519,11 +519,11 @@ export default class BrokerTool extends WriteAccessHandler {
   // Transfer ownership
 
   /**
-   * Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
-   * (i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
-   * his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.
+   * Transfer ownership of a white-label partner's status to a new wallet. This function transfers the values related to
+   * (i) trading volume and (ii) deposited lots to newAddress. The white-label partner needs in addition to manually transfer
+   * his D8X holdings to newAddress. Until this transfer is completed, the white-label partner will not have his current designation reflected at newAddress.
    * @param {string} poolSymbolName Pool symbol name (e.g. MATIC, USDC, etc).
-   * @param {string} newAddress The address this broker wants to use from now on.
+   * @param {string} newAddress The address this white-label partner wants to use from now on.
    * @example
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
