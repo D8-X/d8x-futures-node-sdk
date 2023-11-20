@@ -12,6 +12,7 @@ import {
   ERC20_ABI,
   MULTICALL_ADDRESS,
   OrderStatus,
+  ORDER_TYPE_MARKET,
   PERP_STATE_STR,
   SELL_SIDE,
   ZERO_ADDRESS,
@@ -552,7 +553,7 @@ export default class MarketData extends PerpetualDataHandler {
       indexPriceInfo,
       this.symbolToPerpStaticInfo
     );
-    const [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
+    let [S2, S3, Sm] = [perpetualState.indexPrice, perpetualState.collToQuoteIndexPrice, perpetualState.markPrice];
 
     // exchange fee based on this trader's address (volume, token holding, etc) and his broker address (if any)
     const exchangeFeeTbps = this.proxyContract.interface.decodeFunctionResult(
@@ -560,9 +561,9 @@ export default class MarketData extends PerpetualDataHandler {
       encodedResults[2].returnData
     )[0] as number;
 
-    // price for this order = limit price (conservative) if given, else the current perp price
-    let tradePrice: number;
-    if (order.limitPrice == undefined) {
+    // amm price for this trade amount
+    let ammPrice: number;
+    {
       let fPrice: BigNumber;
       if (encodedResults[3].success) {
         fPrice = this.proxyContract.interface.decodeFunctionResult(
@@ -572,9 +573,40 @@ export default class MarketData extends PerpetualDataHandler {
       } else {
         fPrice = await this.proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmountBC), fS2S3);
       }
-      tradePrice = ABK64x64ToFloat(fPrice);
+      ammPrice = ABK64x64ToFloat(fPrice);
+    }
+    // price for this order = amm price if no limit given, else conservatively adjusted
+    let tradePrice: number;
+    if (order.limitPrice == undefined) {
+      tradePrice = ammPrice;
     } else {
-      tradePrice = order.limitPrice;
+      if (order.type == ORDER_TYPE_MARKET) {
+        if (order.side == BUY_SIDE) {
+          // limit price > amm price --> likely not binding, use avg, less conservative
+          // limit price < amm price --> likely fails due to slippage, use limit price to get actual max cost
+          tradePrice = 0.5 * (order.limitPrice + Math.min(order.limitPrice, ammPrice));
+        } else {
+          tradePrice = 0.5 * (order.limitPrice + Math.max(order.limitPrice, ammPrice));
+        }
+      } else {
+        // limit orders either get executed now (at ammPrice) or later (at limit price)
+        if (
+          (order.side == BUY_SIDE && order.limitPrice > ammPrice) ||
+          (order.side == SELL_SIDE && order.limitPrice < ammPrice)
+        ) {
+          // can be executed now at ammPrice
+          tradePrice = ammPrice;
+        } else {
+          // will execute in the future at limitPrice -> assume prices converge proportionally
+          const slippage = ammPrice / S2;
+          Sm = (Sm / S2) * (order.limitPrice / slippage);
+          S2 = order.limitPrice / slippage;
+          tradePrice = order.limitPrice;
+          if (this.getPerpetualStaticInfo(order.symbol).collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
+            S3 = S2;
+          }
+        }
+      }
     }
     // max buy
     const fMaxLong = this.proxyContract.interface.decodeFunctionResult(
