@@ -446,7 +446,7 @@ export default class MarketData extends PerpetualDataHandler {
     order: Order,
     account?: MarginAccount,
     indexPriceInfo?: [number, number, boolean, boolean],
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { tradingFeeTbps?: number }
   ): Promise<{ newPositionRisk: MarginAccount; orderCost: number; maxLongTrade: number; maxShortTrade: number }> {
     if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -456,6 +456,12 @@ export default class MarketData extends PerpetualDataHandler {
     if (indexPriceInfo == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
       indexPriceInfo = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
+    }
+
+    // override total fee
+    let tradingFeeTbps: number | undefined;
+    if (overrides) {
+      ({ tradingFeeTbps, ...overrides } = overrides);
     }
 
     // signed trade amount
@@ -521,7 +527,7 @@ export default class MarketData extends PerpetualDataHandler {
     ];
 
     // multicall
-    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, (overrides || {}) as CallOverrides);
 
     // positionRisk to apply this trade on: if not given, defaults to the current trader's position
     if (!account) {
@@ -650,8 +656,11 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let newSide = newPositionBC > 0 ? BUY_SIDE : newPositionBC < 0 ? SELL_SIDE : CLOSED_SIDE;
 
-    let exchangeFeeCC = (Math.abs(tradeAmountBC) * exchangeFeeTbps * 1e-5 * S2) / S3;
-    let brokerFeeCC = (Math.abs(tradeAmountBC) * (order.brokerFeeTbps ?? 0) * 1e-5 * S2) / S3;
+    if (tradingFeeTbps === undefined) {
+      // use usual input if not overriden
+      tradingFeeTbps = exchangeFeeTbps + (order.brokerFeeTbps ?? 0);
+    }
+    let tradingFeeCC = (Math.abs(tradeAmountBC) * tradingFeeTbps * 1e-5 * S2) / S3;
     let referralFeeCC = this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
     // Trade type:
     let isClose = newPositionBC == 0 || newPositionBC * tradeAmountBC < 0;
@@ -677,7 +686,7 @@ export default class MarketData extends PerpetualDataHandler {
       let [b0, pos0] = isOpen ? [0, 0] : [account.collateralCC, currentPositionBC];
       traderDepositCC = getDepositAmountForLvgTrade(pos0, b0, tradeAmountBC, targetLvg, tradePrice, S3, Sm);
       // fees are paid from wallet in this case
-      traderDepositCC += exchangeFeeCC + brokerFeeCC + referralFeeCC;
+      traderDepositCC += tradingFeeCC + referralFeeCC;
     }
 
     // Contract: _executeTrade
@@ -689,7 +698,7 @@ export default class MarketData extends PerpetualDataHandler {
       deltaCashCC += pnl / S3;
     }
     // funding and fees
-    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - exchangeFeeCC - brokerFeeCC - referralFeeCC;
+    deltaCashCC = deltaCashCC + account.unrealizedFundingCollateralCCY - tradingFeeCC - referralFeeCC;
 
     // New cash, locked-in, entry price & leverage after trade
     let newLockedInValueQC = currentLockedInQC + deltaLockedQC;
