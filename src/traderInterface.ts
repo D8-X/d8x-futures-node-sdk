@@ -15,11 +15,6 @@ export default class TraderInterface extends MarketData {
   public digestTool: TraderDigests;
   protected gasLimit: number = 1_000_000;
 
-  // accTrade.order(order)
-  // cancelOrder(symbol: string, orderId: string)
-  // accTrade.setAllowance
-  // accTrade.getOrderIds("MATIC-USD-MATIC")
-
   /**
    * Constructor
    * @param {NodeSDKConfig} config Configuration object, see
@@ -37,6 +32,19 @@ export default class TraderInterface extends MarketData {
    * @param traderAddr address of trader
    * @param brokerAddr address of broker
    * @returns fee (in decimals) that is charged by exchange (without broker)
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // query exchange fee
+   *   let fees = await traderAPI.queryExchangeFee("MATIC");
+   *   console.log(fees);
+   * }
+   * main();
+   *
    */
   public async queryExchangeFee(
     poolSymbolName: string,
@@ -57,6 +65,19 @@ export default class TraderInterface extends MarketData {
    * @param poolSymbolName pool symbol, e.g. MATIC
    * @param traderAddr address of the trader
    * @returns volume in USD
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // query volume
+   *   let vol = await traderAPI.getCurrentTraderVolume("MATIC", "0xmyAddress");
+   *   console.log(vol);
+   * }
+   * main();
+   *
    */
   public async getCurrentTraderVolume(
     poolSymbolName: string,
@@ -77,6 +98,18 @@ export default class TraderInterface extends MarketData {
    * @param symbol
    * @param orderId
    * @returns tuple of digest which the trader needs to sign and address of order book contract
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // get digest
+   *   let d = await traderAPI.cancelOrderDigest("BTC-USD-MATIC", "0xmyAddress");
+   *   console.log(d);
+   * }
+   * main();
    */
   public async cancelOrderDigest(
     symbol: string,
@@ -96,6 +129,18 @@ export default class TraderInterface extends MarketData {
    * Get the order book address for a perpetual
    * @param symbol symbol (e.g. MATIC-USD-MATIC)
    * @returns order book address for the perpetual
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // get order book address
+   *   let ob = traderAPI.getOrderBookAddress("BTC-USD-MATIC");
+   *   console.log(ob);
+   * }
+   * main();
    */
   public getOrderBookAddress(symbol: string): string {
     let orderBookContract = this.getOrderBookContract(symbol);
@@ -154,6 +199,13 @@ export default class TraderInterface extends MarketData {
     return PerpetualDataHandler._getABIFromContract(orderBookContract, method);
   }
 
+  /**
+   * Takes up to three orders and designates the first one as "parent" of the others.
+   * E.g. the first order opens a position, and the other two are take-profit and/or stop-loss orders.
+   * @param orders 1, 2 or 3 smart contract orders
+   * @param ids order ids
+   * @returns client orders with dependency info filled in
+   */
   public static chainOrders(orders: SmartContractOrder[], ids: string[]): ClientOrder[] {
     // add dependency
     let obOrders: ClientOrder[] = new Array<ClientOrder>(orders.length);
@@ -174,12 +226,25 @@ export default class TraderInterface extends MarketData {
   }
 
   /**
-   *  Add liquidity to the PnL participant fund. The address gets pool shares in return.
+   *  Add liquidity to the PnL participant fund via signer. The address gets pool shares in return.
    * @param {Signer} signer Signer that will deposit liquidity
    * @param {string} poolSymbolName  Name of pool symbol (e.g. MATIC)
    * @param {number} amountCC  Amount in pool-collateral currency
-   *
    * @return Transaction object
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const signer = // ethers Signer, e.g. from Metamask
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // add liquidity
+   *   let respAddLiquidity = await traderAPI.addLiquidity(signer, "MATIC", 0.1);
+   *   console.log(respAddLiquidity);
+   * }
+   * main();
+   *
    */
   public async addLiquidity(
     signer: Signer,
@@ -207,6 +272,20 @@ export default class TraderInterface extends MarketData {
    * @param {string} amountPoolShares Amount in pool-shares, removes everything if > available amount.
    *
    * @return Transaction object.
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const signer = // ethers Signer, e.g. from Metamask
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // submit txn
+   *   let tx = await traderAPI.initiateLiquidityWithdrawal(signer, "MATIC", 10.2);
+   *   console.log(tx);
+   * }
+   * main();
+   *
    */
   public async initiateLiquidityWithdrawal(
     signer: Signer,
@@ -231,6 +310,20 @@ export default class TraderInterface extends MarketData {
    * @param poolSymbolName
    *
    * @returns Transaction object.
+   * @example
+   * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(TraderInterface);
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const signer = // ethers Signer, e.g. from Metamask
+   *   let traderAPI = new TraderInterface(config);
+   *   await traderAPI.createProxyInstance();
+   *   // submit txn
+   *   let tx = await traderAPI.executeLiquidityWithdrawal(signer, "MATIC");
+   *   console.log(tx);
+   * }
+   * main();
+   *
    */
   public async executeLiquidityWithdrawal(
     signer: Signer,
