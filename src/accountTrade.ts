@@ -100,12 +100,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *    // setup (authentication required, PK is an environment variable with a private key)
    *    const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *    const pk: string = <string>process.env.PK;
-   *    let accTrade = new AccountTrade(config, pk);
+   *    const accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
    *    // set allowance
    *    await accTrade.setAllowance("MATIC");
    *    // set an order
-   *    let order: Order = {
+   *    const order: Order = {
    *        symbol: "MATIC-USD-MATIC",
    *        side: "BUY",
    *        type: "MARKET",
@@ -113,7 +113,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *        leverage: 2,
    *        executionTimestamp: Date.now()/1000,
    *    };
-   *    let orderTransaction = await accTrade.order(order);
+   *    const orderTransaction = await accTrade.order(order);
    *    console.log(orderTransaction);
    *  }
    *  main();
