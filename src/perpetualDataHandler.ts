@@ -122,6 +122,11 @@ export default class PerpetualDataHandler {
   // each pool-array contains perpetual ids
   protected nestedPerpetualIDs: number[][];
 
+  /**
+   * Constructor
+   * @param {NodeSDKConfig} config Configuration object, see
+   * PerpetualDataHandler.readSDKConfig.
+   */
   public constructor(config: NodeSDKConfig) {
     this.config = config;
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
@@ -294,6 +299,11 @@ export default class PerpetualDataHandler {
     }
   }
 
+  /**
+   * Utility function to export mapping and re-use in other objects.
+   * @returns
+   * @ignore
+   */
   public getAllMappings() {
     return {
       nestedPerpetualIDs: this.nestedPerpetualIDs,
