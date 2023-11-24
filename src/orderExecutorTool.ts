@@ -30,8 +30,8 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(OrderExecutorTool);
-   *   // load configuration for testnet
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // load configuration for Polygon zkEVM (testnet)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -52,15 +52,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
-   * @param {string=} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
-   * @param {number=} nonce optional nonce
+   * @param {string} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {number} nonce optional nonce
    * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
    * @example
    * import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   const symbol = "ETH-USD-MATIC";
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -142,6 +142,34 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     return await this.signer.sendTransaction(unsignedTx);
   }
 
+  /**
+   * Executes a list of orders of the symbol. This action interacts with the blockchain and incurs gas costs.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string[]} orderIds IDs of the orders to be executed.
+   * @param {string} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {number} nonce optional nonce
+   * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
+   * @example
+   * import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+   * async function main() {
+   *   console.log(OrderExecutorTool);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   const symbol = "ETH-USD-MATIC";
+   *   let orderTool = new OrderExecutorTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // get some open orders
+   *   const maxOrdersToGet = 5;
+   *   let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+   *   console.log(`Got ${ids.length} orders`);
+   *   // execute
+   *   let tx = await orderTool.executeOrders(symbol, ids);
+   *   console.log(`Sent order ids ${ids.join(", ")} for execution, tx hash = ${tx.hash}`);
+   * }
+   * main();
+   * @returns Transaction object.
+   */
   public async executeOrders(
     symbol: string,
     orderIds: string[],
@@ -234,7 +262,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -274,7 +302,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -309,7 +337,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -343,7 +371,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -419,7 +447,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -573,6 +601,24 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @param indexPrice S2,S3-index prices for the given perpetual. Will fetch prices from REST API
    * if not defined.
    * @returns array of tradeable boolean
+   * @example
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderExecutorTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderExecutorTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // check if tradeable
+   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
+   *   let check = await orderTool.isTradeableBatch(
+   *       [openOrders[0][0], openOrders[0][1]],
+   *       [openOrders[1][0], openOrders[1][1]]
+   *     );
+   *   console.log(check);
+   * }
+   * main();
    */
   public async isTradeableBatch(
     orders: Order[],
@@ -603,6 +649,12 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     return checks;
   }
 
+  /**
+   * Performs on-chain checks via multicall
+   * @param orders orders to check
+   * @param orderIds order ids
+   * @ignore
+   */
   private async _isTradeableBatch(
     orders: Order[],
     orderIds: string[],
@@ -762,6 +814,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @param atBlockTimestamp block timestamp when execution would take place
    * @param symbolToPerpInfoMap metadata
    * @returns true if trading conditions met, false otherwise
+   * @ignore
    */
   protected _isTradeable(
     order: Order,
@@ -824,6 +877,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     return PerpetualDataHandler.fromSmartContractOrder(scOrder, this.symbolToPerpStaticInfo);
   }
 
+  /**
+   * Gets the current transaction count for the connected signer
+   * @param blockTag
+   * @returns The nonce for the next transaction
+   */
   public async getTransactionCount(blockTag?: BlockTag): Promise<number> {
     if (this.signer == null) {
       throw Error("no wallet initialized. Use createProxyInstance().");
