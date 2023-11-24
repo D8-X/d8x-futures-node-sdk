@@ -85,15 +85,27 @@ export default class MarketData extends PerpetualDataHandler {
     super(config);
   }
 
+  /**
+   * Initialize the marketData-Class with this function
+   * to create instance of D8X perpetual contract and gather information
+   * about perpetual currencies
+   * @param provider optional provider to perform blockchain calls
+   */
   public async createProxyInstance(provider?: Provider, overrides?: CallOverrides): Promise<void>;
 
+  /**
+   * Initialize the marketData-Class with this function
+   * to create instance of D8X perpetual contract and gather information
+   * about perpetual currencies
+   * @param marketData Initialized market data object to save on blokchain calls
+   */
   public async createProxyInstance(marketData: MarketData): Promise<void>;
 
   /**
    * Initialize the marketData-Class with this function
    * to create instance of D8X perpetual contract and gather information
    * about perpetual currencies
-   * @param provider optional provider
+   * @param providerOrMarketData optional provider or existing market data instance
    */
   public async createProxyInstance(
     providerOrMarketData?: Provider | MarketData,
@@ -122,7 +134,7 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Get the proxy address
-   * @returns Address of the perpetual proxy contract
+   * @returns {string} Address of the perpetual proxy contract
    */
   public getProxyAddress(): string {
     if (this.proxyContract == null) {
@@ -131,14 +143,18 @@ export default class MarketData extends PerpetualDataHandler {
     return this.proxyContract.address;
   }
 
+  /**
+   * Get the pre-computed triangulations
+   * @returns Triangulations
+   */
   public getTriangulations() {
     return this.priceFeedGetter.getTriangulations();
   }
 
   /**
    * Convert the smart contract output of an order into a convenient format of type "Order"
-   * @param smOrder SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event
-   * @returns more convenient format of order, type "Order"
+   * @param {SmartContractOrder} smOrder SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event
+   * @returns {Order} more convenient format of order, type "Order"
    */
   public smartContractOrderToOrder(smOrder: SmartContractOrder): Order {
     return PerpetualDataHandler.fromSmartContractOrder(smOrder, this.symbolToPerpStaticInfo);
@@ -160,9 +176,9 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns read-only proxy instance
+   * @returns {Contract} read-only proxy instance
    */
-  public getReadOnlyProxyInstance(): Contract {
+  public getReadOnlyProxyInstance(): Contract & IPerpetualManager {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -340,7 +356,7 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns {MarginAccount[]} Array of position risks of trader.
+   * @returns {Array<MarginAccount>} Array of position risks of trader.
    */
   public async positionRisk(
     traderAddr: string,
@@ -407,6 +423,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {string} traderAddr Address of the trader for which we get the position risk.
    * @param {string} symbol perpetual symbol of the form ETH-USD-MATIC
    * @returns MarginAccount struct for the trader
+   * @ignore
    */
   protected async _positionRiskForTraderInPerpetuals(
     traderAddr: string,
@@ -444,7 +461,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param order Order to be submitted
    * @param account Position risk before trade. Defaults to current position if not given.
    * @param indexPriceInfo Index prices and market status (open/closed). Defaults to current market status if not given.
-   * @returns Position risk after trade
+   * @returns Position risk after trade, including order cost and maximal trade sizes for position
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -774,10 +791,9 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Estimates what the position risk will be if given amount of collateral is added/removed from the account.
-   * @param traderAddr Address of trader
-   * @param deltaCollateral Amount of collateral to add or remove (signed)
-   * @param currentPositionRisk Position risk before
-   * @returns {MarginAccount} Position risk after
+   * @param {number} deltaCollateral Amount of collateral to add or remove (signed)
+   * @param {MarginAccount} account Position risk before collateral is added or removed
+   * @returns {MarginAccount} Position risk after collateral has been added/removed
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -959,9 +975,9 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Get the address' balance of the pool share token
-   * @param address address of the liquidity provider
-   * @param symbolOrId Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id
-   * @returns Pool share token balance of the given address (e.g. dMATIC balance)
+   * @param {string} address address of the liquidity provider
+   * @param {string | number} symbolOrId Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id
+   * @returns {number} Pool share token balance of the given address (e.g. dMATIC balance)
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -1005,8 +1021,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Value of pool token in collateral currency
-   * @param symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
-   * @returns current pool share token price in collateral currency
+   * @param {string | number} symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
+   * @returns {number} current pool share token price in collateral currency
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -1031,8 +1047,8 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Value of the pool share tokens for this liquidity provider
    * in poolSymbol-currency (e.g. MATIC, USDC).
-   * @param address address of liquidity provider
-   * @param symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
+   * @param {string} address address of liquidity provider
+   * @param {string | number} symbolOrId symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId
    * @returns the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -1089,8 +1105,8 @@ export default class MarketData extends PerpetualDataHandler {
    * Gets the maximal order sizes to open positions (increase size), both long and short,
    * considering the existing position, state of the perpetual
    * Accounts for user's wallet balance.
-   * @param traderAddr Address of trader
-   * @param symbol Symbol of the form ETH-USD-MATIC
+   * @param {string} traderAddr Address of trader
+   * @param {symbol} symbol Symbol of the form ETH-USD-MATIC
    * @returns Maximal trade sizes
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -1259,8 +1275,8 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Perpetual-wide maximal signed position size in perpetual.
    * @param side BUY_SIDE or SELL_SIDE
-   * @param symbol of the form ETH-USD-MATIC.
-   * @returns signed maximal position size in base currency
+   * @param {string} symbol of the form ETH-USD-MATIC.
+   * @returns {number} signed maximal position size in base currency
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -1274,8 +1290,6 @@ export default class MarketData extends PerpetualDataHandler {
    *   console.log(maxLongPos);
    * }
    * main();
-   *
-   * @returns {number} Price of index in given currency.
    */
   public async maxSignedPosition(side: string, symbol: string, overrides?: CallOverrides): Promise<number> {
     let perpId = this.getPerpIdFromSymbol(symbol);
@@ -1351,7 +1365,6 @@ export default class MarketData extends PerpetualDataHandler {
    * Get the status of an array of orders given a symbol and their Ids
    * @param symbol Symbol of the form ETH-USD-MATIC
    * @param orderId Array of order Ids
-   * @param overrides
    * @returns Array of order status
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -1405,7 +1418,7 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns mark price
+   * @returns {number} mark price
    */
   public async getMarkPrice(symbol: string, indexPrices?: [number, number]): Promise<number> {
     if (this.proxyContract == null) {
@@ -1441,7 +1454,7 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns price (number)
+   * @returns {number} price
    */
   public async getPerpetualPrice(
     symbol: string,
@@ -1469,9 +1482,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Query recent perpetual state from blockchain
-   * @param symbol symbol of the form ETH-USD-MATIC
-   * @param indexPrices S2 and S3 prices/isMarketOpen if not provided fetch via REST API
-   * @returns PerpetualState reference
+   * @param {string} symbol symbol of the form ETH-USD-MATIC
+   * @returns {PerpetualState} PerpetualState copy
    */
   public async getPerpetualState(
     symbol: string,
@@ -1497,13 +1509,12 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Query recent pool state from blockchain, not including perpetual states
-   * @param symbol symbol of the form USDC
-   * @param indexPrices S2 and S3 prices/isMarketOpen if not provided fetch via REST API
-   * @returns PoolState reference
+   * @param {string} poolSymbol symbol of the form USDC
+   * @returns {PoolState} PoolState copy
    */
   public async getPoolState(poolSymbol: string, overrides?: CallOverrides): Promise<PoolState> {
     if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
+      throw new Error("no proxy contract initialized. Use createProxyInstance().");
     }
     const poolId = this._poolSymbolOrIdToPoolId(poolSymbol);
     const pool = await this.proxyContract.getLiquidityPool(poolId, overrides || {});
@@ -1523,14 +1534,15 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Query perpetual static info.
-   * This information is queried once at createProxyInstance-time and remains static after that.
-   * @param symbol symbol of the form ETH-USD-MATIC
-   * @returns PerpetualStaticInfo copy.
+   * This information is queried once at createProxyInstance-time, and remains static after that.
+   * @param {string} symbol Perpetual symbol
+   *
+   * @returns {PerpetualStaticInfo} Perpetual static info copy.
    */
   public getPerpetualStaticInfo(symbol: string): PerpetualStaticInfo {
     let perpInfo = this.symbolToPerpStaticInfo.get(symbol);
     if (perpInfo == undefined) {
-      throw Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
+      throw new Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
     }
     // return new copy, not a reference
     let res: PerpetualStaticInfo = {
@@ -1685,8 +1697,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    *
-   * @param traderAddr Address of the trader
-   * @param orderBookContract Instance of order book contract
+   * @param {string} traderAddr Address of the trader
+   * @param {LimitOrderBook} orderBookContract Instance of order book contract
    * @returns Array of order-id's
    * @ignore
    */
@@ -1708,8 +1720,8 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Query the available margin conditional on the given (or current) index prices
    * Result is in collateral currency
-   * @param traderAddr address of the trader
-   * @param symbol perpetual symbol of the form BTC-USD-MATIC
+   * @param {string} traderAddr address of the trader
+   * @param {string} symbol perpetual symbol of the form BTC-USD-MATIC
    * @param indexPrices optional index prices, will otherwise fetch from REST API
    * @returns available margin in collateral currency
    * @example
@@ -1755,8 +1767,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Calculate a type of exchange loyality score based on trader volume
-   * @param traderAddr address of the trader
-   * @returns a loyality score (4 worst, 1 best)
+   * @param {string} traderAddr address of the trader
+   * @returns {number} a loyality score (4 worst, 1 best)
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -1827,8 +1839,8 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Get market open/closed status
-   * @param symbol Perpetual symbol of the form ETH-USD-MATIC
-   * @returns True if the market is closed
+   * @param {string} symbol Perpetual symbol of the form ETH-USD-MATIC
+   * @returns {boolean} True if the market is closed
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -1855,7 +1867,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param symbol Perp symbol
    * @param _symbolToPerpStaticInfo Static info mapping
    * @param _priceFeedGetter Price getter instance
-   * @returns
+   * @ignore
    */
   private static async _isMarketClosed(
     symbol: string,
@@ -2133,10 +2145,10 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Get the latest on-chain price of a perpetual base index in USD.
-   * @param symbol Symbol of the form ETH-USDC-MATIC.
+   * @param {string} symbol Symbol of the form ETH-USDC-MATIC.
    * If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool.
    * If no argument is provided, it returns all prices of all the indices in the pools of the exchange.
-   * @return Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.
+   * @return {Map<string, number>} Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -2147,7 +2159,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   await mktData.createProxyInstance();
    *   // is market closed?
    *   let px = await mktData.getPriceInUSD("ETH-USDC-USDC");
-   *   console.log(px); // returns the price of ETH in USD (not USDC)
+   *   console.log(px); // {'ETH-USD' -> 1800}
    * }
    * main();
    *
