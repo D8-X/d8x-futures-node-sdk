@@ -31,8 +31,8 @@ and executes smart-contract interactions that require gas-payments.</p>
 import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (tesnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
@@ -62,7 +62,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -95,7 +95,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -124,7 +124,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -154,7 +154,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -182,7 +182,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();

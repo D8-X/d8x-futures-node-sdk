@@ -29,8 +29,8 @@ smart-contract interactions that require gas-payments.</p>
 import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidityProviderTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (testnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
@@ -58,7 +58,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -90,7 +90,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -119,7 +119,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
