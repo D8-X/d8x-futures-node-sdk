@@ -34,8 +34,8 @@ export default class AccountTrade extends WriteAccessHandler {
    * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(AccountTrade);
-   *   // load configuration for testnet
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // load configuration for Polygon zkEVM Tesnet
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   // AccountTrade (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
@@ -60,7 +60,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *    console.log(AccountTrade);
    *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *    const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
@@ -98,7 +98,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *    console.log(AccountTrade);
    *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *    const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
@@ -112,33 +112,6 @@ export default class AccountTrade extends WriteAccessHandler {
    *        quantity: 100,
    *        leverage: 2,
    *        executionTimestamp: Date.now()/1000,
-   *    };
-   *    let orderTransaction = await accTrade.order(order);
-   *    console.log(orderTransaction);
-   *  }
-   *  main();
-   *
-   * @example
-   * import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *    console.log(AccountTrade);
-   *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("testnet");
-   *    const pk: string = <string>process.env.PK;
-   *    let accTrade = new AccountTrade(config, pk);
-   *    await accTrade.createProxyInstance();
-   *    // set allowance
-   *    await accTrade.setAllowance("MATIC");
-   *    // set an order
-   *   let order: Order = {
-   *       symbol: "MATIC-USD-MATIC",
-   *       side: "BUY",
-   *       type: "LIMIT",
-   *       limitPrice: 1,
-   *       quantity: 5,
-   *       leverage: 2,
-   *       executionTimestamp: Date.now() / 1000,
-   *       deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
    *    };
    *    let orderTransaction = await accTrade.order(order);
    *    console.log(orderTransaction);
@@ -182,7 +155,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -215,7 +188,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -244,7 +217,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -374,6 +347,21 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} amount How much collateral to add, in units of collateral currency, e.g. MATIC
+   * @example
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   *
+   * async function main() {
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let accTrade = new AccountTrade(config, pk);
+   *   await accTrade.createProxyInstance();
+   *   // add collateral to margin account
+   *   const tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10.9);
+   *   console.log(orderIds);
+   * }
+   *
+   * main();
    */
   public async addCollateral(
     symbol: string,
@@ -410,6 +398,21 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {number} amount How much collateral to remove, in units of collateral currency, e.g. MATIC
+   * @example
+   * import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   *
+   * async function main() {
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let accTrade = new AccountTrade(config, pk);
+   *   await accTrade.createProxyInstance();
+   *   // remove collateral from margin account
+   *   const tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 3.14);
+   *   console.log(orderIds);
+   * }
+   *
+   * main();
    */
   public async removeCollateral(
     symbol: string,
