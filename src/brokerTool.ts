@@ -26,8 +26,8 @@ export default class BrokerTool extends WriteAccessHandler {
    * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(BrokerTool);
-   *   // load configuration for testnet
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // load configuration for Polygon zkEVM (testnet)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   // BrokerTool (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
@@ -52,7 +52,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -88,7 +88,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -130,7 +130,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -161,7 +161,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -199,7 +199,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -239,7 +239,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -271,7 +271,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -302,7 +302,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -332,7 +332,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -361,7 +361,7 @@ export default class BrokerTool extends WriteAccessHandler {
   // Signatures
 
   /**
-   * Adds this white-label partner's signature to an order. An order signed by a white-label partner is considered
+   * Adds this white-label partner's signature to a user-friendly order. An order signed by a white-label partner is considered
    * to be routed through this white-label partner and benefits from the white-label partner's fee conditions.
    * @param {Order} order Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.
    * @param {string} traderAddr Address of trader submitting the order.
@@ -370,7 +370,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
@@ -413,6 +413,38 @@ export default class BrokerTool extends WriteAccessHandler {
     return order;
   }
 
+  /**
+   * Generates a white-label partner's signature of a smart-contract ready order. An order signed by a white-label partner is considered
+   * to be routed through this white-label partner and benefits from the white-label partner's fee conditions.
+   * @param {SmartContractOrder} scOrder Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.
+   * @param {string} traderAddr Address of trader submitting the order.
+   * @example
+   * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(BrokerTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   const brokTool = new BrokerTool(config, pk);
+   *   const traderAPI = new TraderInterface(config);
+   *   await brokTool.createProxyInstance();
+   *   await traderAPI.createProxyInstance();
+   *   // sign order
+   *   const order = {symbol: "ETH-USD-MATIC",
+   *       side: "BUY",
+   *       type: "MARKET",
+   *       quantity: 1,
+   *       executionTimestamp: Date.now()/1000
+   *    };
+   *   const scOrder = await traderAPI.createSmartContractOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+   *   const signature = await brokTool.signSCOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+   *        0.0001, 1669723339);
+   *   console.log(signature);
+   * }
+   * main();
+   *
+   * @returns {string} Signature of order.
+   */
   public async signSCOrder(scOrder: SmartContractOrder): Promise<string> {
     return await BrokerTool._signOrderFromRawData(
       scOrder.iPerpetualId,
@@ -529,7 +561,7 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
