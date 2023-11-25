@@ -140,8 +140,8 @@ export function floatToDecN(x: number, decimals: number): BigNumber {
 
 /**
  * 9 are rounded up regardless of precision, e.g, 0.1899000 at precision 6 results in 3
- * @param x
- * @param precision
+ * @param {number} x
+ * @param {number} precision
  * @returns number of decimals
  */
 export function countDecimalsOf(x: number, precision: number): number {
@@ -169,9 +169,9 @@ export function countDecimalsOf(x: number, precision: number): number {
 /**
  * Round a number to a given lot size and return a string formated
  * to for this lot-size
- * @param x number to round
- * @param lot lot size (could be 'uneven' such as 0.019999999 instead of 0.02)
- * @param precision optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)
+ * @param {number} x number to round
+ * @param {number} lot lot size (could be 'uneven' such as 0.019999999 instead of 0.02)
+ * @param {number} precision optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)
  * @returns formated number string
  */
 export function roundToLotString(x: number, lot: number, precision: number = 7): string {

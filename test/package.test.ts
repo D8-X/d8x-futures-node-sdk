@@ -8,7 +8,7 @@ describe("Front-end-like functionality", () => {
   beforeAll(async () => {});
   it("order digest", async () => {
     let pk: string = <string>process.env.PK;
-    let config = PerpetualDataHandler.readSDKConfig("testnet");
+    let config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
     let apiInterface = new TraderInterface(config);
     await apiInterface.createProxyInstance();
     let wallet = new ethers.Wallet(pk);
