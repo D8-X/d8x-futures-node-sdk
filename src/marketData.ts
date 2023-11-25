@@ -410,13 +410,14 @@ export default class MarketData extends PerpetualDataHandler {
     overrides?: CallOverrides
   ): Promise<MarginAccount[]> {
     const MAX_SYMBOLS_PER_CALL = 10;
-    let S2S3 = new Array<[number, number]>();
+    const S2S3 = new Array<[number, number]>();
     for (let i = 0; i < symbols.length; i++) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbols[i]);
       S2S3.push([obj.idxPrices[0], obj.idxPrices[1]]);
     }
     let mgnAcct: MarginAccount[] = [];
     let callSymbols = symbols.slice(0, MAX_SYMBOLS_PER_CALL);
+    let pxS2S3 = S2S3.slice(0, MAX_SYMBOLS_PER_CALL);
     while (callSymbols.length > 0) {
       let acc = await PerpetualDataHandler.getMarginAccounts(
         Array(callSymbols.length).fill(traderAddr),
@@ -424,11 +425,12 @@ export default class MarketData extends PerpetualDataHandler {
         this.symbolToPerpStaticInfo,
         Multicall3__factory.connect(MULTICALL_ADDRESS, provider),
         IPerpetualManager__factory.connect(this.proxyAddr, provider),
-        S2S3,
+        pxS2S3,
         overrides
       );
       mgnAcct = mgnAcct.concat(acc);
       callSymbols = symbols.slice(mgnAcct.length, mgnAcct.length + MAX_SYMBOLS_PER_CALL);
+      pxS2S3 = S2S3.slice(mgnAcct.length, mgnAcct.length + MAX_SYMBOLS_PER_CALL);
     }
     return mgnAcct;
   }
