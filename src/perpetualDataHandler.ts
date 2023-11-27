@@ -860,7 +860,11 @@ export default class PerpetualDataHandler {
   }
 
   protected static fromSmartContractOrder(
-    order: SmartContractOrder | IPerpetualOrder.OrderStruct,
+    order:
+      | SmartContractOrder
+      | IPerpetualOrder.OrderStruct
+      | IClientOrder.ClientOrderStruct
+      | IClientOrder.ClientOrderStructOutput,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): Order {
     // find symbol of perpetual id
@@ -899,7 +903,7 @@ export default class PerpetualDataHandler {
       leverage: Number(order.leverageTDR) / 100,
       deadline: Number(order.iDeadline),
       executionTimestamp: Number(order.executionTimestamp),
-      submittedTimestamp: Number(order.submittedTimestamp),
+      submittedTimestamp: "submittedTimestamp" in order ? Number(order.submittedTimestamp) : undefined,
     };
     return userOrder;
   }

@@ -171,22 +171,22 @@ export interface TradeEvent {
 }
 
 /**
- *      struct Order {
-        uint16 leverageTDR; // 12.43x leverage is represented by 1243 (two-digit integer representation); 0 if deposit and trade separate
-        uint16 brokerFeeTbps; // broker can set their own fee
-        uint24 iPerpetualId; // global id for perpetual
-        address traderAddr; // address of trader
-        uint32 executionTimestamp; // normally set to current timestamp; order will not be executed prior to this timestamp.
-        address brokerAddr; // address of the broker or zero
-        uint32 submittedTimestamp;
-        uint32 flags; // order flags
-        uint32 iDeadline; //deadline for price (seconds timestamp)
-        address executorAddr; // address of the executor set by contract
-        int128 fAmount; // amount in base currency to be traded
-        int128 fLimitPrice; // limit price
-        int128 fTriggerPrice; //trigger price. Non-zero for stop orders.
-        bytes brokerSignature; //signature of broker (or 0)
-    }
+ * @global
+ * @typedef {Object} SmartContractOrder
+ * @property {BigNumberish} flags
+ * @property {number} iPerpetualId
+ * @property {number} brokerFeeTbps
+ * @property {string} traderAddr
+ * @property {string} brokerAddr
+ * @property {string} executorAddr
+ * @property {BytesLike} brokerSignature
+ * @property {BigNumberish} fAmount
+ * @property {BigNumberish} fLimitPrice
+ * @property {BigNumberish} fTriggerPrice
+ * @property {number} leverageTDR
+ * @property {number} iDeadline
+ * @property {number} executionTimestamp
+ * @property {number} submittedTimestamp
  */
 export interface SmartContractOrder {
   flags: BigNumberish;
@@ -206,25 +206,24 @@ export interface SmartContractOrder {
 }
 
 /**
- *    struct ClientOrder {
-        uint24 iPerpetualId; // unique id of the perpetual
-        int128 fLimitPrice; // order will not execute if realized price is above (buy) or below (sell) this price
-        uint16 leverageTDR; // leverage, set to 0 if deposit margin and trade separate; format: two-digit integer (e.g., 12.34 -> 1234)
-        uint32 executionTimestamp; // the order will not be executed before this timestamp, allows TWAP orders
-        uint32 flags; // Order-flags are specified in OrderFlags.sol
-        uint32 iDeadline; // order will not be executed after this deadline
-        address brokerAddr; // can be empty, address of the broker
-        int128 fTriggerPrice; // trigger price for stop-orders|0. Order can be executed if the mark price is below this price (sell order) or above (buy)
-        int128 fAmount; // signed amount of base-currency. Will be rounded to lot size
-        bytes32 parentChildDigest1; // see notice in LimitOrderBook.sol
-        address traderAddr; // address of the trader
-        bytes32 parentChildDigest2; // see notice in LimitOrderBook.sol
-        uint16 brokerFeeTbps; // broker fee in tenth of a basis point
-        bytes brokerSignature; // signature, can be empty if no brokerAddr provided
-        address callbackTarget; // address of contract implementing callback function
-        //address executorAddr; <- will be set by LimitOrderBook
-        //uint64 submittedBlock <- will be set by LimitOrderBook
-    }
+ * @global
+ * @typedef {Object} ClientOrder
+ * @property {BigNumberish} flags
+ * @property {BigNumberish} iPerpetualId
+ * @property {BigNumberish} brokerFeeTbps
+ * @property {string} traderAddr
+ * @property {string} brokerAddr
+ * @property {string} executorAddr
+ * @property {BytesLike} brokerSignature
+ * @property {BigNumberish} fAmount
+ * @property {BigNumberish} fLimitPrice
+ * @property {BigNumberish} fTriggerPrice
+ * @property {BigNumberish} leverageTDR
+ * @property {BigNumberish} iDeadline
+ * @property {BigNumberish} executionTimestamp
+ * @property {string} parentChildDigest1
+ * @property {string} parentChildDigest2
+ * @property {string} callbackTarget
  */
 export interface ClientOrder {
   flags: BigNumberish;
