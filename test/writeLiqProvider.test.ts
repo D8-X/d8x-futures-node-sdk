@@ -20,7 +20,7 @@ let liqProvTool: LiquidityProviderTool;
 
 describe("LP: write and spoil gas and tokens", () => {
   beforeAll(async () => {
-    config = PerpetualDataHandler.readSDKConfig("testnet");
+    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
     console.log(`config loaded: ${config.name} v${config.version}`);
     //config = PerpetualDataHandler.readSDKConfig("../config/oldConfig.json");
     if (RPC != undefined) {

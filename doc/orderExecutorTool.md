@@ -10,15 +10,16 @@ gas-payments.</p>
 
 * [OrderExecutorTool](#OrderExecutorTool) ⇐ <code>WriteAccessHandler</code>
     * [new OrderExecutorTool(config, signer)](#new_OrderExecutorTool_new)
-    * [.executeOrder(symbol, orderId, [executorAddr], [nonce], [submission])](#OrderExecutorTool+executeOrder) ⇒
+    * [.executeOrder(symbol, orderId, executorAddr, nonce, [submission])](#OrderExecutorTool+executeOrder) ⇒
+    * [.executeOrders(symbol, orderIds, executorAddr, nonce, [submission])](#OrderExecutorTool+executeOrders) ⇒
     * [.getAllOpenOrders(symbol)](#OrderExecutorTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderExecutorTool+numberOfOpenOrders) ⇒ <code>number</code>
     * [.getOrderById(symbol, digest)](#OrderExecutorTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderExecutorTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderExecutorTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderExecutorTool+isTradeableBatch) ⇒
-    * [._isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderExecutorTool+smartContractOrderToOrder) ⇒
+    * [.getTransactionCount(blockTag)](#OrderExecutorTool+getTransactionCount) ⇒
 
 <a name="new_OrderExecutorTool_new"></a>
 
@@ -36,8 +37,8 @@ gas-payments.</p>
 import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (testnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
@@ -48,7 +49,7 @@ main();
 ```
 <a name="OrderExecutorTool+executeOrder"></a>
 
-### orderExecutorTool.executeOrder(symbol, orderId, [executorAddr], [nonce], [submission]) ⇒
+### orderExecutorTool.executeOrder(symbol, orderId, executorAddr, nonce, [submission]) ⇒
 <p>Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.</p>
 
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
@@ -58,8 +59,8 @@ main();
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | orderId | <code>string</code> | <p>ID of the order to be executed.</p> |
-| [executorAddr] | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
-| [nonce] | <code>number</code> | <p>optional nonce</p> |
+| executorAddr | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| nonce | <code>number</code> | <p>optional nonce</p> |
 | [submission] | <code>PriceFeedSubmission</code> | <p>optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual</p> |
 
 **Example**  
@@ -68,7 +69,7 @@ import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-
 async function main() {
   console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
   let orderTool = new OrderExecutorTool(config, pk);
@@ -86,6 +87,43 @@ async function main() {
       console.log(`Sent order id ${ids[k]} for execution, tx hash = ${tx.hash}`);
     }
   }
+}
+main();
+```
+<a name="OrderExecutorTool+executeOrders"></a>
+
+### orderExecutorTool.executeOrders(symbol, orderIds, executorAddr, nonce, [submission]) ⇒
+<p>Executes a list of orders of the symbol. This action interacts with the blockchain and incurs gas costs.</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Returns**: <p>Transaction object.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| orderIds | <code>Array.&lt;string&gt;</code> | <p>IDs of the orders to be executed.</p> |
+| executorAddr | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| nonce | <code>number</code> | <p>optional nonce</p> |
+| [submission] | <code>PriceFeedSubmission</code> | <p>optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+async function main() {
+  console.log(OrderExecutorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  const symbol = "ETH-USD-MATIC";
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get some open orders
+  const maxOrdersToGet = 5;
+  let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+  console.log(`Got ${ids.length} orders`);
+  // execute
+  let tx = await orderTool.executeOrders(symbol, ids);
+  console.log(`Sent order ids ${ids.join(", ")} for execution, tx hash = ${tx.hash}`);
 }
 main();
 ```
@@ -107,7 +145,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -135,7 +173,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -164,7 +202,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -196,7 +234,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -225,7 +263,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -249,22 +287,26 @@ main();
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
 
-<a name="OrderExecutorTool+_isTradeable"></a>
-
-### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap) ⇒
-<p>Can the order be executed?</p>
-
-**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
-**Returns**: <p>true if trading conditions met, false otherwise</p>  
-
-| Param | Description |
-| --- | --- |
-| order | <p>order struct</p> |
-| tradePrice | <p>&quot;preview&quot; price of this order</p> |
-| markPrice | <p>current mark price</p> |
-| atBlockTimestamp | <p>block timestamp when execution would take place</p> |
-| symbolToPerpInfoMap | <p>metadata</p> |
-
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // check if tradeable
+  let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
+  let check = await orderTool.isTradeableBatch(
+      [openOrders[0][0], openOrders[0][1]],
+      [openOrders[1][0], openOrders[1][1]]
+    );
+  console.log(check);
+}
+main();
+```
 <a name="OrderExecutorTool+smartContractOrderToOrder"></a>
 
 ### orderExecutorTool.smartContractOrderToOrder(scOrder) ⇒
@@ -276,4 +318,16 @@ main();
 | Param | Description |
 | --- | --- |
 | scOrder | <p>Perpetual order as received in the proxy events.</p> |
+
+<a name="OrderExecutorTool+getTransactionCount"></a>
+
+### orderExecutorTool.getTransactionCount(blockTag) ⇒
+<p>Gets the current transaction count for the connected signer</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Returns**: <p>The nonce for the next transaction</p>  
+
+| Param |
+| --- |
+| blockTag | 
 
