@@ -275,7 +275,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @returns Array with all open orders and their IDs.
    */
   public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
-    const MAX_ORDERS_POLLED = 10;
+    const MAX_ORDERS_POLLED = 100;
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
     let orderBundles = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, ZERO_ORDER_ID, overrides);
     let foundNewOrders = orderBundles.length > 0;
