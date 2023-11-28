@@ -878,6 +878,7 @@ export default class PerpetualDataHandler {
     order:
       | SmartContractOrder
       | IPerpetualOrder.OrderStruct
+      | IPerpetualOrder.OrderStructOutput
       | IClientOrder.ClientOrderStruct
       | IClientOrder.ClientOrderStructOutput,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
@@ -919,6 +920,10 @@ export default class PerpetualDataHandler {
       deadline: Number(order.iDeadline),
       executionTimestamp: Number(order.executionTimestamp),
       submittedTimestamp: "submittedTimestamp" in order ? Number(order.submittedTimestamp) : undefined,
+      parentChildOrderIds:
+        "parentChildDigest1" && "parentChildDigest2" in order
+          ? [order.parentChildDigest1.toString(), order.parentChildDigest2.toString()]
+          : undefined,
     };
     return userOrder;
   }

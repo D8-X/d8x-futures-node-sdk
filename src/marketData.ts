@@ -28,7 +28,7 @@ import {
   type Multicall3,
 } from "./contracts";
 import { type ERC20Interface } from "./contracts/ERC20";
-import { type PerpStorage } from "./contracts/IPerpetualManager";
+import { IPerpetualOrder, type PerpStorage } from "./contracts/IPerpetualManager";
 import { type IClientOrder } from "./contracts/LimitOrderBook";
 import {
   ABK64x64ToFloat,
@@ -156,7 +156,14 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {SmartContractOrder} smOrder SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event
    * @returns {Order} more convenient format of order, type "Order"
    */
-  public smartContractOrderToOrder(smOrder: SmartContractOrder): Order {
+  public smartContractOrderToOrder(
+    smOrder:
+      | SmartContractOrder
+      | IPerpetualOrder.OrderStruct
+      | IPerpetualOrder.OrderStructOutput
+      | IClientOrder.ClientOrderStruct
+      | IClientOrder.ClientOrderStructOutput
+  ): Order {
     return PerpetualDataHandler.fromSmartContractOrder(smOrder, this.symbolToPerpStaticInfo);
   }
 
