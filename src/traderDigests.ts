@@ -12,7 +12,7 @@ export default class TraderDigests {
    * @returns orderId string
    * @ignore
    */
-  public static createOrderId(digest: string): string {
+  public createOrderId(digest: string): string {
     let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
     const messagePrefix = "\x19Ethereum Signed Message:\n";
     let tmp = concat([toUtf8Bytes(messagePrefix), toUtf8Bytes(String(digestBuffer.length)), digestBuffer]);
