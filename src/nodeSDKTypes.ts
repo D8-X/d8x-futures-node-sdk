@@ -340,3 +340,8 @@ export interface GasInfo {
   blockTime: number;
   blockNumber: number;
 }
+
+export interface TokenOverride {
+  tokenAddress: string;
+  newSymbol: string;
+}

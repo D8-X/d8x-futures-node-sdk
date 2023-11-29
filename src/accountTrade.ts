@@ -283,7 +283,7 @@ export default class AccountTrade extends WriteAccessHandler {
     };
     let tx = await signer.sendTransaction(unsignedTx);
 
-    let id = TraderDigests.createOrderId(digest);
+    let id = this.digestTool.createOrderId(digest);
     return { tx: tx, orderId: id };
   }
 

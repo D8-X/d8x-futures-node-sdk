@@ -54,6 +54,7 @@ import {
   floatToABK64x64,
 } from "./d8XMath";
 import {
+  TokenOverride,
   TypeSafeOrder,
   type ClientOrder,
   type MarginAccount,
@@ -190,6 +191,7 @@ export default class PerpetualDataHandler {
     if (this.proxyContract == null || this.multicall == null || this.signerOrProvider == null) {
       throw new Error("proxy or multicall not defined");
     }
+    const tokenOverrides = require("./config/tokenOverrides.json") as TokenOverride[];
     let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(this.proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
@@ -268,24 +270,42 @@ export default class PerpetualDataHandler {
       }
       let poolCCY = this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol;
       if (poolCCY == "") {
-        //not already filled
-        const [base, quote] = perp.S2Symbol.split("-");
-        const base3 = perp.S3Symbol.split("-")[0];
-        // we find out the pool currency by looking at all perpetuals
-        // from the perpetual.
-        if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
-          poolCCY = base;
-        } else if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_QUOTE) {
-          poolCCY = quote;
+        // check if token address has an override for its symbol
+        const tokenOverride = tokenOverrides.find(
+          ({ tokenAddress }) => tokenAddress === this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr
+        );
+        if (tokenOverride) {
+          poolCCY = tokenOverride.newSymbol;
         } else {
-          poolCCY = base3;
+          // not overriden - infer from perp
+          const [base, quote] = perp.S2Symbol.split("-");
+          const base3 = perp.S3Symbol.split("-")[0];
+          // we find out the pool currency by looking at all perpetuals
+          // from the perpetual.
+          if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
+            poolCCY = base;
+          } else if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_QUOTE) {
+            poolCCY = quote;
+          } else {
+            poolCCY = base3;
+          }
         }
-        // set pool currency
-        this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = poolCCY;
-        // push pool margin token address into map
-        this.symbolToTokenAddrMap.set(poolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       }
+      let effectivePoolCCY = poolCCY;
       let currentSymbol3 = perp.S2Symbol + "-" + poolCCY;
+      let perpInfo = this.symbolToPerpStaticInfo.get(currentSymbol3);
+      let count = 0;
+      while (perpInfo) {
+        count++;
+        // rename pool symbol
+        effectivePoolCCY = `${poolCCY}${count}`;
+        currentSymbol3 = perp.S2Symbol + "-" + effectivePoolCCY;
+        perpInfo = this.symbolToPerpStaticInfo.get(currentSymbol3);
+      }
+      // set pool currency
+      this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = effectivePoolCCY;
+      // push pool margin token address into map
+      this.symbolToTokenAddrMap.set(effectivePoolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       this.symbolToPerpStaticInfo.set(currentSymbol3, perpStaticInfos[j]);
     }
     // pre-calculate all triangulation paths so we can easily get from

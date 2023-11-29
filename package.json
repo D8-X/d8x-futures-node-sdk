@@ -1,6 +1,6 @@
 {
   "name": "@d8x/perpetuals-sdk",
-  "version": "0.9.21",
+  "version": "1.0.2",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
   "author": "D8X",
   "homepage": "https://github.com/D8-X/d8x-futures-node-sdk#readme",
