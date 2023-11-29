@@ -33,9 +33,9 @@ let wallet: ethers.Wallet;
 describe("readOnly", () => {
   beforeEach(() => {
     config = PerpetualDataHandler.readSDKConfig("zkevm");
-    // if (RPC != undefined) {
-    //   config.nodeURL = RPC;
-    // }
+    if (RPC != undefined) {
+      config.nodeURL = RPC;
+    }
   });
 
   describe("Read config", () => {
