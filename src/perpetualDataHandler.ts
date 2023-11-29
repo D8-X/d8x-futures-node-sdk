@@ -255,7 +255,6 @@ export default class PerpetualDataHandler {
       this.symbolList,
       overrides
     );
-    console.log(perpStaticInfos);
 
     let requiredPairs = new Set<string>();
     // 1) determine pool currency based on its perpetuals

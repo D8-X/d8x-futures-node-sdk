@@ -102,7 +102,7 @@ describe("readOnly", () => {
 
     it("order digest", async () => {
       let order: Order = {
-        symbol: "BTC-USD-USDC",
+        symbol: "BTC-USDC-USDC1",
         side: "BUY",
         type: "MARKET",
         quantity: -0.05,
@@ -138,9 +138,9 @@ describe("readOnly", () => {
       // Signer or provider
       const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
       // Address of the contract
-      let contractAddr = apiInterface.getOrderBookAddress("MATIC-USD-USDC");
+      let contractAddr = apiInterface.getOrderBookAddress("MATIC-USDC-USDC1");
       // ABI as it would come from the API:
-      let abi = apiInterface.getOrderBookABI("MATIC-USD-USDC", "orderCount");
+      let abi = apiInterface.getOrderBookABI("MATIC-USDC-USDC1", "orderCount");
       if (abi.length < 3) {
         console.log(abi);
       }
@@ -150,7 +150,7 @@ describe("readOnly", () => {
       let numOrders = await contract.orderCount();
       expect(numOrders >= 0).toBeTruthy;
       if (numOrders > 0) {
-        console.log(`orderCount in MATIC-USD-USDC order book: ${numOrders}`);
+        console.log(`orderCount in MATIC-USDC-USDC1 order book: ${numOrders}`);
       }
     });
   });
@@ -171,8 +171,8 @@ describe("readOnly", () => {
       expect(mktData2.getReadOnlyProxyInstance() !== null);
     });
     it("perpetual symbols in pool", async () => {
-      let v = mktData.getPerpetualSymbolsInPool("USDC");
-      console.log("***\nPerpetuals for symbol USDC:\n", v, "\n***");
+      let v = mktData.getPerpetualSymbolsInPool("USDC1");
+      console.log("***\nPerpetuals for symbol USDC1:\n", v, "\n***");
       expect(v.length).toBeGreaterThan(1);
     });
     it("exchange info", async () => {
