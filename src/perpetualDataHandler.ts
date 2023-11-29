@@ -255,6 +255,7 @@ export default class PerpetualDataHandler {
       this.symbolList,
       overrides
     );
+    console.log(perpStaticInfos);
 
     let requiredPairs = new Set<string>();
     // 1) determine pool currency based on its perpetuals
@@ -280,12 +281,22 @@ export default class PerpetualDataHandler {
         } else {
           poolCCY = base3;
         }
-        // set pool currency
-        this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = poolCCY;
-        // push pool margin token address into map
-        this.symbolToTokenAddrMap.set(poolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       }
+      let effectivePoolCCY = poolCCY;
       let currentSymbol3 = perp.S2Symbol + "-" + poolCCY;
+      let perpInfo = this.symbolToPerpStaticInfo.get(currentSymbol3);
+      let count = 0;
+      while (perpInfo) {
+        count++;
+        // rename pool symbol
+        effectivePoolCCY = `${poolCCY}${count}`;
+        currentSymbol3 = perp.S2Symbol + "-" + effectivePoolCCY;
+        perpInfo = this.symbolToPerpStaticInfo.get(currentSymbol3);
+      }
+      // set pool currency
+      this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = effectivePoolCCY;
+      // push pool margin token address into map
+      this.symbolToTokenAddrMap.set(effectivePoolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       this.symbolToPerpStaticInfo.set(currentSymbol3, perpStaticInfos[j]);
     }
     // pre-calculate all triangulation paths so we can easily get from
