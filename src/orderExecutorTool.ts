@@ -193,9 +193,8 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
     }
-    if (!overrides || overrides.value == undefined) {
+    if (!overrides || overrides.gasLimit == undefined) {
       overrides = {
-        // value: overrides?.value ?? submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
