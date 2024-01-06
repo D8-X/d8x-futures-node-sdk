@@ -2,10 +2,9 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import type { BlockTag } from "@ethersproject/providers";
-import { ethers } from "ethers";
-import { BUY_SIDE, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
-import { IPyth__factory, Multicall3 } from "./contracts";
+import { BlockTag, StaticJsonRpcProvider } from "@ethersproject/providers";
+import { BUY_SIDE, MULTICALL_ADDRESS, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
+import { IPyth__factory, LimitOrderBook__factory, Multicall3, Multicall3__factory } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
   type NodeSDKConfig,
@@ -31,8 +30,8 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(OrderExecutorTool);
-   *   // load configuration for testnet
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // load configuration for Polygon zkEVM (testnet)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -53,15 +52,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @param {string} orderId ID of the order to be executed.
-   * @param {string=} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
-   * @param {number=} nonce optional nonce
+   * @param {string} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {number} nonce optional nonce
    * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
    * @example
    * import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   const symbol = "ETH-USD-MATIC";
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -143,73 +142,115 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     return await this.signer.sendTransaction(unsignedTx);
   }
 
+  /**
+   * Executes a list of orders of the symbol. This action interacts with the blockchain and incurs gas costs.
+   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string[]} orderIds IDs of the orders to be executed.
+   * @param {string} executorAddr optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.
+   * @param {number} nonce optional nonce
+   * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
+   * @example
+   * import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+   * async function main() {
+   *   console.log(OrderExecutorTool);
+   *   // Setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   const symbol = "ETH-USD-MATIC";
+   *   let orderTool = new OrderExecutorTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // get some open orders
+   *   const maxOrdersToGet = 5;
+   *   let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+   *   console.log(`Got ${ids.length} orders`);
+   *   // execute
+   *   let tx = await orderTool.executeOrders(symbol, ids);
+   *   console.log(`Sent order ids ${ids.join(", ")} for execution, tx hash = ${tx.hash}`);
+   * }
+   * main();
+   * @returns Transaction object.
+   */
   public async executeOrders(
     symbol: string,
     orderIds: string[],
     executorAddr?: string,
     submission?: PriceFeedSubmission,
-    overrides?: PayableOverrides
+    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
+    let rpcURL: string | undefined;
+    let splitTx: boolean | undefined;
+    if (overrides) {
+      ({ rpcURL, splitTx, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const orderBookSC = LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider);
     if (typeof executorAddr == "undefined") {
       executorAddr = this.traderAddr;
     }
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
     }
-    if (!overrides || overrides.value == undefined) {
+    if (!overrides || overrides.gasLimit == undefined) {
       overrides = {
-        // value: overrides?.value ?? submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
         gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
 
-    const pyth = IPyth__factory.connect(this.pythAddr!, this.signer);
-
     // update first
-    const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
-    try {
-      const pythTx = await pyth.updatePriceFeedsIfNecessary(submission.priceFeedVaas, priceIds, submission.timestamps, {
-        value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
-        gasLimit: overrides?.gasLimit ?? this.gasLimit,
-      });
-      // await pythTx.wait();
-    } catch (e) {
-      console.log(e);
+    let nonceInc = 0;
+    let txData: string;
+    let value = overrides?.value;
+    if (splitTx) {
+      try {
+        const pyth = IPyth__factory.connect(this.pythAddr!, provider).connect(this.signer);
+        const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+        const pythTx = await pyth.updatePriceFeedsIfNecessary(
+          submission.priceFeedVaas,
+          priceIds,
+          submission.timestamps,
+          {
+            value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
+            gasLimit: overrides?.gasLimit ?? this.gasLimit,
+            nonce: overrides.nonce,
+          }
+        );
+        nonceInc += 1;
+        // await pythTx.wait();
+      } catch (e) {
+        console.log(e);
+      }
+
+      txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
+    } else {
+      txData = orderBookSC.interface.encodeFunctionData("executeOrders", [
+        orderIds,
+        executorAddr,
+        submission.priceFeedVaas,
+        submission.timestamps,
+      ]);
+      value = this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length;
     }
 
-    const txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
-
-    // const gasInfo = await fetch("https://gasstation-testnet.polygon.technology/zkevm")
-    //   .then((res) => res.json())
-    //   .then((info) => info as GasInfo);
-
-    // const gasPrice = typeof gasInfo.standard == "number" ? gasInfo.standard : (gasInfo.standard as GasPriceV2).maxfee;
-
+    if (overrides?.nonce !== undefined) {
+      const nonce = await overrides!.nonce;
+      overrides.nonce = BigNumber.from(nonce).add(nonceInc);
+    }
     let unsignedTx = {
       to: orderBookSC.address,
       from: this.traderAddr,
       nonce: overrides.nonce,
       data: txData,
-      value: overrides.value,
+      value: value,
       gasLimit: overrides.gasLimit,
-      // gas price is populated by the provider if not specified
+      // gas price is populated by the provider if undefined
       gasPrice: overrides.gasPrice,
-      // gasPrice: overrides.gasPrice ?? parseUnits(gasPrice.toString(), "gwei"),
       chainId: this.chainId,
     };
     return await this.signer.sendTransaction(unsignedTx);
-    // return await orderBookSC.executeOrders(
-    //   orderIds,
-    //   executorAddr,
-    //   submission?.priceFeedVaas,
-    //   submission?.timestamps,
-    //   overrides
-    // );
   }
 
   /**
@@ -220,7 +261,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -232,9 +273,24 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *
    * @returns Array with all open orders and their IDs.
    */
-  public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[]]> {
+  public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
+    const MAX_ORDERS_POLLED = 100;
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
-    return await this.pollLimitOrders(symbol, totalOrders, ZERO_ORDER_ID, overrides);
+    let orderBundles = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, ZERO_ORDER_ID, overrides);
+    let foundNewOrders = orderBundles.length > 0;
+    while (orderBundles[0].length < totalOrders && foundNewOrders) {
+      let res = await this.pollLimitOrders(
+        symbol,
+        MAX_ORDERS_POLLED,
+        orderBundles[1][orderBundles.length - 1],
+        overrides
+      );
+      foundNewOrders = res[0].length > 1;
+      orderBundles[0] = orderBundles[0].concat(res[0].slice(1, res[0].length));
+      orderBundles[1] = orderBundles[1].concat(res[1].slice(1, res[1].length));
+      orderBundles[2] = orderBundles[2].concat(res[2].slice(1, res[2].length));
+    }
+    return orderBundles;
   }
 
   /**
@@ -245,7 +301,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -257,11 +313,16 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *
    * @returns {number} Number of open orders.
    */
-  public async numberOfOpenOrders(symbol: string, overrides?: CallOverrides): Promise<number> {
+  public async numberOfOpenOrders(symbol: string, overrides?: CallOverrides & { rpcURL?: string }): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const orderBookSC = this.getOrderBookContract(symbol).connect(provider);
     let numOrders = await orderBookSC.orderCount(overrides || {});
     return Number(numOrders);
   }
@@ -275,7 +336,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -289,7 +350,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @returns order or undefined
    */
   public async getOrderById(symbol: string, id: string, overrides?: CallOverrides): Promise<Order | undefined> {
-    let ob = await this.getOrderBookContract(symbol);
+    let ob = this.getOrderBookContract(symbol);
     let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id, overrides || {});
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
@@ -309,7 +370,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -325,29 +386,54 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     symbol: string,
     numElements: number,
     startAfter?: string,
-    overrides?: CallOverrides
-  ): Promise<[Order[], string[]]> {
+    overrides?: CallOverrides & { rpcURL?: string }
+  ): Promise<[Order[], string[], string[]]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    const orderBookSC = this.getOrderBookContract(symbol);
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const orderBookSC = this.getOrderBookContract(symbol).connect(provider);
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+
     if (typeof startAfter == "undefined") {
       startAfter = ZERO_ORDER_ID;
     }
+    // first get client orders (incl. dependency info)
     let [orders, orderIds] = await orderBookSC.pollLimitOrders(
       startAfter,
       BigNumber.from(numElements),
       overrides || {}
     );
     let userFriendlyOrders: Order[] = new Array<Order>();
-    let orderIdsOut = [];
+    let traderAddr: string[] = [];
+    let orderIdsOut: string[] = [];
     let k = 0;
     while (k < numElements && k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
       userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
+      traderAddr.push(orders[k].traderAddr);
       k++;
     }
-    return [userFriendlyOrders, orderIdsOut];
+    // then get perp orders (incl. submitted ts info)
+    const multicalls: Multicall3.Call3Struct[] = orderIdsOut.map((id) => ({
+      target: orderBookSC.address,
+      allowFailure: true,
+      callData: orderBookSC.interface.encodeFunctionData("orderOfDigest", [id]),
+    }));
+    const encodedResults = await multicall.callStatic.aggregate3(multicalls, overrides || {});
+
+    // order status
+    encodedResults.map((res, k) => {
+      if (res.success) {
+        const order = orderBookSC.interface.decodeFunctionResult("orderOfDigest", res.returnData);
+        userFriendlyOrders[k].submittedTimestamp = Number(order.submittedTimestamp);
+      }
+    });
+    return [userFriendlyOrders, orderIdsOut, traderAddr];
   }
 
   /**
@@ -360,7 +446,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -377,7 +463,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderId: string,
     blockTimestamp?: number,
     indexPrices?: [number, number],
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<boolean> {
     if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -386,6 +472,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
 
     const fS2S3 = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
       BigNumber,
@@ -393,19 +484,19 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     ];
     const perpId = this.getPerpIdFromSymbol(order.symbol);
     const fAmount = floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1));
-    const orderBook = this.getOrderBookContract(order.symbol);
+    const orderBook = this.getOrderBookContract(order.symbol).connect(provider);
 
     const proxyCalls: Multicall3.Call3Struct[] = [
       // 0: trade amount price
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [perpId, fAmount, fS2S3]),
       },
       // 1: amm state to get the mark price
       {
         target: this.proxyContract.address,
-        allowFailure: false,
+        allowFailure: true,
         callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, fS2S3]),
       },
       // 2: order status to see if it's still open
@@ -435,9 +526,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         callData: orderBook.interface.encodeFunctionData("getOrderStatus", [order.parentChildOrderIds![1]]),
       });
     }
-
     // multicall
-    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const encodedResults = await multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // order status
     let iOrderStatus: number;
@@ -467,19 +558,30 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         return false;
       }
     }
+
+    // mark price
+    let ammState: BigNumber[];
+    if (encodedResults[1].success) {
+      ammState = this.proxyContract.interface.decodeFunctionResult(
+        "getAMMState",
+        encodedResults[1].returnData
+      )[0] as BigNumber[];
+    } else {
+      ammState = await this.proxyContract.getAMMState(perpId, fS2S3);
+    }
+    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+
     // price
-    const orderPrice = ABK64x64ToFloat(
-      this.proxyContract.interface.decodeFunctionResult(
+    let fOrderPrice: BigNumber;
+    if (encodedResults[0].success) {
+      fOrderPrice = this.proxyContract.interface.decodeFunctionResult(
         "queryPerpetualPrice",
         encodedResults[0].returnData
-      )[0] as BigNumber
-    );
-    // mark price
-    const ammState = this.proxyContract.interface.decodeFunctionResult(
-      "getAMMState",
-      encodedResults[1].returnData
-    )[0] as BigNumber[];
-    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+      )[0] as BigNumber;
+    } else {
+      fOrderPrice = await this.proxyContract.queryPerpetualPrice(perpId, fAmount, fS2S3);
+    }
+    const orderPrice = ABK64x64ToFloat(fOrderPrice);
 
     // block timestamp
     const ts = (
@@ -498,13 +600,66 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @param indexPrice S2,S3-index prices for the given perpetual. Will fetch prices from REST API
    * if not defined.
    * @returns array of tradeable boolean
+   * @example
+   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   console.log(OrderExecutorTool);
+   *   // setup (authentication required, PK is an environment variable with a private key)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const pk: string = <string>process.env.PK;
+   *   let orderTool = new OrderExecutorTool(config, pk);
+   *   await orderTool.createProxyInstance();
+   *   // check if tradeable
+   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
+   *   let check = await orderTool.isTradeableBatch(
+   *       [openOrders[0][0], openOrders[0][1]],
+   *       [openOrders[1][0], openOrders[1][1]]
+   *     );
+   *   console.log(check);
+   * }
+   * main();
    */
   public async isTradeableBatch(
     orders: Order[],
     orderIds: string[],
     blockTimestamp?: number,
     indexPrices?: [number, number, boolean, boolean],
-    overrides?: CallOverrides
+    overrides?: CallOverrides & { rpcURL?: string }
+  ): Promise<boolean[]> {
+    const MAX_ORDERS_CHECKED = 10;
+    let totalOrders = orders.length;
+    let checks = await this._isTradeableBatch(
+      orders.slice(0, MAX_ORDERS_CHECKED),
+      orderIds.slice(0, MAX_ORDERS_CHECKED),
+      blockTimestamp,
+      indexPrices,
+      overrides ?? {}
+    );
+    while (checks.length < totalOrders) {
+      let res = await this._isTradeableBatch(
+        orders.slice(checks.length, checks.length + MAX_ORDERS_CHECKED),
+        orderIds.slice(checks.length, checks.length + MAX_ORDERS_CHECKED),
+        blockTimestamp,
+        indexPrices,
+        overrides ?? {}
+      );
+      checks = checks.concat(res);
+    }
+    return checks;
+  }
+
+  /**
+   * Performs on-chain checks via multicall
+   * @param orders orders to check
+   * @param orderIds order ids
+   * @ignore
+   */
+  private async _isTradeableBatch(
+    orders: Order[],
+    orderIds: string[],
+    blockTimestamp?: number,
+    indexPrices?: [number, number, boolean, boolean],
+    overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<boolean[]> {
     if (orders.length == 0) {
       return [];
@@ -523,11 +678,19 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       // market closed
       return orders.map(() => false);
     }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
 
-    const fS2S3 = [indexPrices[0], indexPrices[1]].map(floatToABK64x64) as [BigNumber, BigNumber];
+    const fS2S3 = [indexPrices[0], indexPrices[1]].map((x) =>
+      floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)
+    ) as [BigNumber, BigNumber];
     const perpId = this.getPerpIdFromSymbol(orders[0].symbol);
     const fAmounts = orders.map((order) => floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1)));
-    const orderBook = this.getOrderBookContract(orders[0].symbol);
+    const orderBook = this.getOrderBookContract(orders[0].symbol).connect(provider);
+    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
 
     // mark price and timestamp
     let proxyCalls: Multicall3.Call3Struct[] = [
@@ -579,7 +742,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     proxyCalls = proxyCalls.concat(parentStatusCalls);
 
     // --- multicall ---
-    const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
+    const encodedResults = await multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // mark price
     const ammState = this.proxyContract.interface.decodeFunctionResult(
@@ -595,7 +758,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         encodedResults[1].returnData
       )[0] as BigNumber
     ).toNumber();
-    blockTimestamp = Math.max(ts + 1, blockTimestamp ?? 0);
+    blockTimestamp = Math.max(ts, blockTimestamp ?? 0);
 
     // order status
     const isOrderOpen = encodedResults.slice(2, 2 + orders.length).map((encodedResult) => {
@@ -650,6 +813,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @param atBlockTimestamp block timestamp when execution would take place
    * @param symbolToPerpInfoMap metadata
    * @returns true if trading conditions met, false otherwise
+   * @ignore
    */
   protected _isTradeable(
     order: Order,
@@ -664,12 +828,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       return false;
     }
     // check execution timestamp
-    if (atBlockTimestamp < order.executionTimestamp) {
+    if (order.executionTimestamp > 0 && atBlockTimestamp < order.executionTimestamp) {
       console.log(`execution deferred by ${order.executionTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
-    if (order.submittedTimestamp != undefined && atBlockTimestamp < order.submittedTimestamp) {
-      // next block should be in ~2 seconds, so + 2
+    if (order.submittedTimestamp != undefined && atBlockTimestamp <= order.submittedTimestamp) {
       console.log(`on hold for ${order.submittedTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
@@ -713,6 +876,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     return PerpetualDataHandler.fromSmartContractOrder(scOrder, this.symbolToPerpStaticInfo);
   }
 
+  /**
+   * Gets the current transaction count for the connected signer
+   * @param blockTag
+   * @returns The nonce for the next transaction
+   */
   public async getTransactionCount(blockTag?: BlockTag): Promise<number> {
     if (this.signer == null) {
       throw Error("no wallet initialized. Use createProxyInstance().");

@@ -1,6 +1,8 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
+import { StaticJsonRpcProvider } from "@ethersproject/providers";
+import { IPyth__factory } from "./contracts/factories";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import type { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -19,8 +21,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(LiquidatorTool);
-   *   // load configuration for testnet
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   // load configuration for Polygon zkEVM (tesnet)
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
@@ -47,7 +49,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
@@ -64,8 +66,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
     symbol: string,
     traderAddr: string,
     liquidatorAddr: string = "",
-    priceFeedData?: PriceFeedSubmission,
-    overrides?: PayableOverrides
+    submission?: PriceFeedSubmission,
+    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
   ): Promise<ContractTransaction> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
@@ -75,17 +77,78 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (liquidatorAddr == "") {
       liquidatorAddr = this.traderAddr;
     }
-    let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    if (priceFeedData == undefined) {
-      priceFeedData = await this.fetchLatestFeedPriceInfo(symbol);
+    let rpcURL: string | undefined;
+    let splitTx: boolean | undefined;
+    if (overrides) {
+      ({ rpcURL, splitTx, ...overrides } = overrides);
     }
-    if (!overrides || overrides.value == undefined) {
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    if (submission == undefined) {
+      submission = await this.fetchLatestFeedPriceInfo(symbol);
+    }
+    if (!overrides || overrides.gasLimit == undefined) {
       overrides = {
-        value: priceFeedData.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
         ...overrides,
       } as PayableOverrides;
     }
-    return await this._liquidateByAMM(perpID, liquidatorAddr, traderAddr, priceFeedData, overrides);
+    // update first
+    let nonceInc = 0;
+    let txData: string;
+    let value = overrides?.value;
+    if (splitTx) {
+      try {
+        const pyth = IPyth__factory.connect(this.pythAddr!, provider).connect(this.signer);
+        const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+        const pythTx = await pyth.updatePriceFeedsIfNecessary(
+          submission.priceFeedVaas,
+          priceIds,
+          submission.timestamps,
+          {
+            value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
+            gasLimit: overrides?.gasLimit ?? this.gasLimit,
+            nonce: overrides.nonce,
+          }
+        );
+        nonceInc += 1;
+        // await pythTx.wait();
+      } catch (e) {
+        console.log(e);
+      }
+      txData = this.proxyContract.interface.encodeFunctionData("liquidateByAMM", [
+        perpID,
+        liquidatorAddr,
+        traderAddr,
+        [],
+        [],
+      ]);
+    } else {
+      txData = this.proxyContract.interface.encodeFunctionData("liquidateByAMM", [
+        perpID,
+        liquidatorAddr,
+        traderAddr,
+        submission.priceFeedVaas,
+        submission.timestamps,
+      ]);
+      value = this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length;
+    }
+    if (overrides?.nonce !== undefined) {
+      const nonce = await overrides!.nonce;
+      overrides.nonce = BigNumber.from(nonce).add(nonceInc);
+    }
+    let unsignedTx = {
+      to: this.proxyAddr,
+      from: this.traderAddr,
+      nonce: overrides.nonce,
+      data: txData,
+      value: value,
+      gasLimit: overrides.gasLimit,
+      // gas price is populated by the provider if undefined
+      gasPrice: overrides.gasPrice,
+      chainId: this.chainId,
+    };
+    return await this.signer.sendTransaction(unsignedTx);
   }
 
   /**
@@ -99,7 +162,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
@@ -154,32 +217,6 @@ export default class LiquidatorTool extends WriteAccessHandler {
   }
 
   /**
-   *
-   * @param perpetualId Perpetual id.
-   * @param liquidatorAddr Address to be credited for the liquidation.
-   * @param traderAddr Address of the trader to be liquidated.
-   * @param priceFeedData contains VAA and timestamps required
-   * @param options E.g., Gas limit, fee.
-   * @ignore
-   */
-  public async _liquidateByAMM(
-    perpetualId: number,
-    liquidatorAddr: string,
-    traderAddr: string,
-    priceFeedData: PriceFeedSubmission,
-    overrides?: PayableOverrides
-  ) {
-    return await this.proxyContract!.liquidateByAMM(
-      perpetualId,
-      liquidatorAddr,
-      traderAddr,
-      priceFeedData.priceFeedVaas,
-      priceFeedData.timestamps,
-      overrides
-    );
-  }
-
-  /**
    * Total number of active accounts for this symbol, i.e. accounts with positions that are currently open.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.
    * @example
@@ -187,7 +224,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
@@ -218,7 +255,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
@@ -251,7 +288,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();

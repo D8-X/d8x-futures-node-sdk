@@ -18,6 +18,7 @@ export default class PriceFeeds {
   // store triangulation paths given the price feeds
   private triangulations: Map<string, [string[], boolean[]]>;
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
+  private cache: Map<string, { timestamp: number; values: any }> = new Map();
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -26,7 +27,7 @@ export default class PriceFeeds {
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
       this.config.endpoints = dataHandler.config.priceFeedEndpoints;
     }
-    [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config);
+    [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
   }
@@ -44,6 +45,21 @@ export default class PriceFeeds {
       let triangulation = Triangulator.triangulate(feedSymbols, symbol);
       this.triangulations.set(symbol, triangulation);
     }
+  }
+
+  /**
+   * Returns computed triangulation map
+   * @returns Triangulation map
+   */
+  public getTriangulations() {
+    return this.triangulations;
+  }
+
+  /**
+   * Set pre-computed triangulation map
+   */
+  public setTriangulations(triangulation: Map<string, [string[], boolean[]]>) {
+    this.triangulations = triangulation;
   }
 
   /**
@@ -124,7 +140,7 @@ export default class PriceFeeds {
   /**
    * Fetch the provided feed prices and bool whether market is closed or open
    * - requires the feeds to be defined in priceFeedConfig.json
-   * - if undefined, all feeds are queried
+   * - if symbols undefined, all feeds are queried
    * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or undefined
    * @returns mapping symbol-> [price, isMarketClosed]
    */
@@ -206,15 +222,32 @@ export default class PriceFeeds {
       idCountPriceFeeds[id] = idCountPriceFeeds[id] + 1;
     }
 
-    let data = await Promise.all(
-      queries.map(async (q) => {
-        if (q != undefined) {
-          return this.fetchVAAQuery(q);
-        } else {
-          return [[], []];
-        }
-      })
-    );
+    let data;
+    try {
+      data = await Promise.all(
+        queries.map(async (q) => {
+          if (q != undefined) {
+            return this.fetchVAAQuery(q);
+          } else {
+            return [[], []];
+          }
+        })
+      );
+    } catch (error) {
+      // try switching endpoints and re-query
+      console.log("fetchVAAQuery failed, selecting random price feed endpoint...");
+      [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, true);
+      data = await Promise.all(
+        queries.map(async (q) => {
+          if (q != undefined) {
+            return this.fetchVAAQuery(q);
+          } else {
+            return [[], []];
+          }
+        })
+      );
+      console.log("success");
+    }
 
     // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
@@ -319,12 +352,21 @@ export default class PriceFeeds {
    * @returns vaa and price info
    */
   public async fetchPriceQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
-    const headers = { headers: { "Content-Type": "application/json" } };
-    let response = await fetch(query, headers);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+    let values: any;
+    const cached = this.cache.get(query);
+    const tsNow = Date.now() / 1_000;
+    if (cached && cached.timestamp + 1 > tsNow) {
+      // less than a second has passed since the last query - no need to query again
+      values = cached.values;
+    } else {
+      const headers = { headers: { "Content-Type": "application/json" } };
+      let response = await fetch(query, headers);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+      }
+      values = await response.json();
+      this.cache.set(query, { timestamp: tsNow, values: values });
     }
-    let values = await response.json();
     const priceFeedUpdates = new Array<string>();
     const px = new Array<PriceFeedFormat>();
     for (let k = 0; k < values.length; k++) {
@@ -356,13 +398,21 @@ export default class PriceFeeds {
    * @param config configuration for the selected network
    * @returns feedInfo-map and endPoints-array
    */
-  static _constructFeedInfo(config: PriceFeedConfig): [Map<string, { symbol: string; endpointId: number }>, string[]] {
+  static _constructFeedInfo(
+    config: PriceFeedConfig,
+    shuffleEndpoints: boolean
+  ): [Map<string, { symbol: string; endpointId: number }>, string[]] {
     let feed = new Map<string, { symbol: string; endpointId: number }>();
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
+
     for (let k = 0; k < config.endpoints.length; k++) {
-      feedEndpoints.push(config.endpoints[k].endpoint);
+      const L = config.endpoints[k].endpoints.length;
+      let endpointNr = !shuffleEndpoints ? 0 : 1 + Math.floor(Math.random() * (L - 1));
+      // if config has only one endpoint:
+      endpointNr = Math.min(endpointNr, L - 1);
+      feedEndpoints.push(config.endpoints[k].endpoints[endpointNr]);
     }
     for (let k = 0; k < config.ids.length; k++) {
       if (type != config.ids[k].type) {

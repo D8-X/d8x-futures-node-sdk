@@ -24,7 +24,7 @@ let orderId: string;
  */
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("testnet");
+    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }

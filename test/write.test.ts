@@ -8,7 +8,7 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import LiquidatorTool from "../src/liquidatorTool";
 import OrderExecutorTool from "../src/orderExecutorTool";
 let pk: string = <string>process.env.PK;
-let RPC: string = <string>process.env.RPC;
+// let RPC: string = <string>process.env.RPC;
 
 const delay = (ms: number) => new Promise((res: any) => setTimeout(res, ms));
 
@@ -27,13 +27,13 @@ let orderId: string;
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
     config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
-    if (RPC != undefined) {
-      config.nodeURL = RPC;
-    }
+    // if (RPC != undefined) {
+    //   config.nodeURL = RPC;
+    // }
     expect(pk == undefined).toBeFalsy();
     wallet = new ethers.Wallet(pk);
-    // accTrade = new AccountTrade(config, pk);
-    // await accTrade.createProxyInstance();
+    accTrade = new AccountTrade(config, pk);
+    await accTrade.createProxyInstance();
     // liqTool = new LiquidatorTool(config, pk);
     // await liqTool.createProxyInstance();
     mktData = new MarketData(config);
@@ -67,57 +67,57 @@ describe("write and spoil gas and tokens", () => {
   //   //*/
   // });
 
-  // it("trade", async () => {
-  //   let order: Order = {
-  //     symbol: "BTC-USD-MATIC",
-  //     side: "SELL",
-  //     type: "MARKET",
-  //     quantity: 0.1,
-  //     leverage: 10,
-  //     executionTimestamp: Date.now() / 1000 - 10,
-  //   };
-  //   /*
-  //   let order: Order = {
-  //     symbol: "ETH-USD-MATIC",
-  //     side: "BUY",
-  //     type: "LIMIT",
-  //     limitPrice: 0,
-  //     quantity: 1,
-  //     leverage: 5,
-  //     reduceOnly: true,
-  //     keepPositionLvg: false,
-  //     executionTimestamp: 1677588583,
-  //     deadline: 1677617383,
-  //   };*/
+  it("trade", async () => {
+    let order: Order = {
+      symbol: "EUR-USDC-USDC",
+      side: "SELL",
+      type: "MARKET",
+      quantity: 50000,
+      leverage: 50,
+      executionTimestamp: Date.now() / 1000 - 10,
+    };
+    /*
+    let order: Order = {
+      symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "LIMIT",
+      limitPrice: 0,
+      quantity: 1,
+      leverage: 5,
+      reduceOnly: true,
+      keepPositionLvg: false,
+      executionTimestamp: 1677588583,
+      deadline: 1677617383,
+    };*/
 
-  //   //* UNCOMMENT TO ENABLE TRADING
-  //   let resp: OrderResponse;
-  //   try {
-  //     resp = await accTrade.order(order);
-  //     console.log("orderId =", resp.orderId);
-  //     console.log("txn:", resp.tx);
-  //     // execute trade
-  //     orderId = resp.orderId;
-  //   } catch (err) {
-  //     console.log("Error=", err);
-  //   }
-  //   console.log("order submitted");
-  // });
-
-  it("execute order", async () => {
-    let symbol = "ETH-USD-MATIC";
-    let myOrders = await mktData.openOrders(wallet.address, symbol);
-    let idx = myOrders.findIndex((bundle) => bundle.orderIds.length > 0);
-    if (idx < 0) {
-      // no orders
-      expect(true).toBeTruthy;
-    } else {
-      let orderId = myOrders[idx].orderIds[0];
-      console.log("executing order", orderId, "symbol", symbol);
-      let tx = await execTool.executeOrder(symbol, orderId);
-      console.log(tx);
+    //* UNCOMMENT TO ENABLE TRADING
+    let resp: OrderResponse;
+    try {
+      resp = await accTrade.order(order, undefined, { gasLimit: 800_000 });
+      console.log("orderId =", resp.orderId);
+      console.log("txn:", resp.tx);
+      // execute trade
+      orderId = resp.orderId;
+    } catch (err) {
+      console.log("Error=", err);
     }
+    console.log("order submitted");
   });
+
+  // it("execute order", async () => {
+  //   let symbol = "ETH-USD-MATIC";
+  //   let myOrders = await mktData.openOrders(wallet.address, symbol);
+  //   let idx = myOrders.findIndex((bundle) => bundle.orderIds.length > 0);
+  //   if (idx < 0) {
+  //     // no orders
+  //     expect(true).toBeTruthy;
+  //   } else {
+  //     let orderId = myOrders[idx].orderIds[0];
+  //     console.log("executing order", orderId, "symbol", symbol);
+  //     let tx = await execTool.executeOrder(symbol, orderId);
+  //     console.log(tx);
+  //   }
+  // });
 
   // it("execute orders", async () => {
   //   let symbol = "MATIC-USDC-USDC";

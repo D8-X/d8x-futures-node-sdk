@@ -4,9 +4,10 @@ import type { CallOverrides, ContractTransaction, Overrides, PayableOverrides } 
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
-import { MAX_UINT_256, MOCK_TOKEN_SWAP_ABI } from "./constants";
-import { ERC20__factory, MockTokenSwap__factory } from "./contracts";
+import { MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, MULTICALL_ADDRESS } from "./constants";
+import { ERC20__factory, IPerpetualManager__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
 import { floatToDecN } from "./d8XMath";
+import MarketData from "./marketData";
 import { type NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 
@@ -38,23 +39,44 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     }
   }
 
+  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides): Promise<void>;
+
+  public async createProxyInstance(marketData: MarketData): Promise<void>;
+
   /**
    * Initialize the writeAccessHandler-Class with this function
    * to create instance of D8X perpetual contract and gather information
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides) {
-    if (provider == undefined) {
-      this.provider = new StaticJsonRpcProvider(this.nodeURL);
+  public async createProxyInstance(providerOrMarketData?: Provider | MarketData, overrides?: CallOverrides) {
+    if (providerOrMarketData == undefined || Provider.isProvider(providerOrMarketData)) {
+      this.provider = providerOrMarketData ?? new StaticJsonRpcProvider(this.nodeURL);
+      if (!this.signer) {
+        const wallet = new Wallet(this.privateKey!);
+        this.signer = wallet.connect(this.provider);
+      }
+      await this.initContractsAndData(this.signer, overrides);
     } else {
-      this.provider = provider;
+      const mktData = providerOrMarketData;
+      this.nodeURL = mktData.config.nodeURL;
+      this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
+      this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
+      this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.provider);
+      ({
+        nestedPerpetualIDs: this.nestedPerpetualIDs,
+        poolStaticInfos: this.poolStaticInfos,
+        symbolToTokenAddrMap: this.symbolToTokenAddrMap,
+        symbolToPerpStaticInfo: this.symbolToPerpStaticInfo,
+        perpetualIdToSymbol: this.perpetualIdToSymbol,
+      } = mktData.getAllMappings());
+      this.priceFeedGetter.setTriangulations(mktData.getTriangulations());
+      this.signerOrProvider = this.provider;
     }
     if (!this.signer) {
       const wallet = new Wallet(this.privateKey!);
       this.signer = wallet.connect(this.provider);
     }
-    await this.initContractsAndData(this.signer, overrides);
     this.traderAddr = await this.signer.getAddress();
   }
 

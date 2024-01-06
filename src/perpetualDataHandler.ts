@@ -54,6 +54,7 @@ import {
   floatToABK64x64,
 } from "./d8XMath";
 import {
+  TokenOverride,
   TypeSafeOrder,
   type ClientOrder,
   type MarginAccount,
@@ -97,6 +98,8 @@ export default class PerpetualDataHandler {
   protected proxyContract: IPerpetualManager | null = null;
   protected proxyABI: ContractInterface;
   protected proxyAddr: string;
+  // oracle
+  protected oraclefactoryAddr: string | undefined;
   // limit order book
   protected lobFactoryContract: LimitOrderBookFactory | null = null;
   protected lobFactoryABI: ContractInterface;
@@ -112,7 +115,7 @@ export default class PerpetualDataHandler {
   // pyth
   protected pythAddr: string | undefined;
 
-  private signerOrProvider: Signer | Provider | null = null;
+  protected signerOrProvider: Signer | Provider | null = null;
   protected priceFeedGetter: PriceFeeds;
 
   // pools are numbered consecutively starting at 1
@@ -120,6 +123,11 @@ export default class PerpetualDataHandler {
   // each pool-array contains perpetual ids
   protected nestedPerpetualIDs: number[][];
 
+  /**
+   * Constructor
+   * @param {NodeSDKConfig} config Configuration object, see
+   * PerpetualDataHandler.readSDKConfig.
+   */
   public constructor(config: NodeSDKConfig) {
     this.config = config;
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
@@ -183,6 +191,7 @@ export default class PerpetualDataHandler {
     if (this.proxyContract == null || this.multicall == null || this.signerOrProvider == null) {
       throw new Error("proxy or multicall not defined");
     }
+    const tokenOverrides = require("./config/tokenOverrides.json") as TokenOverride[];
     let poolInfo = await PerpetualDataHandler.getPoolStaticInfo(this.proxyContract, overrides);
 
     this.nestedPerpetualIDs = poolInfo.nestedPerpetualIDs;
@@ -198,6 +207,11 @@ export default class PerpetualDataHandler {
       target: this.proxyAddr,
       allowFailure: false,
       callData: this.proxyContract.interface.encodeFunctionData("getOrderBookFactoryAddress"),
+    });
+    proxyCalls.push({
+      target: this.proxyAddr,
+      allowFailure: false,
+      callData: this.proxyContract.interface.encodeFunctionData("getOracleFactory"),
     });
 
     // multicall
@@ -227,9 +241,15 @@ export default class PerpetualDataHandler {
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
       "getOrderBookFactoryAddress",
-      encodedResults[encodedResults.length - 1].returnData
+      encodedResults[encodedResults.length - 2].returnData
     )[0] as string;
     this.lobFactoryContract = LimitOrderBookFactory__factory.connect(this.lobFactoryAddr, this.signerOrProvider);
+
+    // oracle factory
+    this.oraclefactoryAddr = this.proxyContract.interface.decodeFunctionResult(
+      "getOracleFactory",
+      encodedResults[encodedResults.length - 1].returnData
+    )[0] as string;
 
     let perpStaticInfos = await PerpetualDataHandler.getPerpetualStaticInfo(
       this.proxyContract,
@@ -250,24 +270,42 @@ export default class PerpetualDataHandler {
       }
       let poolCCY = this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol;
       if (poolCCY == "") {
-        //not already filled
-        const [base, quote] = perp.S2Symbol.split("-");
-        const base3 = perp.S3Symbol.split("-")[0];
-        // we find out the pool currency by looking at all perpetuals
-        // from the perpetual.
-        if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
-          poolCCY = base;
-        } else if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_QUOTE) {
-          poolCCY = quote;
+        // check if token address has an override for its symbol
+        const tokenOverride = tokenOverrides.find(
+          ({ tokenAddress }) => tokenAddress === this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr
+        );
+        if (tokenOverride) {
+          poolCCY = tokenOverride.newSymbol;
         } else {
-          poolCCY = base3;
+          // not overriden - infer from perp
+          const [base, quote] = perp.S2Symbol.split("-");
+          const base3 = perp.S3Symbol.split("-")[0];
+          // we find out the pool currency by looking at all perpetuals
+          // from the perpetual.
+          if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_BASE) {
+            poolCCY = base;
+          } else if (perp.collateralCurrencyType == COLLATERAL_CURRENCY_QUOTE) {
+            poolCCY = quote;
+          } else {
+            poolCCY = base3;
+          }
         }
-        // set pool currency
-        this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = poolCCY;
-        // push pool margin token address into map
-        this.symbolToTokenAddrMap.set(poolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       }
+      let effectivePoolCCY = poolCCY;
       let currentSymbol3 = perp.S2Symbol + "-" + poolCCY;
+      let perpInfo = this.symbolToPerpStaticInfo.get(currentSymbol3);
+      let count = 0;
+      while (perpInfo) {
+        count++;
+        // rename pool symbol
+        effectivePoolCCY = `${poolCCY}${count}`;
+        currentSymbol3 = perp.S2Symbol + "-" + effectivePoolCCY;
+        perpInfo = this.symbolToPerpStaticInfo.get(currentSymbol3);
+      }
+      // set pool currency
+      this.poolStaticInfos[perp.poolId - 1].poolMarginSymbol = effectivePoolCCY;
+      // push pool margin token address into map
+      this.symbolToTokenAddrMap.set(effectivePoolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       this.symbolToPerpStaticInfo.set(currentSymbol3, perpStaticInfos[j]);
     }
     // pre-calculate all triangulation paths so we can easily get from
@@ -279,6 +317,20 @@ export default class PerpetualDataHandler {
     for (let [key, info] of this.symbolToPerpStaticInfo) {
       this.perpetualIdToSymbol.set(info.id, key);
     }
+  }
+
+  /**
+   * Utility function to export mapping and re-use in other objects.
+   * @ignore
+   */
+  public getAllMappings() {
+    return {
+      nestedPerpetualIDs: this.nestedPerpetualIDs,
+      poolStaticInfos: this.poolStaticInfos,
+      symbolToTokenAddrMap: this.symbolToTokenAddrMap,
+      symbolToPerpStaticInfo: this.symbolToPerpStaticInfo,
+      perpetualIdToSymbol: this.perpetualIdToSymbol,
+    };
   }
 
   /**
@@ -310,12 +362,18 @@ export default class PerpetualDataHandler {
 
   /**
    * Get the symbol in long format of the perpetual id
-   * @param perpId perpetual id
+   * @param {number} perpId perpetual id
+   * @returns {string} Symbol
    */
   public getSymbolFromPerpId(perpId: number): string | undefined {
     return this.perpetualIdToSymbol.get(perpId);
   }
 
+  /**
+   *
+   * @param {string} sym Short symbol
+   * @returns {string} Long symbol
+   */
   public symbol4BToLongSymbol(sym: string): string {
     return symbol4BToLongSymbol(sym, this.symbolList);
   }
@@ -548,7 +606,7 @@ export default class PerpetualDataHandler {
         symbolToPerpStaticInfo
       );
       fLockedIn = traderState[idx_locked_in];
-      side = traderState[idx_locked_in].gt(0) ? BUY_SIDE : SELL_SIDE;
+      side = traderState[idx_notional].gt(0) ? BUY_SIDE : SELL_SIDE;
       entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]).abs());
     }
     let mgn: MarginAccount = {
@@ -837,7 +895,12 @@ export default class PerpetualDataHandler {
   }
 
   protected static fromSmartContractOrder(
-    order: SmartContractOrder | IPerpetualOrder.OrderStruct,
+    order:
+      | SmartContractOrder
+      | IPerpetualOrder.OrderStruct
+      | IPerpetualOrder.OrderStructOutput
+      | IClientOrder.ClientOrderStruct
+      | IClientOrder.ClientOrderStructOutput,
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): Order {
     // find symbol of perpetual id
@@ -876,7 +939,11 @@ export default class PerpetualDataHandler {
       leverage: Number(order.leverageTDR) / 100,
       deadline: Number(order.iDeadline),
       executionTimestamp: Number(order.executionTimestamp),
-      submittedTimestamp: Number(order.submittedTimestamp),
+      submittedTimestamp: "submittedTimestamp" in order ? Number(order.submittedTimestamp) : undefined,
+      parentChildOrderIds:
+        "parentChildDigest1" && "parentChildDigest2" in order
+          ? [order.parentChildDigest1.toString(), order.parentChildDigest2.toString()]
+          : undefined,
     };
     return userOrder;
   }

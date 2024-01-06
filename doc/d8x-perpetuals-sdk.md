@@ -15,7 +15,7 @@
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p></dd>
 <dt><a href="#BrokerTool">BrokerTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
-<dd><p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
+<dd><p>Functions for white-label partners to determine fees, deposit lots, and sign-up traders.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p></dd>
 <dt><a href="#LiquidatorTool">LiquidatorTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
@@ -196,10 +196,10 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
 **Returns**: <p>number of decimals</p>  
 
-| Param |
-| --- |
-| x | 
-| precision | 
+| Param | Type |
+| --- | --- |
+| x | <code>number</code> | 
+| precision | <code>number</code> | 
 
 <a name="module_d8xMath..roundToLotString"></a>
 
@@ -210,11 +210,11 @@ to for this lot-size</p>
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
 **Returns**: <p>formated number string</p>  
 
-| Param | Default | Description |
-| --- | --- | --- |
-| x |  | <p>number to round</p> |
-| lot |  | <p>lot size (could be 'uneven' such as 0.019999999 instead of 0.02)</p> |
-| precision | <code>7</code> | <p>optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)</p> |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| x | <code>number</code> |  | <p>number to round</p> |
+| lot | <code>number</code> |  | <p>lot size (could be 'uneven' such as 0.019999999 instead of 0.02)</p> |
+| precision | <code>number</code> | <code>7</code> | <p>optional lot size precision (e.g. if 0.01999 should be 0.02 then precision could be 5)</p> |
 
 <a name="module_d8xMath..mul64x64"></a>
 
@@ -475,7 +475,8 @@ require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -502,8 +503,8 @@ require gas-payments.</p>
 import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM Tesnet
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // AccountTrade (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
@@ -531,7 +532,7 @@ import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
    // setup (authentication required, PK is an environment variable with a private key)
-   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
    await accTrade.createProxyInstance();
@@ -560,14 +561,14 @@ import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
    // setup (authentication required, PK is an environment variable with a private key)
-   const config = PerpetualDataHandler.readSDKConfig("testnet");
+   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
    const pk: string = <string>process.env.PK;
-   let accTrade = new AccountTrade(config, pk);
+   const accTrade = new AccountTrade(config, pk);
    await accTrade.createProxyInstance();
    // set allowance
    await accTrade.setAllowance("MATIC");
    // set an order
-   let order: Order = {
+   const order: Order = {
        symbol: "MATIC-USD-MATIC",
        side: "BUY",
        type: "MARKET",
@@ -575,35 +576,7 @@ async function main() {
        leverage: 2,
        executionTimestamp: Date.now()/1000,
    };
-   let orderTransaction = await accTrade.order(order);
-   console.log(orderTransaction);
- }
- main();
-```
-**Example**  
-```js
-import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
-async function main() {
-   console.log(AccountTrade);
-   // setup (authentication required, PK is an environment variable with a private key)
-   const config = PerpetualDataHandler.readSDKConfig("testnet");
-   const pk: string = <string>process.env.PK;
-   let accTrade = new AccountTrade(config, pk);
-   await accTrade.createProxyInstance();
-   // set allowance
-   await accTrade.setAllowance("MATIC");
-   // set an order
-  let order: Order = {
-      symbol: "MATIC-USD-MATIC",
-      side: "BUY",
-      type: "LIMIT",
-      limitPrice: 1,
-      quantity: 5,
-      leverage: 2,
-      executionTimestamp: Date.now() / 1000,
-      deadline: Date.now() / 1000 + 8*60*60, // order expires 8 hours from now
-   };
-   let orderTransaction = await accTrade.order(order);
+   const orderTransaction = await accTrade.order(order);
    console.log(orderTransaction);
  }
  main();
@@ -630,7 +603,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -659,7 +632,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -685,7 +658,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -705,6 +678,23 @@ main();
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | amount | <code>number</code> | <p>How much collateral to add, in units of collateral currency, e.g. MATIC</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+
+async function main() {
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
+  await accTrade.createProxyInstance();
+  // add collateral to margin account
+  const tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10.9);
+  console.log(orderIds);
+}
+
+main();
+```
 <a name="AccountTrade+removeCollateral"></a>
 
 ### accountTrade.removeCollateral(symbol, amount)
@@ -715,6 +705,23 @@ main();
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | amount | <code>number</code> | <p>How much collateral to remove, in units of collateral currency, e.g. MATIC</p> |
 
+**Example**  
+```js
+import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+
+async function main() {
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  let accTrade = new AccountTrade(config, pk);
+  await accTrade.createProxyInstance();
+  // remove collateral from margin account
+  const tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 3.14);
+  console.log(orderIds);
+}
+
+main();
+```
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
 ### accountTrade.createProxyInstance(provider)
@@ -828,15 +835,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### accountTrade.getSymbolFromPerpId(perpId)
+### accountTrade.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### accountTrade.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -957,7 +976,7 @@ and corresponding price information</p>
 <a name="BrokerTool"></a>
 
 ## BrokerTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
-<p>Functions for brokers to determine fees, deposit lots, and sign-up traders.
+<p>Functions for white-label partners to determine fees, deposit lots, and sign-up traders.
 This class requires a private key and executes smart-contract interactions that
 require gas-payments.</p>
 
@@ -976,6 +995,7 @@ require gas-payments.</p>
     * [.getBrokerDesignation(poolSymbolName)](#BrokerTool+getBrokerDesignation) ⇒ <code>number</code>
     * [.depositBrokerLots(poolSymbolName, lots)](#BrokerTool+depositBrokerLots) ⇒ <code>ContractTransaction</code>
     * [.signOrder(order, traderAddr)](#BrokerTool+signOrder) ⇒ <code>Order</code>
+    * [.signSCOrder(scOrder, traderAddr)](#BrokerTool+signSCOrder) ⇒ <code>string</code>
     * [.transferOwnership(poolSymbolName, newAddress)](#BrokerTool+transferOwnership) ⇒ <code>ContractTransaction</code>
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
@@ -986,7 +1006,8 @@ require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -1006,7 +1027,7 @@ require gas-payments.</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler. readSDKConfig.</p> |
-| privateKey | <code>string</code> | <p>Private key of a broker.</p> |
+| privateKey | <code>string</code> | <p>Private key of a white-label partner.</p> |
 | signer | <code>Signer</code> | <p>Signer (ignored if a private key is provided)</p> |
 
 **Example**  
@@ -1014,8 +1035,8 @@ require gas-payments.</p>
 import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (testnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // BrokerTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -1027,11 +1048,11 @@ main();
 <a name="BrokerTool+getBrokerInducedFee"></a>
 
 ### brokerTool.getBrokerInducedFee(poolSymbolName) ⇒ <code>number</code>
-<p>Determine the exchange fee based on lots, traded volume, and D8X balance of this broker.
-This is the final exchange fee that this broker can offer to traders that trade through him.</p>
+<p>Determine the exchange fee based on lots, traded volume, and D8X balance of this white-label partner.
+This is the final exchange fee that this white-label partner can offer to traders that trade through him.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Exchange fee for this broker, in decimals (i.e. 0.1% is 0.001)</p>  
+**Returns**: <code>number</code> - <p>Exchange fee for this white-label partner, in decimals (i.e. 0.1% is 0.001)</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1043,11 +1064,11 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // get broker induced fee
+  // get white-label partner induced fee
   let brokFee = await brokTool.getBrokerInducedFee("MATIC");
   console.log(brokFee);
 }
@@ -1056,17 +1077,17 @@ main();
 <a name="BrokerTool+getFeeForBrokerDesignation"></a>
 
 ### brokerTool.getFeeForBrokerDesignation(poolSymbolName, [lots]) ⇒ <code>number</code>
-<p>Determine the exchange fee based on lots purchased by this broker.
-The final exchange fee that this broker can offer to traders that trade through him is equal to
+<p>Determine the exchange fee based on lots purchased by this white-label partner.
+The final exchange fee that this white-label partner can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Fee based solely on this broker's designation, in decimals (i.e. 0.1% is 0.001).</p>  
+**Returns**: <code>number</code> - <p>Fee based solely on this white-label partner's designation, in decimals (i.e. 0.1% is 0.001).</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
-| [lots] | <code>number</code> | <p>Optional, designation to use if different from this broker's.</p> |
+| [lots] | <code>number</code> | <p>Optional, designation to use if different from this white-label partner's.</p> |
 
 **Example**  
 ```js
@@ -1074,11 +1095,11 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // get broker fee induced by lots
+  // get white-label partner fee induced by lots
   let brokFeeLots = await brokTool.getFeeForBrokerDesignation("MATIC");
   console.log(brokFeeLots);
 }
@@ -1087,12 +1108,12 @@ main();
 <a name="BrokerTool+getFeeForBrokerVolume"></a>
 
 ### brokerTool.getFeeForBrokerVolume(poolSymbolName) ⇒ <code>number</code>
-<p>Determine the exchange fee based on volume traded under this broker.
-The final exchange fee that this broker can offer to traders that trade through him is equal to
+<p>Determine the exchange fee based on volume traded under this white-label partner.
+The final exchange fee that this white-label partner can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(poolSymbolName),  brokerTool.getFeeForBrokerVolume(poolSymbolName), brokerTool.getFeeForBrokerStake())</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Fee based solely on a broker's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).</p>  
+**Returns**: <code>number</code> - <p>Fee based solely on a white-label partner's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1104,11 +1125,11 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // get broker fee induced by volume
+  // get white-label partner fee induced by volume
   let brokFeeVol = await brokTool.getFeeForBrokerVolume("MATIC");
   console.log(brokFeeVol);
 }
@@ -1117,16 +1138,16 @@ main();
 <a name="BrokerTool+getFeeForBrokerStake"></a>
 
 ### brokerTool.getFeeForBrokerStake([brokerAddr]) ⇒ <code>number</code>
-<p>Determine the exchange fee based on the current D8X balance in a broker's wallet.
-The final exchange fee that this broker can offer to traders that trade through him is equal to
+<p>Determine the exchange fee based on the current D8X balance in a white-label partner's wallet.
+The final exchange fee that this white-label partner can offer to traders that trade through him is equal to
 maximum(brokerTool.getFeeForBrokerDesignation(symbol, lots),  brokerTool.getFeeForBrokerVolume(symbol), brokerTool.getFeeForBrokerStake)</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Fee based solely on a broker's D8X balance, in decimals (i.e. 0.1% is 0.001).</p>  
+**Returns**: <code>number</code> - <p>Fee based solely on a white-label partner's D8X balance, in decimals (i.e. 0.1% is 0.001).</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [brokerAddr] | <code>string</code> | <p>Address of the broker in question, if different from the one calling this function.</p> |
+| [brokerAddr] | <code>string</code> | <p>Address of the white-label partner in question, if different from the one calling this function.</p> |
 
 **Example**  
 ```js
@@ -1134,11 +1155,11 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // get broker fee induced by staked d8x
+  // get white-label partner fee induced by staked d8x
   let brokFeeStake = await brokTool.getFeeForBrokerStake("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
   console.log(brokFeeStake);
 }
@@ -1148,11 +1169,11 @@ main();
 
 ### brokerTool.determineExchangeFee(order, traderAddr) ⇒ <code>number</code>
 <p>Determine exchange fee based on an order and a trader.
-This is the fee charged by the exchange only, excluding the broker fee,
-and it takes into account whether the order given here has been signed by a broker or not.
+This is the fee charged by the exchange only, excluding the white-label partner fee,
+and it takes into account whether the order given here has been signed by a white-label partner or not.
 Use this, for instance, to verify that the fee to be charged for a given order is as expected,
 before and after signing it with brokerTool.signOrder.
-This fee is equal or lower than the broker induced fee, provided the order is properly signed.</p>
+This fee is equal or lower than the white-label partner induced fee, provided the order is properly signed.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>number</code> - <p>Fee in decimals (i.e. 0.1% is 0.001).</p>  
@@ -1168,7 +1189,7 @@ import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1189,11 +1210,11 @@ main();
 <a name="BrokerTool+getCurrentBrokerVolume"></a>
 
 ### brokerTool.getCurrentBrokerVolume(poolSymbolName) ⇒ <code>number</code>
-<p>Exponentially weighted EMA of the total trading volume of all trades performed under this broker.
+<p>Exponentially weighted EMA of the total trading volume of all trades performed under this white-label partner.
 The weights are chosen so that in average this coincides with the 30 day volume.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Current trading volume for this broker, in USD.</p>  
+**Returns**: <code>number</code> - <p>Current trading volume for this white-label partner, in USD.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1205,11 +1226,11 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // get 30 day volume for broker
+  // get 30 day volume for white-label partner
   let brokVolume = await brokTool.getCurrentBrokerVolume("MATIC");
   console.log(brokVolume);
 }
@@ -1218,11 +1239,11 @@ main();
 <a name="BrokerTool+getLotSize"></a>
 
 ### brokerTool.getLotSize(poolSymbolName) ⇒ <code>number</code>
-<p>Total amount of collateral currency a broker has to deposit into the default fund to purchase one lot.
+<p>Total amount of collateral currency a white-label partner has to deposit into the default fund to purchase one lot.
 This is equivalent to the price of a lot expressed in a given pool's currency (e.g. MATIC, USDC, etc).</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Broker lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.</p>  
+**Returns**: <code>number</code> - <p>White-label partner lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1234,7 +1255,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1247,11 +1268,11 @@ main();
 <a name="BrokerTool+getBrokerDesignation"></a>
 
 ### brokerTool.getBrokerDesignation(poolSymbolName) ⇒ <code>number</code>
-<p>Provides information on how many lots a broker purchased for a given pool.
-This is relevant to determine the broker's fee tier.</p>
+<p>Provides information on how many lots a white-label partner purchased for a given pool.
+This is relevant to determine the white-label partner's fee tier.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>number</code> - <p>Number of lots purchased by this broker.</p>  
+**Returns**: <code>number</code> - <p>Number of lots purchased by this white-label partner.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -1263,11 +1284,11 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
-  // get broker designation
+  // get white-label partner designation
   let brokDesignation = await brokTool.getBrokerDesignation("MATIC");
   console.log(brokDesignation);
 }
@@ -1292,7 +1313,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1306,15 +1327,15 @@ main();
 <a name="BrokerTool+signOrder"></a>
 
 ### brokerTool.signOrder(order, traderAddr) ⇒ <code>Order</code>
-<p>Adds this broker's signature to an order. An order signed by a broker is considered
-to be routed through this broker and benefits from the broker's fee conditions.</p>
+<p>Adds this white-label partner's signature to a user-friendly order. An order signed by a white-label partner is considered
+to be routed through this white-label partner and benefits from the white-label partner's fee conditions.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>Order</code> - <p>An order signed by this broker, which can be submitted directly with AccountTrade.order.</p>  
+**Returns**: <code>Order</code> - <p>An order signed by this white-label partner, which can be submitted directly with AccountTrade.order.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| order | <code>Order</code> | <p>Order to sign. It must contain valid broker fee, broker address, and order deadline.</p> |
+| order | <code>Order</code> | <p>Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.</p> |
 | traderAddr | <code>string</code> | <p>Address of trader submitting the order.</p> |
 
 **Example**  
@@ -1323,7 +1344,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1343,20 +1364,19 @@ async function main() {
 }
 main();
 ```
-<a name="BrokerTool+transferOwnership"></a>
+<a name="BrokerTool+signSCOrder"></a>
 
-### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ContractTransaction</code>
-<p>Transfer ownership of a broker's status to a new wallet. This function transfers the values related to
-(i) trading volume and (ii) deposited lots to newAddress. The broker needs in addition to manually transfer
-his D8X holdings to newAddress. Until this transfer is completed, the broker will not have his current designation reflected at newAddress.</p>
+### brokerTool.signSCOrder(scOrder, traderAddr) ⇒ <code>string</code>
+<p>Generates a white-label partner's signature of a smart-contract ready order. An order signed by a white-label partner is considered
+to be routed through this white-label partner and benefits from the white-label partner's fee conditions.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
-**Returns**: <code>ContractTransaction</code> - <p>ethers transaction object</p>  
+**Returns**: <code>string</code> - <p>Signature of order.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
-| newAddress | <code>string</code> | <p>The address this broker wants to use from now on.</p> |
+| scOrder | <code>SmartContractOrder</code> | <p>Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.</p> |
+| traderAddr | <code>string</code> | <p>Address of trader submitting the order.</p> |
 
 **Example**  
 ```js
@@ -1364,7 +1384,48 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  const brokTool = new BrokerTool(config, pk);
+  const traderAPI = new TraderInterface(config);
+  await brokTool.createProxyInstance();
+  await traderAPI.createProxyInstance();
+  // sign order
+  const order = {symbol: "ETH-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 1,
+      executionTimestamp: Date.now()/1000
+   };
+  const scOrder = await traderAPI.createSmartContractOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
+  const signature = await brokTool.signSCOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+       0.0001, 1669723339);
+  console.log(signature);
+}
+main();
+```
+<a name="BrokerTool+transferOwnership"></a>
+
+### brokerTool.transferOwnership(poolSymbolName, newAddress) ⇒ <code>ContractTransaction</code>
+<p>Transfer ownership of a white-label partner's status to a new wallet. This function transfers the values related to
+(i) trading volume and (ii) deposited lots to newAddress. The white-label partner needs in addition to manually transfer
+his D8X holdings to newAddress. Until this transfer is completed, the white-label partner will not have his current designation reflected at newAddress.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Returns**: <code>ContractTransaction</code> - <p>ethers transaction object</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| poolSymbolName | <code>string</code> | <p>Pool symbol name (e.g. MATIC, USDC, etc).</p> |
+| newAddress | <code>string</code> | <p>The address this white-label partner wants to use from now on.</p> |
+
+**Example**  
+```js
+import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(BrokerTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1487,15 +1548,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### brokerTool.getSymbolFromPerpId(perpId)
+### brokerTool.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### brokerTool.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -1638,7 +1711,8 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -1665,8 +1739,8 @@ and executes smart-contract interactions that require gas-payments.</p>
 import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (tesnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
@@ -1696,7 +1770,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1729,7 +1803,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1758,7 +1832,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1788,7 +1862,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1816,7 +1890,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1939,15 +2013,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### liquidatorTool.getSymbolFromPerpId(perpId)
+### liquidatorTool.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### liquidatorTool.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -2088,7 +2174,8 @@ smart-contract interactions that require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -2115,8 +2202,8 @@ smart-contract interactions that require gas-payments.</p>
 import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidityProviderTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (testnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
@@ -2144,7 +2231,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -2176,7 +2263,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -2205,7 +2292,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -2328,15 +2415,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### liquidityProviderTool.getSymbolFromPerpId(perpId)
+### liquidityProviderTool.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### liquidityProviderTool.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -2466,58 +2565,51 @@ No gas required for the queries here.</p>
 
 * [MarketData](#MarketData) ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
     * [new MarketData(config)](#new_MarketData_new)
-    * _instance_
-        * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
-        * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
-        * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
-        * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-        * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
-        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
-        * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
-        * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
-        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
-        * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
-        * [._positionRiskForTraderInPerpetuals(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetuals) ⇒
-        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
-        * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
-        * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-        * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance)
-        * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
-        * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
-        * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
-        * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
-        * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
-        * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
-        * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
-        * [.getOrdersStatus(symbol, orderId, overrides)](#MarketData+getOrdersStatus) ⇒
-        * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
-        * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
-        * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
-        * [.getPoolState(symbol, indexPrices)](#MarketData+getPoolState) ⇒
-        * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
-        * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
-        * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-        * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
-        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
-        * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒
-        * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
-        * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
-        * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
-        * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
-        * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-        * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
-        * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
-        * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
-        * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
-        * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-        * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
-        * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
-        * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
-        * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
-        * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
-    * _static_
-        * [._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter)](#MarketData._getAllIndexPrices) ⇒
-        * [._queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap)](#MarketData._queryMidPrices) ⇒
+    * [.createProxyInstance(providerOrMarketData)](#MarketData+createProxyInstance)
+    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒ <code>string</code>
+    * [.getTriangulations()](#MarketData+getTriangulations) ⇒
+    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒ <code>Order</code>
+    * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒ <code>Contract</code>
+    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
+    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
+    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
+    * [.positionRiskOnCollateralAction(deltaCollateral, account)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
+    * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+    * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance) ⇒ <code>number</code>
+    * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
+    * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
+    * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
+    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
+    * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+    * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
+    * [.getOrdersStatus(symbol, orderId)](#MarketData+getOrdersStatus) ⇒
+    * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒ <code>number</code>
+    * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒ <code>number</code>
+    * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒ <code>PerpetualState</code>
+    * [.getPoolState(poolSymbol)](#MarketData+getPoolState) ⇒ <code>PoolState</code>
+    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒ <code>PerpetualStaticInfo</code>
+    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
+    * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
+    * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
+    * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
+    * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
+    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
+    * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
+    * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
+    * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -2534,8 +2626,8 @@ No gas required for the queries here.</p>
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (testnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // MarketData (read only, no authentication needed)
   let mktData = new MarketData(config);
   // Create a proxy instance to access the blockchain
@@ -2545,7 +2637,7 @@ main();
 ```
 <a name="MarketData+createProxyInstance"></a>
 
-### marketData.createProxyInstance(provider)
+### marketData.createProxyInstance(providerOrMarketData)
 <p>Initialize the marketData-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
@@ -2554,41 +2646,48 @@ about perpetual currencies</p>
 
 | Param | Description |
 | --- | --- |
-| provider | <p>optional provider</p> |
+| providerOrMarketData | <p>optional provider or existing market data instance</p> |
 
 <a name="MarketData+getProxyAddress"></a>
 
-### marketData.getProxyAddress() ⇒
+### marketData.getProxyAddress() ⇒ <code>string</code>
 <p>Get the proxy address</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Address of the perpetual proxy contract</p>  
+**Returns**: <code>string</code> - <p>Address of the perpetual proxy contract</p>  
+<a name="MarketData+getTriangulations"></a>
+
+### marketData.getTriangulations() ⇒
+<p>Get the pre-computed triangulations</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Triangulations</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
-### marketData.smartContractOrderToOrder(smOrder) ⇒
+### marketData.smartContractOrderToOrder(smOrder) ⇒ <code>Order</code>
 <p>Convert the smart contract output of an order into a convenient format of type &quot;Order&quot;</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>more convenient format of order, type &quot;Order&quot;</p>  
+**Returns**: <code>Order</code> - <p>more convenient format of order, type &quot;Order&quot;</p>  
 
-| Param | Description |
-| --- | --- |
-| smOrder | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| smOrder | <code>SmartContractOrder</code> | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
 
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
-### marketData.getReadOnlyProxyInstance() ⇒
+### marketData.getReadOnlyProxyInstance() ⇒ <code>Contract</code>
 <p>Get contract instance. Useful for event listening.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>read-only proxy instance</p>  
+**Returns**: <code>Contract</code> - <p>read-only proxy instance</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
@@ -2610,7 +2709,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
@@ -2630,7 +2729,7 @@ main();
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol, or undefined.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol, or undefined. If a poolSymbol is provided, the response includes orders in all perpetuals of the given pool. If no symbol is provided, the response includes orders from all perpetuals in all pools.</p> |
 
 **Example**  
 ```js
@@ -2638,7 +2737,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
@@ -2648,32 +2747,6 @@ async function main() {
 }
 main();
 ```
-<a name="MarketData+_openOrdersOfPerpetual"></a>
-
-### marketData.\_openOrdersOfPerpetual(traderAddr, symbol) ⇒
-<p>All open orders for a trader-address and a given perpetual symbol.</p>
-
-**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>open orders and order ids</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
-
-<a name="MarketData+_openOrdersOfPerpetuals"></a>
-
-### marketData.\_openOrdersOfPerpetuals(traderAddr, symbol) ⇒
-<p>All open orders for a trader-address and a given perpetual symbol.</p>
-
-**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>open orders and order ids</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
-
 <a name="MarketData+positionRisk"></a>
 
 ### marketData.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
@@ -2686,7 +2759,7 @@ for all perpetuals in a pool</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in pool, or undefined to get all positions.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in a given pool, or no symbol to get all positions in all pools.</p> |
 
 **Example**  
 ```js
@@ -2694,7 +2767,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
@@ -2704,111 +2777,157 @@ async function main() {
 }
 main();
 ```
-<a name="MarketData+_positionRiskForTraderInPerpetual"></a>
-
-### marketData.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
-
-**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>MarginAccount struct for the trader</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
-
-<a name="MarketData+_positionRiskForTraderInPerpetuals"></a>
-
-### marketData.\_positionRiskForTraderInPerpetuals(traderAddr, symbol) ⇒
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
-
-**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>MarginAccount struct for the trader</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
-
 <a name="MarketData+positionRiskOnTrade"></a>
 
 ### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒
 <p>Estimates what the position risk will be if a given order is executed.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Position risk after trade</p>  
+**Returns**: <p>Position risk after trade, including order cost and maximal trade sizes for position</p>  
 
 | Param | Description |
 | --- | --- |
 | traderAddr | <p>Address of trader</p> |
 | order | <p>Order to be submitted</p> |
-| account | <p>Position risk before trade</p> |
-| indexPriceInfo | <p>Index prices and market status (open/closed)</p> |
+| account | <p>Position risk before trade. Defaults to current position if not given.</p> |
+| indexPriceInfo | <p>Index prices and market status (open/closed). Defaults to current market status if not given.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  const order: Order = {
+       symbol: "MATIC-USD-MATIC",
+       side: "BUY",
+       type: "MARKET",
+       quantity: 100,
+       leverage: 2,
+       executionTimestamp: Date.now()/1000,
+   };
+  // Get position risk conditional on this order being executed
+  const posRisk = await mktData.positionRiskOnTrade("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", order);
+  console.log(posRisk);
+}
+main();
+```
 <a name="MarketData+positionRiskOnCollateralAction"></a>
 
-### marketData.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+### marketData.positionRiskOnCollateralAction(deltaCollateral, account) ⇒ <code>MarginAccount</code>
 <p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after collateral has been added/removed</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>Address of trader</p> |
-| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
-| currentPositionRisk | <p>Position risk before</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| deltaCollateral | <code>number</code> | <p>Amount of collateral to add or remove (signed)</p> |
+| account | <code>MarginAccount</code> | <p>Position risk before collateral is added or removed</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // Get position risk conditional on removing 3.14 MATIC
+  const traderAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B";
+  const curPos = await mktData.positionRisk("traderAddr", "BTC-USD-MATIC");
+  const posRisk = await mktData.positionRiskOnCollateralAction(-3.14, curPos);
+  console.log(posRisk);
+}
+main();
+```
 <a name="MarketData+getWalletBalance"></a>
 
 ### marketData.getWalletBalance(address, symbol) ⇒
 <p>Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Balance</p>  
+**Returns**: <p>Perpetual's collateral token balance of the given address.</p>  
 
 | Param | Description |
 | --- | --- |
 | address | <p>Address to check</p> |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get MATIC balance of address
+  let marginTokenBalance = await md.getWalletBalance(myaddress, "BTC-USD-MATIC");
+  console.log(marginTokenBalance);
+}
+main();
+```
 <a name="MarketData+getPoolShareTokenBalance"></a>
 
-### marketData.getPoolShareTokenBalance(address, symbolOrId)
+### marketData.getPoolShareTokenBalance(address, symbolOrId) ⇒ <code>number</code>
 <p>Get the address' balance of the pool share token</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <code>number</code> - <p>Pool share token balance of the given address (e.g. dMATIC balance)</p>  
 
-| Param | Description |
-| --- | --- |
-| address | <p>address of the liquidity provider</p> |
-| symbolOrId | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| address | <code>string</code> | <p>address of the liquidity provider</p> |
+| symbolOrId | <code>string</code> \| <code>number</code> | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
 
-<a name="MarketData+_getPoolShareTokenBalanceFromId"></a>
-
-### marketData.\_getPoolShareTokenBalanceFromId(address, poolId) ⇒
-<p>Query the pool share token holdings of address</p>
-
-**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>pool share token balance of address</p>  
-
-| Param | Description |
-| --- | --- |
-| address | <p>address of token holder</p> |
-| poolId | <p>pool id</p> |
-
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get dMATIC balance of address
+  let shareTokenBalance = await md.getPoolShareTokenBalance(myaddress, "MATIC");
+  console.log(shareTokenBalance);
+}
+main();
+```
 <a name="MarketData+getShareTokenPrice"></a>
 
-### marketData.getShareTokenPrice(symbolOrId) ⇒
+### marketData.getShareTokenPrice(symbolOrId) ⇒ <code>number</code>
 <p>Value of pool token in collateral currency</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>current pool share token price in collateral currency</p>  
+**Returns**: <code>number</code> - <p>current pool share token price in collateral currency</p>  
 
-| Param | Description |
-| --- | --- |
-| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbolOrId | <code>string</code> \| <code>number</code> | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get price of 1 dMATIC in MATIC
+  let shareTokenPrice = await md.getShareTokenPrice(myaddress, "MATIC");
+  console.log(shareTokenPrice);
+}
+main();
+```
 <a name="MarketData+getParticipationValue"></a>
 
 ### marketData.getParticipationValue(address, symbolOrId) ⇒
@@ -2818,10 +2937,10 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
 
-| Param | Description |
-| --- | --- |
-| address | <p>address of liquidity provider</p> |
-| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| address | <code>string</code> | <p>address of liquidity provider</p> |
+| symbolOrId | <code>string</code> \| <code>number</code> | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
 
 **Example**  
 ```js
@@ -2829,7 +2948,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
@@ -2841,29 +2960,61 @@ main();
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
 ### marketData.maxOrderSizeForTrader(traderAddr, symbol) ⇒
-<p>Gets the maximal order size to open positions (increase size),
+<p>Gets the maximal order sizes to open positions (increase size), both long and short,
 considering the existing position, state of the perpetual
-Accoutns for user's wallet balance.</p>
+Accounts for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Maximal trade size, not signed</p>  
+**Returns**: <p>Maximal trade sizes</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>Address of trader</p> |
-| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of trader</p> |
+| symbol | <code>symbol</code> | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // max order sizes
+  let shareToken = await md.maxOrderSizeForTrader(myaddress, "BTC-USD-MATIC");
+  console.log(shareToken); // {buy: 314, sell: 415}
+}
+main();
+```
 <a name="MarketData+maxSignedPosition"></a>
 
-### marketData.maxSignedPosition(side, symbol) ⇒
+### marketData.maxSignedPosition(side, symbol) ⇒ <code>number</code>
+<p>Perpetual-wide maximal signed position size in perpetual.</p>
+
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>signed maximal position size in base currency</p>  
+**Returns**: <code>number</code> - <p>signed maximal position size in base currency</p>  
 
-| Param | Description |
-| --- | --- |
-| side | <p>BUY_SIDE or SELL_SIDE</p> |
-| symbol | <p>of the form ETH-USD-MATIC.</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| side |  | <p>BUY_SIDE or SELL_SIDE</p> |
+| symbol | <code>string</code> | <p>of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get oracle price
+  let maxLongPos = await mktData.maxSignedPosition(BUY_SIDE, "BTC-USD-MATIC");
+  console.log(maxLongPos);
+}
+main();
+```
 <a name="MarketData+getOraclePrice"></a>
 
 ### marketData.getOraclePrice(base, quote) ⇒ <code>number</code>
@@ -2883,7 +3034,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -2895,8 +3046,10 @@ main();
 <a name="MarketData+getOrderStatus"></a>
 
 ### marketData.getOrderStatus(symbol, orderId, overrides) ⇒
+<p>Get the status of an order given a symbol and order Id</p>
+
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Order status ()</p>  
+**Returns**: <p>Order status (cancelled = 0, executed = 1, open = 2,  unkown = 3)</p>  
 
 | Param | Description |
 | --- | --- |
@@ -2904,9 +3057,26 @@ main();
 | orderId | <p>Order Id</p> |
 | overrides |  |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get order stauts
+  let status = await mktData.getOrderStatus("ETH-USD-MATIC", "0xmyOrderId");
+  console.log(status);
+}
+main();
+```
 <a name="MarketData+getOrdersStatus"></a>
 
-### marketData.getOrdersStatus(symbol, orderId, overrides) ⇒
+### marketData.getOrdersStatus(symbol, orderId) ⇒
+<p>Get the status of an array of orders given a symbol and their Ids</p>
+
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Array of order status</p>  
 
@@ -2914,15 +3084,29 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 | orderId | <p>Array of order Ids</p> |
-| overrides |  |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get order stauts
+  let status = await mktData.getOrdersStatus("ETH-USD-MATIC", ["0xmyOrderId1", "0xmyOrderId2"]);
+  console.log(status);
+}
+main();
+```
 <a name="MarketData+getMarkPrice"></a>
 
-### marketData.getMarkPrice(symbol) ⇒
+### marketData.getMarkPrice(symbol) ⇒ <code>number</code>
 <p>Get the current mark price</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>mark price</p>  
+**Returns**: <code>number</code> - <p>mark price</p>  
 
 | Param | Description |
 | --- | --- |
@@ -2934,7 +3118,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
@@ -2945,11 +3129,11 @@ main();
 ```
 <a name="MarketData+getPerpetualPrice"></a>
 
-### marketData.getPerpetualPrice(symbol, quantity) ⇒
+### marketData.getPerpetualPrice(symbol, quantity) ⇒ <code>number</code>
 <p>get the current price for a given quantity</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>price (number)</p>  
+**Returns**: <code>number</code> - <p>price</p>  
 
 | Param | Description |
 | --- | --- |
@@ -2962,7 +3146,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
@@ -2973,42 +3157,40 @@ main();
 ```
 <a name="MarketData+getPerpetualState"></a>
 
-### marketData.getPerpetualState(symbol, indexPrices) ⇒
+### marketData.getPerpetualState(symbol) ⇒ <code>PerpetualState</code>
 <p>Query recent perpetual state from blockchain</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>PerpetualState reference</p>  
+**Returns**: <code>PerpetualState</code> - <p>PerpetualState copy</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
-| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData+getPoolState"></a>
 
-### marketData.getPoolState(symbol, indexPrices) ⇒
+### marketData.getPoolState(poolSymbol) ⇒ <code>PoolState</code>
 <p>Query recent pool state from blockchain, not including perpetual states</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>PoolState reference</p>  
+**Returns**: <code>PoolState</code> - <p>PoolState copy</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>symbol of the form USDC</p> |
-| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| poolSymbol | <code>string</code> | <p>symbol of the form USDC</p> |
 
 <a name="MarketData+getPerpetualStaticInfo"></a>
 
-### marketData.getPerpetualStaticInfo(symbol) ⇒
+### marketData.getPerpetualStaticInfo(symbol) ⇒ <code>PerpetualStaticInfo</code>
 <p>Query perpetual static info.
-This information is queried once at createProxyInstance-time and remains static after that.</p>
+This information is queried once at createProxyInstance-time, and remains static after that.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>PerpetualStaticInfo copy.</p>  
+**Returns**: <code>PerpetualStaticInfo</code> - <p>Perpetual static info copy.</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol</p> |
 
 <a name="MarketData+getPerpetualMidPrice"></a>
 
@@ -3028,7 +3210,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual mid price
@@ -3046,48 +3228,108 @@ Result is in collateral currency</p>
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>available margin in collateral currency</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>address of the trader</p> |
-| symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
-| indexPrices | <p>optional index prices, will otherwise fetch from REST API</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>address of the trader</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+| indexPrices |  | <p>optional index prices, will otherwise fetch from REST API</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get available margin
+  let mgn = await mktData.getAvailableMargin("0xmyAddress", "ETH-USD-MATIC");
+  console.log(mgn);
+}
+main();
+```
 <a name="MarketData+getTraderLoyalityScore"></a>
 
-### marketData.getTraderLoyalityScore(traderAddr) ⇒
+### marketData.getTraderLoyalityScore(traderAddr) ⇒ <code>number</code>
 <p>Calculate a type of exchange loyality score based on trader volume</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>a loyality score (4 worst, 1 best)</p>  
+**Returns**: <code>number</code> - <p>a loyality score (4 worst, 1 best)</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>address of the trader</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>address of the trader</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get scpre
+  let s = await mktData.getTraderLoyalityScore("0xmyAddress");
+  console.log(s);
+}
+main();
+```
 <a name="MarketData+isMarketClosed"></a>
 
-### marketData.isMarketClosed(symbol) ⇒
+### marketData.isMarketClosed(symbol) ⇒ <code>boolean</code>
 <p>Get market open/closed status</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>True if the market is closed</p>  
+**Returns**: <code>boolean</code> - <p>True if the market is closed</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // is market closed?
+  let s = await mktData.isMarketClosed("ETH-USD-MATIC");
+  console.log(s);
+}
+main();
+```
 <a name="MarketData+getPriceInUSD"></a>
 
-### marketData.getPriceInUSD(symbol) ⇒
+### marketData.getPriceInUSD(symbol) ⇒ <code>Map.&lt;string, number&gt;</code>
 <p>Get the latest on-chain price of a perpetual base index in USD.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.</p>  
+**Returns**: <code>Map.&lt;string, number&gt;</code> - <p>Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>Symbol of the form ETH-USDC-MATIC. If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool. If no argument is provided, it returns the all prices of all the indices in the pools of the exchange.</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USDC-MATIC. If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool. If no argument is provided, it returns all prices of all the indices in the pools of the exchange.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // is market closed?
+  let px = await mktData.getPriceInUSD("ETH-USDC-USDC");
+  console.log(px); // {'ETH-USD' -> 1800}
+}
+main();
+```
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### marketData.getOrderBookContract(symbol) ⇒
@@ -3150,15 +3392,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### marketData.getSymbolFromPerpId(perpId)
+### marketData.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### marketData.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -3276,35 +3530,6 @@ and corresponding price information</p>
 | --- | --- |
 | contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
-<a name="MarketData._getAllIndexPrices"></a>
-
-### MarketData.\_getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter) ⇒
-<p>Get all off-chain prices</p>
-
-**Kind**: static method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>mapping of symbol-pair (e.g. BTC-USD) to price/isMarketClosed</p>  
-
-| Param | Description |
-| --- | --- |
-| _symbolToPerpStaticInfo | <p>mapping: PerpetualStaticInfo for each perpetual</p> |
-| _priceFeedGetter | <p>priceFeed class from which we can get offchain price data</p> |
-
-<a name="MarketData._queryMidPrices"></a>
-
-### MarketData.\_queryMidPrices(_proxyContract, _nestedPerpetualIDs, _symbolToPerpStaticInfo, _perpetualIdToSymbol, _idxPriceMap) ⇒
-<p>Collect all mid-prices</p>
-
-**Kind**: static method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>perpetual symbol to mid-prices mapping</p>  
-
-| Param | Description |
-| --- | --- |
-| _proxyContract | <p>contract instance</p> |
-| _nestedPerpetualIDs | <p>contains all perpetual ids for each pool</p> |
-| _symbolToPerpStaticInfo | <p>maps symbol to static info</p> |
-| _perpetualIdToSymbol | <p>maps perpetual id to symbol of the form BTC-USD-MATIC</p> |
-| _idxPriceMap | <p>symbol to price/market closed</p> |
-
 <a name="OrderExecutorTool"></a>
 
 ## OrderExecutorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -3317,15 +3542,16 @@ gas-payments.</p>
 
 * [OrderExecutorTool](#OrderExecutorTool) ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
     * [new OrderExecutorTool(config, signer)](#new_OrderExecutorTool_new)
-    * [.executeOrder(symbol, orderId, [executorAddr], [nonce], [submission])](#OrderExecutorTool+executeOrder) ⇒
+    * [.executeOrder(symbol, orderId, executorAddr, nonce, [submission])](#OrderExecutorTool+executeOrder) ⇒
+    * [.executeOrders(symbol, orderIds, executorAddr, nonce, [submission])](#OrderExecutorTool+executeOrders) ⇒
     * [.getAllOpenOrders(symbol)](#OrderExecutorTool+getAllOpenOrders) ⇒
     * [.numberOfOpenOrders(symbol)](#OrderExecutorTool+numberOfOpenOrders) ⇒ <code>number</code>
     * [.getOrderById(symbol, digest)](#OrderExecutorTool+getOrderById) ⇒
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderExecutorTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderExecutorTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderExecutorTool+isTradeableBatch) ⇒
-    * [._isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap)](#OrderExecutorTool+_isTradeable) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderExecutorTool+smartContractOrderToOrder) ⇒
+    * [.getTransactionCount(blockTag)](#OrderExecutorTool+getTransactionCount) ⇒
     * [.createProxyInstance(provider)](#WriteAccessHandler+createProxyInstance)
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
@@ -3335,7 +3561,8 @@ gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -3362,8 +3589,8 @@ gas-payments.</p>
 import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
-  // load configuration for testnet
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  // load configuration for Polygon zkEVM (testnet)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
@@ -3374,7 +3601,7 @@ main();
 ```
 <a name="OrderExecutorTool+executeOrder"></a>
 
-### orderExecutorTool.executeOrder(symbol, orderId, [executorAddr], [nonce], [submission]) ⇒
+### orderExecutorTool.executeOrder(symbol, orderId, executorAddr, nonce, [submission]) ⇒
 <p>Executes an order by symbol and ID. This action interacts with the blockchain and incurs gas costs.</p>
 
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
@@ -3384,8 +3611,8 @@ main();
 | --- | --- | --- |
 | symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
 | orderId | <code>string</code> | <p>ID of the order to be executed.</p> |
-| [executorAddr] | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
-| [nonce] | <code>number</code> | <p>optional nonce</p> |
+| executorAddr | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| nonce | <code>number</code> | <p>optional nonce</p> |
 | [submission] | <code>PriceFeedSubmission</code> | <p>optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual</p> |
 
 **Example**  
@@ -3394,7 +3621,7 @@ import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-
 async function main() {
   console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
   let orderTool = new OrderExecutorTool(config, pk);
@@ -3412,6 +3639,43 @@ async function main() {
       console.log(`Sent order id ${ids[k]} for execution, tx hash = ${tx.hash}`);
     }
   }
+}
+main();
+```
+<a name="OrderExecutorTool+executeOrders"></a>
+
+### orderExecutorTool.executeOrders(symbol, orderIds, executorAddr, nonce, [submission]) ⇒
+<p>Executes a list of orders of the symbol. This action interacts with the blockchain and incurs gas costs.</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Returns**: <p>Transaction object.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| orderIds | <code>Array.&lt;string&gt;</code> | <p>IDs of the orders to be executed.</p> |
+| executorAddr | <code>string</code> | <p>optional address of the wallet to be credited for executing the order, if different from the one submitting this transaction.</p> |
+| nonce | <code>number</code> | <p>optional nonce</p> |
+| [submission] | <code>PriceFeedSubmission</code> | <p>optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+async function main() {
+  console.log(OrderExecutorTool);
+  // Setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  const symbol = "ETH-USD-MATIC";
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get some open orders
+  const maxOrdersToGet = 5;
+  let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+  console.log(`Got ${ids.length} orders`);
+  // execute
+  let tx = await orderTool.executeOrders(symbol, ids);
+  console.log(`Sent order ids ${ids.join(", ")} for execution, tx hash = ${tx.hash}`);
 }
 main();
 ```
@@ -3433,7 +3697,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3461,7 +3725,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3490,7 +3754,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3522,7 +3786,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3551,7 +3815,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3575,22 +3839,26 @@ main();
 | orders | <p>orders belonging to 1 perpetual</p> |
 | indexPrice | <p>S2,S3-index prices for the given perpetual. Will fetch prices from REST API if not defined.</p> |
 
-<a name="OrderExecutorTool+_isTradeable"></a>
-
-### orderExecutorTool.\_isTradeable(order, tradePrice, markPrice, atBlockTimestamp, symbolToPerpInfoMap) ⇒
-<p>Can the order be executed?</p>
-
-**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
-**Returns**: <p>true if trading conditions met, false otherwise</p>  
-
-| Param | Description |
-| --- | --- |
-| order | <p>order struct</p> |
-| tradePrice | <p>&quot;preview&quot; price of this order</p> |
-| markPrice | <p>current mark price</p> |
-| atBlockTimestamp | <p>block timestamp when execution would take place</p> |
-| symbolToPerpInfoMap | <p>metadata</p> |
-
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // check if tradeable
+  let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
+  let check = await orderTool.isTradeableBatch(
+      [openOrders[0][0], openOrders[0][1]],
+      [openOrders[1][0], openOrders[1][1]]
+    );
+  console.log(check);
+}
+main();
+```
 <a name="OrderExecutorTool+smartContractOrderToOrder"></a>
 
 ### orderExecutorTool.smartContractOrderToOrder(scOrder) ⇒
@@ -3602,6 +3870,18 @@ main();
 | Param | Description |
 | --- | --- |
 | scOrder | <p>Perpetual order as received in the proxy events.</p> |
+
+<a name="OrderExecutorTool+getTransactionCount"></a>
+
+### orderExecutorTool.getTransactionCount(blockTag) ⇒
+<p>Gets the current transaction count for the connected signer</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Returns**: <p>The nonce for the next transaction</p>  
+
+| Param |
+| --- |
+| blockTag | 
 
 <a name="WriteAccessHandler+createProxyInstance"></a>
 
@@ -3716,15 +3996,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### orderExecutorTool.getSymbolFromPerpId(perpId)
+### orderExecutorTool.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### orderExecutorTool.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -3851,13 +4143,15 @@ common data and chain operations.</p>
 **Kind**: global class  
 
 * [PerpetualDataHandler](#PerpetualDataHandler)
+    * [new PerpetualDataHandler(config)](#new_PerpetualDataHandler_new)
     * _instance_
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
         * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
         * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-        * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+        * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+        * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
         * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -3886,6 +4180,16 @@ common data and chain operations.</p>
         * [._getABIFromContract(contract, functionName)](#PerpetualDataHandler._getABIFromContract) ⇒
         * [.checkOrder(order, traderAccount, perpStaticInfo)](#PerpetualDataHandler.checkOrder)
         * [.fromClientOrderToTypeSafeOrder(order)](#PerpetualDataHandler.fromClientOrderToTypeSafeOrder) ⇒
+
+<a name="new_PerpetualDataHandler_new"></a>
+
+### new PerpetualDataHandler(config)
+<p>Constructor</p>
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
@@ -3944,14 +4248,25 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### perpetualDataHandler.getSymbolFromPerpId(perpId)
+### perpetualDataHandler.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### perpetualDataHandler.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -4598,6 +4913,8 @@ trader liquidations, trade executions, change of trader margin amount.</p>
 * [PriceFeeds](#PriceFeeds)
     * _instance_
         * [.initializeTriangulations(symbols)](#PriceFeeds+initializeTriangulations)
+        * [.getTriangulations()](#PriceFeeds+getTriangulations) ⇒
+        * [.setTriangulations()](#PriceFeeds+setTriangulations)
         * [.fetchFeedPriceInfoAndIndicesForPerpetual(symbol)](#PriceFeeds+fetchFeedPriceInfoAndIndicesForPerpetual) ⇒
         * [.fetchPrices()](#PriceFeeds+fetchPrices) ⇒
         * [.fetchPricesForPerpetual(symbol)](#PriceFeeds+fetchPricesForPerpetual) ⇒
@@ -4623,6 +4940,19 @@ trader liquidations, trade executions, change of trader margin amount.</p>
 | --- | --- |
 | symbols | <p>set of symbols we want to triangulate from price feeds</p> |
 
+<a name="PriceFeeds+getTriangulations"></a>
+
+### priceFeeds.getTriangulations() ⇒
+<p>Returns computed triangulation map</p>
+
+**Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
+**Returns**: <p>Triangulation map</p>  
+<a name="PriceFeeds+setTriangulations"></a>
+
+### priceFeeds.setTriangulations()
+<p>Set pre-computed triangulation map</p>
+
+**Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
 <a name="PriceFeeds+fetchFeedPriceInfoAndIndicesForPerpetual"></a>
 
 ### priceFeeds.fetchFeedPriceInfoAndIndicesForPerpetual(symbol) ⇒
@@ -4663,7 +4993,7 @@ it is a direct price feed.</p>
 <p>Fetch the provided feed prices and bool whether market is closed or open</p>
 <ul>
 <li>requires the feeds to be defined in priceFeedConfig.json</li>
-<li>if undefined, all feeds are queried</li>
+<li>if symbols undefined, all feeds are queried</li>
 </ul>
 
 **Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
@@ -4789,9 +5119,39 @@ one chain, unless the backend employs code transferrals</p>
 **Kind**: global class  
 
 * [ReferralCodeSigner](#ReferralCodeSigner)
+    * [.getSignatureForNewReferral(rc, signingFun)](#ReferralCodeSigner.getSignatureForNewReferral) ⇒
+    * [.getSignatureForNewCode(rc, signingFun)](#ReferralCodeSigner.getSignatureForNewCode) ⇒
     * [._referralCodeNewCodePayloadToMessage(rc)](#ReferralCodeSigner._referralCodeNewCodePayloadToMessage) ⇒
     * [._codeSelectionPayloadToMessage(rc)](#ReferralCodeSigner._codeSelectionPayloadToMessage) ⇒
     * [.checkNewCodeSignature(rc)](#ReferralCodeSigner.checkNewCodeSignature) ⇒
+
+<a name="ReferralCodeSigner.getSignatureForNewReferral"></a>
+
+### ReferralCodeSigner.getSignatureForNewReferral(rc, signingFun) ⇒
+<p>New agency/broker to agency referral
+rc.PassOnPercTDF must be in 100*percentage unit</p>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>signature</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>payload to sign</p> |
+| signingFun | <p>signing function</p> |
+
+<a name="ReferralCodeSigner.getSignatureForNewCode"></a>
+
+### ReferralCodeSigner.getSignatureForNewCode(rc, signingFun) ⇒
+<p>New code
+rc.PassOnPercTDF must be in 100*percentage unit</p>
+
+**Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
+**Returns**: <p>signature string</p>  
+
+| Param | Description |
+| --- | --- |
+| rc | <p>APIReferralCodePayload without signature</p> |
+| signingFun | <p>function that signs</p> |
 
 <a name="ReferralCodeSigner._referralCodeNewCodePayloadToMessage"></a>
 
@@ -4822,8 +5182,8 @@ one chain, unless the backend employs code transferrals</p>
 ### ReferralCodeSigner.checkNewCodeSignature(rc) ⇒
 <p>Check whether signature is correct on payload:</p>
 <ul>
-<li>either the agency signed</li>
-<li>or the referrer signed and the agency is 'set to 0'</li>
+<li>the referrer always signs</li>
+<li>if the agency is not an agency for this referrer, the backend will reject</li>
 </ul>
 
 **Kind**: static method of [<code>ReferralCodeSigner</code>](#ReferralCodeSigner)  
@@ -4844,65 +5204,65 @@ so that signatures can be handled in frontend via wallet</p>
 
 * [TraderInterface](#TraderInterface) ⇐ [<code>MarketData</code>](#MarketData)
     * [new TraderInterface(config)](#new_TraderInterface_new)
-    * [.queryExchangeFee(poolSymbolName, traderAddr, brokerAddr)](#TraderInterface+queryExchangeFee) ⇒
-    * [.getCurrentTraderVolume(poolSymbolName, traderAddr)](#TraderInterface+getCurrentTraderVolume) ⇒
-    * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
-    * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
-    * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
-    * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
-    * [.getProxyABI(method)](#TraderInterface+getProxyABI) ⇒
-    * [.getOrderBookABI(symbol, method)](#TraderInterface+getOrderBookABI) ⇒
-    * [.addLiquidity(signer, poolSymbolName, amountCC)](#TraderInterface+addLiquidity) ⇒
-    * [.initiateLiquidityWithdrawal(signer, poolSymbolName, amountPoolShares)](#TraderInterface+initiateLiquidityWithdrawal) ⇒
-    * [.executeLiquidityWithdrawal(signer, poolSymbolName)](#TraderInterface+executeLiquidityWithdrawal) ⇒
-    * [.createProxyInstance(provider)](#MarketData+createProxyInstance)
-    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒
-    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒
-    * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
-    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
-    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
-    * [._openOrdersOfPerpetual(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetual) ⇒
-    * [._openOrdersOfPerpetuals(traderAddr, symbol)](#MarketData+_openOrdersOfPerpetuals) ⇒
-    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
-    * [._positionRiskForTraderInPerpetual(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetual) ⇒
-    * [._positionRiskForTraderInPerpetuals(traderAddr, symbol)](#MarketData+_positionRiskForTraderInPerpetuals) ⇒
-    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
-    * [.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
-    * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-    * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance)
-    * [._getPoolShareTokenBalanceFromId(address, poolId)](#MarketData+_getPoolShareTokenBalanceFromId) ⇒
-    * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒
-    * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
-    * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
-    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒
-    * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
-    * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
-    * [.getOrdersStatus(symbol, orderId, overrides)](#MarketData+getOrdersStatus) ⇒
-    * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒
-    * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒
-    * [.getPerpetualState(symbol, indexPrices)](#MarketData+getPerpetualState) ⇒
-    * [.getPoolState(symbol, indexPrices)](#MarketData+getPoolState) ⇒
-    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒
-    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
-    * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-    * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒
-    * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒
-    * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒
-    * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
-    * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
-    * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
-    * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
-    * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
-    * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
-    * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
-    * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
-    * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
-    * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
-    * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
-    * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
-    * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
-    * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
+    * _instance_
+        * [.queryExchangeFee(poolSymbolName, traderAddr, brokerAddr)](#TraderInterface+queryExchangeFee) ⇒
+        * [.getCurrentTraderVolume(poolSymbolName, traderAddr)](#TraderInterface+getCurrentTraderVolume) ⇒
+        * [.cancelOrderDigest(symbol, orderId)](#TraderInterface+cancelOrderDigest) ⇒
+        * [.getOrderBookAddress(symbol)](#TraderInterface+getOrderBookAddress) ⇒
+        * [.createSmartContractOrder(order, traderAddr)](#TraderInterface+createSmartContractOrder) ⇒
+        * [.orderDigest(scOrder)](#TraderInterface+orderDigest) ⇒
+        * [.getProxyABI(method)](#TraderInterface+getProxyABI) ⇒
+        * [.getOrderBookABI(symbol, method)](#TraderInterface+getOrderBookABI) ⇒
+        * [.addLiquidity(signer, poolSymbolName, amountCC)](#TraderInterface+addLiquidity) ⇒
+        * [.initiateLiquidityWithdrawal(signer, poolSymbolName, amountPoolShares)](#TraderInterface+initiateLiquidityWithdrawal) ⇒
+        * [.executeLiquidityWithdrawal(signer, poolSymbolName)](#TraderInterface+executeLiquidityWithdrawal) ⇒
+        * [.createProxyInstance(providerOrMarketData)](#MarketData+createProxyInstance)
+        * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒ <code>string</code>
+        * [.getTriangulations()](#MarketData+getTriangulations) ⇒
+        * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒ <code>Order</code>
+        * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒ <code>Contract</code>
+        * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
+        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
+        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+        * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
+        * [.positionRiskOnCollateralAction(deltaCollateral, account)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
+        * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+        * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance) ⇒ <code>number</code>
+        * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
+        * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
+        * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
+        * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+        * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
+        * [.getOrdersStatus(symbol, orderId)](#MarketData+getOrdersStatus) ⇒
+        * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒ <code>number</code>
+        * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒ <code>number</code>
+        * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒ <code>PerpetualState</code>
+        * [.getPoolState(poolSymbol)](#MarketData+getPoolState) ⇒ <code>PoolState</code>
+        * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒ <code>PerpetualStaticInfo</code>
+        * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
+        * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
+        * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
+        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
+        * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
+        * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+        * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+        * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
+        * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
+        * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
+        * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+        * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
+        * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
+        * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
+        * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+        * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
+        * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+        * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
+        * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+        * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+        * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
+    * _static_
+        * [.chainOrders(orders, ids)](#TraderInterface.chainOrders) ⇒
 
 <a name="new_TraderInterface_new"></a>
 
@@ -4929,6 +5289,20 @@ without broker fee</p>
 | traderAddr | <p>address of trader</p> |
 | brokerAddr | <p>address of broker</p> |
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // query exchange fee
+  let fees = await traderAPI.queryExchangeFee("MATIC");
+  console.log(fees);
+}
+main();
+```
 <a name="TraderInterface+getCurrentTraderVolume"></a>
 
 ### traderInterface.getCurrentTraderVolume(poolSymbolName, traderAddr) ⇒
@@ -4940,6 +5314,20 @@ without broker fee</p>
 | poolSymbolName | <p>pool symbol, e.g. MATIC</p> |
 | traderAddr | <p>address of the trader</p> |
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // query volume
+  let vol = await traderAPI.getCurrentTraderVolume("MATIC", "0xmyAddress");
+  console.log(vol);
+}
+main();
+```
 <a name="TraderInterface+cancelOrderDigest"></a>
 
 ### traderInterface.cancelOrderDigest(symbol, orderId) ⇒
@@ -4954,6 +5342,20 @@ orderBookContract.cancelOrder(orderId, signature);</p>
 | symbol | 
 | orderId | 
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // get digest
+  let d = await traderAPI.cancelOrderDigest("BTC-USD-MATIC", "0xmyAddress");
+  console.log(d);
+}
+main();
+```
 <a name="TraderInterface+getOrderBookAddress"></a>
 
 ### traderInterface.getOrderBookAddress(symbol) ⇒
@@ -4966,6 +5368,20 @@ orderBookContract.cancelOrder(orderId, signature);</p>
 | --- | --- |
 | symbol | <p>symbol (e.g. MATIC-USD-MATIC)</p> |
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // get order book address
+  let ob = traderAPI.getOrderBookAddress("BTC-USD-MATIC");
+  console.log(ob);
+}
+main();
+```
 <a name="TraderInterface+createSmartContractOrder"></a>
 
 ### traderInterface.createSmartContractOrder(order, traderAddr) ⇒
@@ -5021,7 +5437,7 @@ Order must contain broker fee and broker address if there is supposed to be a br
 <a name="TraderInterface+addLiquidity"></a>
 
 ### traderInterface.addLiquidity(signer, poolSymbolName, amountCC) ⇒
-<p>Add liquidity to the PnL participant fund. The address gets pool shares in return.</p>
+<p>Add liquidity to the PnL participant fund via signer. The address gets pool shares in return.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Returns**: <p>Transaction object</p>  
@@ -5032,6 +5448,21 @@ Order must contain broker fee and broker address if there is supposed to be a br
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC)</p> |
 | amountCC | <code>number</code> | <p>Amount in pool-collateral currency</p> |
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const signer = // ethers Signer, e.g. from Metamask
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // add liquidity
+  let respAddLiquidity = await traderAPI.addLiquidity(signer, "MATIC", 0.1);
+  console.log(respAddLiquidity);
+}
+main();
+```
 <a name="TraderInterface+initiateLiquidityWithdrawal"></a>
 
 ### traderInterface.initiateLiquidityWithdrawal(signer, poolSymbolName, amountPoolShares) ⇒
@@ -5048,6 +5479,21 @@ The amount of pool shares to be unlocked is fixed by this call, but not their va
 | poolSymbolName | <code>string</code> | <p>Name of pool symbol (e.g. MATIC).</p> |
 | amountPoolShares | <code>string</code> | <p>Amount in pool-shares, removes everything if &gt; available amount.</p> |
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const signer = // ethers Signer, e.g. from Metamask
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // submit txn
+  let tx = await traderAPI.initiateLiquidityWithdrawal(signer, "MATIC", 10.2);
+  console.log(tx);
+}
+main();
+```
 <a name="TraderInterface+executeLiquidityWithdrawal"></a>
 
 ### traderInterface.executeLiquidityWithdrawal(signer, poolSymbolName) ⇒
@@ -5062,9 +5508,24 @@ The address loses pool shares in return.</p>
 | signer | <code>Signer</code> | <p>Signer that will execute the liquidity withdrawal</p> |
 | poolSymbolName |  |  |
 
+**Example**  
+```js
+import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(TraderInterface);
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const signer = // ethers Signer, e.g. from Metamask
+  let traderAPI = new TraderInterface(config);
+  await traderAPI.createProxyInstance();
+  // submit txn
+  let tx = await traderAPI.executeLiquidityWithdrawal(signer, "MATIC");
+  console.log(tx);
+}
+main();
+```
 <a name="MarketData+createProxyInstance"></a>
 
-### traderInterface.createProxyInstance(provider)
+### traderInterface.createProxyInstance(providerOrMarketData)
 <p>Initialize the marketData-Class with this function
 to create instance of D8X perpetual contract and gather information
 about perpetual currencies</p>
@@ -5074,44 +5535,52 @@ about perpetual currencies</p>
 
 | Param | Description |
 | --- | --- |
-| provider | <p>optional provider</p> |
+| providerOrMarketData | <p>optional provider or existing market data instance</p> |
 
 <a name="MarketData+getProxyAddress"></a>
 
-### traderInterface.getProxyAddress() ⇒
+### traderInterface.getProxyAddress() ⇒ <code>string</code>
 <p>Get the proxy address</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getProxyAddress</code>](#MarketData+getProxyAddress)  
-**Returns**: <p>Address of the perpetual proxy contract</p>  
+**Returns**: <code>string</code> - <p>Address of the perpetual proxy contract</p>  
+<a name="MarketData+getTriangulations"></a>
+
+### traderInterface.getTriangulations() ⇒
+<p>Get the pre-computed triangulations</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getTriangulations</code>](#MarketData+getTriangulations)  
+**Returns**: <p>Triangulations</p>  
 <a name="MarketData+smartContractOrderToOrder"></a>
 
-### traderInterface.smartContractOrderToOrder(smOrder) ⇒
+### traderInterface.smartContractOrderToOrder(smOrder) ⇒ <code>Order</code>
 <p>Convert the smart contract output of an order into a convenient format of type &quot;Order&quot;</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>smartContractOrderToOrder</code>](#MarketData+smartContractOrderToOrder)  
-**Returns**: <p>more convenient format of order, type &quot;Order&quot;</p>  
+**Returns**: <code>Order</code> - <p>more convenient format of order, type &quot;Order&quot;</p>  
 
-| Param | Description |
-| --- | --- |
-| smOrder | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| smOrder | <code>SmartContractOrder</code> | <p>SmartContractOrder, as obtained e.g., by PerpetualLimitOrderCreated event</p> |
 
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
-### traderInterface.getReadOnlyProxyInstance() ⇒
+### traderInterface.getReadOnlyProxyInstance() ⇒ <code>Contract</code>
 <p>Get contract instance. Useful for event listening.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getReadOnlyProxyInstance</code>](#MarketData+getReadOnlyProxyInstance)  
-**Returns**: <p>read-only proxy instance</p>  
+**Returns**: <code>Contract</code> - <p>read-only proxy instance</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
@@ -5134,7 +5603,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
@@ -5155,7 +5624,7 @@ main();
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol, or undefined.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC or a pool symbol, or undefined. If a poolSymbol is provided, the response includes orders in all perpetuals of the given pool. If no symbol is provided, the response includes orders from all perpetuals in all pools.</p> |
 
 **Example**  
 ```js
@@ -5163,7 +5632,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
@@ -5173,34 +5642,6 @@ async function main() {
 }
 main();
 ```
-<a name="MarketData+_openOrdersOfPerpetual"></a>
-
-### traderInterface.\_openOrdersOfPerpetual(traderAddr, symbol) ⇒
-<p>All open orders for a trader-address and a given perpetual symbol.</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>\_openOrdersOfPerpetual</code>](#MarketData+_openOrdersOfPerpetual)  
-**Returns**: <p>open orders and order ids</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
-
-<a name="MarketData+_openOrdersOfPerpetuals"></a>
-
-### traderInterface.\_openOrdersOfPerpetuals(traderAddr, symbol) ⇒
-<p>All open orders for a trader-address and a given perpetual symbol.</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>\_openOrdersOfPerpetuals</code>](#MarketData+_openOrdersOfPerpetuals)  
-**Returns**: <p>open orders and order ids</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the open orders.</p> |
-| symbol | <code>string</code> | <p>perpetual-symbol of the form ETH-USD-MATIC</p> |
-
 <a name="MarketData+positionRisk"></a>
 
 ### traderInterface.positionRisk(traderAddr, symbol) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
@@ -5214,7 +5655,7 @@ for all perpetuals in a pool</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in pool, or undefined to get all positions.</p> |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC, or pool symbol (&quot;MATIC&quot;) to get all positions in a given pool, or no symbol to get all positions in all pools.</p> |
 
 **Example**  
 ```js
@@ -5222,7 +5663,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
@@ -5232,34 +5673,6 @@ async function main() {
 }
 main();
 ```
-<a name="MarketData+_positionRiskForTraderInPerpetual"></a>
-
-### traderInterface.\_positionRiskForTraderInPerpetual(traderAddr, symbol) ⇒
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>\_positionRiskForTraderInPerpetual</code>](#MarketData+_positionRiskForTraderInPerpetual)  
-**Returns**: <p>MarginAccount struct for the trader</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
-
-<a name="MarketData+_positionRiskForTraderInPerpetuals"></a>
-
-### traderInterface.\_positionRiskForTraderInPerpetuals(traderAddr, symbol) ⇒
-<p>Information about the position open by a given trader in a given perpetual contract.</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>\_positionRiskForTraderInPerpetuals</code>](#MarketData+_positionRiskForTraderInPerpetuals)  
-**Returns**: <p>MarginAccount struct for the trader</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| traderAddr | <code>string</code> | <p>Address of the trader for which we get the position risk.</p> |
-| symbol | <code>string</code> | <p>perpetual symbol of the form ETH-USD-MATIC</p> |
-
 <a name="MarketData+positionRiskOnTrade"></a>
 
 ### traderInterface.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒
@@ -5267,30 +5680,69 @@ main();
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>positionRiskOnTrade</code>](#MarketData+positionRiskOnTrade)  
-**Returns**: <p>Position risk after trade</p>  
+**Returns**: <p>Position risk after trade, including order cost and maximal trade sizes for position</p>  
 
 | Param | Description |
 | --- | --- |
 | traderAddr | <p>Address of trader</p> |
 | order | <p>Order to be submitted</p> |
-| account | <p>Position risk before trade</p> |
-| indexPriceInfo | <p>Index prices and market status (open/closed)</p> |
+| account | <p>Position risk before trade. Defaults to current position if not given.</p> |
+| indexPriceInfo | <p>Index prices and market status (open/closed). Defaults to current market status if not given.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  const order: Order = {
+       symbol: "MATIC-USD-MATIC",
+       side: "BUY",
+       type: "MARKET",
+       quantity: 100,
+       leverage: 2,
+       executionTimestamp: Date.now()/1000,
+   };
+  // Get position risk conditional on this order being executed
+  const posRisk = await mktData.positionRiskOnTrade("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", order);
+  console.log(posRisk);
+}
+main();
+```
 <a name="MarketData+positionRiskOnCollateralAction"></a>
 
-### traderInterface.positionRiskOnCollateralAction(traderAddr, deltaCollateral, currentPositionRisk) ⇒ <code>MarginAccount</code>
+### traderInterface.positionRiskOnCollateralAction(deltaCollateral, account) ⇒ <code>MarginAccount</code>
 <p>Estimates what the position risk will be if given amount of collateral is added/removed from the account.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>positionRiskOnCollateralAction</code>](#MarketData+positionRiskOnCollateralAction)  
-**Returns**: <code>MarginAccount</code> - <p>Position risk after</p>  
+**Returns**: <code>MarginAccount</code> - <p>Position risk after collateral has been added/removed</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>Address of trader</p> |
-| deltaCollateral | <p>Amount of collateral to add or remove (signed)</p> |
-| currentPositionRisk | <p>Position risk before</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| deltaCollateral | <code>number</code> | <p>Amount of collateral to add or remove (signed)</p> |
+| account | <code>MarginAccount</code> | <p>Position risk before collateral is added or removed</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // Get position risk conditional on removing 3.14 MATIC
+  const traderAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B";
+  const curPos = await mktData.positionRisk("traderAddr", "BTC-USD-MATIC");
+  const posRisk = await mktData.positionRiskOnCollateralAction(-3.14, curPos);
+  console.log(posRisk);
+}
+main();
+```
 <a name="MarketData+getWalletBalance"></a>
 
 ### traderInterface.getWalletBalance(address, symbol) ⇒
@@ -5298,53 +5750,85 @@ main();
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getWalletBalance</code>](#MarketData+getWalletBalance)  
-**Returns**: <p>Balance</p>  
+**Returns**: <p>Perpetual's collateral token balance of the given address.</p>  
 
 | Param | Description |
 | --- | --- |
 | address | <p>Address to check</p> |
 | symbol | <p>Symbol of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get MATIC balance of address
+  let marginTokenBalance = await md.getWalletBalance(myaddress, "BTC-USD-MATIC");
+  console.log(marginTokenBalance);
+}
+main();
+```
 <a name="MarketData+getPoolShareTokenBalance"></a>
 
-### traderInterface.getPoolShareTokenBalance(address, symbolOrId)
+### traderInterface.getPoolShareTokenBalance(address, symbolOrId) ⇒ <code>number</code>
 <p>Get the address' balance of the pool share token</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPoolShareTokenBalance</code>](#MarketData+getPoolShareTokenBalance)  
+**Returns**: <code>number</code> - <p>Pool share token balance of the given address (e.g. dMATIC balance)</p>  
 
-| Param | Description |
-| --- | --- |
-| address | <p>address of the liquidity provider</p> |
-| symbolOrId | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| address | <code>string</code> | <p>address of the liquidity provider</p> |
+| symbolOrId | <code>string</code> \| <code>number</code> | <p>Symbol of the form ETH-USD-MATIC, or MATIC (collateral only), or Pool-Id</p> |
 
-<a name="MarketData+_getPoolShareTokenBalanceFromId"></a>
-
-### traderInterface.\_getPoolShareTokenBalanceFromId(address, poolId) ⇒
-<p>Query the pool share token holdings of address</p>
-
-**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>\_getPoolShareTokenBalanceFromId</code>](#MarketData+_getPoolShareTokenBalanceFromId)  
-**Returns**: <p>pool share token balance of address</p>  
-
-| Param | Description |
-| --- | --- |
-| address | <p>address of token holder</p> |
-| poolId | <p>pool id</p> |
-
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get dMATIC balance of address
+  let shareTokenBalance = await md.getPoolShareTokenBalance(myaddress, "MATIC");
+  console.log(shareTokenBalance);
+}
+main();
+```
 <a name="MarketData+getShareTokenPrice"></a>
 
-### traderInterface.getShareTokenPrice(symbolOrId) ⇒
+### traderInterface.getShareTokenPrice(symbolOrId) ⇒ <code>number</code>
 <p>Value of pool token in collateral currency</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getShareTokenPrice</code>](#MarketData+getShareTokenPrice)  
-**Returns**: <p>current pool share token price in collateral currency</p>  
+**Returns**: <code>number</code> - <p>current pool share token price in collateral currency</p>  
 
-| Param | Description |
-| --- | --- |
-| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbolOrId | <code>string</code> \| <code>number</code> | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // get price of 1 dMATIC in MATIC
+  let shareTokenPrice = await md.getShareTokenPrice(myaddress, "MATIC");
+  console.log(shareTokenPrice);
+}
+main();
+```
 <a name="MarketData+getParticipationValue"></a>
 
 ### traderInterface.getParticipationValue(address, symbolOrId) ⇒
@@ -5355,10 +5839,10 @@ in poolSymbol-currency (e.g. MATIC, USDC).</p>
 **Overrides**: [<code>getParticipationValue</code>](#MarketData+getParticipationValue)  
 **Returns**: <p>the value (in collateral tokens) of the pool share, #share tokens, shareTokenAddress</p>  
 
-| Param | Description |
-| --- | --- |
-| address | <p>address of liquidity provider</p> |
-| symbolOrId | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| address | <code>string</code> | <p>address of liquidity provider</p> |
+| symbolOrId | <code>string</code> \| <code>number</code> | <p>symbol of the form ETH-USD-MATIC, MATIC (collateral), or poolId</p> |
 
 **Example**  
 ```js
@@ -5366,7 +5850,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
@@ -5378,31 +5862,63 @@ main();
 <a name="MarketData+maxOrderSizeForTrader"></a>
 
 ### traderInterface.maxOrderSizeForTrader(traderAddr, symbol) ⇒
-<p>Gets the maximal order size to open positions (increase size),
+<p>Gets the maximal order sizes to open positions (increase size), both long and short,
 considering the existing position, state of the perpetual
-Accoutns for user's wallet balance.</p>
+Accounts for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>maxOrderSizeForTrader</code>](#MarketData+maxOrderSizeForTrader)  
-**Returns**: <p>Maximal trade size, not signed</p>  
+**Returns**: <p>Maximal trade sizes</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>Address of trader</p> |
-| symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>Address of trader</p> |
+| symbol | <code>symbol</code> | <p>Symbol of the form ETH-USD-MATIC</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let md = new MarketData(config);
+  await md.createProxyInstance();
+  // max order sizes
+  let shareToken = await md.maxOrderSizeForTrader(myaddress, "BTC-USD-MATIC");
+  console.log(shareToken); // {buy: 314, sell: 415}
+}
+main();
+```
 <a name="MarketData+maxSignedPosition"></a>
 
-### traderInterface.maxSignedPosition(side, symbol) ⇒
+### traderInterface.maxSignedPosition(side, symbol) ⇒ <code>number</code>
+<p>Perpetual-wide maximal signed position size in perpetual.</p>
+
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>maxSignedPosition</code>](#MarketData+maxSignedPosition)  
-**Returns**: <p>signed maximal position size in base currency</p>  
+**Returns**: <code>number</code> - <p>signed maximal position size in base currency</p>  
 
-| Param | Description |
-| --- | --- |
-| side | <p>BUY_SIDE or SELL_SIDE</p> |
-| symbol | <p>of the form ETH-USD-MATIC.</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| side |  | <p>BUY_SIDE or SELL_SIDE</p> |
+| symbol | <code>string</code> | <p>of the form ETH-USD-MATIC.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get oracle price
+  let maxLongPos = await mktData.maxSignedPosition(BUY_SIDE, "BTC-USD-MATIC");
+  console.log(maxLongPos);
+}
+main();
+```
 <a name="MarketData+getOraclePrice"></a>
 
 ### traderInterface.getOraclePrice(base, quote) ⇒ <code>number</code>
@@ -5423,7 +5939,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -5435,9 +5951,11 @@ main();
 <a name="MarketData+getOrderStatus"></a>
 
 ### traderInterface.getOrderStatus(symbol, orderId, overrides) ⇒
+<p>Get the status of an order given a symbol and order Id</p>
+
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getOrderStatus</code>](#MarketData+getOrderStatus)  
-**Returns**: <p>Order status ()</p>  
+**Returns**: <p>Order status (cancelled = 0, executed = 1, open = 2,  unkown = 3)</p>  
 
 | Param | Description |
 | --- | --- |
@@ -5445,9 +5963,26 @@ main();
 | orderId | <p>Order Id</p> |
 | overrides |  |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get order stauts
+  let status = await mktData.getOrderStatus("ETH-USD-MATIC", "0xmyOrderId");
+  console.log(status);
+}
+main();
+```
 <a name="MarketData+getOrdersStatus"></a>
 
-### traderInterface.getOrdersStatus(symbol, orderId, overrides) ⇒
+### traderInterface.getOrdersStatus(symbol, orderId) ⇒
+<p>Get the status of an array of orders given a symbol and their Ids</p>
+
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getOrdersStatus</code>](#MarketData+getOrdersStatus)  
 **Returns**: <p>Array of order status</p>  
@@ -5456,16 +5991,30 @@ main();
 | --- | --- |
 | symbol | <p>Symbol of the form ETH-USD-MATIC</p> |
 | orderId | <p>Array of order Ids</p> |
-| overrides |  |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get order stauts
+  let status = await mktData.getOrdersStatus("ETH-USD-MATIC", ["0xmyOrderId1", "0xmyOrderId2"]);
+  console.log(status);
+}
+main();
+```
 <a name="MarketData+getMarkPrice"></a>
 
-### traderInterface.getMarkPrice(symbol) ⇒
+### traderInterface.getMarkPrice(symbol) ⇒ <code>number</code>
 <p>Get the current mark price</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getMarkPrice</code>](#MarketData+getMarkPrice)  
-**Returns**: <p>mark price</p>  
+**Returns**: <code>number</code> - <p>mark price</p>  
 
 | Param | Description |
 | --- | --- |
@@ -5477,7 +6026,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
@@ -5488,12 +6037,12 @@ main();
 ```
 <a name="MarketData+getPerpetualPrice"></a>
 
-### traderInterface.getPerpetualPrice(symbol, quantity) ⇒
+### traderInterface.getPerpetualPrice(symbol, quantity) ⇒ <code>number</code>
 <p>get the current price for a given quantity</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPerpetualPrice</code>](#MarketData+getPerpetualPrice)  
-**Returns**: <p>price (number)</p>  
+**Returns**: <code>number</code> - <p>price</p>  
 
 | Param | Description |
 | --- | --- |
@@ -5506,7 +6055,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
@@ -5517,45 +6066,43 @@ main();
 ```
 <a name="MarketData+getPerpetualState"></a>
 
-### traderInterface.getPerpetualState(symbol, indexPrices) ⇒
+### traderInterface.getPerpetualState(symbol) ⇒ <code>PerpetualState</code>
 <p>Query recent perpetual state from blockchain</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPerpetualState</code>](#MarketData+getPerpetualState)  
-**Returns**: <p>PerpetualState reference</p>  
+**Returns**: <code>PerpetualState</code> - <p>PerpetualState copy</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
-| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>symbol of the form ETH-USD-MATIC</p> |
 
 <a name="MarketData+getPoolState"></a>
 
-### traderInterface.getPoolState(symbol, indexPrices) ⇒
+### traderInterface.getPoolState(poolSymbol) ⇒ <code>PoolState</code>
 <p>Query recent pool state from blockchain, not including perpetual states</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPoolState</code>](#MarketData+getPoolState)  
-**Returns**: <p>PoolState reference</p>  
+**Returns**: <code>PoolState</code> - <p>PoolState copy</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>symbol of the form USDC</p> |
-| indexPrices | <p>S2 and S3 prices/isMarketOpen if not provided fetch via REST API</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| poolSymbol | <code>string</code> | <p>symbol of the form USDC</p> |
 
 <a name="MarketData+getPerpetualStaticInfo"></a>
 
-### traderInterface.getPerpetualStaticInfo(symbol) ⇒
+### traderInterface.getPerpetualStaticInfo(symbol) ⇒ <code>PerpetualStaticInfo</code>
 <p>Query perpetual static info.
-This information is queried once at createProxyInstance-time and remains static after that.</p>
+This information is queried once at createProxyInstance-time, and remains static after that.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPerpetualStaticInfo</code>](#MarketData+getPerpetualStaticInfo)  
-**Returns**: <p>PerpetualStaticInfo copy.</p>  
+**Returns**: <code>PerpetualStaticInfo</code> - <p>Perpetual static info copy.</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol</p> |
 
 <a name="MarketData+getPerpetualMidPrice"></a>
 
@@ -5576,7 +6123,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("testnet");
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual mid price
@@ -5595,51 +6142,111 @@ Result is in collateral currency</p>
 **Overrides**: [<code>getAvailableMargin</code>](#MarketData+getAvailableMargin)  
 **Returns**: <p>available margin in collateral currency</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>address of the trader</p> |
-| symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
-| indexPrices | <p>optional index prices, will otherwise fetch from REST API</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>address of the trader</p> |
+| symbol | <code>string</code> | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+| indexPrices |  | <p>optional index prices, will otherwise fetch from REST API</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get available margin
+  let mgn = await mktData.getAvailableMargin("0xmyAddress", "ETH-USD-MATIC");
+  console.log(mgn);
+}
+main();
+```
 <a name="MarketData+getTraderLoyalityScore"></a>
 
-### traderInterface.getTraderLoyalityScore(traderAddr) ⇒
+### traderInterface.getTraderLoyalityScore(traderAddr) ⇒ <code>number</code>
 <p>Calculate a type of exchange loyality score based on trader volume</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getTraderLoyalityScore</code>](#MarketData+getTraderLoyalityScore)  
-**Returns**: <p>a loyality score (4 worst, 1 best)</p>  
+**Returns**: <code>number</code> - <p>a loyality score (4 worst, 1 best)</p>  
 
-| Param | Description |
-| --- | --- |
-| traderAddr | <p>address of the trader</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| traderAddr | <code>string</code> | <p>address of the trader</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // get scpre
+  let s = await mktData.getTraderLoyalityScore("0xmyAddress");
+  console.log(s);
+}
+main();
+```
 <a name="MarketData+isMarketClosed"></a>
 
-### traderInterface.isMarketClosed(symbol) ⇒
+### traderInterface.isMarketClosed(symbol) ⇒ <code>boolean</code>
 <p>Get market open/closed status</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>isMarketClosed</code>](#MarketData+isMarketClosed)  
-**Returns**: <p>True if the market is closed</p>  
+**Returns**: <code>boolean</code> - <p>True if the market is closed</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Perpetual symbol of the form ETH-USD-MATIC</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // is market closed?
+  let s = await mktData.isMarketClosed("ETH-USD-MATIC");
+  console.log(s);
+}
+main();
+```
 <a name="MarketData+getPriceInUSD"></a>
 
-### traderInterface.getPriceInUSD(symbol) ⇒
+### traderInterface.getPriceInUSD(symbol) ⇒ <code>Map.&lt;string, number&gt;</code>
 <p>Get the latest on-chain price of a perpetual base index in USD.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getPriceInUSD</code>](#MarketData+getPriceInUSD)  
-**Returns**: <p>Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.</p>  
+**Returns**: <code>Map.&lt;string, number&gt;</code> - <p>Price of the base index in USD, e.g. for ETH-USDC-MATIC, it returns the value of ETH-USD.</p>  
 
-| Param | Description |
-| --- | --- |
-| symbol | <p>Symbol of the form ETH-USDC-MATIC. If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool. If no argument is provided, it returns the all prices of all the indices in the pools of the exchange.</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USDC-MATIC. If a pool symbol is used, it returns an array of all the USD prices of the indices in the pool. If no argument is provided, it returns all prices of all the indices in the pools of the exchange.</p> |
 
+**Example**  
+```js
+import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(MarketData);
+  // setup
+  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  // is market closed?
+  let px = await mktData.getPriceInUSD("ETH-USDC-USDC");
+  console.log(px); // {'ETH-USD' -> 1800}
+}
+main();
+```
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### traderInterface.getOrderBookContract(symbol) ⇒
@@ -5702,15 +6309,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### traderInterface.getSymbolFromPerpId(perpId)
+### traderInterface.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### traderInterface.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
@@ -5828,6 +6447,20 @@ and corresponding price information</p>
 | --- | --- |
 | contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
+<a name="TraderInterface.chainOrders"></a>
+
+### TraderInterface.chainOrders(orders, ids) ⇒
+<p>Takes up to three orders and designates the first one as &quot;parent&quot; of the others.
+E.g. the first order opens a position, and the other two are take-profit and/or stop-loss orders.</p>
+
+**Kind**: static method of [<code>TraderInterface</code>](#TraderInterface)  
+**Returns**: <p>client orders with dependency info filled in</p>  
+
+| Param | Description |
+| --- | --- |
+| orders | <p>1, 2 or 3 smart contract orders</p> |
+| ids | <p>order ids</p> |
+
 <a name="WriteAccessHandler"></a>
 
 ## WriteAccessHandler ⇐ [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)
@@ -5850,7 +6483,8 @@ require gas-payments.</p>
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
-    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId)
+    * [.getSymbolFromPerpId(perpId)](#PerpetualDataHandler+getSymbolFromPerpId) ⇒ <code>string</code>
+    * [.symbol4BToLongSymbol(sym)](#PerpetualDataHandler+symbol4BToLongSymbol) ⇒ <code>string</code>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
@@ -5980,15 +6614,27 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 <a name="PerpetualDataHandler+getSymbolFromPerpId"></a>
 
-### writeAccessHandler.getSymbolFromPerpId(perpId)
+### writeAccessHandler.getSymbolFromPerpId(perpId) ⇒ <code>string</code>
 <p>Get the symbol in long format of the perpetual id</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 **Overrides**: [<code>getSymbolFromPerpId</code>](#PerpetualDataHandler+getSymbolFromPerpId)  
+**Returns**: <code>string</code> - <p>Symbol</p>  
 
-| Param | Description |
-| --- | --- |
-| perpId | <p>perpetual id</p> |
+| Param | Type | Description |
+| --- | --- | --- |
+| perpId | <code>number</code> | <p>perpetual id</p> |
+
+<a name="PerpetualDataHandler+symbol4BToLongSymbol"></a>
+
+### writeAccessHandler.symbol4BToLongSymbol(sym) ⇒ <code>string</code>
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>symbol4BToLongSymbol</code>](#PerpetualDataHandler+symbol4BToLongSymbol)  
+**Returns**: <code>string</code> - <p>Long symbol</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| sym | <code>string</code> | <p>Short symbol</p> |
 
 <a name="PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual"></a>
 
