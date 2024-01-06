@@ -606,7 +606,7 @@ export default class PerpetualDataHandler {
         symbolToPerpStaticInfo
       );
       fLockedIn = traderState[idx_locked_in];
-      side = traderState[idx_locked_in].gt(0) ? BUY_SIDE : SELL_SIDE;
+      side = traderState[idx_notional].gt(0) ? BUY_SIDE : SELL_SIDE;
       entryPrice = ABK64x64ToFloat(div64x64(fLockedIn, traderState[idx_notional]).abs());
     }
     let mgn: MarginAccount = {
