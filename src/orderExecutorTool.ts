@@ -276,7 +276,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
     const MAX_ORDERS_POLLED = 500;
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
-    let orderBundles: [Order[], string[], string[]] = [[], [], []]; // = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, ZERO_ORDER_ID, overrides);
+    let orderBundles: [Order[], string[], string[]] = [[], [], []];
     let moreOrders = orderBundles[1].length < totalOrders;
     let startAfter = ZERO_ORDER_ID;
     while (orderBundles[1].length < totalOrders && moreOrders) {
@@ -416,15 +416,11 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     let userFriendlyOrders: Order[] = new Array<Order>();
     let traderAddr: string[] = [];
     let orderIdsOut: string[] = [];
-    // let seenOrderIds = new Set<string>();
     let k = 0;
     while (k < numElements && k < orders.length && orders[k].traderAddr !== ZERO_ADDRESS) {
-      // if (!seenOrderIds.has(orderIds[k])) {
       userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
       traderAddr.push(orders[k].traderAddr);
-      // seenOrderIds.add(orderIds[k]);
-      // }
       k++;
     }
     // then get perp orders (incl. submitted ts info)
