@@ -278,21 +278,21 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
     let orderBundles: [Order[], string[], string[]] = [[], [], []];
     let moreOrders = orderBundles[1].length < totalOrders;
-    let startAfter = ZERO_ORDER_ID;
+    let startAfter = 0;
     while (orderBundles[1].length < totalOrders && moreOrders) {
       let res = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, startAfter, overrides);
       if (res[1].length < 1) {
         break;
       }
       const curIds = new Set(orderBundles[1]);
-      for (let k = 0; k < res[0].length; k++) {
+      for (let k = 0; k < res[0].length && res[2][k] !== ZERO_ADDRESS; k++) {
         if (!curIds.has(res[1][k])) {
           orderBundles[0].push(res[0][k]);
           orderBundles[1].push(res[1][k]);
           orderBundles[2].push(res[2][k]);
         }
       }
-      startAfter = res[1].at(-1)!;
+      startAfter = orderBundles[0].length;
       moreOrders = orderBundles[1].length < totalOrders;
     }
     return orderBundles;
@@ -390,7 +390,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   public async pollLimitOrders(
     symbol: string,
     numElements: number,
-    startAfter?: string,
+    startAfter?: string | number,
     overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<[Order[], string[], string[]]> {
     if (this.proxyContract == null) {
@@ -404,15 +404,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     const orderBookSC = this.getOrderBookContract(symbol).connect(provider) as LimitOrderBook;
     const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
 
-    if (typeof startAfter == "undefined") {
+    if (typeof startAfter === "undefined") {
       startAfter = ZERO_ORDER_ID;
+    } else if (typeof startAfter === "string") {
+      startAfter = 0; // TODO: fix
     }
     // first get client orders (incl. dependency info)
-    let [orders, orderIds] = await orderBookSC.pollLimitOrders(
-      startAfter,
-      BigNumber.from(numElements),
-      overrides || {}
-    );
+    let [orders, orderIds] = await orderBookSC.pollRange(startAfter, BigNumber.from(numElements), overrides || {});
     let userFriendlyOrders: Order[] = new Array<Order>();
     let traderAddr: string[] = [];
     let orderIdsOut: string[] = [];
