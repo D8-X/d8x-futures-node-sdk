@@ -326,6 +326,8 @@ export default class MarketData extends PerpetualDataHandler {
     provider: Provider,
     overrides?: CallOverrides
   ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
+    // filter by perpetuals with valid order book
+    symbols = symbols.filter((symbol) => this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr !== ZERO_ADDRESS);
     // open orders requested only for given symbol
     const orderBookContracts = symbols.map((symbol) =>
       LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider)
