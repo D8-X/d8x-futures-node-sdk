@@ -46,5 +46,17 @@
     "proxyABILocation": "IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "arbitrumSepolia",
+    "chainId": 421614,
+    "version": 1,
+    "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "nodeURL": "https://sepolia-rollup.arbitrum.io/rpc",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
   }
 ]
