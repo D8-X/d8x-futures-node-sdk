@@ -34,5 +34,41 @@
     "proxyABILocation": "IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "cardona",
+    "chainId": 2442,
+    "version": 1,
+    "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "arbitrumSepolia",
+    "chainId": 421614,
+    "version": 1,
+    "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "nodeURL": "https://sepolia-rollup.arbitrum.io/rpc",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "artio",
+    "chainId": 80085,
+    "version": 1,
+    "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "nodeURL": "https://rpc.ankr.com/berachain_testnet",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
   }
 ]

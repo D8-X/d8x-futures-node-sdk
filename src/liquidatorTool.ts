@@ -37,6 +37,39 @@ export default class LiquidatorTool extends WriteAccessHandler {
     super(config, signer);
   }
 
+  public async updateOracles(
+    symbol: string,
+    priceUpdates?: PriceFeedSubmission,
+    overrides?: PayableOverrides & { rpcURL?: string }
+  ) {
+    if (this.proxyContract == null || this.signer == null) {
+      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
+    }
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
+    if (priceUpdates == undefined) {
+      priceUpdates = await this.fetchLatestFeedPriceInfo(symbol);
+    }
+    if (!overrides || overrides.gasLimit == undefined) {
+      overrides = {
+        gasLimit: overrides?.gasLimit ?? this.gasLimit,
+        ...overrides,
+      } as PayableOverrides;
+    }
+
+    const pyth = IPyth__factory.connect(this.pythAddr!, provider).connect(this.signer);
+    const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
+    return await pyth.updatePriceFeedsIfNecessary(priceUpdates.priceFeedVaas, priceIds, priceUpdates.timestamps, {
+      value: this.PRICE_UPDATE_FEE_GWEI * priceUpdates.timestamps.length,
+      gasLimit: overrides?.gasLimit ?? this.gasLimit,
+      nonce: overrides.nonce,
+    });
+  }
+
   /**
    * Liquidate a trader.
    * @param {string} symbol Symbol of the form ETH-USD-MATIC.

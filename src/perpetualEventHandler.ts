@@ -1,5 +1,4 @@
 import { BigNumber } from "@ethersproject/bignumber";
-import { emitWarning } from "process";
 import { ONE_64x64 } from "./constants";
 import { ABK64x64ToFloat, mul64x64 } from "./d8XMath";
 import MarketData from "./marketData";
@@ -126,14 +125,14 @@ export default class PerpetualEventHandler {
     let poolIdx = this.poolIndexForPerpetual.get(perpId)!; //Math.floor(perpId / 100_000);
     let perpetuals = this.exchangeInfo?.pools[poolIdx].perpetuals;
     if (perpetuals == undefined) {
-      emitWarning(`exchangeInfo not found, initialize perpetualEventHandler`);
+      console.log(`exchangeInfo not found, initialize perpetualEventHandler`);
       return undefined;
     }
     // find perpetual
     let k;
     for (k = 0; k < perpetuals?.length && perpetuals[k].id != perpId; k++);
     if (perpetuals[k].id != perpId) {
-      emitWarning(`getPerpetualData: perpetual id ${perpId} not found`);
+      console.log(`getPerpetualData: perpetual id ${perpId} not found`);
       return undefined;
     }
     return perpetuals[k];
@@ -242,7 +241,7 @@ export default class PerpetualEventHandler {
    */
   public onExecutionFailed(perpetualId: number, trader: string, digest: string, reason: string) {
     if (trader != this.traderAddr) {
-      emitWarning(`onExecutionFailed: trader ${trader} not relevant`);
+      console.log(`onExecutionFailed: trader ${trader} not relevant`);
       return;
     }
     // remove order from open orders
@@ -253,7 +252,7 @@ export default class PerpetualEventHandler {
         }
       | undefined = this.ordersInPerpetual.get(perpetualId);
     if (orderStructs == undefined) {
-      emitWarning(`onExecutionFailed: no order found for perpetual ${perpetualId}`);
+      console.log(`onExecutionFailed: no order found for perpetual ${perpetualId}`);
       return;
     }
     if (reason == "cancel delay required") {
@@ -272,7 +271,7 @@ export default class PerpetualEventHandler {
     // remove order from open orders
     let perpId: number | undefined = PerpetualEventHandler.findOrderForId(orderId, this.ordersInPerpetual);
     if (perpId == undefined) {
-      emitWarning(`onPerpetualLimitOrderCancelled: no order found with id ${orderId}`);
+      console.log(`onPerpetualLimitOrderCancelled: no order found with id ${orderId}`);
       return;
     }
     let orderStruct: OrderStruct | undefined = this.ordersInPerpetual.get(perpId);
@@ -304,7 +303,7 @@ export default class PerpetualEventHandler {
     digest: string
   ): void {
     if (trader != this.traderAddr) {
-      emitWarning(`onPerpetualLimitOrderCreated: trader ${trader} not relevant`);
+      console.log(`onPerpetualLimitOrderCreated: trader ${trader} not relevant`);
       return;
     }
     let order: Order = this.mktData.smartContractOrderToOrder(Order);
@@ -341,7 +340,7 @@ export default class PerpetualEventHandler {
   ): Promise<void> {
     let perpetual = this.getPerpetualData(perpetualId.toString());
     if (perpetual == undefined) {
-      emitWarning(`onUpdateMarginAccount: perpetual ${perpetualId} not found`);
+      console.log(`onUpdateMarginAccount: perpetual ${perpetualId} not found`);
       return;
     }
     perpetual.openInterestBC = ABK64x64ToFloat(fOpenInterestBC);
@@ -376,7 +375,7 @@ export default class PerpetualEventHandler {
     // remove order digest from open orders
     let orderStructs = this.ordersInPerpetual.get(perpetualId);
     if (orderStructs == undefined) {
-      emitWarning(`onTrade: executed order not found ${orderDigest}`);
+      console.log(`onTrade: executed order not found ${orderDigest}`);
     } else {
       PerpetualEventHandler.deleteOrder(orderStructs, orderDigest);
     }
@@ -420,7 +419,7 @@ export default class PerpetualEventHandler {
     let k;
     for (k = 0; k < orderStructs.orderIds.length && orderStructs.orderIds[k] != orderId; k++);
     if (orderStructs.orderIds[k] != orderId) {
-      emitWarning(`deleteOrder: no order found with digest ${orderId}`);
+      console.log(`deleteOrder: no order found with digest ${orderId}`);
       return;
     }
     // delete element k on reference of orders

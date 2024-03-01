@@ -4,7 +4,7 @@ import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { BlockTag, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { BUY_SIDE, MULTICALL_ADDRESS, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
-import { IPyth__factory, LimitOrderBook__factory, Multicall3, Multicall3__factory } from "./contracts";
+import { IPyth__factory, LimitOrderBook, LimitOrderBook__factory, Multicall3, Multicall3__factory } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
   type NodeSDKConfig,
@@ -274,21 +274,26 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @returns Array with all open orders and their IDs.
    */
   public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
-    const MAX_ORDERS_POLLED = 100;
+    const MAX_ORDERS_POLLED = 500;
     let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
-    let orderBundles = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, ZERO_ORDER_ID, overrides);
-    let foundNewOrders = orderBundles.length > 0;
-    while (orderBundles[0].length < totalOrders && foundNewOrders) {
-      let res = await this.pollLimitOrders(
-        symbol,
-        MAX_ORDERS_POLLED,
-        orderBundles[1][orderBundles.length - 1],
-        overrides
-      );
-      foundNewOrders = res[0].length > 1;
-      orderBundles[0] = orderBundles[0].concat(res[0].slice(1, res[0].length));
-      orderBundles[1] = orderBundles[1].concat(res[1].slice(1, res[1].length));
-      orderBundles[2] = orderBundles[2].concat(res[2].slice(1, res[2].length));
+    let orderBundles: [Order[], string[], string[]] = [[], [], []];
+    let moreOrders = orderBundles[1].length < totalOrders;
+    let startAfter = 0;
+    while (orderBundles[1].length < totalOrders && moreOrders) {
+      let res = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, startAfter, overrides);
+      if (res[1].length < 1) {
+        break;
+      }
+      const curIds = new Set(orderBundles[1]);
+      for (let k = 0; k < res[0].length && res[2][k] !== ZERO_ADDRESS; k++) {
+        if (!curIds.has(res[1][k])) {
+          orderBundles[0].push(res[0][k]);
+          orderBundles[1].push(res[1][k]);
+          orderBundles[2].push(res[2][k]);
+        }
+      }
+      startAfter = orderBundles[0].length;
+      moreOrders = orderBundles[1].length < totalOrders;
     }
     return orderBundles;
   }
@@ -385,7 +390,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   public async pollLimitOrders(
     symbol: string,
     numElements: number,
-    startAfter?: string,
+    startAfter?: string | number,
     overrides?: CallOverrides & { rpcURL?: string }
   ): Promise<[Order[], string[], string[]]> {
     if (this.proxyContract == null) {
@@ -396,23 +401,21 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       ({ rpcURL, ...overrides } = overrides);
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
-    const orderBookSC = this.getOrderBookContract(symbol).connect(provider);
+    const orderBookSC = this.getOrderBookContract(symbol).connect(provider) as LimitOrderBook;
     const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
 
-    if (typeof startAfter == "undefined") {
+    if (typeof startAfter === "undefined") {
       startAfter = ZERO_ORDER_ID;
+    } else if (typeof startAfter === "string") {
+      startAfter = 0; // TODO: fix
     }
     // first get client orders (incl. dependency info)
-    let [orders, orderIds] = await orderBookSC.pollLimitOrders(
-      startAfter,
-      BigNumber.from(numElements),
-      overrides || {}
-    );
+    let [orders, orderIds] = await orderBookSC.pollRange(startAfter, BigNumber.from(numElements), overrides || {});
     let userFriendlyOrders: Order[] = new Array<Order>();
     let traderAddr: string[] = [];
     let orderIdsOut: string[] = [];
     let k = 0;
-    while (k < numElements && k < orders.length && orders[k].traderAddr != ZERO_ADDRESS) {
+    while (k < numElements && k < orders.length && orders[k].traderAddr !== ZERO_ADDRESS) {
       userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
       orderIdsOut.push(orderIds[k]);
       traderAddr.push(orders[k].traderAddr);

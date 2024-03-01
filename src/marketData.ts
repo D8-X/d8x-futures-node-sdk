@@ -326,6 +326,8 @@ export default class MarketData extends PerpetualDataHandler {
     provider: Provider,
     overrides?: CallOverrides
   ): Promise<{ orders: Order[]; orderIds: string[] }[]> {
+    // filter by perpetuals with valid order book
+    symbols = symbols.filter((symbol) => this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr !== ZERO_ADDRESS);
     // open orders requested only for given symbol
     const orderBookContracts = symbols.map((symbol) =>
       LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider)
@@ -519,6 +521,8 @@ export default class MarketData extends PerpetualDataHandler {
     // signed trade amount
     let tradeAmountBC = Math.abs(order.quantity) * (order.side == BUY_SIDE ? 1 : -1);
 
+    const accountGiven = account !== undefined;
+
     // create all calls
     const poolId = PerpetualDataHandler._getPoolIdFromSymbol(order.symbol, this.poolStaticInfos);
     const perpId = PerpetualDataHandler.symbolToPerpetualId(order.symbol, this.symbolToPerpStaticInfo);
@@ -562,7 +566,9 @@ export default class MarketData extends PerpetualDataHandler {
         allowFailure: false,
         callData: this.proxyContract.interface.encodeFunctionData("getMaxSignedOpenTradeSizeForPos", [
           perpId,
-          BigNumber.from(0),
+          account
+            ? floatToABK64x64(account.positionNotionalBaseCCY * (account.side === BUY_SIDE ? 1 : -1))
+            : BigNumber.from(0),
           true,
         ]),
       },
@@ -572,7 +578,9 @@ export default class MarketData extends PerpetualDataHandler {
         allowFailure: false,
         callData: this.proxyContract.interface.encodeFunctionData("getMaxSignedOpenTradeSizeForPos", [
           perpId,
-          BigNumber.from(0),
+          account
+            ? floatToABK64x64(account.positionNotionalBaseCCY * (account.side === BUY_SIDE ? 1 : -1))
+            : BigNumber.from(0),
           false,
         ]),
       },
@@ -673,7 +681,7 @@ export default class MarketData extends PerpetualDataHandler {
     )[0] as BigNumber;
     const maxLongTrade =
       account.side == BUY_SIDE
-        ? Math.max(0, ABK64x64ToFloat(fMaxLong) - account.positionNotionalBaseCCY)
+        ? Math.max(0, ABK64x64ToFloat(fMaxLong) - (accountGiven ? 0 : account.positionNotionalBaseCCY))
         : ABK64x64ToFloat(fMaxLong) + account.positionNotionalBaseCCY;
     // max sell
     const fMaxShort = this.proxyContract.interface.decodeFunctionResult(
@@ -682,7 +690,7 @@ export default class MarketData extends PerpetualDataHandler {
     )[0] as BigNumber;
     const maxShortTrade =
       account.side == SELL_SIDE
-        ? Math.max(0, ABK64x64ToFloat(fMaxShort.abs()) - Math.abs(account.positionNotionalBaseCCY))
+        ? Math.max(0, ABK64x64ToFloat(fMaxShort.abs()) - (accountGiven ? 0 : Math.abs(account.positionNotionalBaseCCY)))
         : ABK64x64ToFloat(fMaxShort.abs()) + Math.abs(account.positionNotionalBaseCCY);
 
     // Current state:
@@ -1157,33 +1165,14 @@ export default class MarketData extends PerpetualDataHandler {
         allowFailure: false,
         callData: this.proxyContract.interface.encodeFunctionData("getTraderState", [perpId, traderAddr, fS2S3]),
       },
-      // 1: max long
-      {
-        target: this.proxyContract.address,
-        allowFailure: false,
-        callData: this.proxyContract.interface.encodeFunctionData("getMaxSignedOpenTradeSizeForPos", [
-          perpId,
-          BigNumber.from(0),
-          true,
-        ]),
-      },
-      // 2: max short
-      {
-        target: this.proxyContract.address,
-        allowFailure: false,
-        callData: this.proxyContract.interface.encodeFunctionData("getMaxSignedOpenTradeSizeForPos", [
-          perpId,
-          BigNumber.from(0),
-          false,
-        ]),
-      },
-      // 3: wallet balance
+
+      // 1: wallet balance
       {
         target: poolInfo.poolMarginTokenAddr,
         allowFailure: false,
         callData: IERC20.encodeFunctionData("balanceOf", [traderAddr]),
       },
-      // 4: exchange fee
+      // 2: exchange fee
       {
         target: this.proxyContract.address,
         allowFailure: false,
@@ -1194,10 +1183,12 @@ export default class MarketData extends PerpetualDataHandler {
         ]),
       },
     ];
+
     // multicall
     const encodedResults = await this.multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // position risk
+    const idxNotional = 4;
     const traderState = this.proxyContract.interface.decodeFunctionResult(
       "getTraderState",
       encodedResults[0].returnData
@@ -1207,35 +1198,64 @@ export default class MarketData extends PerpetualDataHandler {
       indexPriceInfo[1],
     ]);
 
-    // Max based on perp:
-    // max buy
-    const maxLongPosPerp = ABK64x64ToFloat(
-      this.proxyContract.interface.decodeFunctionResult(
-        "getMaxSignedOpenTradeSizeForPos",
-        encodedResults[1].returnData
-      )[0] as BigNumber
-    );
-    // max short
-    const maxShortPosPerp = ABK64x64ToFloat(
-      this.proxyContract.interface.decodeFunctionResult(
-        "getMaxSignedOpenTradeSizeForPos",
-        encodedResults[2].returnData
-      )[0] as BigNumber
-    );
-
     // fee rate
     const feeRate =
       1e-5 *
       (this.proxyContract.interface.decodeFunctionResult(
         "queryExchangeFee",
-        encodedResults[4].returnData
+        encodedResults[2].returnData
       )[0] as number);
 
     // Max based on margin requirements:
     const walletBalance = decNToFloat(
-      IERC20.decodeFunctionResult("balanceOf", encodedResults[3].returnData)[0],
+      IERC20.decodeFunctionResult("balanceOf", encodedResults[1].returnData)[0],
       poolInfo.poolMarginTokenDecimals!
     );
+
+    const proxyCalls2: Multicall3.Call3Struct[] = [
+      // 0: max long
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("getMaxSignedOpenTradeSizeForPos", [
+          perpId,
+          traderState[idxNotional],
+          true,
+        ]),
+      },
+      // 1: max short
+      {
+        target: this.proxyContract.address,
+        allowFailure: false,
+        callData: this.proxyContract.interface.encodeFunctionData("getMaxSignedOpenTradeSizeForPos", [
+          perpId,
+          traderState[idxNotional],
+          false,
+        ]),
+      },
+    ];
+
+    // multicall
+    const encodedResults2 = await this.multicall.callStatic.aggregate3(proxyCalls2, overrides || {});
+
+    // Max based on perp:
+    // max buy
+    const maxLongOrderPerp = ABK64x64ToFloat(
+      this.proxyContract.interface.decodeFunctionResult(
+        "getMaxSignedOpenTradeSizeForPos",
+        encodedResults2[0].returnData
+      )[0] as BigNumber
+    );
+    const maxLongPosPerp = maxLongOrderPerp + ABK64x64ToFloat(traderState[idxNotional]);
+    // max short
+    const maxShortOrderPerp = ABK64x64ToFloat(
+      this.proxyContract.interface.decodeFunctionResult(
+        "getMaxSignedOpenTradeSizeForPos",
+        encodedResults2[1].returnData
+      )[0] as BigNumber
+    );
+    const maxShortPosPerp = maxShortOrderPerp + ABK64x64ToFloat(traderState[idxNotional]);
+
     const curPos = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
 
     const maxLongPosAccount = getMaxSignedPositionSize(

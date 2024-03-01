@@ -140,3 +140,7 @@ export function loadConfigAbis(config: NodeSDKConfig) {
   config.lobABI = require(config.limitOrderBookABILocation);
   config.shareTokenABI = require(config.shareTokenABILocation);
 }
+
+export async function sleep(seconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1_000));
+}
