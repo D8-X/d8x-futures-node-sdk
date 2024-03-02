@@ -237,6 +237,9 @@ export default class PerpetualDataHandler {
     //pyth
     const oracle = OracleFactory__factory.connect(poolInfo.oracleFactory, this.signerOrProvider);
     this.pythAddr = await oracle.pyth();
+    if (this.pythAddr == ZERO_ADDRESS) {
+      this.pythAddr = await oracle.onDemandFeed();
+    }
 
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(
