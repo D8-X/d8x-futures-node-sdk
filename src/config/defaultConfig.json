@@ -60,6 +60,18 @@
     "limitOrderBookABILocation": "LimitOrderBook.json"
   },
   {
+    "name": "cardona",
+    "chainId": 2442,
+    "version": 3,
+    "proxyAddr": "0xb9B2C2b56eF25B51C12eB28Bd081B9BF462B475B",
+    "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
     "name": "arbitrumSepolia",
     "chainId": 421614,
     "version": 1,
