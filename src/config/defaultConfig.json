@@ -69,6 +69,7 @@
     "shareTokenABILocation": "ShareToken.json",
     "proxyABILocation": "IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "limitOrderBookABILocation": "LimitOrderBook.json",
+    "multicall": "0x9d1dB8253105b007DDDE65Ce262f701814B91125"
   }
 ]

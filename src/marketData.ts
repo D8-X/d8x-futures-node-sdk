@@ -119,7 +119,7 @@ export default class MarketData extends PerpetualDataHandler {
       this.nodeURL = mktData.config.nodeURL;
       this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
       this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
-      this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.provider);
+      this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
         nestedPerpetualIDs: this.nestedPerpetualIDs,
         poolStaticInfos: this.poolStaticInfos,
@@ -221,7 +221,7 @@ export default class MarketData extends PerpetualDataHandler {
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
     return await MarketData._exchangeInfo(
       IPerpetualManager__factory.connect(this.proxyAddr, provider),
-      Multicall3__factory.connect(MULTICALL_ADDRESS, provider),
+      Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider),
       this.poolStaticInfos,
       this.symbolToPerpStaticInfo,
       this.perpetualIdToSymbol,
@@ -332,7 +332,7 @@ export default class MarketData extends PerpetualDataHandler {
     const orderBookContracts = symbols.map((symbol) =>
       LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider)
     );
-    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider);
     const { orders, digests } = await MarketData._openOrdersOnOrderBooks(
       traderAddr,
       orderBookContracts,
@@ -454,7 +454,7 @@ export default class MarketData extends PerpetualDataHandler {
         Array(callSymbols.length).fill(traderAddr),
         callSymbols,
         this.symbolToPerpStaticInfo,
-        Multicall3__factory.connect(MULTICALL_ADDRESS, provider),
+        Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider),
         IPerpetualManager__factory.connect(this.proxyAddr, provider),
         pxS2S3,
         overrides

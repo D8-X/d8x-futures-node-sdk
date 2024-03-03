@@ -164,7 +164,7 @@ export default class PerpetualDataHandler {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
-    this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.signerOrProvider);
+    this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
 
@@ -237,6 +237,9 @@ export default class PerpetualDataHandler {
     //pyth
     const oracle = OracleFactory__factory.connect(poolInfo.oracleFactory, this.signerOrProvider);
     this.pythAddr = await oracle.pyth();
+    if (this.pythAddr == ZERO_ADDRESS) {
+      this.pythAddr = await oracle.onDemandFeed();
+    }
 
     // order book factory
     this.lobFactoryAddr = this.proxyContract.interface.decodeFunctionResult(

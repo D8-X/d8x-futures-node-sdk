@@ -402,7 +402,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
     const orderBookSC = this.getOrderBookContract(symbol).connect(provider) as LimitOrderBook;
-    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider);
 
     if (typeof startAfter === "undefined") {
       startAfter = ZERO_ORDER_ID;
@@ -530,7 +530,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       });
     }
     // multicall
-    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider);
     const encodedResults = await multicall.callStatic.aggregate3(proxyCalls, overrides || {});
 
     // order status
@@ -693,7 +693,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     const perpId = this.getPerpIdFromSymbol(orders[0].symbol);
     const fAmounts = orders.map((order) => floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1)));
     const orderBook = this.getOrderBookContract(orders[0].symbol).connect(provider);
-    const multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, provider);
+    const multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider);
 
     // mark price and timestamp
     let proxyCalls: Multicall3.Call3Struct[] = [
