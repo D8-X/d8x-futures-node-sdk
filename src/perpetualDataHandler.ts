@@ -164,7 +164,7 @@ export default class PerpetualDataHandler {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
-    this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.signerOrProvider);
+    this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
 

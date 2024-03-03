@@ -21,6 +21,7 @@ export interface NodeSDKConfig {
   lobABI?: ContractInterface | undefined;
   shareTokenABI?: ContractInterface | undefined;
   priceFeedEndpoints?: Array<{ type: string; endpoints: string[] }>;
+  multicall?: string;
 }
 
 export interface MarginAccount {

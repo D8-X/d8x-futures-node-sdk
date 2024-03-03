@@ -4,7 +4,7 @@ import type { CallOverrides, ContractTransaction, Overrides, PayableOverrides } 
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
-import { MAX_UINT_256, MOCK_TOKEN_SWAP_ABI, MULTICALL_ADDRESS } from "./constants";
+import { MAX_UINT_256, MULTICALL_ADDRESS } from "./constants";
 import { ERC20__factory, IPerpetualManager__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
 import { floatToDecN } from "./d8XMath";
 import MarketData from "./marketData";
@@ -62,7 +62,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
       this.nodeURL = mktData.config.nodeURL;
       this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
       this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
-      this.multicall = Multicall3__factory.connect(MULTICALL_ADDRESS, this.provider);
+      this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
         nestedPerpetualIDs: this.nestedPerpetualIDs,
         poolStaticInfos: this.poolStaticInfos,
