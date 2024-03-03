@@ -165,7 +165,6 @@ export default class PerpetualDataHandler {
     }
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
     this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.signerOrProvider);
-    console.log(this.multicall.address);
     await this._fillSymbolMaps(overrides);
   }
 
