@@ -1,33 +1,7 @@
 [
     {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "_perpetualManagerAddr",
-                "type": "address"
-            },
-            {
-                "internalType": "uint24",
-                "name": "_perpetualId",
-                "type": "uint24"
-            },
-            {
-                "internalType": "uint8",
-                "name": "_iCancelDelaySec",
-                "type": "uint8"
-            },
-            {
-                "internalType": "uint16",
-                "name": "_postingFeeTbps",
-                "type": "uint16"
-            },
-            {
-                "internalType": "uint32",
-                "name": "_callbackGasLimit",
-                "type": "uint32"
-            }
-        ],
-        "stateMutability": "payable",
+        "inputs": [],
+        "stateMutability": "nonpayable",
         "type": "constructor"
     },
     {
@@ -84,6 +58,19 @@
             }
         ],
         "name": "ExecutionFailed",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "version",
+                "type": "uint8"
+            }
+        ],
+        "name": "Initialized",
         "type": "event"
     },
     {
@@ -543,6 +530,39 @@
             }
         ],
         "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_perpetualManagerAddr",
+                "type": "address"
+            },
+            {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "uint8",
+                "name": "_iCancelDelaySec",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_postingFeeTbps",
+                "type": "uint16"
+            },
+            {
+                "internalType": "uint32",
+                "name": "_callbackGasLimit",
+                "type": "uint32"
+            }
+        ],
+        "name": "initialize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
     },
     {

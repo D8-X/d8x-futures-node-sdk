@@ -63,7 +63,7 @@
     "name": "cardona",
     "chainId": 2442,
     "version": 3,
-    "proxyAddr": "0xb9B2C2b56eF25B51C12eB28Bd081B9BF462B475B",
+    "proxyAddr": "0x36ce59a9cC9b0cBc68B19143240357a0b51E70c6",
     "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
     "priceFeedConfigNetwork": "odin",
     "shareTokenABILocation": "ShareToken.json",
