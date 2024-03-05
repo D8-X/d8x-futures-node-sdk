@@ -24,6 +24,30 @@
     "limitOrderBookABILocation": "LimitOrderBook.json"
   },
   {
+    "name": "zkevm",
+    "chainId": 1101,
+    "version": 2,
+    "proxyAddr": "0x268BD5D59aae0e46A7B549Cf0A880008BA4C49C7",
+    "nodeURL": "https://zkevm-rpc.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "arbitrum",
+    "chainId": 42161,
+    "version": 1,
+    "proxyAddr": "0x9A8a5DBFdc95C41E03cD80c758C8e9b05211Dd6C",
+    "nodeURL": "https://arbitrum.llamarpc.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
     "name": "x1",
     "chainId": 195,
     "version": 1,
