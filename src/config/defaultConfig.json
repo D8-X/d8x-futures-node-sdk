@@ -2,14 +2,14 @@
   {
     "name": "zkevmTestnet",
     "chainId": 1442,
-    "version": 1,
+    "version": 2,
     "proxyAddr": "0x0e23619704556945B1C7CB550Dee6D428f7d2E2B",
     "nodeURL": "https://rpc.public.zkevm-test.net",
     "priceFeedConfigNetwork": "testnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "lean0/ShareToken.json",
+    "proxyABILocation": "lean0/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "lean0/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "lean0/LimitOrderBook.json"
   },
   {
     "name": "zkevm",
@@ -39,7 +39,7 @@
     "name": "arbitrum",
     "chainId": 42161,
     "version": 1,
-    "proxyAddr": "0x9A8a5DBFdc95C41E03cD80c758C8e9b05211Dd6C",
+    "proxyAddr": "0xa44e7b8dfB8FF28a38517D2F0bddf638976D5cEf",
     "nodeURL": "https://arbitrum.llamarpc.com",
     "priceFeedConfigNetwork": "mainnet",
     "shareTokenABILocation": "ShareToken.json",
