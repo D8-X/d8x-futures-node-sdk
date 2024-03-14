@@ -23,18 +23,7 @@
     "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "LimitOrderBook.json"
   },
-  {
-    "name": "zkevm",
-    "chainId": 1101,
-    "version": 2,
-    "proxyAddr": "0x268BD5D59aae0e46A7B549Cf0A880008BA4C49C7",
-    "nodeURL": "https://zkevm-rpc.com",
-    "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
-  },
+
   {
     "name": "arbitrum",
     "chainId": 42161,
@@ -52,6 +41,18 @@
     "chainId": 195,
     "version": 1,
     "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "nodeURL": "https://testrpc.x1.tech",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "x1",
+    "chainId": 195,
+    "version": 2,
+    "proxyAddr": "0x459C0af496c7a48cD6f4FCdab81ccAAAd7E2981a",
     "nodeURL": "https://testrpc.x1.tech",
     "priceFeedConfigNetwork": "odin",
     "shareTokenABILocation": "ShareToken.json",
@@ -100,6 +101,18 @@
     "chainId": 421614,
     "version": 1,
     "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
+    "nodeURL": "https://sepolia-rollup.arbitrum.io/rpc",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "ShareToken.json",
+    "proxyABILocation": "IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "LimitOrderBook.json"
+  },
+  {
+    "name": "arbitrumSepolia",
+    "chainId": 421614,
+    "version": 2,
+    "proxyAddr": "0x05e72cc11A642abd27031925611cB125ccE05969",
     "nodeURL": "https://sepolia-rollup.arbitrum.io/rpc",
     "priceFeedConfigNetwork": "mainnet",
     "shareTokenABILocation": "ShareToken.json",
