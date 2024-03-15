@@ -2076,7 +2076,6 @@ export default class MarketData extends PerpetualDataHandler {
     _perpetuals: any[],
     _symbolList: Map<string, string>
   ): PerpetualState[] {
-    console.log("perpetual output struct", _perpetuals);
     const perpStates = _perpetuals.map((perp) => ({
       id: perp.id!,
       state: PERP_STATE_STR[perp.state!],

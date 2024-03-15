@@ -827,16 +827,16 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   ): boolean {
     // check expiration date
     if (order.deadline != undefined && order.deadline < Date.now() / 1000) {
-      console.log("order expired");
+      // console.log("order expired");
       return false;
     }
     // check execution timestamp
     if (order.executionTimestamp > 0 && atBlockTimestamp < order.executionTimestamp) {
-      console.log(`execution deferred by ${order.executionTimestamp - atBlockTimestamp} more seconds`);
+      // console.log(`execution deferred by ${order.executionTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
     if (order.submittedTimestamp != undefined && atBlockTimestamp <= order.submittedTimestamp) {
-      console.log(`on hold for ${order.submittedTimestamp - atBlockTimestamp} more seconds`);
+      // console.log(`on hold for ${order.submittedTimestamp - atBlockTimestamp} more seconds`);
       return false;
     }
 
