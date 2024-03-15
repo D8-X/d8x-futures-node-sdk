@@ -4,7 +4,10 @@ import { NodeSDKConfig } from "./nodeSDKTypes";
 
 export const ERC20_ABI = require("./abi/ERC20.json");
 export const MOCK_TOKEN_SWAP_ABI = require("./abi/MockTokenSwap.json");
-
+export const PROXY_ABI = require("./abi/IPerpetualManager.json");
+export const LOB_FACTORY_ABI = require("./abi/LimitOrderBookFactory.json");
+export const LOB_ABI = require("./abi/LimitOrderBook.json");
+export const SHARE_TOKEN_ABI = require("./abi/ShareToken.json");
 export const MULTICALL3_ABI = require("./abi/Multicall3.json");
 
 export const SYMBOL_LIST = new Map<string, string>(Object.entries(require(`./config/symbolList.json`)));
