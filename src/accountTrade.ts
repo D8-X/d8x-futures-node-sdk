@@ -132,7 +132,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let minSize = PerpetualDataHandler._getMinimalPositionSize(order.symbol, this.symbolToPerpStaticInfo);
     if (Math.abs(order.quantity) < minSize) {
-      throw Error("order size too small");
+      throw Error(`order size too small: minSize: ${minSize}, order quantity: ${order.quantity}`);
     }
     let orderBookContract = this.getOrderBookContract(order.symbol);
     let res: OrderResponse = await this._order(

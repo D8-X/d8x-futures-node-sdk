@@ -5,6 +5,7 @@ import { NodeSDKConfig } from "./nodeSDKTypes";
 export const ERC20_ABI = require("./abi/ERC20.json");
 export const MOCK_TOKEN_SWAP_ABI = require("./abi/MockTokenSwap.json");
 export const PROXY_ABI = require("./abi/IPerpetualManager.json");
+export const PROXY_ZKEVM_ABI = require("./abi-zkevm/IPerpetualManager.json");
 export const LOB_FACTORY_ABI = require("./abi/LimitOrderBookFactory.json");
 export const LOB_ABI = require("./abi/LimitOrderBook.json");
 export const SHARE_TOKEN_ABI = require("./abi/ShareToken.json");
@@ -57,9 +58,9 @@ export const DEFAULT_CONFIG_TESTNET_NAME = "testnet";
 
 let defaultConfigs = require("./config/defaultConfig.json") as NodeSDKConfig[];
 defaultConfigs.map((config) => {
-  config.proxyABI = require(config.proxyABILocation);
-  config.lobABI = require(config.limitOrderBookABILocation);
-  config.lobFactoryABI = require(config.limitOrderBookFactoryABILocation);
-  config.shareTokenABI = require(config.shareTokenABILocation);
+  config.proxyABI = config.proxyABILocation.includes("abi-zkevm") ? PROXY_ZKEVM_ABI : PROXY_ABI;
+  config.lobABI = LOB_ABI;
+  config.lobFactoryABI = LOB_FACTORY_ABI;
+  config.shareTokenABI = SHARE_TOKEN_ABI;
 });
 export const DEFAULT_CONFIG = defaultConfigs;
