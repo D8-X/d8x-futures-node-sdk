@@ -1,6 +1,6 @@
 import { Interface } from "@ethersproject/abi";
 import { BigNumber } from "@ethersproject/bignumber";
-import type { CallOverrides, Contract } from "@ethersproject/contracts";
+import { CallOverrides, Contract } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { formatUnits } from "@ethersproject/units";
 import {
@@ -20,10 +20,8 @@ import {
 } from "./constants";
 import {
   ERC20__factory,
-  IPerpetualManager__factory,
   LimitOrderBook__factory,
   Multicall3__factory,
-  type IPerpetualManager,
   type LimitOrderBook,
   type Multicall3,
 } from "./contracts";
@@ -118,7 +116,7 @@ export default class MarketData extends PerpetualDataHandler {
       const mktData = providerOrMarketData;
       this.nodeURL = mktData.config.nodeURL;
       this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
-      this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
+      this.proxyContract = new Contract(mktData.getProxyAddress(), this.config.proxyABI!, this.provider);
       this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
         nestedPerpetualIDs: this.nestedPerpetualIDs,
@@ -185,7 +183,7 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns {Contract} read-only proxy instance
    */
-  public getReadOnlyProxyInstance(): Contract & IPerpetualManager {
+  public getReadOnlyProxyInstance(): Contract {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -220,7 +218,7 @@ export default class MarketData extends PerpetualDataHandler {
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
     return await MarketData._exchangeInfo(
-      IPerpetualManager__factory.connect(this.proxyAddr, provider),
+      new Contract(this.proxyAddr, this.config.proxyABI!, provider),
       Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider),
       this.poolStaticInfos,
       this.symbolToPerpStaticInfo,
@@ -420,7 +418,7 @@ export default class MarketData extends PerpetualDataHandler {
       traderAddr,
       symbol,
       this.symbolToPerpStaticInfo,
-      IPerpetualManager__factory.connect(this.proxyAddr, provider),
+      new Contract(this.proxyAddr, this.config.proxyABI!, provider),
       [obj.idxPrices[0], obj.idxPrices[1]],
       overrides
     );
@@ -455,7 +453,7 @@ export default class MarketData extends PerpetualDataHandler {
         callSymbols,
         this.symbolToPerpStaticInfo,
         Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider),
-        IPerpetualManager__factory.connect(this.proxyAddr, provider),
+        new Contract(this.proxyAddr, this.config.proxyABI!, provider),
         pxS2S3,
         overrides
       );
@@ -1929,7 +1927,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   private static async _queryMidPrices(
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     _multicall: Multicall3,
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
@@ -1994,7 +1992,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   private static async _queryPoolAndPerpetualStates(
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     _multicall: Multicall3,
     _poolStaticInfos: PoolStaticInfo[],
     _symbolList: Map<string, string>,
@@ -2028,11 +2026,11 @@ export default class MarketData extends PerpetualDataHandler {
       const pools = _proxyContract.interface.decodeFunctionResult(
         "getLiquidityPools",
         encodedResults[0].returnData
-      )[0] as PerpStorage.LiquidityPoolDataStructOutput[];
+      )[0] as Partial<PerpStorage.LiquidityPoolDataStructOutput>[];
       const perps = _proxyContract.interface.decodeFunctionResult(
         "getPerpetuals",
         encodedResults[1].returnData
-      )[0] as PerpStorage.PerpetualDataStructOutput[];
+      )[0] as any[];
 
       poolStates = poolStates.concat(MarketData._poolDataToPoolState(pools, _poolStaticInfos));
       perpStates = perpStates.concat(MarketData._perpetualDataToPerpetualState(perps, _symbolList));
@@ -2048,20 +2046,20 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   protected static _poolDataToPoolState(
-    _liquidityPools: PerpStorage.LiquidityPoolDataStructOutput[],
+    _liquidityPools: Partial<PerpStorage.LiquidityPoolDataStructOutput>[],
     _poolStaticInfos: PoolStaticInfo[]
   ): PoolState[] {
     const poolStates = _liquidityPools.map(
       (pool, k) =>
         ({
-          isRunning: pool.isRunning,
+          isRunning: pool.isRunning!,
           poolSymbol: _poolStaticInfos[k].poolMarginSymbol,
-          marginTokenAddr: pool.marginTokenAddress,
-          poolShareTokenAddr: pool.shareTokenAddress,
-          defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC),
-          pnlParticipantCashCC: ABK64x64ToFloat(pool.fPnLparticipantsCashCC),
-          totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize),
-          brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
+          marginTokenAddr: pool.marginTokenAddress!,
+          poolShareTokenAddr: pool.shareTokenAddress!,
+          defaultFundCashCC: ABK64x64ToFloat(pool.fDefaultFundCashCC!),
+          pnlParticipantCashCC: ABK64x64ToFloat(pool.fPnLparticipantsCashCC!),
+          totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize!),
+          brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize!),
           perpetuals: [],
         } as PoolState)
     );
@@ -2075,20 +2073,21 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   protected static _perpetualDataToPerpetualState(
-    _perpetuals: PerpStorage.PerpetualDataStructOutput[],
+    _perpetuals: any[],
     _symbolList: Map<string, string>
   ): PerpetualState[] {
+    console.log("perpetual output struct", _perpetuals);
     const perpStates = _perpetuals.map((perp) => ({
-      id: perp.id,
-      state: PERP_STATE_STR[perp.state],
-      baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY, _symbolList)!,
-      quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY, _symbolList)!,
+      id: perp.id!,
+      state: PERP_STATE_STR[perp.state!],
+      baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY!, _symbolList)!,
+      quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY!, _symbolList)!,
       indexPrice: 0, //fill later
       collToQuoteIndexPrice: 0, //fill later
-      markPrice: ABK64x64ToFloat(perp.currentMarkPremiumRate.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
+      markPrice: ABK64x64ToFloat(perp.currentMarkPremiumRate!.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
       midPrice: 0, // fill later
-      currentFundingRateBps: 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate),
-      openInterestBC: ABK64x64ToFloat(perp.fOpenInterest),
+      currentFundingRateBps: 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate!),
+      openInterestBC: ABK64x64ToFloat(perp.fOpenInterest!),
       isMarketClosed: false, //fill later
     }));
     return perpStates;
@@ -2109,7 +2108,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @ignore
    */
   public static async _exchangeInfo(
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     _multicall: Multicall3,
     _poolStaticInfos: Array<PoolStaticInfo>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,

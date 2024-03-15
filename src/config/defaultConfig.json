@@ -6,10 +6,10 @@
     "proxyAddr": "0x0e23619704556945B1C7CB550Dee6D428f7d2E2B",
     "nodeURL": "https://rpc.public.zkevm-test.net",
     "priceFeedConfigNetwork": "testnet",
-    "shareTokenABILocation": "lean0/ShareToken.json",
-    "proxyABILocation": "lean0/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "lean0/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "lean0/LimitOrderBook.json"
+    "shareTokenABILocation": "./abi//ShareToken.json",
+    "proxyABILocation": "./abi-zkevm//IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm//LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm//LimitOrderBook.json"
   },
   {
     "name": "zkevm",
@@ -18,24 +18,12 @@
     "proxyAddr": "0xaB7794EcD2c8e9Decc6B577864b40eBf9204720f",
     "nodeURL": "https://zkevm-rpc.com",
     "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json"
   },
 
-  {
-    "name": "arbitrum",
-    "chainId": 42161,
-    "version": 1,
-    "proxyAddr": "0xa44e7b8dfB8FF28a38517D2F0bddf638976D5cEf",
-    "nodeURL": "https://arbitrum.llamarpc.com",
-    "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
-  },
   {
     "name": "x1",
     "chainId": 195,
@@ -43,10 +31,10 @@
     "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
     "nodeURL": "https://testrpc.x1.tech",
     "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json"
   },
   {
     "name": "x1",
@@ -55,10 +43,10 @@
     "proxyAddr": "0x459C0af496c7a48cD6f4FCdab81ccAAAd7E2981a",
     "nodeURL": "https://testrpc.x1.tech",
     "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   },
   {
     "name": "cardona",
@@ -67,10 +55,10 @@
     "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
     "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
     "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json"
   },
   {
     "name": "cardona",
@@ -79,10 +67,10 @@
     "proxyAddr": "0xef64b7A00AFf37ECbf85eD8EB355395B72FDBCF0",
     "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
     "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json"
   },
   {
     "name": "cardona",
@@ -91,10 +79,10 @@
     "proxyAddr": "0x36ce59a9cC9b0cBc68B19143240357a0b51E70c6",
     "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
     "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json"
   },
   {
     "name": "arbitrumSepolia",
@@ -103,10 +91,10 @@
     "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
     "nodeURL": "https://sepolia-rollup.arbitrum.io/rpc",
     "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json"
   },
   {
     "name": "arbitrumSepolia",
@@ -115,10 +103,10 @@
     "proxyAddr": "0x05e72cc11A642abd27031925611cB125ccE05969",
     "nodeURL": "https://sepolia-rollup.arbitrum.io/rpc",
     "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json"
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   },
   {
     "name": "artio",
@@ -127,10 +115,10 @@
     "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
     "nodeURL": "https://rpc.ankr.com/berachain_testnet",
     "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "ShareToken.json",
-    "proxyABILocation": "IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "LimitOrderBook.json",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi-zkevm/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi-zkevm/LimitOrderBook.json",
     "multicall": "0x9d1dB8253105b007DDDE65Ce262f701814B91125"
   }
 ]

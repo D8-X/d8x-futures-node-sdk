@@ -1,11 +1,11 @@
 import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
-import type { CallOverrides, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
 import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
 import { parseEther } from "@ethersproject/units";
 import { Wallet } from "@ethersproject/wallet";
 import { MAX_UINT_256, MULTICALL_ADDRESS } from "./constants";
-import { ERC20__factory, IPerpetualManager__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
+import { ERC20__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
 import { floatToDecN } from "./d8XMath";
 import MarketData from "./marketData";
 import { type NodeSDKConfig } from "./nodeSDKTypes";
@@ -61,7 +61,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
       const mktData = providerOrMarketData;
       this.nodeURL = mktData.config.nodeURL;
       this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
-      this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
+      this.proxyContract = new Contract(mktData.getProxyAddress(), this.config.proxyABI!, this.provider);
       this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
         nestedPerpetualIDs: this.nestedPerpetualIDs,
