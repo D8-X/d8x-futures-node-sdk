@@ -120,5 +120,17 @@
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
     "multicall": "0x9d1dB8253105b007DDDE65Ce262f701814B91125"
+  },
+  {
+    "name": "arbitrum",
+    "chainId": 42161,
+    "version": 1,
+    "proxyAddr": "0x8f8BccE4c180B699F81499005281fA89440D1e95",
+    "nodeURL": "https://arb1.arbitrum.io/rpc",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   }
 ]
