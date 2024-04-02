@@ -135,25 +135,34 @@
         "origin": "Metal.XAU/USD"
       },
       {
-        "symbol": "stETH-USD",
+        "symbol": "STETH-USD",
         "id": "0x846ae1bdb6300b817cee5fdee2a6da192775030db5615b94a465f53bd40850b5",
         "type": "pyth",
         "origin": "Crypto.STETH/USD"
       },
       {
-        "symbol": "wstETH-USD",
+        "symbol": "WSTETH-USD",
         "id": "0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784",
         "type": "pyth",
         "origin": "Crypto.WSTETH/USD"
       },
       {
-        "symbol": "agEUR-USD",
+        "symbol": "EURA-USD",
         "id": "0x3b670a7aa22cf0dc3b76b42dc2e26a85bac35eafc5a5ae2defd6d98201b1b997",
         "type": "pyth",
         "origin": "Crypto.AGEUR/USD"
+      },
+      {
+        "symbol": "WEETH-USD",
+        "id": "weETH",
+        "type": "redstone",
+        "origin": "weETH"
       }
     ],
-    "endpoints": [{ "type": "pyth", "endpoints": ["https://hermes.pyth.network/api"] }]
+    "endpoints": [
+      { "type": "pyth", "endpoints": ["https://hermes.pyth.network/api"] },
+      { "type": "redstone", "endpoints": ["https://api.redstone.finance"] }
+    ]
   },
   {
     "network": "odin",
