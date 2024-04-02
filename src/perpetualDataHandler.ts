@@ -31,12 +31,10 @@ import {
   ZERO_ORDER_ID,
 } from "./constants";
 import {
-  IPerpetualManager__factory,
   LimitOrderBookFactory__factory,
   LimitOrderBook__factory,
   Multicall3__factory,
   OracleFactory__factory,
-  type IPerpetualManager,
   type LimitOrderBook,
   type LimitOrderBookFactory,
   type Multicall3,
@@ -95,7 +93,7 @@ export default class PerpetualDataHandler {
   //the address of the margin token
   protected symbolToTokenAddrMap: Map<string, string>;
   public chainId: number;
-  protected proxyContract: IPerpetualManager | null = null;
+  protected proxyContract: Contract | null = null;
   protected proxyABI: ContractInterface;
   protected proxyAddr: string;
   // oracle
@@ -163,7 +161,7 @@ export default class PerpetualDataHandler {
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
-    this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
+    this.proxyContract = new Contract(this.proxyAddr, this.config.proxyABI!, signerOrProvider);
     this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
@@ -483,7 +481,7 @@ export default class PerpetualDataHandler {
    * @returns array with PerpetualStaticInfo for each perpetual
    */
   public static async getPerpetualStaticInfo(
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     nestedPerpetualIDs: Array<Array<number>>,
     symbolList: Map<string, string>,
     overrides?: CallOverrides
@@ -547,7 +545,7 @@ export default class PerpetualDataHandler {
   }
 
   public static async getPoolStaticInfo(
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     overrides?: CallOverrides
   ): Promise<{
     nestedPerpetualIDs: Array<Array<number>>;
@@ -643,7 +641,7 @@ export default class PerpetualDataHandler {
     traderAddr: string,
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     _pxS2S3: [number, number],
     overrides?: CallOverrides
   ): Promise<MarginAccount> {
@@ -676,7 +674,7 @@ export default class PerpetualDataHandler {
     symbols: string[],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _multicall: Multicall3,
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     _pxS2S3s: number[][],
     overrides?: CallOverrides
   ): Promise<MarginAccount[]> {
@@ -713,7 +711,7 @@ export default class PerpetualDataHandler {
     symbol: string,
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     indexPrices: [number, number],
     overrides?: CallOverrides
   ): Promise<number> {
@@ -731,7 +729,7 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     indexPrices: [number, number],
     overrides?: CallOverrides
   ): Promise<number> {
@@ -745,7 +743,7 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualState(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: IPerpetualManager,
+    _proxyContract: Contract,
     indexPrices: [number, number, boolean, boolean],
     overrides?: CallOverrides
   ): Promise<PerpetualState> {

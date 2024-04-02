@@ -86,8 +86,8 @@ describe("utils", () => {
     }
   });
   it("4Chars", async () => {
-    let examples = ["MATIC", "FEDORA", "A", "AEIOUAEI", "D8X", "ARmAGEDON", "stMATIC", "stETH", "wstETH"];
-    let solutions = ["MATC", "FEDR", "A\0\0\0", "AEIO", "D8X\0", "RmGD", "stMT", "stTH", "wstT"];
+    let examples = ["MATIC", "FEDORA", "A", "AEIOUAEI", "D8X", "ARmAGEDON", "stMATIC", "stETH", "wstETH", "weETH"];
+    let solutions = ["MATC", "FEDR", "A\0\0\0", "AEIO", "D8X\0", "RmGD", "stMT", "stTH", "wstT", "wETH"];
     for (let k = 0; k < examples.length; k++) {
       let sol = to4Chars(examples[k]);
       let deencoded = fromBytes4(toBytes4(examples[k]));
@@ -179,8 +179,8 @@ describe("utils", () => {
     symbolList.set("MXTC", "MATUC");
     // add actual liquid staked matic
     symbolList.set(to4Chars("stMATIC"), "stMATIC");
-    let examples = ["MATC", "MXTC-ETH", "XXX-ETH", "MATC-ETH-XAU", "MATC-USD-stMT"];
-    let solutions = ["MATIC", "MATUC-ETH", "XXX-ETH", "MATIC-ETH-XAU", "MATIC-USD-stMATIC"];
+    let examples = ["MATC", "MXTC-ETH", "XXX-ETH", "MATC-ETH-XAU", "MATC-USD-stMT", "ETH-USD-wETH"];
+    let solutions = ["MATIC", "MATUC-ETH", "XXX-ETH", "MATIC-ETH-XAU", "MATIC-USD-stMATIC", "ETH-USD-WEETH"];
     for (let j = 0; j < examples.length; j++) {
       let v = symbol4BToLongSymbol(examples[j], symbolList);
       let bIsEqual = v == solutions[j];

@@ -32,7 +32,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeEach(() => {
-    config = PerpetualDataHandler.readSDKConfig("zkevm");
+    config = PerpetualDataHandler.readSDKConfig("cardona");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -82,10 +82,6 @@ describe("readOnly", () => {
 
   describe("APIInterface", () => {
     beforeAll(async () => {
-      config = PerpetualDataHandler.readSDKConfig("zkevm");
-      if (RPC != undefined) {
-        config.nodeURL = RPC;
-      }
       if (pk == undefined) {
         console.log(`Define private key: export PK="CA52A..."`);
         expect(false);
@@ -194,7 +190,7 @@ describe("readOnly", () => {
       }
     });
     it("exchange info: custom provider", async () => {
-      let info: ExchangeInfo = await mktData.exchangeInfo({ rpcURL: "https://zkevm-rpc.com" });
+      let info: ExchangeInfo = await mktData.exchangeInfo({ rpcURL: config.nodeURL });
       console.log(info);
       for (var k = 0; k < info.pools.length; k++) {
         let pool = info.pools[k];

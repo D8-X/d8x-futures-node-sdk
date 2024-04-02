@@ -1,8 +1,14 @@
 import { Signer } from "@ethersproject/abstract-signer";
-import type { CallOverrides, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
+import type {
+  CallOverrides,
+  Contract,
+  ContractTransaction,
+  Overrides,
+  PayableOverrides,
+} from "@ethersproject/contracts";
 import { Buffer } from "buffer";
 import { ZERO_ADDRESS } from "./constants";
-import { IPerpetualManager, LimitOrderBook } from "./contracts";
+import { LimitOrderBook } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
 import type {
@@ -126,7 +132,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let minSize = PerpetualDataHandler._getMinimalPositionSize(order.symbol, this.symbolToPerpStaticInfo);
     if (Math.abs(order.quantity) < minSize) {
-      throw Error("order size too small");
+      throw Error(`order size too small: minSize: ${minSize}, order quantity: ${order.quantity}`);
     }
     let orderBookContract = this.getOrderBookContract(order.symbol);
     let res: OrderResponse = await this._order(
@@ -254,7 +260,7 @@ export default class AccountTrade extends WriteAccessHandler {
     order: Order,
     traderAddr: string,
     symbolToPerpetualMap: Map<string, PerpetualStaticInfo>,
-    proxyContract: IPerpetualManager,
+    proxyContract: Contract,
     orderBookContract: LimitOrderBook,
     chainId: number,
     signer: Signer,

@@ -1,6 +1,6 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
-import { decNToFloat } from "./d8XMath";
+import { decNToFloat, floatToDec18 } from "./d8XMath";
 import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
@@ -19,6 +19,10 @@ export default class PriceFeeds {
   private triangulations: Map<string, [string[], boolean[]]>;
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
   private cache: Map<string, { timestamp: number; values: any }> = new Map();
+
+  // api formatting constants
+  private PYTH = { endpoint: "/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
+  private REDSTONE = { endpoint: "/prices?symbols=", separator: ",", suffix: "&provider=redstone" };
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -146,6 +150,7 @@ export default class PriceFeeds {
    */
   public async fetchFeedPrices(symbols?: string[]): Promise<Map<string, [number, boolean]>> {
     let queries = new Array<string>(this.feedEndpoints.length);
+    let suffixes = new Array<string>(queries.length);
     let symbolsOfEndpoint: string[][] = [];
     for (let j = 0; j < queries.length; j++) {
       symbolsOfEndpoint.push([]);
@@ -155,22 +160,28 @@ export default class PriceFeeds {
       if (symbols != undefined && !symbols.includes(currFeed.symbol)) {
         continue;
       }
+      const apiFormat = { pyth: this.PYTH, odin: this.PYTH, redstone: this.REDSTONE }[currFeed.type];
+      if (apiFormat === undefined) {
+        throw new Error(`API format for ${currFeed} unknown.`);
+      }
       // feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
       let endpointId = this.feedInfo.get(currFeed.id)!.endpointId;
       symbolsOfEndpoint[endpointId].push(currFeed.symbol);
       if (queries[endpointId] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[endpointId] = this.feedEndpoints[endpointId] + "/latest_price_feeds?";
+        queries[endpointId] = this.feedEndpoints[endpointId] + apiFormat.endpoint + currFeed.id;
+        suffixes[endpointId] = apiFormat.suffix;
+      } else {
+        queries[endpointId] = queries[endpointId] + apiFormat.separator + currFeed.id;
       }
-      queries[endpointId] = queries[endpointId] + "ids[]=" + currFeed.id + "&";
     }
     let resultPrices = new Map<string, [number, boolean]>();
     for (let k = 0; k < queries.length; k++) {
       if (queries[k] == undefined) {
         continue;
       }
-      let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k]);
+      let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k] + suffixes[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
       for (let j = 0; j < pxInfo.length; j++) {
         let price = decNToFloat(BigNumber.from(pxInfo[j].price), -pxInfo[j].expo);
@@ -369,9 +380,22 @@ export default class PriceFeeds {
     }
     const priceFeedUpdates = new Array<string>();
     const px = new Array<PriceFeedFormat>();
-    for (let k = 0; k < values.length; k++) {
-      priceFeedUpdates.push("0x" + Buffer.from(values[k].id, "base64").toString("hex"));
-      px.push(values[k].price as PriceFeedFormat);
+    const keys = Array.isArray(values) ? [] : Object.keys(values);
+    if (keys.length > 0) {
+      for (const k of keys) {
+        priceFeedUpdates.push("0x");
+        px.push({
+          conf: BigNumber.from(0),
+          expo: -18,
+          price: floatToDec18(values[k].value),
+          publish_time: values[k].timestamp,
+        });
+      }
+    } else {
+      for (let k = 0; k < values.length; k++) {
+        priceFeedUpdates.push("0x" + Buffer.from(values[k].id, "base64").toString("hex"));
+        px.push(values[k].price as PriceFeedFormat);
+      }
     }
     return [priceFeedUpdates, px];
   }

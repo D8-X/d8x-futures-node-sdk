@@ -2678,6 +2678,26 @@
                         "internalType": "int128",
                         "name": "fUnitAccumulatedFundingStart",
                         "type": "int128"
+                    },
+                    {
+                        "internalType": "uint64",
+                        "name": "slot2",
+                        "type": "uint64"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "slot3",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "slot4",
+                        "type": "uint16"
+                    },
+                    {
+                        "internalType": "bytes16",
+                        "name": "slot",
+                        "type": "bytes16"
                     }
                 ],
                 "internalType": "struct PerpStorage.MarginAccount",
@@ -2862,9 +2882,14 @@
                         "type": "uint32"
                     },
                     {
-                        "internalType": "int32",
-                        "name": "fDFCoverNRate",
-                        "type": "int32"
+                        "internalType": "uint32",
+                        "name": "slot0",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "slot1",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "int32",
@@ -2880,6 +2905,11 @@
                         "internalType": "enum AMMPerpLogic.CollateralCurrency",
                         "name": "eCollateralCurrency",
                         "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "minimalSpreadTbps",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "bytes4",
@@ -2898,7 +2928,7 @@
                     },
                     {
                         "internalType": "uint16",
-                        "name": "minimalSpreadTbps",
+                        "name": "slot2",
                         "type": "uint16"
                     },
                     {
@@ -3047,6 +3077,11 @@
                         "internalType": "uint32",
                         "name": "iLastTargetPoolSizeTime",
                         "type": "uint32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fDFCoverNRate",
+                        "type": "int32"
                     },
                     {
                         "internalType": "int128[2]",
@@ -3249,9 +3284,14 @@
                         "type": "uint32"
                     },
                     {
-                        "internalType": "int32",
-                        "name": "fDFCoverNRate",
-                        "type": "int32"
+                        "internalType": "uint32",
+                        "name": "slot0",
+                        "type": "uint32"
+                    },
+                    {
+                        "internalType": "uint32",
+                        "name": "slot1",
+                        "type": "uint32"
                     },
                     {
                         "internalType": "int32",
@@ -3267,6 +3307,11 @@
                         "internalType": "enum AMMPerpLogic.CollateralCurrency",
                         "name": "eCollateralCurrency",
                         "type": "uint8"
+                    },
+                    {
+                        "internalType": "uint16",
+                        "name": "minimalSpreadTbps",
+                        "type": "uint16"
                     },
                     {
                         "internalType": "bytes4",
@@ -3285,7 +3330,7 @@
                     },
                     {
                         "internalType": "uint16",
-                        "name": "minimalSpreadTbps",
+                        "name": "slot2",
                         "type": "uint16"
                     },
                     {
@@ -3434,6 +3479,11 @@
                         "internalType": "uint32",
                         "name": "iLastTargetPoolSizeTime",
                         "type": "uint32"
+                    },
+                    {
+                        "internalType": "int32",
+                        "name": "fDFCoverNRate",
+                        "type": "int32"
                     },
                     {
                         "internalType": "int128[2]",
@@ -3907,7 +3957,7 @@
                         "type": "uint64"
                     }
                 ],
-                "internalType": "struct PerpStorage.WithdrawRequest[]",
+                "internalType": "struct IPerpetualTreasury.WithdrawRequest[]",
                 "name": "",
                 "type": "tuple[]"
             }
