@@ -160,7 +160,7 @@ export default class PriceFeeds {
       if (symbols != undefined && !symbols.includes(currFeed.symbol)) {
         continue;
       }
-      const apiFormat = { pyth: this.PYTH, odin: this.PYTH, redstone: this.REDSTONE }[currFeed.type];
+      const apiFormat = { pyth: this.PYTH, odin: this.PYTH, redstone: this.REDSTONE }[currFeed.type] ?? this.PYTH;
       if (apiFormat === undefined) {
         throw new Error(`API format for ${currFeed} unknown.`);
       }

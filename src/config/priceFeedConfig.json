@@ -154,14 +154,14 @@
       },
       {
         "symbol": "WEETH-USD",
-        "id": "weETH",
-        "type": "redstone",
-        "origin": "weETH"
+        "id": "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6",
+        "type": "pyth-beta",
+        "origin": "Crypto.ETH/USD"
       }
     ],
     "endpoints": [
       { "type": "pyth", "endpoints": ["https://hermes.pyth.network/api"] },
-      { "type": "redstone", "endpoints": ["https://api.redstone.finance"] }
+      { "type": "pyth-beta", "endpoints": ["https://hermes-beta.pyth.network/api"] }
     ]
   },
   {
