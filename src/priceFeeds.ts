@@ -29,7 +29,15 @@ export default class PriceFeeds {
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
     // if SDK config contains custom price feed endpoints, these override the public/default ones
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
-      this.config.endpoints = dataHandler.config.priceFeedEndpoints;
+      // override price feed endpoints of same type
+      for (let k = 0; k < dataHandler.config.priceFeedEndpoints.length; k++) {
+        for (let j = 0; j < this.config.endpoints.length; j++) {
+          if (this.config.endpoints[j].type == dataHandler.config.priceFeedEndpoints[k].type) {
+            this.config.endpoints[j] = dataHandler.config.priceFeedEndpoints[k];
+            break;
+          }
+        }
+      }
     }
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
     this.dataHandler = dataHandler;
