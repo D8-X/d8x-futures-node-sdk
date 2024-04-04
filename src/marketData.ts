@@ -2252,4 +2252,16 @@ export default class MarketData extends PerpetualDataHandler {
     });
     return res;
   }
+
+  /**
+   * Fetch latest off-chain index and collateral prices
+   * @param symbol Perpetual symbol of the form BTC-USDc-USDC
+   * @returns Prices and market-closed information
+   */
+  public async fetchPricesForPerpetual(symbol: string): Promise<{
+    idxPrices: number[];
+    mktClosed: boolean[];
+  }> {
+    return this.priceFeedGetter.fetchPricesForPerpetual(symbol);
+  }
 }

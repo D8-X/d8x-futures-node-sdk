@@ -374,8 +374,8 @@ export default class PriceFeeds {
     let values: any;
     const cached = this.cache.get(query);
     const tsNow = Date.now() / 1_000;
-    if (cached && cached.timestamp + 1 > tsNow) {
-      // less than a second has passed since the last query - no need to query again
+    if (cached && cached.timestamp + 2 > tsNow) {
+      // less than two seconds have passed since the last query - no need to query again
       values = cached.values;
     } else {
       const headers = { headers: { "Content-Type": "application/json" } };
