@@ -23,9 +23,7 @@
   "[json]": {
     "editor.formatOnSave": true
   },
-  "editor.codeActionsOnSave": {
-    "source.fixAll": true
-  },
+
   "eslint.autoFixOnSave": true,
   "editor.tabSize": 2,
   "prettier.tabWidth": 2,

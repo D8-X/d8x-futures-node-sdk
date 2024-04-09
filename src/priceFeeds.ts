@@ -4,7 +4,8 @@ import { decNToFloat, floatToDec18 } from "./d8XMath";
 import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
-
+import OnChainPxFeed from "./onChainPxFeed";
+import OnChainPxFactory from "./onChainPxFactory";
 /**
  * This class communicates with the REST API that provides price-data that is
  * to be submitted to the smart contracts for certain functions such as
@@ -19,10 +20,9 @@ export default class PriceFeeds {
   private triangulations: Map<string, [string[], boolean[]]>;
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
   private cache: Map<string, { timestamp: number; values: any }> = new Map();
-
+  private onChainPxFeeds: Map<string, OnChainPxFeed>;
   // api formatting constants
   private PYTH = { endpoint: "/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
-  private REDSTONE = { endpoint: "/prices?symbols=", separator: ",", suffix: "&provider=redstone" };
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -37,6 +37,13 @@ export default class PriceFeeds {
             break;
           }
         }
+      }
+    }
+    this.onChainPxFeeds = new Map<string, OnChainPxFeed>();
+    for (let k = 0; k < this.config.ids.length; k++) {
+      if (this.config.ids[k].type == "onchain") {
+        let sym = this.config.ids[k].symbol;
+        this.onChainPxFeeds[sym] = OnChainPxFactory.createFeed(sym);
       }
     }
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
@@ -163,12 +170,17 @@ export default class PriceFeeds {
     for (let j = 0; j < queries.length; j++) {
       symbolsOfEndpoint.push([]);
     }
+    let onChainSyms: string[] = [];
     for (let k = 0; k < this.config.ids.length; k++) {
       let currFeed = this.config.ids[k];
       if (symbols != undefined && !symbols.includes(currFeed.symbol)) {
         continue;
       }
-      const apiFormat = { pyth: this.PYTH, odin: this.PYTH, redstone: this.REDSTONE }[currFeed.type] ?? this.PYTH;
+      if (currFeed.type == "onchain") {
+        onChainSyms.push(currFeed.symbol);
+        continue;
+      }
+      const apiFormat = { pyth: this.PYTH, odin: this.PYTH }[currFeed.type];
       if (apiFormat === undefined) {
         throw new Error(`API format for ${currFeed} unknown.`);
       }
@@ -189,6 +201,8 @@ export default class PriceFeeds {
       if (queries[k] == undefined) {
         continue;
       }
+      if (queries[k] == "onchain") {
+      }
       let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k] + suffixes[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
       for (let j = 0; j < pxInfo.length; j++) {
@@ -196,6 +210,11 @@ export default class PriceFeeds {
         let isMarketClosed = tsSecNow - pxInfo[j].publish_time > this.THRESHOLD_MARKET_CLOSED_SEC;
         resultPrices.set(symbolsOfEndpoint[k][j], [price, isMarketClosed]);
       }
+    }
+    for (let k = 0; k < onChainSyms.length; k++) {
+      let sym = onChainSyms[k];
+      let price = await this.onChainPxFeeds[sym].getPrice();
+      resultPrices.set(sym, [price, false]);
     }
     return resultPrices;
   }

@@ -17,12 +17,12 @@ describe("priceFeed", () => {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
     config.priceFeedEndpoints = [
-      { type: "pyth", endpoints: ["https://hermes-beta.pyth.network/api"] }, //, "https://xc-testnet.pyth.network/api"] },
+      { type: "pyth", endpoints: ["https://hermes.pyth.network/api"] }, //, "https://xc-testnet.pyth.network/api"] },
     ];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
