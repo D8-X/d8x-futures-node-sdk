@@ -40,7 +40,7 @@ describe("readOnly", () => {
 
   describe("Read config", () => {
     it("read all config types", () => {
-      let configs = ["zkevm", "zkevmTestnet", 1101];
+      let configs = ["zkevm", "cardona", 1101];
 
       for (let i = 0; i < configs.length; i++) {
         let config = PerpetualDataHandler.readSDKConfig(configs[i]);

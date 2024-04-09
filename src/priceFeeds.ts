@@ -344,11 +344,12 @@ export default class PriceFeeds {
     let prices = new Array<number>();
     let mktClosed = new Array<boolean>();
     for (let k = 0; k < symbols.length; k++) {
-      let triangulation: [string[], boolean[]] | undefined = this.triangulations[symbols[k]];
+      let sym = symbols[k] as string;
+      let triangulation: [string[], boolean[]] | undefined = this.triangulations.get(sym);
       if (triangulation == undefined) {
-        let feedPrice = feedPriceMap.get(symbols[k]);
+        let feedPrice = feedPriceMap.get(sym);
         if (feedPrice == undefined) {
-          throw new Error(`PriceFeeds: no triangulation defined for ${symbols[k]}`);
+          throw new Error(`PriceFeeds: no triangulation defined for ${sym}`);
         } else {
           prices.push(feedPrice[0]); //price
           mktClosed.push(feedPrice[1]); //market closed?

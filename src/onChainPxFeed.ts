@@ -21,7 +21,8 @@ export default class OnChainPxFeed {
 
   public constructor(ctrctAddr: string, decimals: number, rpcs: string[]) {
     this.rpcs = rpcs;
-    this.provider = new StaticJsonRpcProvider(this.rpcs[0]);
+    this.lastRpc = Math.floor(Math.random() * rpcs.length);
+    this.provider = new StaticJsonRpcProvider(this.rpcs[this.lastRpc]);
     this.ctrctAddr = ctrctAddr;
     this.decimals = decimals;
   }
@@ -52,8 +53,7 @@ export default class OnChainPxFeed {
   }
 
   private setRpc() {
-    this.lastRpc += 1;
-    const idx = this.lastRpc % this.rpcs.length;
-    this.provider = new StaticJsonRpcProvider(this.rpcs[idx]);
+    this.lastRpc = (this.lastRpc + 1) % this.rpcs.length;
+    this.provider = new StaticJsonRpcProvider(this.rpcs[this.lastRpc]);
   }
 }
