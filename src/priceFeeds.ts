@@ -196,6 +196,7 @@ export default class PriceFeeds {
         queries[endpointId] = queries[endpointId] + apiFormat.separator + currFeed.id;
       }
     }
+    let onChainPromise = this.queryOnChainPxFeeds(onChainSyms);
     let resultPrices = new Map<string, [number, boolean]>();
     for (let k = 0; k < queries.length; k++) {
       if (queries[k] == undefined) {
@@ -211,12 +212,22 @@ export default class PriceFeeds {
         resultPrices.set(symbolsOfEndpoint[k][j], [price, isMarketClosed]);
       }
     }
+    let onChPxs = await onChainPromise;
     for (let k = 0; k < onChainSyms.length; k++) {
       let sym = onChainSyms[k];
-      let price = await this.onChainPxFeeds[sym].getPrice();
-      resultPrices.set(sym, [price, false]);
+      resultPrices.set(sym, [onChPxs[k], false]);
     }
     return resultPrices;
+  }
+
+  private async queryOnChainPxFeeds(symbols: string[]) {
+    let prices: number[] = new Array<number>();
+    for (let k = 0; k < symbols.length; k++) {
+      let sym = symbols[k];
+      let price = await this.onChainPxFeeds[sym].getPrice();
+      prices.push(price);
+    }
+    return prices;
   }
 
   /**
