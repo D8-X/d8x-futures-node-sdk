@@ -9,6 +9,8 @@ let RPC: string = <string>process.env.RPC;
 
 let och: OnChainPxFeed;
 let px0: number;
+let priceFeeds: PriceFeeds;
+
 describe("onChainPxSources", () => {
   beforeAll(async () => {});
   it("instantiate and get price", async () => {
@@ -40,10 +42,21 @@ describe("onChainPxSources", () => {
       }
       let mktData = new MarketData(config);
       await mktData.createProxyInstance();
-      let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+      priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
       let prices,
         _ = await priceFeeds.fetchFeedPrices(["WEETH-ETH"]);
       console.log("price = ", prices);
+    });
+    it("triangulated price", async () => {
+      let triang = new Map<string, [string[], boolean[]]>();
+      triang["WEETH-USD"] = [
+        ["WEETH-ETH", "ETH-USD"],
+        [false, false],
+      ];
+
+      priceFeeds.setTriangulations(triang);
+      let prices = await priceFeeds.fetchPrices(["WEETH-USD"]);
+      console.log(prices["WEETH-USD"]);
     });
   });
 });

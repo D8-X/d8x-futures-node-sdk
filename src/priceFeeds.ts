@@ -344,7 +344,7 @@ export default class PriceFeeds {
     let prices = new Array<number>();
     let mktClosed = new Array<boolean>();
     for (let k = 0; k < symbols.length; k++) {
-      let triangulation: [string[], boolean[]] | undefined = this.triangulations.get(symbols[k]);
+      let triangulation: [string[], boolean[]] | undefined = this.triangulations[symbols[k]];
       if (triangulation == undefined) {
         let feedPrice = feedPriceMap.get(symbols[k]);
         if (feedPrice == undefined) {
