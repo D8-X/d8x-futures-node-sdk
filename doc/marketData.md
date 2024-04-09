@@ -39,6 +39,7 @@ No gas required for the queries here.</p>
     * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
     * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
     * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
+    * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -759,3 +760,15 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+fetchPricesForPerpetual"></a>
+
+### marketData.fetchPricesForPerpetual(symbol) ⇒
+<p>Fetch latest off-chain index and collateral prices</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Prices and market-closed information</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
+
