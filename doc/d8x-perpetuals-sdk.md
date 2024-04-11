@@ -28,6 +28,8 @@ smart-contract interactions that require gas-payments.</p></dd>
 <dd><p>Functions to access market data (e.g., information on open orders, information on products that can be traded).
 This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p></dd>
+<dt><a href="#OnChainPxFeed">OnChainPxFeed</a></dt>
+<dd><p>OnChainPxFeed: get a price from a chainlink-style oracle</p></dd>
 <dt><a href="#OrderExecutorTool">OrderExecutorTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
@@ -2594,6 +2596,7 @@ No gas required for the queries here.</p>
     * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
     * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
     * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
+    * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -3330,6 +3333,18 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+fetchPricesForPerpetual"></a>
+
+### marketData.fetchPricesForPerpetual(symbol) ⇒
+<p>Fetch latest off-chain index and collateral prices</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>Prices and market-closed information</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
+
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### marketData.getOrderBookContract(symbol) ⇒
@@ -3530,6 +3545,12 @@ and corresponding price information</p>
 | --- | --- |
 | contract | <p>name of contract: proxy|lob|sharetoken</p> |
 
+<a name="OnChainPxFeed"></a>
+
+## OnChainPxFeed
+<p>OnChainPxFeed: get a price from a chainlink-style oracle</p>
+
+**Kind**: global class  
 <a name="OrderExecutorTool"></a>
 
 ## OrderExecutorTool ⇐ [<code>WriteAccessHandler</code>](#WriteAccessHandler)
@@ -5245,6 +5266,7 @@ so that signatures can be handled in frontend via wallet</p>
         * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
         * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
+        * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
@@ -6247,6 +6269,19 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+fetchPricesForPerpetual"></a>
+
+### traderInterface.fetchPricesForPerpetual(symbol) ⇒
+<p>Fetch latest off-chain index and collateral prices</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>fetchPricesForPerpetual</code>](#MarketData+fetchPricesForPerpetual)  
+**Returns**: <p>Prices and market-closed information</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
+
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### traderInterface.getOrderBookContract(symbol) ⇒
