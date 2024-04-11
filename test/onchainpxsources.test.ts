@@ -14,6 +14,21 @@ let priceFeeds: PriceFeeds;
 let config: NodeSDKConfig;
 
 describe("onChainPxSources", () => {
+  describe("positionRisk", () => {
+    let mktData: MarketData;
+    beforeAll(async () => {
+      config = PerpetualDataHandler.readSDKConfig("arbitrum");
+      mktData = new MarketData(config);
+      await mktData.createProxyInstance();
+    });
+    it("should get price via positionRisk", async () => {
+      //let p = await mktData.positionRisk("0x2BAC2B1243Ab69E8Ab7b6eaA1cb0A55CF6214F1B", "ETH-USD-WEETH");
+      for (let k = 0; k < 3; k++) {
+        let p = await mktData.positionRisk("0x2BAC2B1243Ab69E8Ab7b6eaA1cb0A55CF6214F1B");
+        console.log(p);
+      }
+    });
+  });
   beforeAll(async () => {});
   it("instantiate and get price", async () => {
     let rpcs = ["https://arbitrum.llamarpc.com", "https://1rpc.io/arb"];
@@ -62,6 +77,7 @@ describe("onChainPxSources", () => {
       console.log(info);
       //let markPrice1 = await mktData.getMarkPrice("ETH-USD-WEETH");
       //await mktData.
+      //https://api-mainnet.arb-42161.d8x.xyz/position-risk?traderAddr=0x2BAC2B1243Ab69E8Ab7b6eaA1cb0A55CF6214F1B&t=1712825020702
     });
   });
 });
