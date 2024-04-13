@@ -489,7 +489,7 @@ export default class PriceFeeds {
           j++;
         }
         if (config.endpoints[endpointId].type != type) {
-          throw new Error(`priceFeeds: no enpoint found for ${type} check priceFeedConfig`);
+          throw new Error(`priceFeeds: no endpoint found for ${type} check priceFeedConfig`);
         }
       }
       feed.set(config.ids[k].id, { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });
