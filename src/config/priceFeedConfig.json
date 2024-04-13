@@ -75,6 +75,12 @@
         "origin": "Crypto.AGEUR/USD"
       },
       {
+        "symbol": "OKB-USD",
+        "id": "0xd6f83dfeaff95d596ddec26af2ee32f391c206a183b161b7980821860eeef2f5",
+        "type": "pyth",
+        "origin": "Crypto.OKB/USD"
+      },
+      {
         "symbol": "WEETH-ETH",
         "id": "",
         "type": "onchain",
@@ -142,6 +148,12 @@
         "id": "0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2",
         "type": "odin",
         "origin": "Metal.XAU/USD"
+      },
+      {
+        "symbol": "OKB-USD",
+        "id": "0xd6f83dfeaff95d596ddec26af2ee32f391c206a183b161b7980821860eeef2f5",
+        "type": "pyth",
+        "origin": "Crypto.OKB/USD"
       }
     ],
     "endpoints": [{ "type": "odin", "endpoints": ["https://odin.quantena.tech/api/"] }]
