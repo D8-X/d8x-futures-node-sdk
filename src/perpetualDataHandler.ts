@@ -313,7 +313,8 @@ export default class PerpetualDataHandler {
     // the prices of price-feeds to the index price required, e.g.
     // BTC-USDC : BTC-USD / USDC-USD
     this.priceFeedGetter.initializeTriangulations(requiredPairs);
-
+    // ensure all feed prices can be fetched
+    await this.priceFeedGetter.fetchFeedPrices();
     // fill this.perpetualIdToSymbol
     for (let [key, info] of this.symbolToPerpStaticInfo) {
       this.perpetualIdToSymbol.set(info.id, key);
