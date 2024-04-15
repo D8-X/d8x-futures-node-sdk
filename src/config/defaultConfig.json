@@ -138,7 +138,7 @@
     "chainId": 196,
     "version": 1,
     "proxyAddr": "0xb24dB543749277E8625a59C061aE7574C8235475",
-    "nodeURL": "https://xlayerrpc.okx.com",
+    "nodeURL": "https://rpc.xlayer.tech",
     "priceFeedConfigNetwork": "odin",
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
