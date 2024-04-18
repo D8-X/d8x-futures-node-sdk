@@ -383,7 +383,7 @@ export default class PriceFeeds {
     const headers = { headers: { "Content-Type": "application/json" } };
     let response = await fetch(query, headers);
     if (!response.ok) {
-      throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+      throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
     let values = (await response.json()) as Array<PythLatestPriceFeed>;
     const priceFeedUpdates = new Array<string>();
@@ -412,7 +412,7 @@ export default class PriceFeeds {
       const headers = { headers: { "Content-Type": "application/json" } };
       let response = await fetch(query, headers);
       if (!response.ok) {
-        throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+        throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} query:${query}`);
       }
       values = await response.json();
       this.cache.set(query, { timestamp: tsNow, values: values });
