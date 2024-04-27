@@ -38,7 +38,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
@@ -69,7 +69,7 @@ import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-
 async function main() {
   console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
   let orderTool = new OrderExecutorTool(config, pk);
@@ -112,7 +112,7 @@ import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-
 async function main() {
   console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
   let orderTool = new OrderExecutorTool(config, pk);
@@ -145,7 +145,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -173,7 +173,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -202,7 +202,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -234,7 +234,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -263,7 +263,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -293,7 +293,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();

@@ -57,7 +57,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // MarketData (read only, no authentication needed)
   let mktData = new MarketData(config);
   // Create a proxy instance to access the blockchain
@@ -117,7 +117,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
@@ -139,7 +139,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
@@ -167,7 +167,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
@@ -197,7 +197,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
@@ -228,7 +228,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const mktData = new MarketData(config);
   await mktData.createProxyInstance();
   const order: Order = {
@@ -264,7 +264,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk conditional on removing 3.14 MATIC
@@ -294,7 +294,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get MATIC balance of address
@@ -322,7 +322,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get dMATIC balance of address
@@ -349,7 +349,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get price of 1 dMATIC in MATIC
@@ -378,7 +378,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
@@ -408,7 +408,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // max order sizes
@@ -436,7 +436,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -464,7 +464,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -493,7 +493,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get order stauts
@@ -521,7 +521,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get order stauts
@@ -548,7 +548,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
@@ -576,7 +576,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
@@ -640,7 +640,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual mid price
@@ -670,7 +670,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get available margin
@@ -697,7 +697,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get scpre
@@ -724,7 +724,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // is market closed?
@@ -751,7 +751,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // is market closed?

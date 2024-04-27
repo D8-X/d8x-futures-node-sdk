@@ -41,7 +41,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // BrokerTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -69,7 +69,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -100,7 +100,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -130,7 +130,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -160,7 +160,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -194,7 +194,7 @@ import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -231,7 +231,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -260,7 +260,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -289,7 +289,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -318,7 +318,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -349,7 +349,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -389,7 +389,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   const brokTool = new BrokerTool(config, pk);
   const traderAPI = new TraderInterface(config);
@@ -430,7 +430,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();

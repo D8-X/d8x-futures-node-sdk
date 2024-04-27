@@ -506,7 +506,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // load configuration for Polygon zkEVM Tesnet
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // AccountTrade (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
@@ -534,7 +534,7 @@ import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
    // setup (authentication required, PK is an environment variable with a private key)
-   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   const config = PerpetualDataHandler.readSDKConfig("cardona");
    const pk: string = <string>process.env.PK;
    let accTrade = new AccountTrade(config, pk);
    await accTrade.createProxyInstance();
@@ -563,7 +563,7 @@ import { AccountTrade, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
    console.log(AccountTrade);
    // setup (authentication required, PK is an environment variable with a private key)
-   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   const config = PerpetualDataHandler.readSDKConfig("cardona");
    const pk: string = <string>process.env.PK;
    const accTrade = new AccountTrade(config, pk);
    await accTrade.createProxyInstance();
@@ -605,7 +605,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -634,7 +634,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -660,7 +660,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(AccountTrade);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -686,7 +686,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 
 async function main() {
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -713,7 +713,7 @@ import { AccountTrade, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 
 async function main() {
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
@@ -1038,7 +1038,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // BrokerTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
@@ -1066,7 +1066,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1097,7 +1097,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1127,7 +1127,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1157,7 +1157,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1191,7 +1191,7 @@ import { BrokerTool, PerpetualDataHandler, Order } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1228,7 +1228,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1257,7 +1257,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1286,7 +1286,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1315,7 +1315,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1346,7 +1346,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1386,7 +1386,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   const brokTool = new BrokerTool(config, pk);
   const traderAPI = new TraderInterface(config);
@@ -1427,7 +1427,7 @@ import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(BrokerTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let brokTool = new BrokerTool(config, pk);
   await brokTool.createProxyInstance();
@@ -1742,7 +1742,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // load configuration for Polygon zkEVM (tesnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // LiquidatorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
@@ -1772,7 +1772,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1805,7 +1805,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1834,7 +1834,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1864,7 +1864,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -1892,7 +1892,7 @@ import { LiquidatorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(LiquidatorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtrTool = new LiquidatorTool(config, pk);
   await lqudtrTool.createProxyInstance();
@@ -2205,7 +2205,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // LiquidityProviderTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
@@ -2233,7 +2233,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -2265,7 +2265,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -2294,7 +2294,7 @@ import { LiquidityProviderTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk
 async function main() {
   console.log(LiquidityProviderTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let lqudtProviderTool = new LiquidityProviderTool(config, pk);
   await lqudtProviderTool.createProxyInstance();
@@ -2630,7 +2630,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // MarketData (read only, no authentication needed)
   let mktData = new MarketData(config);
   // Create a proxy instance to access the blockchain
@@ -2690,7 +2690,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
@@ -2712,7 +2712,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
@@ -2740,7 +2740,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
@@ -2770,7 +2770,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
@@ -2801,7 +2801,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const mktData = new MarketData(config);
   await mktData.createProxyInstance();
   const order: Order = {
@@ -2837,7 +2837,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk conditional on removing 3.14 MATIC
@@ -2867,7 +2867,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get MATIC balance of address
@@ -2895,7 +2895,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get dMATIC balance of address
@@ -2922,7 +2922,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get price of 1 dMATIC in MATIC
@@ -2951,7 +2951,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
@@ -2981,7 +2981,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // max order sizes
@@ -3009,7 +3009,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -3037,7 +3037,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -3066,7 +3066,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get order stauts
@@ -3094,7 +3094,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get order stauts
@@ -3121,7 +3121,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
@@ -3149,7 +3149,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
@@ -3213,7 +3213,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual mid price
@@ -3243,7 +3243,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get available margin
@@ -3270,7 +3270,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get scpre
@@ -3297,7 +3297,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // is market closed?
@@ -3324,7 +3324,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // is market closed?
@@ -3611,7 +3611,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // load configuration for Polygon zkEVM (testnet)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
@@ -3642,7 +3642,7 @@ import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-
 async function main() {
   console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
   let orderTool = new OrderExecutorTool(config, pk);
@@ -3685,7 +3685,7 @@ import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-
 async function main() {
   console.log(OrderExecutorTool);
   // Setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   const symbol = "ETH-USD-MATIC";
   let orderTool = new OrderExecutorTool(config, pk);
@@ -3718,7 +3718,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3746,7 +3746,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3775,7 +3775,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3807,7 +3807,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3836,7 +3836,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -3866,7 +3866,7 @@ import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(OrderExecutorTool);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const pk: string = <string>process.env.PK;
   let orderTool = new OrderExecutorTool(config, pk);
   await orderTool.createProxyInstance();
@@ -4198,6 +4198,7 @@ common data and chain operations.</p>
         * [.getConfigByName(name, version)](#PerpetualDataHandler.getConfigByName) ⇒
         * [.getConfigByLocation(filename, version)](#PerpetualDataHandler.getConfigByLocation) ⇒
         * [.getConfigByChainId(chainId, version)](#PerpetualDataHandler.getConfigByChainId) ⇒
+        * [.getAvailableConfigs()](#PerpetualDataHandler.getAvailableConfigs) ⇒
         * [._getABIFromContract(contract, functionName)](#PerpetualDataHandler._getABIFromContract) ⇒
         * [.checkOrder(order, traderAccount, perpStaticInfo)](#PerpetualDataHandler.checkOrder)
         * [.fromClientOrderToTypeSafeOrder(order)](#PerpetualDataHandler.fromClientOrderToTypeSafeOrder) ⇒
@@ -4605,6 +4606,26 @@ Checks for some misspecifications.</p>
 | chainId | <p>Chain Id</p> |
 | version | <p>Version of the config. Defaults to highest available.</p> |
 
+<a name="PerpetualDataHandler.getAvailableConfigs"></a>
+
+### PerpetualDataHandler.getAvailableConfigs() ⇒
+<p>Get available configurations in a Set.
+You can use the output to determine the config file that you get
+via 'let config = PerpetualDataHandler.readSDKConfig(196);'</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>set of chain-ids and name separated by ;</p>  
+**Example**  
+```js
+import { PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  const configs = PerpetualDataHandler.getAvailableConfigs("");
+  console.log(configs);
+  // output of the form:
+  // Set(2) { '1101; zkevm', `196; xlayer'}
+}
+main();
+```
 <a name="PerpetualDataHandler._getABIFromContract"></a>
 
 ### PerpetualDataHandler.\_getABIFromContract(contract, functionName) ⇒
@@ -5316,7 +5337,7 @@ without broker fee</p>
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
   // query exchange fee
@@ -5341,7 +5362,7 @@ main();
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
   // query volume
@@ -5369,7 +5390,7 @@ orderBookContract.cancelOrder(orderId, signature);</p>
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
   // get digest
@@ -5395,7 +5416,7 @@ main();
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
   // get order book address
@@ -5475,7 +5496,7 @@ Order must contain broker fee and broker address if there is supposed to be a br
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const signer = // ethers Signer, e.g. from Metamask
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
@@ -5506,7 +5527,7 @@ The amount of pool shares to be unlocked is fixed by this call, but not their va
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const signer = // ethers Signer, e.g. from Metamask
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
@@ -5535,7 +5556,7 @@ The address loses pool shares in return.</p>
 import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(TraderInterface);
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const signer = // ethers Signer, e.g. from Metamask
   let traderAPI = new TraderInterface(config);
   await traderAPI.createProxyInstance();
@@ -5602,7 +5623,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get contract instance
@@ -5625,7 +5646,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get exchange info
@@ -5654,7 +5675,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get all open orders for a trader/symbol
@@ -5685,7 +5706,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk info
@@ -5717,7 +5738,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const mktData = new MarketData(config);
   await mktData.createProxyInstance();
   const order: Order = {
@@ -5754,7 +5775,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   const mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // Get position risk conditional on removing 3.14 MATIC
@@ -5785,7 +5806,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get MATIC balance of address
@@ -5814,7 +5835,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get dMATIC balance of address
@@ -5842,7 +5863,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get price of 1 dMATIC in MATIC
@@ -5872,7 +5893,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // get value of pool share token
@@ -5903,7 +5924,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let md = new MarketData(config);
   await md.createProxyInstance();
   // max order sizes
@@ -5932,7 +5953,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -5961,7 +5982,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get oracle price
@@ -5991,7 +6012,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get order stauts
@@ -6020,7 +6041,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get order stauts
@@ -6048,7 +6069,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get mark price
@@ -6077,7 +6098,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual price
@@ -6145,7 +6166,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get perpetual mid price
@@ -6176,7 +6197,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get available margin
@@ -6204,7 +6225,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // get scpre
@@ -6232,7 +6253,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // is market closed?
@@ -6260,7 +6281,7 @@ import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
 async function main() {
   console.log(MarketData);
   // setup
-  const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
   // is market closed?
