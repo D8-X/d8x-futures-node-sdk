@@ -174,6 +174,6 @@
         "origin": "Crypto.DOGE/USD"
       }
     ],
-    "endpoints": [{ "type": "odin", "endpoints": ["https://odin.d8x.xyz/api/"] }]
+    "endpoints": [{ "type": "odin", "endpoints": ["https://odin.d8x.xyz/api"] }]
   }
 ]
