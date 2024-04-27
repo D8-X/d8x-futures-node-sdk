@@ -48,6 +48,8 @@ async function trade() {
 }
 
 async function main() {
+  let c = PerpetualDataHandler.getAvailableConfigs();
+  console.log(c);
   let config = PerpetualDataHandler.readSDKConfig(196);
 
   let mktData = new MarketData(config);
@@ -62,5 +64,5 @@ async function main() {
 
   //await trade();
 }
-//main();
-trade();
+main();
+//trade();

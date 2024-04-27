@@ -1256,6 +1256,31 @@ export default class PerpetualDataHandler {
   }
 
   /**
+   * Get available configurations in a Set.
+   * You can use the output to determine the config file that you get
+   * via 'let config = PerpetualDataHandler.readSDKConfig(196);'
+   * @returns set of chain-ids and name separated by ;
+   * @example
+   * import { PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * async function main() {
+   *   const configs = PerpetualDataHandler.getAvailableConfigs("");
+   *   console.log(configs);
+   *   // output of the form:
+   *   // Set(2) { '1101; zkevm', `196; xlayer'}
+   * }
+   * main();
+   */
+  public static getAvailableConfigs() {
+    let configFile = DEFAULT_CONFIG;
+    let ids = new Set<string>();
+    for (let k = 0; k < configFile.length; k++) {
+      const el = configFile[k].chainId.toString() + "; " + configFile[k].name;
+      ids.add(el);
+    }
+    return ids;
+  }
+
+  /**
    * Get the ABI of a function in a given contract
    * @param contract A contract instance, e.g. this.proxyContract
    * @param functionName Name of the function whose ABI we want
