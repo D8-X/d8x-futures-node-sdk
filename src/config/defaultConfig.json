@@ -1,17 +1,5 @@
 [
   {
-    "name": "zkevmTestnet",
-    "chainId": 1442,
-    "version": 2,
-    "proxyAddr": "0x0e23619704556945B1C7CB550Dee6D428f7d2E2B",
-    "nodeURL": "https://rpc.public.zkevm-test.net",
-    "priceFeedConfigNetwork": "testnet",
-    "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
-  },
-  {
     "name": "zkevm",
     "chainId": 1101,
     "version": 1,
