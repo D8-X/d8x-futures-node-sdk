@@ -93,11 +93,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    if (typeof executorAddr == "undefined") {
+    if (executorAddr == undefined) {
       executorAddr = this.traderAddr;
     }
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    }
+    if (submission.priceFeedVaas.length == 0) {
+      // we have at least 1 push oracle, so there must be at least 1 price feed to update
+      throw Error("executeOrder: no priceFeedVaas found for symbol " + symbol);
     }
     if (!overrides || overrides.value == undefined) {
       overrides = {
@@ -121,8 +125,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
           gasLimit: overrides?.gasLimit ?? this.gasLimit,
         }
       );
-      // wait
-      // await pythTxn.wait();
     } catch (e) {
       console.log(e);
     }
