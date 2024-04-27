@@ -1263,7 +1263,7 @@ export default class PerpetualDataHandler {
    * @example
    * import { PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
-   *   const configs = PerpetualDataHandler.getAvailableConfigs("");
+   *   const configs = PerpetualDataHandler.getAvailableConfigs();
    *   console.log(configs);
    *   // output of the form:
    *   // Set(2) { '1101; zkevm', `196; xlayer'}
