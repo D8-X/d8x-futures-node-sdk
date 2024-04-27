@@ -36,7 +36,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // query exchange fee
@@ -69,7 +69,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // query volume
@@ -102,7 +102,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // get digest
@@ -133,7 +133,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // get order book address
@@ -235,7 +235,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const signer = // ethers Signer, e.g. from Metamask
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
@@ -276,7 +276,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const signer = // ethers Signer, e.g. from Metamask
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
@@ -314,7 +314,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const signer = // ethers Signer, e.g. from Metamask
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
