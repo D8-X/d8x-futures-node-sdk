@@ -37,6 +37,18 @@
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   },
   {
+    "name": "x1",
+    "chainId": 195,
+    "version": 2,
+    "proxyAddr": "0x2971f469685C93812449B755ed7D1EC105E21Cd8",
+    "nodeURL": "https://xlayertestrpc.okx.com",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
     "name": "cardona",
     "chainId": 2442,
     "version": 1,
