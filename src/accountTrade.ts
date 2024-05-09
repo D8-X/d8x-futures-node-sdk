@@ -303,11 +303,12 @@ export default class AccountTrade extends WriteAccessHandler {
     if (orderBookContract == null || this.signer == null) {
       throw Error(`Order Book contract for symbol ${symbol} or signer not defined`);
     }
+
+    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
+    let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
-    let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
     // value is minimal necessary by default, but can be overriden
     if (!overrides || overrides.value == undefined) {
       overrides = {
