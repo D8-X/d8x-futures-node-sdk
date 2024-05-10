@@ -346,3 +346,63 @@ export interface TokenOverride {
   tokenAddress: string;
   newSymbol: string;
 }
+
+export interface PerpetualData {
+  poolId: number;
+  id: number;
+  fInitialMarginRate: number; //parameter: initial margin
+  fSigma2: number; // parameter: volatility of base-quote pair
+  iLastFundingTime: number; //timestamp since last funding rate payment
+  fDFCoverNRate: number; // parameter: cover-n rule for default fund. E.g., fDFCoverNRate=0.05 -> we try to cover 5% of active accounts with default fund
+  fMaintenanceMarginRate: number; // parameter: maintenance margin
+  perpetualState: string; // Perpetual AMM state
+  eCollateralCurrency: number; //parameter: in what currency is the collateral held?
+  // ------ 1
+  S2BaseCCY: string; //base currency of S2
+  S2QuoteCCY: string; //quote currency of S2
+  incentiveSpreadTbps: number; //parameter: maximum spread added to the PD
+  minimalSpreadTbps: number; //parameter: minimal spread between long and short perpetual price
+  S3BaseCCY: string; //base currency of S3
+  S3QuoteCCY: string; //quote currency of S3
+  sigma3: number; // parameter: volatility of quanto-quote pair
+  rho23: number; // parameter: correlation of quanto/base returns
+  liquidationPenaltyRateTbps: number; //parameter: penalty if AMM closes the position and not the trader
+  //------- 2
+  currentMarkPremiumRatePrice: number; //relative diff to index price EMA, used for markprice.
+  currentMarkPremiumRateTime: number; //relative diff to index price EMA, used for markprice.
+  //------- 3
+  premiumRatesEMA: number; // EMA of premium rate
+  unitAccumulatedFunding: number; //accumulated funding in collateral currency
+  //------- 4
+  openInterest: number; //open interest is the larger of the amount of long and short positions in base currency
+  targetAMMFundSize: number; //target liquidity pool funds to allocate to the AMM
+  //------- 5
+  fCurrentTraderExposureEMA: number; // trade amounts (storing absolute value)
+  fCurrentFundingRate: number; // current instantaneous funding rate
+  //------- 6
+  fLotSizeBC: number; //parameter: minimal trade unit (in base currency) to avoid dust positions
+  fReferralRebateCC: number; //parameter: referall rebate in collateral currency
+  //------- 7
+  fTargetDFSize: number; // target default fund size
+  fkStar: number; // signed trade size that minimizes the AMM risk
+  //------- 8
+  fAMMTargetDD: number; // parameter: target distance to default (=inverse of default probability)
+  fAMMMinSizeCC: number; // parameter: minimal size of AMM pool, regardless of current exposure
+  //------- 9
+  fMinimalTraderExposureEMA: number; // parameter: minimal value for fCurrentTraderExposureEMA that we don't want to undershoot
+  fMinimalAMMExposureEMA: number; // parameter: minimal abs value for fCurrentAMMExposureEMA that we don't want to undershoot
+  //------- 10
+  fSettlementS3PriceData: number; //quanto index
+  fSettlementS2PriceData: number; //base-quote pair. Used as last price in normal state.
+  //------- 11
+  fTotalMarginBalance: number; //calculated for settlement, in collateral currency
+  fMarkPriceEMALambda: number; // parameter: Lambda parameter for EMA used in mark-price for funding rates
+  fFundingRateClamp: number; // parameter: funding rate clamp between which we charge 1bps
+  fMaximalTradeSizeBumpUp: number; // parameter: >1, users can create a maximal position of size fMaximalTradeSizeBumpUp*fCurrentAMMExposureEMA
+  iLastTargetPoolSizeTime: number; //timestamp (seconds) since last update of fTargetDFSize and fTargetAMMFundSize
+  //------- 12
+  fStressReturnS3: [number, number]; // parameter: negative and positive stress returns for quanto-quote asset
+  fDFLambda: [number, number]; // parameter: EMA lambda for AMM and trader exposure K,k: EMA*lambda + (1-lambda)*K. 0 regular lambda, 1 if current value exceeds past
+  fCurrentAMMExposureEMA: [number, number]; // 0: negative aggregated exposure (storing negative value), 1: positive
+  fStressReturnS2: [number, number]; // parameter: negative and positive stress returns for base-quote asset
+}
