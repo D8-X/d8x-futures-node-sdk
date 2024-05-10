@@ -51,6 +51,7 @@ import {
   calculateLiquidationPriceCollateralQuote,
   div64x64,
   floatToABK64x64,
+  dec18ToFloat,
 } from "./d8XMath";
 import {
   TokenOverride,
@@ -65,6 +66,7 @@ import {
   type PriceFeedSubmission,
   type SmartContractOrder,
   type PerpetualData,
+  LiquidityPoolData,
 } from "./nodeSDKTypes";
 import PriceFeeds from "./priceFeeds";
 import {
@@ -194,6 +196,30 @@ export default class PerpetualDataHandler {
       throw new Error("proxy not defined");
     }
     return await PerpetualDataHandler._getPerpetuals(ids, this.proxyContract, this.symbolList, overrides);
+  }
+
+  /**
+   * Get liquidity pools data
+   * @param fromIdx starting index (>=1)
+   * @param toIdx to index (inclusive)
+   * @param overrides optional
+   * @returns array of LiquidityPoolData converted into decimals
+   */
+  public async getLiquidityPools(
+    fromIdx: number,
+    toIdx: number,
+    overrides?: CallOverrides
+  ): Promise<LiquidityPoolData[]> {
+    if (this.proxyContract == null) {
+      throw new Error("proxy not defined");
+    }
+    return await PerpetualDataHandler._getLiquidityPools(
+      fromIdx,
+      toIdx,
+      this.proxyContract,
+      this.symbolList,
+      overrides
+    );
   }
 
   /**
@@ -559,6 +585,58 @@ export default class PerpetualDataHandler {
       chunkIDs.push(currentChunk);
     }
     return chunkIDs;
+  }
+
+  /**
+   * Query perpetuals
+   * @param ids perpetual ids
+   * @param _proxyContract proxy contract instance
+   * @param _symbolList symbol mappings to convert the bytes encoded symbol name to string
+   * @param overrides optional
+   * @returns array of PerpetualData converted into decimals
+   */
+  public static async _getLiquidityPools(
+    fromIdx: number,
+    toIdx: number,
+    _proxyContract: Contract,
+    _symbolList: Map<string, string>,
+    overrides?: CallOverrides
+  ): Promise<LiquidityPoolData[]> {
+    if (fromIdx < 1) {
+      throw Error("_getLiquidityPools: indices start at 1");
+    }
+    const rawPools: PerpStorage.LiquidityPoolDataStruct[] = await _proxyContract.getLiquidityPools(
+      fromIdx,
+      toIdx,
+      overrides || {}
+    );
+    let p = new Array<LiquidityPoolData>();
+    for (let k = 0; k < rawPools.length; k++) {
+      let orig = rawPools[k];
+      let v: LiquidityPoolData = {
+        isRunning: orig.isRunning, // state
+        iPerpetualCount: Number(orig.iPerpetualCount), // state
+        id: Number(orig.id), // parameter: index, starts from 1
+        fCeilPnLShare: ABK64x64ToFloat(BigNumber.from(orig.fCeilPnLShare)), // parameter: cap on the share of PnL allocated to liquidity providers
+        marginTokenDecimals: Number(orig.marginTokenDecimals), // parameter: decimals of margin token, inferred from token contract
+        iTargetPoolSizeUpdateTime: Number(orig.iTargetPoolSizeUpdateTime), //parameter: timestamp in seconds. How often we update the pool's target size
+        marginTokenAddress: orig.marginTokenAddress, //parameter: address of the margin token
+        prevAnchor: Number(orig.prevAnchor), // state: keep track of timestamp since last withdrawal was initiated
+        fRedemptionRate: ABK64x64ToFloat(BigNumber.from(orig.fRedemptionRate)), // state: used for settlement in case of AMM default
+        shareTokenAddress: orig.shareTokenAddress, // parameter
+        fPnLparticipantsCashCC: ABK64x64ToFloat(BigNumber.from(orig.fPnLparticipantsCashCC)), // state: addLiquidity/withdrawLiquidity + profit/loss - rebalance
+        fTargetAMMFundSize: ABK64x64ToFloat(BigNumber.from(orig.fTargetAMMFundSize)), // state: target liquidity for all perpetuals in pool (sum)
+        fDefaultFundCashCC: ABK64x64ToFloat(BigNumber.from(orig.fDefaultFundCashCC)), // state: profit/loss
+        fTargetDFSize: ABK64x64ToFloat(BigNumber.from(orig.fTargetDFSize)), // state: target default fund size for all perpetuals in pool
+        fBrokerCollateralLotSize: ABK64x64ToFloat(BigNumber.from(orig.fBrokerCollateralLotSize)), // param:how much collateral do brokers deposit when providing "1 lot" (not trading lot)
+        prevTokenAmount: dec18ToFloat(BigNumber.from(orig.prevTokenAmount)), // state
+        nextTokenAmount: dec18ToFloat(BigNumber.from(orig.nextTokenAmount)), // state
+        totalSupplyShareToken: dec18ToFloat(BigNumber.from(orig.totalSupplyShareToken)), // state
+        fBrokerFundCashCC: ABK64x64ToFloat(BigNumber.from(orig.fBrokerFundCashCC)), // state: amount of cash in broker fund
+      };
+      p.push(v);
+    }
+    return p;
   }
 
   /**

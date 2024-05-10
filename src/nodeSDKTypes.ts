@@ -347,6 +347,9 @@ export interface TokenOverride {
   newSymbol: string;
 }
 
+/**
+ * Perpetualdata corresponding to the data in the smart contract
+ */
 export interface PerpetualData {
   poolId: number;
   id: number;
@@ -405,4 +408,30 @@ export interface PerpetualData {
   fDFLambda: [number, number]; // parameter: EMA lambda for AMM and trader exposure K,k: EMA*lambda + (1-lambda)*K. 0 regular lambda, 1 if current value exceeds past
   fCurrentAMMExposureEMA: [number, number]; // 0: negative aggregated exposure (storing negative value), 1: positive
   fStressReturnS2: [number, number]; // parameter: negative and positive stress returns for base-quote asset
+}
+
+/**
+ * LiquidityPoolData corresponding to the data in the smart contract
+ */
+export interface LiquidityPoolData {
+  isRunning: boolean; // state
+  iPerpetualCount: number; // state
+  id: number; // parameter: index, starts from 1
+  fCeilPnLShare: number; // parameter: cap on the share of PnL allocated to liquidity providers
+  marginTokenDecimals: number; // parameter: decimals of margin token, inferred from token contract
+  iTargetPoolSizeUpdateTime: number; //parameter: timestamp in seconds. How often we update the pool's target size
+  marginTokenAddress: string; //parameter: address of the margin token
+  // -----
+  prevAnchor: number; // state: keep track of timestamp since last withdrawal was initiated
+  fRedemptionRate: number; // state: used for settlement in case of AMM default
+  shareTokenAddress: string; // parameter
+  fPnLparticipantsCashCC: number; // state: addLiquidity/withdrawLiquidity + profit/loss - rebalance
+  fTargetAMMFundSize: number; // state: target liquidity for all perpetuals in pool (sum)
+  fDefaultFundCashCC: number; // state: profit/loss
+  fTargetDFSize: number; // state: target default fund size for all perpetuals in pool
+  fBrokerCollateralLotSize: number; // param:how much collateral do brokers deposit when providing "1 lot" (not trading lot)
+  prevTokenAmount: number; // state
+  nextTokenAmount: number; // state
+  totalSupplyShareToken: number; // state
+  fBrokerFundCashCC: number; // state: amount of cash in broker fund
 }

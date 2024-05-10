@@ -1,5 +1,12 @@
 import { ethers } from "ethers";
-import { NodeSDKConfig, ExchangeInfo, Order, PerpetualStaticInfo, PerpetualData } from "../src/nodeSDKTypes";
+import {
+  NodeSDKConfig,
+  ExchangeInfo,
+  Order,
+  PerpetualStaticInfo,
+  PerpetualData,
+  LiquidityPoolData,
+} from "../src/nodeSDKTypes";
 import { ABK64x64ToFloat } from "../src/d8XMath";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
@@ -210,6 +217,10 @@ describe("readOnly", () => {
     it("get perpetual data", async () => {
       let perps: PerpetualData[] = await mktData.getPerpetuals([100000]);
       expect(perps[0].id).toEqual(100000);
+    });
+    it("get pool data", async () => {
+      let pools: LiquidityPoolData[] = await mktData.getLiquidityPools(1, 1);
+      expect(pools[0].id).toEqual(1);
     });
     it("mark price", async () => {
       // base, quote, quanto

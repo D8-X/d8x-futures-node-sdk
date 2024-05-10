@@ -473,6 +473,8 @@ require gas-payments.</p>
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -788,6 +790,35 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### accountTrade.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### accountTrade.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
+
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
 ### accountTrade.\_fillSymbolMaps()
@@ -1004,6 +1035,8 @@ require gas-payments.</p>
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -1501,6 +1534,35 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### brokerTool.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### brokerTool.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
+
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
 ### brokerTool.\_fillSymbolMaps()
@@ -1709,6 +1771,8 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -1966,6 +2030,35 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### liquidatorTool.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### liquidatorTool.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
+
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
 ### liquidatorTool.\_fillSymbolMaps()
@@ -2172,6 +2265,8 @@ smart-contract interactions that require gas-payments.</p>
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -2367,6 +2462,35 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### liquidityProviderTool.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### liquidityProviderTool.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
 
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
@@ -2598,6 +2722,8 @@ No gas required for the queries here.</p>
     * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
     * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -3358,6 +3484,35 @@ main();
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### marketData.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### marketData.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
+
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
 ### marketData.\_fillSymbolMaps()
@@ -3578,6 +3733,8 @@ gas-payments.</p>
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -3968,6 +4125,35 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### orderExecutorTool.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### orderExecutorTool.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
+
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
 ### orderExecutorTool.\_fillSymbolMaps()
@@ -4167,6 +4353,8 @@ common data and chain operations.</p>
     * [new PerpetualDataHandler(config)](#new_PerpetualDataHandler_new)
     * _instance_
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+        * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+        * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
         * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -4185,6 +4373,8 @@ common data and chain operations.</p>
     * _static_
         * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
         * [.nestedIDsToChunks(chunkSize, nestedIDs)](#PerpetualDataHandler.nestedIDsToChunks) ⇒ <code>Array.&lt;Array.&lt;number&gt;&gt;</code>
+        * [._getLiquidityPools(ids, _proxyContract, _symbolList, overrides)](#PerpetualDataHandler._getLiquidityPools) ⇒
+        * [._getPerpetuals(ids, _proxyContract, _symbolList, overrides)](#PerpetualDataHandler._getPerpetuals) ⇒
         * [.getMarginAccount(traderAddr, symbol, symbolToPerpStaticInfo, _proxyContract, _pxS2S3, overrides)](#PerpetualDataHandler.getMarginAccount) ⇒
         * [.getMarginAccounts(traderAddrs, symbols, symbolToPerpStaticInfo, _multicall, _proxyContract, _pxS2S3s, overrides)](#PerpetualDataHandler.getMarginAccounts) ⇒
         * [._calculateLiquidationPrice(symbol, traderState, S2, symbolToPerpStaticInfo)](#PerpetualDataHandler._calculateLiquidationPrice) ⇒
@@ -4224,6 +4414,33 @@ common data and chain operations.</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### perpetualDataHandler.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### perpetualDataHandler.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
 
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
@@ -4423,6 +4640,36 @@ and corresponding price information</p>
 | --- | --- | --- |
 | chunkSize | <code>number</code> | <p>The size of each chunk.</p> |
 | nestedIDs | <code>Array.&lt;Array.&lt;number&gt;&gt;</code> | <p>The array of nested arrays to chunk.</p> |
+
+<a name="PerpetualDataHandler._getLiquidityPools"></a>
+
+### PerpetualDataHandler.\_getLiquidityPools(ids, _proxyContract, _symbolList, overrides) ⇒
+<p>Query perpetuals</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| _proxyContract | <p>proxy contract instance</p> |
+| _symbolList | <p>symbol mappings to convert the bytes encoded symbol name to string</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler._getPerpetuals"></a>
+
+### PerpetualDataHandler.\_getPerpetuals(ids, _proxyContract, _symbolList, overrides) ⇒
+<p>Query perpetuals</p>
+
+**Kind**: static method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| _proxyContract | <p>proxy contract instance</p> |
+| _symbolList | <p>symbol mappings to convert the bytes encoded symbol name to string</p> |
+| overrides | <p>optional</p> |
 
 <a name="PerpetualDataHandler.getMarginAccount"></a>
 
@@ -5289,6 +5536,8 @@ so that signatures can be handled in frontend via wallet</p>
         * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
         * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+        * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+        * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
         * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -6319,6 +6568,35 @@ main();
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### traderInterface.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### traderInterface.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
+
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
 ### traderInterface.\_fillSymbolMaps()
@@ -6538,6 +6816,8 @@ require gas-payments.</p>
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
+    * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
+    * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
@@ -6623,6 +6903,35 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+getPerpetuals"></a>
+
+### writeAccessHandler.getPerpetuals(ids, overrides) ⇒
+<p>Get perpetuals for the given ids from onchain</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getPerpetuals</code>](#PerpetualDataHandler+getPerpetuals)  
+**Returns**: <p>array of PerpetualData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| ids | <p>perpetual ids</p> |
+| overrides | <p>optional</p> |
+
+<a name="PerpetualDataHandler+getLiquidityPools"></a>
+
+### writeAccessHandler.getLiquidityPools(fromIdx, toIdx, overrides) ⇒
+<p>Get liquidity pools data</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getLiquidityPools</code>](#PerpetualDataHandler+getLiquidityPools)  
+**Returns**: <p>array of LiquidityPoolData converted into decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| fromIdx | <p>starting index (&gt;=1)</p> |
+| toIdx | <p>to index (inclusive)</p> |
+| overrides | <p>optional</p> |
 
 <a name="PerpetualDataHandler+_fillSymbolMaps"></a>
 
