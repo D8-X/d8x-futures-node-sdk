@@ -486,6 +486,9 @@ require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -958,6 +961,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### accountTrade.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### accountTrade.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### accountTrade.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### accountTrade.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -1048,6 +1141,9 @@ require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -1702,6 +1798,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### brokerTool.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### brokerTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### brokerTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### brokerTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -1784,6 +1970,9 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -2198,6 +2387,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### liquidatorTool.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### liquidatorTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### liquidatorTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### liquidatorTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -2278,6 +2557,9 @@ smart-contract interactions that require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -2631,6 +2913,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### liquidityProviderTool.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### liquidityProviderTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### liquidityProviderTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### liquidityProviderTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -2735,6 +3107,9 @@ No gas required for the queries here.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -3652,6 +4027,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### marketData.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### marketData.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### marketData.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### marketData.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -3720,10 +4185,7 @@ gas-payments.</p>
     * [new OrderExecutorTool(config, signer)](#new_OrderExecutorTool_new)
     * [.executeOrder(symbol, orderId, executorAddr, nonce, [submission])](#OrderExecutorTool+executeOrder) ⇒
     * [.executeOrders(symbol, orderIds, executorAddr, nonce, [submission])](#OrderExecutorTool+executeOrders) ⇒
-    * [.getAllOpenOrders(symbol)](#OrderExecutorTool+getAllOpenOrders) ⇒
-    * [.numberOfOpenOrders(symbol)](#OrderExecutorTool+numberOfOpenOrders) ⇒ <code>number</code>
     * [.getOrderById(symbol, digest)](#OrderExecutorTool+getOrderById) ⇒
-    * [.pollLimitOrders(symbol, numElements, [startAfter])](#OrderExecutorTool+pollLimitOrders) ⇒
     * [.isTradeable(order, indexPrices)](#OrderExecutorTool+isTradeable) ⇒
     * [.isTradeableBatch(orders, indexPrice)](#OrderExecutorTool+isTradeableBatch) ⇒
     * [.smartContractOrderToOrder(scOrder)](#OrderExecutorTool+smartContractOrderToOrder) ⇒
@@ -3746,6 +4208,9 @@ gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -3857,62 +4322,6 @@ async function main() {
 }
 main();
 ```
-<a name="OrderExecutorTool+getAllOpenOrders"></a>
-
-### orderExecutorTool.getAllOpenOrders(symbol) ⇒
-<p>All the orders in the order book for a given symbol that are currently open.</p>
-
-**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
-**Returns**: <p>Array with all open orders and their IDs.</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
-
-**Example**  
-```js
-import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(OrderExecutorTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("cardona");
-  const pk: string = <string>process.env.PK;
-  let orderTool = new OrderExecutorTool(config, pk);
-  await orderTool.createProxyInstance();
-  // get all open orders
-  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
-  console.log(openOrders);
-}
-main();
-```
-<a name="OrderExecutorTool+numberOfOpenOrders"></a>
-
-### orderExecutorTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
-<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
-
-**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
-**Returns**: <code>number</code> - <p>Number of open orders.</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
-
-**Example**  
-```js
-import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(OrderExecutorTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("cardona");
-  const pk: string = <string>process.env.PK;
-  let orderTool = new OrderExecutorTool(config, pk);
-  await orderTool.createProxyInstance();
-  // get all open orders
-  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
-  console.log(numberOfOrders);
-}
-main();
-```
 <a name="OrderExecutorTool+getOrderById"></a>
 
 ### orderExecutorTool.getOrderById(symbol, digest) ⇒
@@ -3940,37 +4349,6 @@ async function main() {
   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
       "0x0091a1d878491479afd09448966c1403e9d8753122e25260d3b2b9688d946eae");
   console.log(myorder);
-}
-main();
-```
-<a name="OrderExecutorTool+pollLimitOrders"></a>
-
-### orderExecutorTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
-<p>Get a list of active conditional orders in the order book.
-This a read-only action and does not incur in gas costs.</p>
-
-**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
-**Returns**: <p>Array of orders and corresponding order IDs</p>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
-| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
-| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
-
-**Example**  
-```js
-import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-async function main() {
-  console.log(OrderExecutorTool);
-  // setup (authentication required, PK is an environment variable with a private key)
-  const config = PerpetualDataHandler.readSDKConfig("cardona");
-  const pk: string = <string>process.env.PK;
-  let orderTool = new OrderExecutorTool(config, pk);
-  await orderTool.createProxyInstance();
-  // get all open orders
-  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
-  console.log(activeOrders);
 }
 main();
 ```
@@ -4293,6 +4671,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### orderExecutorTool.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### orderExecutorTool.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### orderExecutorTool.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### orderExecutorTool.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -4366,6 +4834,9 @@ common data and chain operations.</p>
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+        * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+        * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+        * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
         * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
         * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -4570,6 +5041,93 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### perpetualDataHandler.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### perpetualDataHandler.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### perpetualDataHandler.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### perpetualDataHandler.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -5549,6 +6107,9 @@ so that signatures can be handled in frontend via wallet</p>
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+        * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+        * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+        * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
         * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
         * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -6736,6 +7297,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### traderInterface.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### traderInterface.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### traderInterface.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### traderInterface.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
@@ -6829,6 +7480,9 @@ require gas-payments.</p>
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
+    * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
+    * [.numberOfOpenOrders(symbol)](#PerpetualDataHandler+numberOfOpenOrders) ⇒ <code>number</code>
+    * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
@@ -7072,6 +7726,96 @@ and corresponding price information</p>
 | --- | --- |
 | poolSymbol | <p>pool symbol such as &quot;MATIC&quot;</p> |
 
+<a name="PerpetualDataHandler+getAllOpenOrders"></a>
+
+### writeAccessHandler.getAllOpenOrders(symbol) ⇒
+<p>All the orders in the order book for a given symbol that are currently open.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getAllOpenOrders</code>](#PerpetualDataHandler+getAllOpenOrders)  
+**Returns**: <p>Array with all open orders and their IDs.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
+  console.log(openOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+numberOfOpenOrders"></a>
+
+### writeAccessHandler.numberOfOpenOrders(symbol) ⇒ <code>number</code>
+<p>Total number of limit orders for this symbol, excluding those that have been cancelled/removed.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>numberOfOpenOrders</code>](#PerpetualDataHandler+numberOfOpenOrders)  
+**Returns**: <code>number</code> - <p>Number of open orders.</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
+  console.log(numberOfOrders);
+}
+main();
+```
+<a name="PerpetualDataHandler+pollLimitOrders"></a>
+
+### writeAccessHandler.pollLimitOrders(symbol, numElements, [startAfter]) ⇒
+<p>Get a list of active conditional orders in the order book.
+This a read-only action and does not incur in gas costs.</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>pollLimitOrders</code>](#PerpetualDataHandler+pollLimitOrders)  
+**Returns**: <p>Array of orders and corresponding order IDs</p>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| symbol | <code>string</code> | <p>Symbol of the form ETH-USD-MATIC.</p> |
+| numElements | <code>number</code> | <p>Maximum number of orders to poll.</p> |
+| [startAfter] | <code>string</code> | <p>Optional order ID from where to start polling. Defaults to the first order.</p> |
+
+**Example**  
+```js
+import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+async function main() {
+  console.log(OrderExecutorTool);
+  // setup (authentication required, PK is an environment variable with a private key)
+  const config = PerpetualDataHandler.readSDKConfig("cardona");
+  const pk: string = <string>process.env.PK;
+  let orderTool = new OrderExecutorTool(config, pk);
+  await orderTool.createProxyInstance();
+  // get all open orders
+  let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
+  console.log(activeOrders);
+}
+main();
+```
 <a name="PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol"></a>
 
 ### writeAccessHandler.getPoolStaticInfoIndexFromSymbol(symbol) ⇒
