@@ -653,7 +653,10 @@ export default class PerpetualDataHandler {
     _symbolList: Map<string, string>,
     overrides?: CallOverrides
   ): Promise<PerpetualData[]> {
-    const rawPerps: PerpStorage.PerpetualDataStruct[] = await _proxyContract.getPerpetuals(ids, overrides || {});
+    const rawPerps: Partial<PerpStorage.PerpetualDataStruct>[] = await _proxyContract.getPerpetuals(
+      ids,
+      overrides || {}
+    );
     let p = new Array<PerpetualData>();
     for (let k = 0; k < rawPerps.length; k++) {
       let orig = rawPerps[k];
@@ -667,17 +670,17 @@ export default class PerpetualDataHandler {
         fMaintenanceMarginRate: ABDK29ToFloat(Number(orig.fMaintenanceMarginRate)), // parameter: maintenance margin
         perpetualState: PERP_STATE_STR[Number(orig.state)], // Perpetual AMM state
         eCollateralCurrency: Number(orig.eCollateralCurrency), //parameter: in what currency is the collateral held?
-        S2BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S2BaseCCY.toString())), _symbolList), //base currency of S2
-        S2QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S2QuoteCCY.toString())), _symbolList), //quote currency of S2
+        S2BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S2BaseCCY!.toString())), _symbolList), //base currency of S2
+        S2QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S2QuoteCCY!.toString())), _symbolList), //quote currency of S2
         incentiveSpreadTbps: Number(orig.incentiveSpreadTbps) / 1e5, //parameter: maximum spread added to the PD
         minimalSpreadTbps: Number(orig.minimalSpreadTbps) / 1e5, //parameter: minimal spread between long and short perpetual price
-        S3BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3BaseCCY.toString())), _symbolList), //base currency of S3
-        S3QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3QuoteCCY.toString())), _symbolList), //quote currency of S3
+        S3BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3BaseCCY!.toString())), _symbolList), //base currency of S3
+        S3QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3QuoteCCY!.toString())), _symbolList), //quote currency of S3
         sigma3: ABDK29ToFloat(Number(orig.fSigma3)), // parameter: volatility of quanto-quote pair
         rho23: ABDK29ToFloat(Number(orig.fRho23)), // parameter: correlation of quanto/base returns
         liquidationPenaltyRateTbps: Number(orig.incentiveSpreadTbps) / 1e5, //parameter: penalty if AMM closes the position and not the trader
-        currentMarkPremiumRatePrice: ABK64x64ToFloat(BigNumber.from(orig.currentMarkPremiumRate.fPrice)), //relative diff to index price EMA, used for markprice.
-        currentMarkPremiumRateTime: Number(orig.currentMarkPremiumRate.time), //relative diff to index price EMA, used for markprice.
+        currentMarkPremiumRatePrice: ABK64x64ToFloat(BigNumber.from(orig.currentMarkPremiumRate!.fPrice)), //relative diff to index price EMA, used for markprice.
+        currentMarkPremiumRateTime: Number(orig.currentMarkPremiumRate!.time), //relative diff to index price EMA, used for markprice.
         premiumRatesEMA: ABK64x64ToFloat(BigNumber.from(orig.premiumRatesEMA)), // EMA of premium rate
         unitAccumulatedFunding: ABK64x64ToFloat(BigNumber.from(orig.fUnitAccumulatedFunding)), //accumulated funding in collateral currency
         openInterest: ABK64x64ToFloat(BigNumber.from(orig.fOpenInterest)), //open interest is the larger of the amount of long and short positions in base currency
@@ -700,20 +703,20 @@ export default class PerpetualDataHandler {
         fMaximalTradeSizeBumpUp: ABK64x64ToFloat(BigNumber.from(orig.fMaximalTradeSizeBumpUp)), // parameter: >1, users can create a maximal position of size fMaximalTradeSizeBumpUp*fCurrentAMMExposureEMA
         iLastTargetPoolSizeTime: Number(orig.iLastTargetPoolSizeTime), //timestamp (seconds) since last update of fTargetDFSize and fTargetAMMFundSize
         fStressReturnS3: [
-          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS3[0])),
-          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS3[1])),
+          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS3![0])),
+          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS3![1])),
         ], // parameter: negative and positive stress returns for quanto-quote asset
         fDFLambda: [
-          ABK64x64ToFloat(BigNumber.from(orig.fDFLambda[0])),
-          ABK64x64ToFloat(BigNumber.from(orig.fDFLambda[1])),
+          ABK64x64ToFloat(BigNumber.from(orig.fDFLambda![0])),
+          ABK64x64ToFloat(BigNumber.from(orig.fDFLambda![1])),
         ], // parameter: EMA lambda for AMM and trader exposure K,k: EMA*lambda + (1-lambda)*K. 0 regular lambda, 1 if current value exceeds past
         fCurrentAMMExposureEMA: [
-          ABK64x64ToFloat(BigNumber.from(orig.fCurrentAMMExposureEMA[0])),
-          ABK64x64ToFloat(BigNumber.from(orig.fCurrentAMMExposureEMA[1])),
+          ABK64x64ToFloat(BigNumber.from(orig.fCurrentAMMExposureEMA![0])),
+          ABK64x64ToFloat(BigNumber.from(orig.fCurrentAMMExposureEMA![1])),
         ], // 0: negative aggregated exposure (storing negative value), 1: positive
         fStressReturnS2: [
-          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS2[0])),
-          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS2[1])),
+          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS2![0])),
+          ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS2![1])),
         ], // parameter: negative and positive stress returns for base-quote asset
       };
       p.push(v);
