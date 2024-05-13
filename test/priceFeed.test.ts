@@ -17,7 +17,7 @@ describe("priceFeed", () => {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
+    config = PerpetualDataHandler.readSDKConfig("xlayer");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -29,7 +29,7 @@ describe("priceFeed", () => {
   });
   it("get recent prices and submission info for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
-    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("ETH-USDC-USDC");
+    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("BTC-USDT-USDT");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
