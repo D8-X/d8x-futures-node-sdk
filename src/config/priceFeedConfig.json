@@ -172,6 +172,12 @@
         "id": "0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c",
         "type": "odin",
         "origin": "Crypto.DOGE/USD"
+      },
+      {
+        "symbol": "USDT-USD",
+        "id": "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+        "type": "odin",
+        "origin": "Crypto.USDT/USD"
       }
     ],
     "endpoints": [{ "type": "odin", "endpoints": ["https://odin.d8x.xyz/api"] }]
