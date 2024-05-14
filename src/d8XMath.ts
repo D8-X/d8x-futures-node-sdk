@@ -1,4 +1,4 @@
-import { BigNumber } from "@ethersproject/bignumber";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { DECIMALS, ONE_64x64 } from "./constants";
 
 /**
@@ -19,13 +19,14 @@ export function ABDK29ToFloat(x: BigNumber | number): number {
 /**
  * Convert ABK64x64 bigint-format to float.
  * Result = x/2^64 if big number, x/2^29 if number
- * @param  {BigNumber|number} x number in ABDK-format or 2^29
+ * @param  {BigNumberish|number} x number in ABDK-format or 2^29
  * @returns {number} x/2^64 in number-format (float)
  */
-export function ABK64x64ToFloat(x: BigNumber | number): number {
+export function ABK64x64ToFloat(x: BigNumberish | number): number {
   if (typeof x == "number") {
     return x / 2 ** 29;
   }
+  x = BigNumber.from(x);
   let s = x.lt(0) ? -1 : 1;
   x = x.mul(s);
   let xInt = x.div(ONE_64x64);
@@ -41,12 +42,13 @@ export function ABK64x64ToFloat(x: BigNumber | number): number {
 
 /**
  *
- * @param {BigNumber} x BigNumber in Dec-N format
+ * @param {BigNumberish} x BigNumber in Dec-N format
  * @returns {number} x as a float (number)
  */
-export function decNToFloat(x: BigNumber, numDec: number) {
+export function decNToFloat(x: BigNumberish, numDec: number) {
   //x: BigNumber in DecN format to float
   const DECIMALS = BigNumber.from(10).pow(BigNumber.from(numDec));
+  x = BigNumber.from(x);
   let s = x.lt(0) ? -1 : 1;
   x = x.mul(s);
   let xInt = x.div(DECIMALS);
@@ -59,11 +61,12 @@ export function decNToFloat(x: BigNumber, numDec: number) {
 
 /**
  *
- * @param {BigNumber} x BigNumber in Dec18 format
+ * @param {BigNumberish} x BigNumber in Dec18 format
  * @returns {number} x as a float (number)
  */
-export function dec18ToFloat(x: BigNumber): number {
+export function dec18ToFloat(x: BigNumberish): number {
   //x: BigNumber in Dec18 format to float
+  x = BigNumber.from(x);
   let s = x.lt(0) ? -1 : 1;
   x = x.mul(s);
   let xInt = x.div(DECIMALS);
