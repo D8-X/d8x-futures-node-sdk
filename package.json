@@ -1,6 +1,6 @@
 {
   "name": "@d8x/perpetuals-sdk",
-  "version": "1.1.5",
+  "version": "1.1.30",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
   "author": "D8X",
   "homepage": "https://github.com/D8-X/d8x-futures-node-sdk#readme",
@@ -12,6 +12,7 @@
   "bugs": {
     "url": "https://github.com/D8-X/d8x-futures-node-sdk/issues"
   },
+  "documentation": "doc",
   "keywords": [
     "d8x",
     "perpetuals",
@@ -23,7 +24,7 @@
     "build": "yarn run typechain && yarn build:esm && yarn build:cjs",
     "build:esm": "tsc",
     "build:cjs": "tsc --module commonjs --outDir dist/cjs",
-    "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderExecutorTool.ts --configure ./jsdoc2md.json > ./doc/orderExecutorTool.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
+    "build:doc": "jsdoc2md --files ./src/accountTrade.ts --configure ./jsdoc2md.json > ./doc/accountTrade.md && jsdoc2md --files ./src/marketData.ts --configure ./jsdoc2md.json > ./doc/marketData.md && jsdoc2md --files ./src/liquidatorTool.ts --configure ./jsdoc2md.json > ./doc/liquidatorTool.md && jsdoc2md --files ./src/liquidityProviderTool.ts --configure ./jsdoc2md.json > ./doc/liquidityProviderTool.md && jsdoc2md --files ./src/brokerTool.ts --configure ./jsdoc2md.json > ./doc/brokerTool.md && jsdoc2md --files ./src/orderExecutorTool.ts --configure ./jsdoc2md.json > ./doc/perpetualDataHandler.md && jsdoc2md --files ./src/perpetualDataHandler.ts --configure ./jsdoc2md.json > ./doc/perpetualDataHandler.md && jsdoc2md --files ./src/*.ts --configure ./jsdoc2md.json > ./doc/d8x-perpetuals-sdk.md",
     "test": "yarn jest",
     "coverage": "nyc -r lcov -e .ts -x \"*.test.ts\" npm run test",
     "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",

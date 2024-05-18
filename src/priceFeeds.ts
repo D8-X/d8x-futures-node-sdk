@@ -4,7 +4,8 @@ import { decNToFloat, floatToDec18 } from "./d8XMath";
 import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
-
+import OnChainPxFeed from "./onChainPxFeed";
+import OnChainPxFactory from "./onChainPxFactory";
 /**
  * This class communicates with the REST API that provides price-data that is
  * to be submitted to the smart contracts for certain functions such as
@@ -19,17 +20,31 @@ export default class PriceFeeds {
   private triangulations: Map<string, [string[], boolean[]]>;
   private THRESHOLD_MARKET_CLOSED_SEC = 15; // smallest lag for which we consider the market as being closed
   private cache: Map<string, { timestamp: number; values: any }> = new Map();
-
+  private onChainPxFeeds: Map<string, OnChainPxFeed>;
   // api formatting constants
   private PYTH = { endpoint: "/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
-  private REDSTONE = { endpoint: "/prices?symbols=", separator: ",", suffix: "&provider=redstone" };
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
     // if SDK config contains custom price feed endpoints, these override the public/default ones
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
-      this.config.endpoints = dataHandler.config.priceFeedEndpoints;
+      // override price feed endpoints of same type
+      for (let k = 0; k < dataHandler.config.priceFeedEndpoints.length; k++) {
+        for (let j = 0; j < this.config.endpoints.length; j++) {
+          if (this.config.endpoints[j].type == dataHandler.config.priceFeedEndpoints[k].type) {
+            this.config.endpoints[j] = dataHandler.config.priceFeedEndpoints[k];
+            break;
+          }
+        }
+      }
+    }
+    this.onChainPxFeeds = new Map<string, OnChainPxFeed>();
+    for (let k = 0; k < this.config.ids.length; k++) {
+      if (this.config.ids[k].type == "onchain") {
+        let sym = this.config.ids[k].symbol;
+        this.onChainPxFeeds[sym] = OnChainPxFactory.createFeed(sym);
+      }
     }
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
     this.dataHandler = dataHandler;
@@ -155,12 +170,17 @@ export default class PriceFeeds {
     for (let j = 0; j < queries.length; j++) {
       symbolsOfEndpoint.push([]);
     }
+    let onChainSyms: string[] = [];
     for (let k = 0; k < this.config.ids.length; k++) {
       let currFeed = this.config.ids[k];
       if (symbols != undefined && !symbols.includes(currFeed.symbol)) {
         continue;
       }
-      const apiFormat = { pyth: this.PYTH, odin: this.PYTH, redstone: this.REDSTONE }[currFeed.type];
+      if (currFeed.type == "onchain") {
+        onChainSyms.push(currFeed.symbol);
+        continue;
+      }
+      const apiFormat = { pyth: this.PYTH, odin: this.PYTH }[currFeed.type];
       if (apiFormat === undefined) {
         throw new Error(`API format for ${currFeed} unknown.`);
       }
@@ -176,10 +196,13 @@ export default class PriceFeeds {
         queries[endpointId] = queries[endpointId] + apiFormat.separator + currFeed.id;
       }
     }
+    let onChainPromise = this.queryOnChainPxFeeds(onChainSyms);
     let resultPrices = new Map<string, [number, boolean]>();
     for (let k = 0; k < queries.length; k++) {
       if (queries[k] == undefined) {
         continue;
+      }
+      if (queries[k] == "onchain") {
       }
       let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k] + suffixes[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
@@ -189,7 +212,22 @@ export default class PriceFeeds {
         resultPrices.set(symbolsOfEndpoint[k][j], [price, isMarketClosed]);
       }
     }
+    let onChPxs = await onChainPromise;
+    for (let k = 0; k < onChainSyms.length; k++) {
+      let sym = onChainSyms[k];
+      resultPrices.set(sym, [onChPxs[k], false]);
+    }
     return resultPrices;
+  }
+
+  private async queryOnChainPxFeeds(symbols: string[]) {
+    let prices: number[] = new Array<number>();
+    for (let k = 0; k < symbols.length; k++) {
+      let sym = symbols[k];
+      let price = await this.onChainPxFeeds[sym].getPrice();
+      prices.push(price);
+    }
+    return prices;
   }
 
   /**
@@ -317,11 +355,12 @@ export default class PriceFeeds {
     let prices = new Array<number>();
     let mktClosed = new Array<boolean>();
     for (let k = 0; k < symbols.length; k++) {
-      let triangulation: [string[], boolean[]] | undefined = this.triangulations.get(symbols[k]);
+      let sym = symbols[k] as string;
+      let triangulation: [string[], boolean[]] | undefined = this.triangulations.get(sym);
       if (triangulation == undefined) {
-        let feedPrice = feedPriceMap.get(symbols[k]);
+        let feedPrice = feedPriceMap.get(sym);
         if (feedPrice == undefined) {
-          throw new Error(`PriceFeeds: no triangulation defined for ${symbols[k]}`);
+          throw new Error(`PriceFeeds: no triangulation defined for ${sym}`);
         } else {
           prices.push(feedPrice[0]); //price
           mktClosed.push(feedPrice[1]); //market closed?
@@ -344,7 +383,7 @@ export default class PriceFeeds {
     const headers = { headers: { "Content-Type": "application/json" } };
     let response = await fetch(query, headers);
     if (!response.ok) {
-      throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+      throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
     let values = (await response.json()) as Array<PythLatestPriceFeed>;
     const priceFeedUpdates = new Array<string>();
@@ -367,13 +406,13 @@ export default class PriceFeeds {
     const cached = this.cache.get(query);
     const tsNow = Date.now() / 1_000;
     if (cached && cached.timestamp + 1 > tsNow) {
-      // less than a second has passed since the last query - no need to query again
+      // less than one second has passed since the last query - no need to query again
       values = cached.values;
     } else {
       const headers = { headers: { "Content-Type": "application/json" } };
       let response = await fetch(query, headers);
       if (!response.ok) {
-        throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText}`);
+        throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} query:${query}`);
       }
       values = await response.json();
       this.cache.set(query, { timestamp: tsNow, values: values });
@@ -450,7 +489,7 @@ export default class PriceFeeds {
           j++;
         }
         if (config.endpoints[endpointId].type != type) {
-          throw new Error(`priceFeeds: no enpoint found for ${type} check priceFeedConfig`);
+          throw new Error(`priceFeeds: no endpoint found for ${type} check priceFeedConfig`);
         }
       }
       feed.set(config.ids[k].id, { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });

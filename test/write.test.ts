@@ -26,7 +26,7 @@ let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    config = PerpetualDataHandler.readSDKConfig("x1");
     // if (RPC != undefined) {
     //   config.nodeURL = RPC;
     // }
@@ -69,11 +69,11 @@ describe("write and spoil gas and tokens", () => {
 
   it("trade", async () => {
     let order: Order = {
-      symbol: "EUR-USDC-USDC",
+      symbol: "ETH-USDC-USDC",
       side: "SELL",
       type: "MARKET",
-      quantity: 50000,
-      leverage: 50,
+      quantity: 0.25,
+      leverage: 20,
       executionTimestamp: Date.now() / 1000 - 10,
     };
     /*
@@ -96,12 +96,15 @@ describe("write and spoil gas and tokens", () => {
       resp = await accTrade.order(order, undefined, { gasLimit: 800_000 });
       console.log("orderId =", resp.orderId);
       console.log("txn:", resp.tx);
-      // execute trade
       orderId = resp.orderId;
+      // cancel order
+      console.log("order submitted");
+      await resp.tx.wait();
+      let txCancel = await accTrade.cancelOrder("ETH-USDC-USDC", orderId);
+      console.log("cancel order hash = ", txCancel.hash);
     } catch (err) {
       console.log("Error=", err);
     }
-    console.log("order submitted");
   });
 
   // it("execute order", async () => {

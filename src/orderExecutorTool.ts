@@ -31,7 +31,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // load configuration for Polygon zkEVM (testnet)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   // OrderExecutorTool (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -60,7 +60,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   const symbol = "ETH-USD-MATIC";
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -93,11 +93,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     const orderBookSC = this.getOrderBookContract(symbol);
-    if (typeof executorAddr == "undefined") {
+    if (executorAddr == undefined) {
       executorAddr = this.traderAddr;
     }
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+    }
+    if (submission.priceFeedVaas.length == 0) {
+      // we have at least 1 push oracle, so there must be at least 1 price feed to update
+      throw Error("executeOrder: no priceFeedVaas found for symbol " + symbol);
     }
     if (!overrides || overrides.value == undefined) {
       overrides = {
@@ -121,8 +125,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
           gasLimit: overrides?.gasLimit ?? this.gasLimit,
         }
       );
-      // wait
-      // await pythTxn.wait();
     } catch (e) {
       console.log(e);
     }
@@ -154,7 +156,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   const symbol = "ETH-USD-MATIC";
    *   let orderTool = new OrderExecutorTool(config, pk);
@@ -254,85 +256,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   }
 
   /**
-   * All the orders in the order book for a given symbol that are currently open.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
-   * @example
-   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(OrderExecutorTool);
-   *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
-   *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderExecutorTool(config, pk);
-   *   await orderTool.createProxyInstance();
-   *   // get all open orders
-   *   let openOrders = await orderTool.getAllOpenOrders("ETH-USD-MATIC");
-   *   console.log(openOrders);
-   * }
-   * main();
-   *
-   * @returns Array with all open orders and their IDs.
-   */
-  public async getAllOpenOrders(symbol: string, overrides?: CallOverrides): Promise<[Order[], string[], string[]]> {
-    const MAX_ORDERS_POLLED = 500;
-    let totalOrders = await this.numberOfOpenOrders(symbol, overrides);
-    let orderBundles: [Order[], string[], string[]] = [[], [], []];
-    let moreOrders = orderBundles[1].length < totalOrders;
-    let startAfter = 0;
-    while (orderBundles[1].length < totalOrders && moreOrders) {
-      let res = await this.pollLimitOrders(symbol, MAX_ORDERS_POLLED, startAfter, overrides);
-      if (res[1].length < 1) {
-        break;
-      }
-      const curIds = new Set(orderBundles[1]);
-      for (let k = 0; k < res[0].length && res[2][k] !== ZERO_ADDRESS; k++) {
-        if (!curIds.has(res[1][k])) {
-          orderBundles[0].push(res[0][k]);
-          orderBundles[1].push(res[1][k]);
-          orderBundles[2].push(res[2][k]);
-        }
-      }
-      startAfter = orderBundles[0].length;
-      moreOrders = orderBundles[1].length < totalOrders;
-    }
-    return orderBundles;
-  }
-
-  /**
-   * Total number of limit orders for this symbol, excluding those that have been cancelled/removed.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
-   * @example
-   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(OrderExecutorTool);
-   *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
-   *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderExecutorTool(config, pk);
-   *   await orderTool.createProxyInstance();
-   *   // get all open orders
-   *   let numberOfOrders = await orderTool.numberOfOpenOrders("ETH-USD-MATIC");
-   *   console.log(numberOfOrders);
-   * }
-   * main();
-   *
-   * @returns {number} Number of open orders.
-   */
-  public async numberOfOpenOrders(symbol: string, overrides?: CallOverrides & { rpcURL?: string }): Promise<number> {
-    if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
-    }
-    let rpcURL: string | undefined;
-    if (overrides) {
-      ({ rpcURL, ...overrides } = overrides);
-    }
-    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
-    const orderBookSC = this.getOrderBookContract(symbol).connect(provider);
-    let numOrders = await orderBookSC.orderCount(overrides || {});
-    return Number(numOrders);
-  }
-
-  /**
    * Get order from the digest (=id)
    * @param symbol symbol of order book, e.g. ETH-USD-MATIC
    * @param digest digest of the order (=order ID)
@@ -341,7 +264,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -365,81 +288,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   }
 
   /**
-   * Get a list of active conditional orders in the order book.
-   * This a read-only action and does not incur in gas costs.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
-   * @param {number} numElements Maximum number of orders to poll.
-   * @param {string=} startAfter Optional order ID from where to start polling. Defaults to the first order.
-   * @example
-   * import { OrderExecutorTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
-   * async function main() {
-   *   console.log(OrderExecutorTool);
-   *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
-   *   const pk: string = <string>process.env.PK;
-   *   let orderTool = new OrderExecutorTool(config, pk);
-   *   await orderTool.createProxyInstance();
-   *   // get all open orders
-   *   let activeOrders = await orderTool.pollLimitOrders("ETH-USD-MATIC", 2);
-   *   console.log(activeOrders);
-   * }
-   * main();
-   *
-   * @returns Array of orders and corresponding order IDs
-   */
-  public async pollLimitOrders(
-    symbol: string,
-    numElements: number,
-    startAfter?: string | number,
-    overrides?: CallOverrides & { rpcURL?: string }
-  ): Promise<[Order[], string[], string[]]> {
-    if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
-    }
-    let rpcURL: string | undefined;
-    if (overrides) {
-      ({ rpcURL, ...overrides } = overrides);
-    }
-    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
-    const orderBookSC = this.getOrderBookContract(symbol).connect(provider) as LimitOrderBook;
-    const multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider);
-
-    if (typeof startAfter === "undefined") {
-      startAfter = ZERO_ORDER_ID;
-    } else if (typeof startAfter === "string") {
-      startAfter = 0; // TODO: fix
-    }
-    // first get client orders (incl. dependency info)
-    let [orders, orderIds] = await orderBookSC.pollRange(startAfter, BigNumber.from(numElements), overrides || {});
-    let userFriendlyOrders: Order[] = new Array<Order>();
-    let traderAddr: string[] = [];
-    let orderIdsOut: string[] = [];
-    let k = 0;
-    while (k < numElements && k < orders.length && orders[k].traderAddr !== ZERO_ADDRESS) {
-      userFriendlyOrders.push(WriteAccessHandler.fromClientOrder(orders[k], this.symbolToPerpStaticInfo));
-      orderIdsOut.push(orderIds[k]);
-      traderAddr.push(orders[k].traderAddr);
-      k++;
-    }
-    // then get perp orders (incl. submitted ts info)
-    const multicalls: Multicall3.Call3Struct[] = orderIdsOut.map((id) => ({
-      target: orderBookSC.address,
-      allowFailure: true,
-      callData: orderBookSC.interface.encodeFunctionData("orderOfDigest", [id]),
-    }));
-    const encodedResults = await multicall.callStatic.aggregate3(multicalls, overrides || {});
-
-    // order status
-    encodedResults.map((res, k) => {
-      if (res.success) {
-        const order = orderBookSC.interface.decodeFunctionResult("orderOfDigest", res.returnData);
-        userFriendlyOrders[k].submittedTimestamp = Number(order.submittedTimestamp);
-      }
-    });
-    return [userFriendlyOrders, orderIdsOut, traderAddr];
-  }
-
-  /**
    * Check if a conditional order can be executed
    * @param order order structure
    * @param indexPrices pair of index prices S2 and S3. S3 set to zero if not required. If undefined
@@ -449,7 +297,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
@@ -608,7 +456,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();

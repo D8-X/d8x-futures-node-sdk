@@ -1,17 +1,5 @@
 [
   {
-    "name": "zkevmTestnet",
-    "chainId": 1442,
-    "version": 2,
-    "proxyAddr": "0x0e23619704556945B1C7CB550Dee6D428f7d2E2B",
-    "nodeURL": "https://rpc.public.zkevm-test.net",
-    "priceFeedConfigNetwork": "testnet",
-    "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
-  },
-  {
     "name": "zkevm",
     "chainId": 1101,
     "version": 1,
@@ -42,6 +30,18 @@
     "version": 2,
     "proxyAddr": "0x2971f469685C93812449B755ed7D1EC105E21Cd8",
     "nodeURL": "https://testrpc.x1.tech",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
+    "name": "x1",
+    "chainId": 195,
+    "version": 2,
+    "proxyAddr": "0x2971f469685C93812449B755ed7D1EC105E21Cd8",
+    "nodeURL": "https://xlayertestrpc.okx.com",
     "priceFeedConfigNetwork": "odin",
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
@@ -128,6 +128,18 @@
     "proxyAddr": "0x8f8BccE4c180B699F81499005281fA89440D1e95",
     "nodeURL": "https://arb1.arbitrum.io/rpc",
     "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
+    "name": "xlayer",
+    "chainId": 196,
+    "version": 1,
+    "proxyAddr": "0xb24dB543749277E8625a59C061aE7574C8235475",
+    "nodeURL": "https://rpc.xlayer.tech",
+    "priceFeedConfigNetwork": "odin",
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",

@@ -41,7 +41,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // load configuration for Polygon zkEVM Tesnet
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   // AccountTrade (authentication required, PK is an environment variable with a private key)
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
@@ -66,7 +66,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *    console.log(AccountTrade);
    *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *    const config = PerpetualDataHandler.readSDKConfig("cardona");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
@@ -104,7 +104,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *    console.log(AccountTrade);
    *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *    const config = PerpetualDataHandler.readSDKConfig("cardona");
    *    const pk: string = <string>process.env.PK;
    *    const accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
@@ -161,7 +161,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -194,7 +194,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -223,7 +223,7 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -303,11 +303,12 @@ export default class AccountTrade extends WriteAccessHandler {
     if (orderBookContract == null || this.signer == null) {
       throw Error(`Order Book contract for symbol ${symbol} or signer not defined`);
     }
+
+    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
+    let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    let scOrder: SmartContractOrder = await orderBookContract.orderOfDigest(orderId);
-    let [signature] = await this._createSignature(scOrder, this.chainId, false, this.signer, this.proxyAddr);
     // value is minimal necessary by default, but can be overriden
     if (!overrides || overrides.value == undefined) {
       overrides = {
@@ -358,7 +359,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * async function main() {
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
@@ -409,7 +410,7 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * async function main() {
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();

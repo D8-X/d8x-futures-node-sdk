@@ -2,6 +2,7 @@
   "MATC": "MATIC",
   "ETH": "ETH",
   "BTC": "BTC",
+  "DOGE": "DOGE",
   "USDC": "USDC",
   "XAU": "XAU",
   "XAG": "XAG",
@@ -11,9 +12,11 @@
   "EUR": "EUR",
   "JPY": "JPY",
   "stTH": "STETH",
+  "stUS": "STUSD",
   "wstT": "WSTETH",
   "stER": "STEUR",
   "EURA": "EURA",
   "LUSD": "LUSD",
-  "wETH": "WEETH"
+  "wETH": "WEETH",
+  "OKB": "WOKB"
 }

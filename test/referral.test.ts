@@ -19,7 +19,7 @@ describe("referralCodeSigner", () => {
       throw new Error('PK not defined: export PK="pk-without-0x-prefix"');
     }
     RPC = <string>process.env.RPC;
-    const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    const config = PerpetualDataHandler.readSDKConfig("cardona");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     } else {

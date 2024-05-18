@@ -17,19 +17,19 @@ describe("priceFeed", () => {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+    config = PerpetualDataHandler.readSDKConfig("xlayer");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
     config.priceFeedEndpoints = [
-      { type: "pyth", endpoints: ["https://hermes-beta.pyth.network/api"] }, //, "https://xc-testnet.pyth.network/api"] },
+      { type: "pyth", endpoints: ["https://hermes.pyth.network/api"] }, //, "https://xc-testnet.pyth.network/api"] },
     ];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });
   it("get recent prices and submission info for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
-    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("ETH-USDC-USDC");
+    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("BTC-USDT-USDT");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });

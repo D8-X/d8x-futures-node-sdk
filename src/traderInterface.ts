@@ -36,7 +36,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // query exchange fee
@@ -69,7 +69,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // query volume
@@ -102,11 +102,14 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("x1");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
-   *   // get digest
-   *   let d = await traderAPI.cancelOrderDigest("BTC-USD-MATIC", "0xmyAddress");
+   *   // submit order
+   *   let resp = await accTrade.order(order, undefined, { gasLimit: 800_000 });
+   *   await resp.tx.wait();
+   *   // cancel what we just submitted
+   *   let d = await traderAPI.cancelOrderDigest("ETH-USDC-USDC", resp.orderId);
    *   console.log(d);
    * }
    * main();
@@ -133,7 +136,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
    *   // get order book address
@@ -235,7 +238,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const signer = // ethers Signer, e.g. from Metamask
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
@@ -276,7 +279,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const signer = // ethers Signer, e.g. from Metamask
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
@@ -314,7 +317,7 @@ export default class TraderInterface extends MarketData {
    * import { TraderInterface, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(TraderInterface);
-   *   const config = PerpetualDataHandler.readSDKConfig("zkevmTestnet");
+   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const signer = // ethers Signer, e.g. from Metamask
    *   let traderAPI = new TraderInterface(config);
    *   await traderAPI.createProxyInstance();
