@@ -676,15 +676,15 @@ export default class PerpetualDataHandler {
         minimalSpreadTbps: Number(orig.minimalSpreadTbps) / 1e5, //parameter: minimal spread between long and short perpetual price
         S3BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3BaseCCY!.toString())), _symbolList), //base currency of S3
         S3QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3QuoteCCY!.toString())), _symbolList), //quote currency of S3
-        sigma3: ABDK29ToFloat(Number(orig.fSigma3)), // parameter: volatility of quanto-quote pair
-        rho23: ABDK29ToFloat(Number(orig.fRho23)), // parameter: correlation of quanto/base returns
+        fSigma3: ABDK29ToFloat(Number(orig.fSigma3)), // parameter: volatility of quanto-quote pair
+        fRho23: ABDK29ToFloat(Number(orig.fRho23)), // parameter: correlation of quanto/base returns
         liquidationPenaltyRateTbps: Number(orig.incentiveSpreadTbps) / 1e5, //parameter: penalty if AMM closes the position and not the trader
         currentMarkPremiumRatePrice: ABK64x64ToFloat(BigNumber.from(orig.currentMarkPremiumRate!.fPrice)), //relative diff to index price EMA, used for markprice.
         currentMarkPremiumRateTime: Number(orig.currentMarkPremiumRate!.time), //relative diff to index price EMA, used for markprice.
         premiumRatesEMA: ABK64x64ToFloat(BigNumber.from(orig.premiumRatesEMA)), // EMA of premium rate
-        unitAccumulatedFunding: ABK64x64ToFloat(BigNumber.from(orig.fUnitAccumulatedFunding)), //accumulated funding in collateral currency
-        openInterest: ABK64x64ToFloat(BigNumber.from(orig.fOpenInterest)), //open interest is the larger of the amount of long and short positions in base currency
-        targetAMMFundSize: ABK64x64ToFloat(BigNumber.from(orig.fTargetAMMFundSize)), //target liquidity pool funds to allocate to the AMM
+        fUnitAccumulatedFunding: ABK64x64ToFloat(BigNumber.from(orig.fUnitAccumulatedFunding)), //accumulated funding in collateral currency
+        fOpenInterest: ABK64x64ToFloat(BigNumber.from(orig.fOpenInterest)), //open interest is the larger of the amount of long and short positions in base currency
+        fTargetAMMFundSize: ABK64x64ToFloat(BigNumber.from(orig.fTargetAMMFundSize)), //target liquidity pool funds to allocate to the AMM
         fCurrentTraderExposureEMA: ABK64x64ToFloat(BigNumber.from(orig.fCurrentTraderExposureEMA)), // trade amounts (storing absolute value)
         fCurrentFundingRate: ABK64x64ToFloat(BigNumber.from(orig.fCurrentFundingRate)), // current instantaneous funding rate
         fLotSizeBC: ABK64x64ToFloat(BigNumber.from(orig.fLotSizeBC)), //parameter: minimal trade unit (in base currency) to avoid dust positions
@@ -698,9 +698,9 @@ export default class PerpetualDataHandler {
         fSettlementS3PriceData: ABK64x64ToFloat(BigNumber.from(orig.fSettlementS3PriceData)), //quanto index
         fSettlementS2PriceData: ABK64x64ToFloat(BigNumber.from(orig.fSettlementS2PriceData)), //base-quote pair. Used as last price in normal state.
         fTotalMarginBalance: ABK64x64ToFloat(BigNumber.from(orig.fTotalMarginBalance)), //calculated for settlement, in collateral currency
-        fMarkPriceEMALambda: ABK64x64ToFloat(BigNumber.from(orig.fMarkPriceEMALambda)), // parameter: Lambda parameter for EMA used in mark-price for funding rates
-        fFundingRateClamp: ABK64x64ToFloat(BigNumber.from(orig.fFundingRateClamp)), // parameter: funding rate clamp between which we charge 1bps
-        fMaximalTradeSizeBumpUp: ABK64x64ToFloat(BigNumber.from(orig.fMaximalTradeSizeBumpUp)), // parameter: >1, users can create a maximal position of size fMaximalTradeSizeBumpUp*fCurrentAMMExposureEMA
+        fMarkPriceEMALambda: ABK64x64ToFloat(Number(orig.fMarkPriceEMALambda)), // parameter: Lambda parameter for EMA used in mark-price for funding rates
+        fFundingRateClamp: ABK64x64ToFloat(Number(orig.fFundingRateClamp)), // parameter: funding rate clamp between which we charge 1bps
+        fMaximalTradeSizeBumpUp: ABK64x64ToFloat(Number(orig.fMaximalTradeSizeBumpUp)), // parameter: >1, users can create a maximal position of size fMaximalTradeSizeBumpUp*fCurrentAMMExposureEMA
         iLastTargetPoolSizeTime: Number(orig.iLastTargetPoolSizeTime), //timestamp (seconds) since last update of fTargetDFSize and fTargetAMMFundSize
         fStressReturnS3: [
           ABK64x64ToFloat(BigNumber.from(orig.fStressReturnS3![0])),

@@ -367,18 +367,18 @@ export interface PerpetualData {
   minimalSpreadTbps: number; //parameter: minimal spread between long and short perpetual price
   S3BaseCCY: string; //base currency of S3
   S3QuoteCCY: string; //quote currency of S3
-  sigma3: number; // parameter: volatility of quanto-quote pair
-  rho23: number; // parameter: correlation of quanto/base returns
+  fSigma3: number; // parameter: volatility of quanto-quote pair
+  fRho23: number; // parameter: correlation of quanto/base returns
   liquidationPenaltyRateTbps: number; //parameter: penalty if AMM closes the position and not the trader
   //------- 2
   currentMarkPremiumRatePrice: number; //relative diff to index price EMA, used for markprice.
   currentMarkPremiumRateTime: number; //relative diff to index price EMA, used for markprice.
   //------- 3
   premiumRatesEMA: number; // EMA of premium rate
-  unitAccumulatedFunding: number; //accumulated funding in collateral currency
+  fUnitAccumulatedFunding: number; //accumulated funding in collateral currency
   //------- 4
-  openInterest: number; //open interest is the larger of the amount of long and short positions in base currency
-  targetAMMFundSize: number; //target liquidity pool funds to allocate to the AMM
+  fOpenInterest: number; //open interest is the larger of the amount of long and short positions in base currency
+  fTargetAMMFundSize: number; //target liquidity pool funds to allocate to the AMM
   //------- 5
   fCurrentTraderExposureEMA: number; // trade amounts (storing absolute value)
   fCurrentFundingRate: number; // current instantaneous funding rate
