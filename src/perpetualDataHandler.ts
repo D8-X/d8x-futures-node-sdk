@@ -672,13 +672,13 @@ export default class PerpetualDataHandler {
         eCollateralCurrency: Number(orig.eCollateralCurrency), //parameter: in what currency is the collateral held?
         S2BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S2BaseCCY!.toString())), _symbolList), //base currency of S2
         S2QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S2QuoteCCY!.toString())), _symbolList), //quote currency of S2
-        incentiveSpreadTbps: Number(orig.incentiveSpreadTbps) / 1e5, //parameter: maximum spread added to the PD
-        minimalSpreadTbps: Number(orig.minimalSpreadTbps) / 1e5, //parameter: minimal spread between long and short perpetual price
+        incentiveSpreadBps: Number(orig.incentiveSpreadTbps) / 10, //parameter: maximum spread added to the PD
+        minimalSpreadBps: Number(orig.minimalSpreadTbps) / 10, //parameter: minimal spread between long and short perpetual price
         S3BaseCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3BaseCCY!.toString())), _symbolList), //base currency of S3
         S3QuoteCCY: contractSymbolToSymbol(fromBytes4(Buffer.from(orig.S3QuoteCCY!.toString())), _symbolList), //quote currency of S3
         fSigma3: ABDK29ToFloat(Number(orig.fSigma3)), // parameter: volatility of quanto-quote pair
         fRho23: ABDK29ToFloat(Number(orig.fRho23)), // parameter: correlation of quanto/base returns
-        liquidationPenaltyRateTbps: Number(orig.incentiveSpreadTbps) / 1e5, //parameter: penalty if AMM closes the position and not the trader
+        liquidationPenaltyRateBps: Number(orig.liquidationPenaltyRateTbps) / 10, //parameter: penalty if AMM closes the position and not the trader
         currentMarkPremiumRatePrice: ABK64x64ToFloat(BigNumber.from(orig.currentMarkPremiumRate!.fPrice)), //relative diff to index price EMA, used for markprice.
         currentMarkPremiumRateTime: Number(orig.currentMarkPremiumRate!.time), //relative diff to index price EMA, used for markprice.
         premiumRatesEMA: ABK64x64ToFloat(BigNumber.from(orig.premiumRatesEMA)), // EMA of premium rate

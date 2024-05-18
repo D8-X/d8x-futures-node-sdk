@@ -363,13 +363,13 @@ export interface PerpetualData {
   // ------ 1
   S2BaseCCY: string; //base currency of S2
   S2QuoteCCY: string; //quote currency of S2
-  incentiveSpreadTbps: number; //parameter: maximum spread added to the PD
-  minimalSpreadTbps: number; //parameter: minimal spread between long and short perpetual price
+  incentiveSpreadBps: number; //parameter: maximum spread added to the PD
+  minimalSpreadBps: number; //parameter: minimal spread between long and short perpetual price
   S3BaseCCY: string; //base currency of S3
   S3QuoteCCY: string; //quote currency of S3
   fSigma3: number; // parameter: volatility of quanto-quote pair
   fRho23: number; // parameter: correlation of quanto/base returns
-  liquidationPenaltyRateTbps: number; //parameter: penalty if AMM closes the position and not the trader
+  liquidationPenaltyRateBps: number; //parameter: penalty if AMM closes the position and not the trader
   //------- 2
   currentMarkPremiumRatePrice: number; //relative diff to index price EMA, used for markprice.
   currentMarkPremiumRateTime: number; //relative diff to index price EMA, used for markprice.
