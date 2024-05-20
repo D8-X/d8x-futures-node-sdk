@@ -472,7 +472,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param indexPriceInfo Index prices and market status (open/closed). Defaults to current market status if not given.
    * @returns Position risk after trade, including order cost and maximal trade sizes for position
    * @example
-   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { MarketData, Order, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(MarketData);
    *   // setup
@@ -819,8 +819,8 @@ export default class MarketData extends PerpetualDataHandler {
    *   await mktData.createProxyInstance();
    *   // Get position risk conditional on removing 3.14 MATIC
    *   const traderAddr = "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B";
-   *   const curPos = await mktData.positionRisk("traderAddr", "BTC-USD-MATIC");
-   *   const posRisk = await mktData.positionRiskOnCollateralAction(-3.14, curPos);
+   *   const curPos = await mktData.positionRisk(traderAddr, "BTC-USDC-USDC");
+   *   const posRisk = await mktData.positionRiskOnCollateralAction(3.14, curPos[0]);
    *   console.log(posRisk);
    * }
    * main();
@@ -973,8 +973,11 @@ export default class MarketData extends PerpetualDataHandler {
    *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let md = new MarketData(config);
    *   await md.createProxyInstance();
-   *   // get MATIC balance of address
-   *   let marginTokenBalance = await md.getWalletBalance(myaddress, "BTC-USD-MATIC");
+   *   // get USDC balance of address
+   *   let marginTokenBalance = await md.getWalletBalance(
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+   *     "BTC-USD-USDC"
+   *   );
    *   console.log(marginTokenBalance);
    * }
    * main();
@@ -1001,8 +1004,11 @@ export default class MarketData extends PerpetualDataHandler {
    *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let md = new MarketData(config);
    *   await md.createProxyInstance();
-   *   // get dMATIC balance of address
-   *   let shareTokenBalance = await md.getPoolShareTokenBalance(myaddress, "MATIC");
+   *   // get dUSDC balance of address
+   *   let shareTokenBalance = await md.getPoolShareTokenBalance(
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+   *     "USDC"
+   *   );
    *   console.log(shareTokenBalance);
    * }
    * main();
@@ -1046,8 +1052,8 @@ export default class MarketData extends PerpetualDataHandler {
    *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let md = new MarketData(config);
    *   await md.createProxyInstance();
-   *   // get price of 1 dMATIC in MATIC
-   *   let shareTokenPrice = await md.getShareTokenPrice(myaddress, "MATIC");
+   *   // get price of 1 dUSDC in USDC
+   *   let shareTokenPrice = await md.getShareTokenPrice("USDC");
    *   console.log(shareTokenPrice);
    * }
    * main();
@@ -1074,7 +1080,10 @@ export default class MarketData extends PerpetualDataHandler {
    *   let md = new MarketData(config);
    *   await md.createProxyInstance();
    *   // get value of pool share token
-   *   let shareToken = await md.getParticipationValue(myaddress, "MATIC");
+   *   let shareToken = await md.getParticipationValue(
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+   *     "USDC"
+   *   );
    *   console.log(shareToken);
    * }
    * main();
@@ -1132,7 +1141,10 @@ export default class MarketData extends PerpetualDataHandler {
    *   let md = new MarketData(config);
    *   await md.createProxyInstance();
    *   // max order sizes
-   *   let shareToken = await md.maxOrderSizeForTrader(myaddress, "BTC-USD-MATIC");
+   *   let shareToken = await md.maxOrderSizeForTrader(
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+   *     "BTC-USDC-USDC"
+   *   );
    *   console.log(shareToken); // {buy: 314, sell: 415}
    * }
    * main();
@@ -1305,7 +1317,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param {string} symbol of the form ETH-USD-MATIC.
    * @returns {number} signed maximal position size in base currency
    * @example
-   * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import { MarketData, PerpetualDataHandler, BUY_SIDE } from '@d8x/perpetuals-sdk';
    * async function main() {
    *   console.log(MarketData);
    *   // setup
@@ -1313,7 +1325,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get oracle price
-   *   let maxLongPos = await mktData.maxSignedPosition(BUY_SIDE, "BTC-USD-MATIC");
+   *   let maxLongPos = await mktData.maxSignedPosition(BUY_SIDE, "BTC-USDC-USDC");
    *   console.log(maxLongPos);
    * }
    * main();
@@ -1373,7 +1385,10 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get order stauts
-   *   let status = await mktData.getOrderStatus("ETH-USD-MATIC", "0xmyOrderId");
+   *   let status = await mktData.getOrderStatus(
+   *     "BTC-USDC-USDC",
+   *     "0x2a71efad7e9a2d25d078be14e593b84274a8b482cd3ab0468fc452bf72156f31",
+   *   );
    *   console.log(status);
    * }
    * main();
@@ -1401,8 +1416,11 @@ export default class MarketData extends PerpetualDataHandler {
    *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
-   *   // get order stauts
-   *   let status = await mktData.getOrdersStatus("ETH-USD-MATIC", ["0xmyOrderId1", "0xmyOrderId2"]);
+   *   // get orders stauts
+   *   let status = await mktData.getOrdersStatus("BTC-USDC-USDC", [
+   *     "0x2a71efad7e9a2d25d078be14e593b84274a8b482cd3ab0468fc452bf72156f31",
+   *     "0x7d53356e8b42892ccb0278e9b8671bfd40cce48d42dcabfb4b1aeb4283220760",
+   *   ]);
    *   console.log(status);
    * }
    * main();
@@ -1440,7 +1458,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get mark price
-   *   let price = await mktData.getMarkPrice("ETH-USD-MATIC");
+   *   let price = await mktData.getMarkPrice("BTC-USDC-USDC");
    *   console.log(price);
    * }
    * main();
@@ -1476,7 +1494,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get perpetual price
-   *   let price = await mktData.getPerpetualPrice("ETH-USD-MATIC", 1);
+   *   let price = await mktData.getPerpetualPrice("ETH-USDC-USDC", 1);
    *   console.log(price);
    * }
    * main();
@@ -1600,7 +1618,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get perpetual mid price
-   *   let midPrice = await mktData.getPerpetualMidPrice("ETH-USD-MATIC");
+   *   let midPrice = await mktData.getPerpetualMidPrice("ETH-USDC-USDC");
    *   console.log(midPrice);
    * }
    * main();
@@ -1760,7 +1778,10 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get available margin
-   *   let mgn = await mktData.getAvailableMargin("0xmyAddress", "ETH-USD-MATIC");
+   *   let mgn = await mktData.getAvailableMargin(
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
+   *     "ETH-USDC-USDC",
+   *   );
    *   console.log(mgn);
    * }
    * main();
@@ -1805,7 +1826,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // get scpre
-   *   let s = await mktData.getTraderLoyalityScore("0xmyAddress");
+   *   let s = await mktData.getTraderLoyalityScore("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(s);
    * }
    * main();
@@ -1877,7 +1898,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   let mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   // is market closed?
-   *   let s = await mktData.isMarketClosed("ETH-USD-MATIC");
+   *   let s = await mktData.isMarketClosed("ETH-USDC-USDC");
    *   console.log(s);
    * }
    * main();
