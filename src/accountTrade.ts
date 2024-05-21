@@ -66,13 +66,15 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *    console.log(AccountTrade);
    *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *    const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *    const pk: string = <string>process.env.PK;
    *    let accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
    *    // cancel order
-   *    let cancelTransaction = accTrade.cancelOrder("MATIC-USD-MATIC",
-   *        "0x4639061a58dcf34f4c9c703f49f1cb00d6a4fba490d62c0eb4a4fb06e1c76c19")
+   *    let cancelTransaction = accTrade.cancelOrder(
+   *      "BTC-USDC-USDC",
+   *      "0xf8c74cf0a1c849ed9d53b1ac2226c154c5e020428f5249c5c4f3f6ae8468ee53",
+   *    )
    *    console.log(cancelTransaction);
    *  }
    *  main();
@@ -104,18 +106,18 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *    console.log(AccountTrade);
    *    // setup (authentication required, PK is an environment variable with a private key)
-   *    const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *    const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *    const pk: string = <string>process.env.PK;
    *    const accTrade = new AccountTrade(config, pk);
    *    await accTrade.createProxyInstance();
    *    // set allowance
-   *    await accTrade.setAllowance("MATIC");
+   *    await accTrade.setAllowance("USDC");
    *    // set an order
    *    const order: Order = {
-   *        symbol: "MATIC-USD-MATIC",
+   *        symbol: "BTC-USDC-USDC",
    *        side: "BUY",
    *        type: "MARKET",
-   *        quantity: 100,
+   *        quantity: 0.02,
    *        leverage: 2,
    *        executionTimestamp: Date.now()/1000,
    *    };
@@ -161,12 +163,12 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // query exchange fee
-   *   let fees = await accTrade.queryExchangeFee("MATIC");
+   *   let fees = await accTrade.queryExchangeFee("USDC");
    *   console.log(fees);
    * }
    * main();
@@ -194,12 +196,12 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("xlayer");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // query 30 day volume
-   *   let vol = await accTrade.getCurrentTraderVolume("MATIC");
+   *   let vol = await accTrade.getCurrentTraderVolume("WOKB");
    *   console.log(vol);
    * }
    * main();
@@ -223,12 +225,12 @@ export default class AccountTrade extends WriteAccessHandler {
    * async function main() {
    *   console.log(AccountTrade);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("xlayer");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // get order IDs
-   *   let orderIds = await accTrade.getOrderIds("MATIC-USD-MATIC");
+   *   let orderIds = await accTrade.getOrderIds("WOKB-USD-WOKB");
    *   console.log(orderIds);
    * }
    * main();
@@ -359,12 +361,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * async function main() {
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // add collateral to margin account
-   *   const tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10.9);
+   *   const tx = await accTrade.addCollateral("BTC-USDC-USDC", 2);
    *   console.log(orderIds);
    * }
    *
@@ -410,12 +412,12 @@ export default class AccountTrade extends WriteAccessHandler {
    *
    * async function main() {
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *   const pk: string = <string>process.env.PK;
    *   let accTrade = new AccountTrade(config, pk);
    *   await accTrade.createProxyInstance();
    *   // remove collateral from margin account
-   *   const tx = await accTrade.removeCollateral("MATIC-USD-MATIC", 3.14);
+   *   const tx = await accTrade.removeCollateral("BTC-USDC-USDC", 2);
    *   console.log(orderIds);
    * }
    *

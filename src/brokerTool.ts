@@ -57,7 +57,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get white-label partner induced fee
-   *   let brokFee = await brokTool.getBrokerInducedFee("MATIC");
+   *   let brokFee = await brokTool.getBrokerInducedFee("USDC");
    *   console.log(brokFee);
    * }
    * main();
@@ -93,7 +93,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get white-label partner fee induced by lots
-   *   let brokFeeLots = await brokTool.getFeeForBrokerDesignation("MATIC");
+   *   let brokFeeLots = await brokTool.getFeeForBrokerDesignation("USDC");
    *   console.log(brokFeeLots);
    * }
    * main();
@@ -135,7 +135,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get white-label partner fee induced by volume
-   *   let brokFeeVol = await brokTool.getFeeForBrokerVolume("MATIC");
+   *   let brokFeeVol = await brokTool.getFeeForBrokerVolume("USDC");
    *   console.log(brokFeeVol);
    * }
    * main();
@@ -205,10 +205,10 @@ export default class BrokerTool extends WriteAccessHandler {
    *   await brokTool.createProxyInstance();
    *   // get exchange fee based on an order and trader
    *   let order: Order = {
-   *       symbol: "MATIC-USD-MATIC",
+   *       symbol: "BTC-USDC-USDC",
    *       side: "BUY",
    *       type: "MARKET",
-   *       quantity: 100,
+   *       quantity: 0.02,
    *       executionTimestamp: Date.now()/1000
    *   };
    *    let exchFee = await brokTool.determineExchangeFee(order,
@@ -244,7 +244,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get 30 day volume for white-label partner
-   *   let brokVolume = await brokTool.getCurrentBrokerVolume("MATIC");
+   *   let brokVolume = await brokTool.getCurrentBrokerVolume("USDC");
    *   console.log(brokVolume);
    * }
    * main();
@@ -276,7 +276,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get lot price
-   *   let brokLotSize = await brokTool.getLotSize("MATIC");
+   *   let brokLotSize = await brokTool.getLotSize("USDC");
    *   console.log(brokLotSize);
    * }
    * main();
@@ -307,7 +307,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // get white-label partner designation
-   *   let brokDesignation = await brokTool.getBrokerDesignation("MATIC");
+   *   let brokDesignation = await brokTool.getBrokerDesignation("USDC");
    *   console.log(brokDesignation);
    * }
    * main();
@@ -332,13 +332,13 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // deposit to perpetuals
-   *   await brokTool.setAllowance("MATIC");
-   *   let respDeposit = await brokTool.depositBrokerLots("MATIC",1);
+   *   await brokTool.setAllowance("USDC");
+   *   let respDeposit = await brokTool.depositBrokerLots("USDC",1);
    *   console.log(respDeposit);
    * }
    * main();
@@ -370,19 +370,19 @@ export default class BrokerTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
    *   const pk: string = <string>process.env.PK;
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // sign order
-   *   let order = {symbol: "ETH-USD-MATIC",
+   *   let order = {symbol: "BTC-USDC-USDC",
    *       side: "BUY",
    *       type: "MARKET",
-   *       quantity: 1,
-   *       executionTimestamp: Date.now()/1000
+   *       quantity: 0.02,
+   *       executionTimestamp: Date.now()/1000,
+   *       deadline: Date.now()/1000 + 60*1000,
    *    };
-   *    let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-   *        0.0001, 1669723339);
+   *   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(signedOrder);
    *   // execute order
    *   let orderTransaction = await accTrade.order(signedOrder);
@@ -419,7 +419,11 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param {SmartContractOrder} scOrder Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.
    * @param {string} traderAddr Address of trader submitting the order.
    * @example
-   * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import {
+   *   BrokerTool,
+   *   PerpetualDataHandler,
+   *   TraderInterface,
+   * } from "@d8x/perpetuals-sdk";
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
@@ -430,15 +434,18 @@ export default class BrokerTool extends WriteAccessHandler {
    *   await brokTool.createProxyInstance();
    *   await traderAPI.createProxyInstance();
    *   // sign order
-   *   const order = {symbol: "ETH-USD-MATIC",
-   *       side: "BUY",
-   *       type: "MARKET",
-   *       quantity: 1,
-   *       executionTimestamp: Date.now()/1000
-   *    };
-   *   const scOrder = await traderAPI.createSmartContractOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B")
-   *   const signature = await brokTool.signSCOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-   *        0.0001, 1669723339);
+   *   const order = {
+   *     symbol: "BTC-USDC-USDC",
+   *     side: "BUY",
+   *     type: "MARKET",
+   *     quantity: 0.02,
+   *     executionTimestamp: Date.now() / 1000,
+   *   };
+   *   const scOrder = await traderAPI.createSmartContractOrder(
+   *     order,
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+   *   );
+   *   const signature = await brokTool.signSCOrder(scOrder);
    *   console.log(signature);
    * }
    * main();
@@ -566,7 +573,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // transfer ownership
-   *   let respTransferOwnership = await brokTool.transferOwnership("MATIC", "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+   *   let respTransferOwnership = await brokTool.transferOwnership("USDC", "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(respTransferOwnership);
    * }
    * main();

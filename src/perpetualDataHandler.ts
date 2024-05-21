@@ -938,7 +938,7 @@ export default class PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns Array of orders and corresponding order IDs
+   * @returns Array of orders their corresponding order IDs and trader addresses
    */
   public async pollLimitOrders(
     symbol: string,
