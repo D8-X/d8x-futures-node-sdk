@@ -247,7 +247,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   await mktData.createProxyInstance();
    *   // Get all open orders for a trader/symbol
    *   let opOrder = await mktData.openOrders("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-   *       "ETH-USD-MATIC");
+   *       "BTC-USDC-USDC");
    *   console.log(opOrder);
    * }
    * main();
@@ -358,7 +358,7 @@ export default class MarketData extends PerpetualDataHandler {
    *   await mktData.createProxyInstance();
    *   // Get position risk info
    *   let posRisk = await mktData.positionRisk("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B",
-   *       "ETH-USD-MATIC");
+   *       "BTC-USDC-USDC");
    *   console.log(posRisk);
    * }
    * main();
@@ -480,10 +480,10 @@ export default class MarketData extends PerpetualDataHandler {
    *   const mktData = new MarketData(config);
    *   await mktData.createProxyInstance();
    *   const order: Order = {
-   *        symbol: "MATIC-USD-MATIC",
+   *        symbol: "BTC-USDC-USDC",
    *        side: "BUY",
    *        type: "MARKET",
-   *        quantity: 100,
+   *        quantity: 0.05,
    *        leverage: 2,
    *        executionTimestamp: Date.now()/1000,
    *    };
