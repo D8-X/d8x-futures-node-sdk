@@ -366,7 +366,12 @@ export default class BrokerTool extends WriteAccessHandler {
    * @param {Order} order Order to sign. It must contain valid white-label partner fee, white-label partner address, and order deadline.
    * @param {string} traderAddr Address of trader submitting the order.
    * @example
-   * import { BrokerTool, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
+   * import {
+   *   AccountTrade,
+   *   BrokerTool,
+   *   Order,
+   *   PerpetualDataHandler,
+   * } from "@d8x/perpetuals-sdk";
    * async function main() {
    *   console.log(BrokerTool);
    *   // setup (authentication required, PK is an environment variable with a private key)
@@ -375,18 +380,25 @@ export default class BrokerTool extends WriteAccessHandler {
    *   let brokTool = new BrokerTool(config, pk);
    *   await brokTool.createProxyInstance();
    *   // sign order
-   *   let order = {symbol: "BTC-USDC-USDC",
-   *       side: "BUY",
-   *       type: "MARKET",
-   *       quantity: 0.02,
-   *       executionTimestamp: Date.now()/1000,
-   *       deadline: Date.now()/1000 + 60*1000,
-   *    };
-   *   let signedOrder = await brokTool.signOrder(order, "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
+   *   let order: Order = {
+   *     symbol: "BTC-USDC-USDC",
+   *     side: "BUY",
+   *     type: "MARKET",
+   *     quantity: 0.02,
+   *     executionTimestamp: Math.round(Date.now() / 1000),
+   *     deadline: Math.round(Date.now() / 1000 + 60 * 1000),
+   *     brokerFeeTbps: 60,
+   *   };
+   *   let signedOrder = await brokTool.signOrder(
+   *     order,
+   *     "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B"
+   *   );
    *   console.log(signedOrder);
    *   // execute order
+   *   const accTrade = new AccountTrade(config, pk);
+   *   await accTrade.createProxyInstance();
    *   let orderTransaction = await accTrade.order(signedOrder);
-   *   console.log(orderTransaction.hash);
+   *   console.log(orderTransaction);
    * }
    * main();
    *
