@@ -269,6 +269,9 @@ export interface PriceFeedConfig {
   endpoints: Array<{ type: string; endpoints: string[] }>;
 }
 
+// price feed id => list of symbols and their endpoint ids
+export type FeedInfo = Map<string, { symbol: string; endpointId: number }[]>;
+
 export interface PriceFeedSubmission {
   symbols: string[];
   priceFeedVaas: string[];

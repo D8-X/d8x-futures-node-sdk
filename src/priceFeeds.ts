@@ -1,11 +1,18 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
 import { decNToFloat, floatToDec18 } from "./d8XMath";
-import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
+import type {
+  FeedInfo,
+  PriceFeedConfig,
+  PriceFeedFormat,
+  PriceFeedSubmission,
+  PythLatestPriceFeed,
+} from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
 import OnChainPxFactory from "./onChainPxFactory";
+
 /**
  * This class communicates with the REST API that provides price-data that is
  * to be submitted to the smart contracts for certain functions such as
@@ -14,7 +21,8 @@ import OnChainPxFactory from "./onChainPxFactory";
 export default class PriceFeeds {
   private config: PriceFeedConfig;
   private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
-  private feedInfo: Map<string, { symbol: string; endpointId: number }>; // priceFeedId -> symbol, endpointId
+  // priceFeedId -> [symbol, endpointId]. Same price id can have multiple symbols
+  private feedInfo: FeedInfo;
   private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
   private triangulations: Map<string, [string[], boolean[]]>;
@@ -47,6 +55,8 @@ export default class PriceFeeds {
       }
     }
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
+    console.log("feed info endpoints", this.feedInfo, this.feedEndpoints);
+
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
   }
@@ -57,8 +67,8 @@ export default class PriceFeeds {
    */
   public initializeTriangulations(symbols: Set<string>) {
     let feedSymbols = new Array<string>();
-    for (let [, value] of this.feedInfo) {
-      feedSymbols.push(value.symbol);
+    for (let [, values] of this.feedInfo) {
+      values.forEach((value) => feedSymbols.push(value.symbol));
     }
     for (let symbol of symbols.values()) {
       let triangulation = Triangulator.triangulate(feedSymbols, symbol);
@@ -185,7 +195,10 @@ export default class PriceFeeds {
         throw new Error(`API format for ${currFeed} unknown.`);
       }
       // feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-      let endpointId = this.feedInfo.get(currFeed.id)!.endpointId;
+      console.log("currfeed and feed info", this.feedInfo, currFeed);
+      let endpointId = this.feedInfo
+        .get(currFeed.id)!
+        .find((x) => x.symbol.toLowerCase() == currFeed.symbol.toLowerCase())!.endpointId;
       symbolsOfEndpoint[endpointId].push(currFeed.symbol);
       if (queries[endpointId] == undefined) {
         // each id can have a different endpoint, but we cluster
@@ -254,12 +267,19 @@ export default class PriceFeeds {
     let idCountPriceFeeds = new Array<number>(this.feedEndpoints.length);
     let symbols = new Array<string>();
     for (let k = 0; k < feedIds.length; k++) {
-      let info = this.feedInfo.get(feedIds[k]);
+      let info = this.feedInfo.get(feedIds[k])!;
       if (info == undefined) {
         throw new Error(`priceFeeds: config for symbol ${symbol} insufficient`);
       }
-      let id = info.endpointId;
-      symbols.push(info.symbol);
+
+      const perpSymbolMatcher = (perpSymbol: string, pairSymbol: string) => {
+        const perpSymbolParts = perpSymbol.split("-");
+        const pairSymbolParts = pairSymbol.split("-");
+        return perpSymbolParts.indexOf(pairSymbolParts[0]) != -1 && perpSymbolParts.indexOf(pairSymbolParts[1]) != 1;
+      };
+
+      let id = info.find((i) => perpSymbolMatcher(symbol, i.symbol))!.endpointId;
+      symbols.push(info.find((i) => perpSymbolMatcher(symbol, i.symbol))!.symbol);
       if (queries[id] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
@@ -461,11 +481,8 @@ export default class PriceFeeds {
    * @param config configuration for the selected network
    * @returns feedInfo-map and endPoints-array
    */
-  static _constructFeedInfo(
-    config: PriceFeedConfig,
-    shuffleEndpoints: boolean
-  ): [Map<string, { symbol: string; endpointId: number }>, string[]] {
-    let feed = new Map<string, { symbol: string; endpointId: number }>();
+  static _constructFeedInfo(config: PriceFeedConfig, shuffleEndpoints: boolean): [FeedInfo, string[]] {
+    let feed: FeedInfo = new Map<string, Array<{ symbol: string; endpointId: number }>>();
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
@@ -492,7 +509,15 @@ export default class PriceFeeds {
           throw new Error(`priceFeeds: no endpoint found for ${type} check priceFeedConfig`);
         }
       }
-      feed.set(config.ids[k].id, { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });
+
+      const currentPriceId = config.ids[k].id;
+      const feedItem = { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId };
+      // If price feed id is present - append feed item to the list
+      if (feed.has(currentPriceId)) {
+        feed.set(currentPriceId, feed.get(currentPriceId)!.concat(feedItem));
+      } else {
+        feed.set(config.ids[k].id, [feedItem]);
+      }
     }
     return [feed, feedEndpoints];
   }

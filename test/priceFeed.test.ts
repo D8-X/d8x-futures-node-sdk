@@ -49,7 +49,7 @@ describe("priceFeed", () => {
   });
 
   it("get recent prices from market data directly", async () => {
-    let prices = await mktData.fetchLatestFeedPriceInfo("MATIC-USDC-USDC");
+    let prices = await mktData.fetchLatestFeedPriceInfo("BTC-USDT-USDT");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -77,8 +77,9 @@ describe("priceFeed", () => {
     expect(px[1][1]).toBeFalsy();
     expect(px[1][2]).toBeTruthy(); // market closed
   });
+
   it("fetch info from data handler", async () => {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("ETH-USD-MATIC");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("BTC-USDT-USDT");
     console.log(l);
   });
 });
