@@ -1,5 +1,5 @@
 import MarketData from "../src/marketData";
-import { NodeSDKConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, PriceFeedConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import PriceFeeds from "../src/priceFeeds";
 
@@ -11,13 +11,41 @@ jest.setTimeout(150000);
 let config: NodeSDKConfig;
 let mktData: MarketData;
 
+const NETWORK_SDK_NAME = "xlayer";
+const PRICES_NETWORK = "odin";
+
+const FakePriceFeedsConfig: PriceFeedConfig = {
+  endpoints: [{ endpoints: ["https://odin.d8x.xyz/api"], type: "odin" }],
+  network: PRICES_NETWORK,
+  ids: [
+    {
+      symbol: "STUSD-USD",
+      id: "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+      type: "odin",
+      origin: "Crypto.USDT/USD",
+    },
+    {
+      symbol: "anotherSTUSD-USD",
+      id: "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+      type: "odin",
+      origin: "Crypto.USDT/USD",
+    },
+    {
+      symbol: "GBP-USD",
+      id: "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1",
+      type: "odin",
+      origin: "FX.GBP/USD",
+    },
+  ],
+};
+
 describe("priceFeed", () => {
   beforeAll(async () => {
     if (pk == undefined) {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("xlayer");
+    config = PerpetualDataHandler.readSDKConfig(NETWORK_SDK_NAME);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -81,5 +109,26 @@ describe("priceFeed", () => {
   it("fetch info from data handler", async () => {
     let l = await mktData.fetchPriceSubmissionInfoForPerpetual("BTC-USDT-USDT");
     console.log(l);
+  });
+
+  it("should correctly construct non-unique price id price feeds", async () => {
+    let [priceFeeds, endpoints] = PriceFeeds._constructFeedInfo(FakePriceFeedsConfig, false);
+    console.log("FEEDS", priceFeeds, endpoints);
+    expect(priceFeeds).toEqual(
+      new Map(
+        Object.entries({
+          "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b": [
+            { symbol: "STUSD-USD", endpointId: 0 },
+            { symbol: "ANOTHERSTUSD-USD", endpointId: 0 },
+          ],
+          "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1": [
+            {
+              symbol: "GBP-USD",
+              endpointId: 0,
+            },
+          ],
+        })
+      )
+    );
   });
 });

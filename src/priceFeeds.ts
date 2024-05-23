@@ -12,6 +12,7 @@ import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
 import OnChainPxFactory from "./onChainPxFactory";
+import { PriceFeedInfo } from "./priceFeedInfo";
 
 /**
  * This class communicates with the REST API that provides price-data that is
@@ -20,9 +21,10 @@ import OnChainPxFactory from "./onChainPxFactory";
  */
 export default class PriceFeeds {
   private config: PriceFeedConfig;
-  private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
+  public priceFeeds: PriceFeedInfo;
+  // private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
   // priceFeedId -> [symbol, endpointId]. Same price id can have multiple symbols
-  private feedInfo: FeedInfo;
+  // private feedInfo: FeedInfo;
   private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
   private triangulations: Map<string, [string[], boolean[]]>;
@@ -32,8 +34,22 @@ export default class PriceFeeds {
   // api formatting constants
   private PYTH = { endpoint: "/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
 
-  constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
-    let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
+  /**
+   *
+   * @param dataHandler
+   * @param priceFeedConfigNetwork
+   * @param priceFeedsConfig optional price feeds config that will be used
+   * instead of default one
+   */
+  constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string, priceFeedsConfig?: PriceFeedConfig[]) {
+    // Load default price feed configs whenever not provided
+    let configs: PriceFeedConfig[];
+    if (priceFeedsConfig === undefined) {
+      configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
+    } else {
+      configs = priceFeedsConfig;
+    }
+
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
     // if SDK config contains custom price feed endpoints, these override the public/default ones
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
@@ -47,6 +63,7 @@ export default class PriceFeeds {
         }
       }
     }
+
     this.onChainPxFeeds = new Map<string, OnChainPxFeed>();
     for (let k = 0; k < this.config.ids.length; k++) {
       if (this.config.ids[k].type == "onchain") {
@@ -54,8 +71,10 @@ export default class PriceFeeds {
         this.onChainPxFeeds[sym] = OnChainPxFactory.createFeed(sym);
       }
     }
-    [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
-    console.log("feed info endpoints", this.feedInfo, this.feedEndpoints);
+
+    // [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
+    const [feeds, feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
+    this.priceFeeds = new PriceFeedInfo(feeds, feedEndpoints);
 
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
@@ -66,10 +85,7 @@ export default class PriceFeeds {
    * @param symbols set of symbols we want to triangulate from price feeds
    */
   public initializeTriangulations(symbols: Set<string>) {
-    let feedSymbols = new Array<string>();
-    for (let [, values] of this.feedInfo) {
-      values.forEach((value) => feedSymbols.push(value.symbol));
-    }
+    let feedSymbols = this.priceFeeds.getAllSymbols();
     for (let symbol of symbols.values()) {
       let triangulation = Triangulator.triangulate(feedSymbols, symbol);
       this.triangulations.set(symbol, triangulation);
@@ -168,13 +184,15 @@ export default class PriceFeeds {
 
   /**
    * Fetch the provided feed prices and bool whether market is closed or open
-   * - requires the feeds to be defined in priceFeedConfig.json
+   * - requires the feeds to be defined in default priceFeedConfig.json or
+   *   provided during initialization
    * - if symbols undefined, all feeds are queried
-   * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or undefined
+   * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or
+   * undefined
    * @returns mapping symbol-> [price, isMarketClosed]
    */
   public async fetchFeedPrices(symbols?: string[]): Promise<Map<string, [number, boolean]>> {
-    let queries = new Array<string>(this.feedEndpoints.length);
+    let queries = new Array<string>(this.priceFeeds.numEndpoints());
     let suffixes = new Array<string>(queries.length);
     let symbolsOfEndpoint: string[][] = [];
     for (let j = 0; j < queries.length; j++) {
@@ -195,18 +213,23 @@ export default class PriceFeeds {
         throw new Error(`API format for ${currFeed} unknown.`);
       }
       // feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-      console.log("currfeed and feed info", this.feedInfo, currFeed);
-      let endpointId = this.feedInfo
-        .get(currFeed.id)!
-        .find((x) => x.symbol.toLowerCase() == currFeed.symbol.toLowerCase())!.endpointId;
-      symbolsOfEndpoint[endpointId].push(currFeed.symbol);
-      if (queries[endpointId] == undefined) {
+      // let endpointId = this.feedInfo
+      //   .get(currFeed.id)!
+      //   .find((x) => x.symbol.toLowerCase() == currFeed.symbol.toLowerCase())!.endpointId;
+
+      let endpointIndex = this.priceFeeds.getEndpointIndex(currFeed.id, currFeed.symbol)!;
+      if (endpointIndex === undefined) {
+        throw new Error(`PriceFeeds: endpoint index not found for symbol ${currFeed.symbol} and id ${currFeed.id}`);
+      }
+
+      symbolsOfEndpoint[endpointIndex].push(currFeed.symbol);
+      if (queries[endpointIndex] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[endpointId] = this.feedEndpoints[endpointId] + apiFormat.endpoint + currFeed.id;
-        suffixes[endpointId] = apiFormat.suffix;
+        queries[endpointIndex] = this.priceFeeds.getEndpointByIndex(endpointIndex) + apiFormat.endpoint + currFeed.id;
+        suffixes[endpointIndex] = apiFormat.suffix;
       } else {
-        queries[endpointId] = queries[endpointId] + apiFormat.separator + currFeed.id;
+        queries[endpointIndex] = queries[endpointIndex] + apiFormat.separator + currFeed.id;
       }
     }
     let onChainPromise = this.queryOnChainPxFeeds(onChainSyms);
@@ -260,14 +283,14 @@ export default class PriceFeeds {
    */
   public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
     let feedIds = this.dataHandler.getPriceIds(symbol);
-    let queries = new Array<string>(this.feedEndpoints.length);
+    let queries = new Array<string>(this.priceFeeds.numEndpoints());
     // we need to preserve the order of the price feeds
     let orderEndpointNumber = new Array<number>();
     // count how many prices per endpoint
-    let idCountPriceFeeds = new Array<number>(this.feedEndpoints.length);
+    let idCountPriceFeeds = new Array<number>(this.priceFeeds.numEndpoints());
     let symbols = new Array<string>();
     for (let k = 0; k < feedIds.length; k++) {
-      let info = this.feedInfo.get(feedIds[k])!;
+      let info = this.priceFeeds.getFeedInfoByPriceId(feedIds[k])!;
       if (info == undefined) {
         throw new Error(`priceFeeds: config for symbol ${symbol} insufficient`);
       }
@@ -283,7 +306,7 @@ export default class PriceFeeds {
       if (queries[id] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id] + "/latest_price_feeds?binary=true&";
+        queries[id] = this.priceFeeds.getEndpointByIndex(id) + "/latest_price_feeds?binary=true&";
         idCountPriceFeeds[id] = 0;
       }
       queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";
@@ -305,7 +328,9 @@ export default class PriceFeeds {
     } catch (error) {
       // try switching endpoints and re-query
       console.log("fetchVAAQuery failed, selecting random price feed endpoint...");
-      [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, true);
+      const [feedInfo, feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, true);
+      this.priceFeeds = new PriceFeedInfo(feedInfo, feedEndpoints);
+
       data = await Promise.all(
         queries.map(async (q) => {
           if (q != undefined) {
