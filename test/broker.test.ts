@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { Wallet, ethers } from "ethers";
 import AccountTrade from "../src/accountTrade";
 import BrokerTool from "../src/brokerTool";
 import { NodeSDKConfig, Order } from "../src/nodeSDKTypes";
@@ -24,7 +24,7 @@ let lotSize: number;
 let lotsDeposit: number;
 describe("broker tools that spend gas and tokens", () => {
   beforeAll(async function () {
-    const chainId = 80001;
+    const chainId = 421614;
     config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
@@ -107,6 +107,39 @@ describe("broker tools that spend gas and tokens", () => {
         console.log(`exchange fee without a broker ${10_000 * fee2!} bps`);
       }
     }
+  });
+
+  it("should fail when brokerFeeTbps is not set", async () => {
+    let accTrade = new AccountTrade(config, Wallet.createRandom().privateKey);
+    await accTrade.createProxyInstance();
+    let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 200,
+      leverage: 10,
+      executionTimestamp: Math.round(Date.now() / 1000),
+      deadline: Math.round(Date.now() / 1000) + 100000,
+    };
+    await expect(brokerTool.signOrder(order, accTrade.getAddress())).rejects.toThrow(
+      "order.brokerFeeTbps is undefined"
+    );
+  });
+
+  it("should not fail when brokerFeeTbps is set", async () => {
+    let accTrade = new AccountTrade(config, Wallet.createRandom().privateKey);
+    await accTrade.createProxyInstance();
+    let order: Order = {
+      symbol: "MATIC-USD-MATIC",
+      side: "BUY",
+      type: "MARKET",
+      quantity: 200,
+      leverage: 10,
+      executionTimestamp: Math.round(Date.now() / 1000),
+      deadline: Math.round(Date.now() / 1000) + 100000,
+      brokerFeeTbps: 60,
+    };
+    await expect(brokerTool.signOrder(order, accTrade.getAddress())).rejects.toBeTruthy();
   });
 
   it("should transfer ownership", async () => {

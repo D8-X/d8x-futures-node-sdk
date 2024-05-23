@@ -412,6 +412,11 @@ export default class BrokerTool extends WriteAccessHandler {
     if (order.deadline == undefined) {
       throw Error("brokerTool::signOrder: deadline not defined");
     }
+    // brokerFeeTbps cannot be undefined
+    if (order.brokerFeeTbps === undefined) {
+      throw Error("order.brokerFeeTbps is undefined");
+    }
+
     order.brokerSignature = await BrokerTool._signOrder(
       order.symbol,
       order.brokerFeeTbps!,
