@@ -56,30 +56,40 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    * @param {number} nonce optional nonce
    * @param {PriceFeedSubmission=} submission optional signed prices obtained via PriceFeeds::fetchLatestFeedPriceInfoForPerpetual
    * @example
-   * import { OrderExecutorTool, PerpetualDataHandler, Order } from "@d8x/perpetuals-sdk";
+   * import {
+   *   OrderExecutorTool,
+   *   PerpetualDataHandler,
+   *   Order,
+   * } from "@d8x/perpetuals-sdk";
    * async function main() {
    *   console.log(OrderExecutorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
    *   const config = PerpetualDataHandler.readSDKConfig("cardona");
    *   const pk: string = <string>process.env.PK;
-   *   const symbol = "ETH-USD-MATIC";
+   *   const symbol = "BTC-USDC-USDC";
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get some open orders
    *   const maxOrdersToGet = 5;
-   *   let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+   *   let [orders, ids, wallets] = await orderTool.pollLimitOrders(
+   *     symbol,
+   *     maxOrdersToGet
+   *   );
    *   console.log(`Got ${ids.length} orders`);
    *   for (let k = 0; k < ids.length; k++) {
    *     // check whether order meets conditions
-   *     let doExecute = await orderTool.isTradeable(orders[k]);
+   *     let doExecute = await orderTool.isTradeable(orders[k], ids[k]);
    *     if (doExecute) {
    *       // execute
    *       let tx = await orderTool.executeOrder(symbol, ids[k]);
-   *       console.log(`Sent order id ${ids[k]} for execution, tx hash = ${tx.hash}`);
+   *       console.log(
+   *         `Sent order id ${ids[k]} for execution, tx hash = ${tx.hash}`
+   *       );
    *     }
    *   }
    * }
    * main();
+   *
    * @returns Transaction object.
    */
   public async executeOrder(
@@ -163,7 +173,10 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *   await orderTool.createProxyInstance();
    *   // get some open orders
    *   const maxOrdersToGet = 5;
-   *   let [orders, ids]: [Order[], string[]] = await orderTool.pollLimitOrders(symbol, maxOrdersToGet);
+   *   let [orders, ids, wallets] = await orderTool.pollLimitOrders(
+   *     symbol,
+   *     maxOrdersToGet
+   *   );
    *   console.log(`Got ${ids.length} orders`);
    *   // execute
    *   let tx = await orderTool.executeOrders(symbol, ids);
@@ -269,7 +282,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // get order by ID
-   *   let myorder = await orderTool.getOrderById("MATIC-USD-MATIC",
+   *   let myorder = await orderTool.getOrderById("BTC-USDC-USDC",
    *       "0x0091a1d878491479afd09448966c1403e9d8753122e25260d3b2b9688d946eae");
    *   console.log(myorder);
    * }
@@ -302,8 +315,10 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // check if tradeable
-   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
-   *   let check = await orderTool.isTradeable(openOrders[0][0]);
+   *   let [orders, ids, wallets] = await orderTool.getAllOpenOrders(
+   *    "BTC-USDC-USDC"
+   *   );
+   *   let check = await orderTool.isTradeable(orders[0], ids[0]);
    *   console.log(check);
    * }
    * main();
@@ -448,6 +463,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
   /**
    * Check for a batch of orders on the same perpetual whether they can be traded
    * @param orders orders belonging to 1 perpetual
+   * @param orderIds orders ids belonging to 1 perpetual
    * @param indexPrice S2,S3-index prices for the given perpetual. Will fetch prices from REST API
    * if not defined.
    * @returns array of tradeable boolean
@@ -461,11 +477,10 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *   let orderTool = new OrderExecutorTool(config, pk);
    *   await orderTool.createProxyInstance();
    *   // check if tradeable
-   *   let openOrders = await orderTool.getAllOpenOrders("MATIC-USD-MATIC");
-   *   let check = await orderTool.isTradeableBatch(
-   *       [openOrders[0][0], openOrders[0][1]],
-   *       [openOrders[1][0], openOrders[1][1]]
-   *     );
+   *   let [orders, ids, wallets] = await orderTool.getAllOpenOrders(
+   *     "BTC-USDC-USDC"
+   *   );
+   *   let check = await orderTool.isTradeableBatch(orders, ids);
    *   console.log(check);
    * }
    * main();

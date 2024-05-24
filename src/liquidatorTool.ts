@@ -72,7 +72,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
 
   /**
    * Liquidate a trader.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string} symbol Symbol of the form BTC-USDC-USDC.
    * @param {string} traderAddr Address of the trader to be liquidated.
    * @param {string=} liquidatorAddr Address to be credited if the liquidation succeeds.
    * @param {PriceFeedSubmission} priceFeedData optional. VAA and timestamps for oracle. If not provided will query from REST API.
@@ -87,7 +87,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // liquidate trader
-   *   let liqAmount = await lqudtrTool.liquidateTrader("ETH-USD-MATIC",
+   *   let liqAmount = await lqudtrTool.liquidateTrader("BTC-USDC-USDC",
    *       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(liqAmount);
    * }
@@ -187,7 +187,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
   /**
    * Check if the collateral of a trader is above the maintenance margin ("maintenance margin safe").
    * If not, the position can be liquidated.
-   * @param {string} symbol Symbol of the form ETH-USD-MATIC.
+   * @param {string} symbol Symbol of the form BTC-USDC-USDC.
    * @param {string} traderAddr Address of the trader whose position you want to assess.
    * @param {number[]} indexPrices optional, index price S2/S3 for which we test
    * @example
@@ -200,7 +200,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // check if trader can be liquidated
-   *   let safe = await lqudtrTool.isMaintenanceMarginSafe("ETH-USD-MATIC",
+   *   let safe = await lqudtrTool.isMaintenanceMarginSafe("BTC-USDC-USDC",
    *       "0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B");
    *   console.log(safe);
    * }
@@ -257,12 +257,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("xlayer");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // get number of active accounts
-   *   let accounts = await lqudtrTool.countActivePerpAccounts("ETH-USD-MATIC");
+   *   let accounts = await lqudtrTool.countActivePerpAccounts("DOGE-USDC-USDC");
    *   console.log(accounts);
    * }
    * main();
@@ -288,12 +288,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("xlayer");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // get all active accounts in chunks
-   *   let accounts = await lqudtrTool.getActiveAccountsByChunks("ETH-USD-MATIC", 0, 4);
+   *   let accounts = await lqudtrTool.getActiveAccountsByChunks("WOKB-USD-WOKB", 0, 15);
    *   console.log(accounts);
    * }
    * main();
@@ -321,12 +321,12 @@ export default class LiquidatorTool extends WriteAccessHandler {
    * async function main() {
    *   console.log(LiquidatorTool);
    *   // Setup (authentication required, PK is an environment variable with a private key)
-   *   const config = PerpetualDataHandler.readSDKConfig("cardona");
+   *   const config = PerpetualDataHandler.readSDKConfig("xlayer");
    *   const pk: string = <string>process.env.PK;
    *   let lqudtrTool = new LiquidatorTool(config, pk);
    *   await lqudtrTool.createProxyInstance();
    *   // get all active accounts
-   *   let accounts = await lqudtrTool.getAllActiveAccounts("ETH-USD-MATIC");
+   *   let accounts = await lqudtrTool.getAllActiveAccounts("WOKB-USD-WOKB");
    *   console.log(accounts);
    * }
    * main();
