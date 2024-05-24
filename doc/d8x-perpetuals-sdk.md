@@ -135,7 +135,7 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| x | <code>BigNumber</code> \| <code>number</code> | <p>number in ABDK-format or 2^29</p> |
+| x | <code>BigNumberish</code> \| <code>number</code> | <p>number in ABDK-format or 2^29</p> |
 
 <a name="module_d8xMath..decNToFloat"></a>
 
@@ -145,7 +145,7 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| x | <code>BigNumber</code> | <p>BigNumber in Dec-N format</p> |
+| x | <code>BigNumberish</code> | <p>BigNumber in Dec-N format</p> |
 
 <a name="module_d8xMath..dec18ToFloat"></a>
 
@@ -155,7 +155,7 @@ Result = x/2^64 if big number, x/2^29 if number</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| x | <code>BigNumber</code> | <p>BigNumber in Dec18 format</p> |
+| x | <code>BigNumberish</code> | <p>BigNumber in Dec18 format</p> |
 
 <a name="module_d8xMath..floatToABK64x64"></a>
 
