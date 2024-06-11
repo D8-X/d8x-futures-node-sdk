@@ -277,13 +277,82 @@ export default class OrderExecutorTool extends WriteAccessHandler {
    *
    * @returns order or undefined
    */
-  public async getOrderById(symbol: string, id: string, overrides?: CallOverrides): Promise<Order | undefined> {
+  public async getOrderById(
+    symbol: string,
+    id: string,
+    overrides?: CallOverrides & { rpcURL?: string }
+  ): Promise<Order | undefined> {
     let ob = this.getOrderBookContract(symbol);
-    let smartContractOrder: SmartContractOrder = await ob.orderOfDigest(id, overrides || {});
+    // multicall
+    let rpcURL: string | undefined;
+    if (overrides) {
+      ({ rpcURL, ...overrides } = overrides);
+    }
+    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, provider);
+    const calls: Multicall3.Call3Struct[] = [
+      // 0: orderOfDigest
+      {
+        target: ob.address,
+        allowFailure: false,
+        callData: ob.interface.encodeFunctionData("orderOfDigest", [id]),
+      },
+      // 1: orderDependency
+      {
+        target: ob.address,
+        allowFailure: false,
+        callData: ob.interface.encodeFunctionData("orderDependency", [id]),
+      },
+    ];
+    const encodedResults = await multicall.callStatic.aggregate3(calls, overrides || {});
+    if (encodedResults.some(({ success }) => !success)) {
+      return undefined;
+    }
+
+    const smartContractOrder = ob.interface.decodeFunctionResult("orderOfDigest", encodedResults[0].returnData) as [
+      number,
+      number,
+      number,
+      string,
+      number,
+      string,
+      number,
+      number,
+      number,
+      string,
+      BigNumber,
+      BigNumber,
+      BigNumber,
+      string
+    ] & {
+      leverageTDR: number;
+      brokerFeeTbps: number;
+      iPerpetualId: number;
+      traderAddr: string;
+      executionTimestamp: number;
+      brokerAddr: string;
+      submittedTimestamp: number;
+      flags: number;
+      iDeadline: number;
+      executorAddr: string;
+      fAmount: BigNumber;
+      fLimitPrice: BigNumber;
+      fTriggerPrice: BigNumber;
+      brokerSignature: string;
+    };
+
+    const orderDependency = ob.interface.decodeFunctionResult("orderDependency", encodedResults[1].returnData) as [
+      string,
+      string
+    ] & {
+      parentChildDigest1: string;
+      parentChildDigest2: string;
+    };
     if (smartContractOrder.traderAddr == ZERO_ADDRESS) {
       return undefined;
     }
-    let order = OrderExecutorTool.fromSmartContractOrder(smartContractOrder, this.symbolToPerpStaticInfo);
+    const order = OrderExecutorTool.fromSmartContractOrder(smartContractOrder, this.symbolToPerpStaticInfo);
+    order.parentChildOrderIds = [orderDependency.parentChildDigest1, orderDependency.parentChildDigest2];
     return order;
   }
 
