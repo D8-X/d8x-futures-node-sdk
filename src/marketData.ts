@@ -832,10 +832,10 @@ export default class MarketData extends PerpetualDataHandler {
     overrides?: CallOverrides
   ): Promise<MarginAccount> {
     if (this.proxyContract == null) {
-      throw Error("no proxy contract initialized. Use createProxyInstance().");
+      throw new Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (deltaCollateral + account.collateralCC + account.unrealizedFundingCollateralCCY < 0) {
-      throw Error("not enough margin to remove");
+      throw new Error("not enough margin to remove");
     }
     if (indexPriceInfo == undefined) {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(account.symbol);

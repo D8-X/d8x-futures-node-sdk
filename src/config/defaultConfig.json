@@ -144,5 +144,17 @@
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
+    "name": "bartio",
+    "chainId": 80084,
+    "version": 1,
+    "proxyAddr": "0xf922A26375967130aeaB637cB3eE59f498CB2d24",
+    "nodeURL": "https://bartio.rpc.berachain.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   }
 ]
