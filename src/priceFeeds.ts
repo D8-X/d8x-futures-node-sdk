@@ -22,7 +22,7 @@ export default class PriceFeeds {
   private cache: Map<string, { timestamp: number; values: any }> = new Map();
   private onChainPxFeeds: Map<string, OnChainPxFeed>;
   // api formatting constants
-  private PYTH = { endpoint: "/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
+  private PYTH = { endpoint: "/api/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -34,6 +34,9 @@ export default class PriceFeeds {
         for (let j = 0; j < this.config.endpoints.length; j++) {
           if (this.config.endpoints[j].type == dataHandler.config.priceFeedEndpoints[k].type) {
             this.config.endpoints[j] = dataHandler.config.priceFeedEndpoints[k];
+            for (let i = 0; i < this.config.endpoints[j].endpoints.length; i++) {
+              this.config.endpoints[j].endpoints[i] = PriceFeeds.trimEndpoint(this.config.endpoints[j].endpoints[i]);
+            }
             break;
           }
         }
@@ -49,6 +52,20 @@ export default class PriceFeeds {
     [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
+  }
+
+  /**
+   * We cut last / or legacy url format /api/ if any
+   * @param endp endpoint string
+   * @returns trimmed string
+   */
+  public static trimEndpoint(endp: string): string {
+    // cut last /
+    let regex = new RegExp("/$");
+    endp = endp.replace(regex, "");
+    regex = new RegExp("/api$");
+    endp = endp.replace(regex, "");
+    return endp;
   }
 
   /**
@@ -263,7 +280,7 @@ export default class PriceFeeds {
       if (queries[id] == undefined) {
         // each id can have a different endpoint, but we cluster
         // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id] + "/latest_price_feeds?binary=true&";
+        queries[id] = this.feedEndpoints[id] + "/api/latest_price_feeds?binary=true&";
         idCountPriceFeeds[id] = 0;
       }
       queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";

@@ -27,6 +27,25 @@ describe("priceFeed", () => {
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });
+
+  it("trimEndpoint", async () => {
+    let v = "https://blabla.xyz/api/";
+    let res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz").toBeTruthy;
+
+    v = "https://blabla.xyz/api";
+    res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz").toBeTruthy;
+
+    v = "https://blabla.xyz/";
+    res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz").toBeTruthy;
+
+    v = "https://blabla.xyz/api/blabla/";
+    res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz/api/blabla").toBeTruthy;
+  });
+
   it("get recent prices and submission info for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
     let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("BTC-USDT-USDT");
@@ -43,7 +62,6 @@ describe("priceFeed", () => {
   });
   it("get recent prices", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
-    //let query = "https://pyth.testnet.quantena.tech/api/latest_price_feeds?ids[]=0x796d24444ff50728b58e94b1f53dc3a406b2f1ba9d0d0b91d4406c37491a6feb&ids[]=0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b";
     let prices = await priceFeeds.fetchAllFeedPrices();
     console.log("pyth price info = ", prices);
   });
