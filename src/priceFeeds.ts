@@ -22,7 +22,7 @@ export default class PriceFeeds {
   private cache: Map<string, { timestamp: number; values: any }> = new Map();
   private onChainPxFeeds: Map<string, OnChainPxFeed>;
   // api formatting constants
-  private PYTH = { endpoint: "/api/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
+  private PYTH = { endpoint: "/v2/updates/price/latest?encoding=base64&ids[]=", separator: "&ids[]=", suffix: "" };
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -179,6 +179,7 @@ export default class PriceFeeds {
    * Fetch the provided feed prices and bool whether market is closed or open
    * - requires the feeds to be defined in priceFeedConfig.json
    * - if symbols undefined, all feeds are queried
+   * - vaas are not of interest here
    * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or undefined
    * @returns mapping symbol-> [price, isMarketClosed]
    */
