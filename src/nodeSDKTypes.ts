@@ -285,16 +285,25 @@ export interface PriceFeedFormat {
   publish_time: number;
 }
 
-export interface PythLatestPriceFeed {
-  ema_price: {
-    conf: string;
-    expo: number;
-    price: string;
-    publish_time: number;
+export interface PythV2MetaData {
+  slot: number;
+  proof_available_time: number;
+  prev_publish_time: number;
+}
+
+export interface PythV2LatestPriceFeed {
+  binary: {
+    encoding: string;
+    data: string[];
   };
-  id: string;
-  price: PriceFeedFormat;
-  vaa: string;
+  parsed: [
+    {
+      ema_price: PriceFeedFormat;
+      id: string;
+      price: PriceFeedFormat;
+      metadata: PythV2MetaData;
+    }
+  ];
 }
 
 // Payload to be sent to backend when creating

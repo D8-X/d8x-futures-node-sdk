@@ -1,7 +1,7 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
 import { decNToFloat, floatToDec18 } from "./d8XMath";
-import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
+import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythV2LatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
@@ -277,7 +277,7 @@ export default class PriceFeeds {
       // and another
       let idx = info[0].endpointId;
       let feedId = feedIds[k];
-      queries.push(this.feedEndpoints[idx] + "/api/latest_price_feeds?binary=true&ids[]=" + feedId);
+      queries.push(this.feedEndpoints[idx] + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId);
       for (let j = 0; j < info.length; j++) {
         if (symbols.has(feedId)) {
           symbols[feedId].append(info[j].symbol);
@@ -397,6 +397,9 @@ export default class PriceFeeds {
 
   /**
    * Queries the REST endpoint and returns parsed VAA price data
+   * We expect one single id in the query,
+   * otherwise the VAA is a compressed VAA for all prices which is not suited
+   * for the smart contracts
    * @param query query price-info from endpoint
    * @returns vaa and price info
    */
@@ -406,13 +409,14 @@ export default class PriceFeeds {
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
-    let values = (await response.json()) as Array<PythLatestPriceFeed>;
+    let values = (await response.json()) as PythV2LatestPriceFeed;
     const vaas = new Array<string>();
     const prices = new Array<PriceFeedFormat>();
-    for (let k = 0; k < values.length; k++) {
-      const vaa = values[k].vaa;
-      vaas.push("0x" + Buffer.from(vaa, "base64").toString("hex"));
-      prices.push(values[k].price);
+    for (let k = 0; k < values.parsed.length; k++) {
+      // see also fetchPriceQuery for idx
+      const idx = k % values.binary.data.length;
+      vaas.push("0x" + Buffer.from(values.binary.data[idx], "base64").toString("hex"));
+      prices.push(values.parsed[k].price);
     }
     return { vaas, prices };
   }
@@ -423,7 +427,7 @@ export default class PriceFeeds {
    * @returns vaa and price info
    */
   public async fetchPriceQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
-    let values: any;
+    let values: PythV2LatestPriceFeed;
     const cached = this.cache.get(query);
     const tsNow = Date.now() / 1_000;
     if (cached && cached.timestamp + 1 > tsNow) {

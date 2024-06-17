@@ -5773,6 +5773,7 @@ trader liquidations, trade executions, change of trader margin amount.</p>
         * [.fetchVAAQuery(query)](#PriceFeeds+fetchVAAQuery) ⇒
         * [.fetchPriceQuery(query)](#PriceFeeds+fetchPriceQuery) ⇒
     * _static_
+        * [.trimEndpoint(endp)](#PriceFeeds.trimEndpoint) ⇒
         * [._selectConfig(configs, network)](#PriceFeeds._selectConfig) ⇒
         * [._constructFeedInfo(config)](#PriceFeeds._constructFeedInfo) ⇒
 
@@ -5841,6 +5842,7 @@ it is a direct price feed.</p>
 <ul>
 <li>requires the feeds to be defined in priceFeedConfig.json</li>
 <li>if symbols undefined, all feeds are queried</li>
+<li>vaas are not of interest here</li>
 </ul>
 
 **Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
@@ -5904,7 +5906,10 @@ return a triangulated price</p>
 <a name="PriceFeeds+fetchVAAQuery"></a>
 
 ### priceFeeds.fetchVAAQuery(query) ⇒
-<p>Queries the REST endpoint and returns parsed VAA price data</p>
+<p>Queries the REST endpoint and returns parsed VAA price data
+We expect one single id in the query,
+otherwise the VAA is a compressed VAA for all prices which is not suited
+for the smart contracts</p>
 
 **Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
 **Returns**: <p>vaa and price info</p>  
@@ -5924,6 +5929,18 @@ return a triangulated price</p>
 | Param | Description |
 | --- | --- |
 | query | <p>query price-info from endpoint</p> |
+
+<a name="PriceFeeds.trimEndpoint"></a>
+
+### PriceFeeds.trimEndpoint(endp) ⇒
+<p>We cut last / or legacy url format /api/ if any</p>
+
+**Kind**: static method of [<code>PriceFeeds</code>](#PriceFeeds)  
+**Returns**: <p>trimmed string</p>  
+
+| Param | Description |
+| --- | --- |
+| endp | <p>endpoint string</p> |
 
 <a name="PriceFeeds._selectConfig"></a>
 
