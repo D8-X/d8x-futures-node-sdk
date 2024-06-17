@@ -14,7 +14,7 @@ import OnChainPxFactory from "./onChainPxFactory";
 export default class PriceFeeds {
   private config: PriceFeedConfig;
   private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
-  private feedInfo: Map<string, { symbol: string; endpointId: number }>; // priceFeedId -> symbol, endpointId
+  private feedInfo: Map<string, { symbol: string; endpointId: number }[]>; // priceFeedId -> [symbol, endpointId]
   private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
   private triangulations: Map<string, [string[], boolean[]]>;
@@ -75,7 +75,9 @@ export default class PriceFeeds {
   public initializeTriangulations(symbols: Set<string>) {
     let feedSymbols = new Array<string>();
     for (let [, value] of this.feedInfo) {
-      feedSymbols.push(value.symbol);
+      for (let j = 0; j < value.length; j++) {
+        feedSymbols.push(value[j].symbol);
+      }
     }
     for (let symbol of symbols.values()) {
       let triangulation = Triangulator.triangulate(feedSymbols, symbol);
@@ -201,8 +203,8 @@ export default class PriceFeeds {
       if (apiFormat === undefined) {
         throw new Error(`API format for ${currFeed} unknown.`);
       }
-      // feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-      let endpointId = this.feedInfo.get(currFeed.id)!.endpointId;
+      // feedInfo: Map<string, {symbol:string, endpointId: number}[]>; // priceFeedId -> (symbol, endpointId)[]
+      let endpointId = this.feedInfo.get(currFeed.id)![0].endpointId;
       symbolsOfEndpoint[endpointId].push(currFeed.symbol);
       if (queries[endpointId] == undefined) {
         // each id can have a different endpoint, but we cluster
@@ -218,8 +220,6 @@ export default class PriceFeeds {
     for (let k = 0; k < queries.length; k++) {
       if (queries[k] == undefined) {
         continue;
-      }
-      if (queries[k] == "onchain") {
       }
       let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k] + suffixes[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
@@ -263,29 +263,27 @@ export default class PriceFeeds {
    * and corresponding price information
    */
   public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
+    // get the feedIds that the contract uses
     let feedIds = this.dataHandler.getPriceIds(symbol);
-    let queries = new Array<string>(this.feedEndpoints.length);
-    // we need to preserve the order of the price feeds
-    let orderEndpointNumber = new Array<number>();
-    // count how many prices per endpoint
-    let idCountPriceFeeds = new Array<number>(this.feedEndpoints.length);
-    let symbols = new Array<string>();
+    let queries = new Array<string>();
+    let symbols = new Map<string, string[]>();
     for (let k = 0; k < feedIds.length; k++) {
       let info = this.feedInfo.get(feedIds[k]);
       if (info == undefined) {
         throw new Error(`priceFeeds: config for symbol ${symbol} insufficient`);
       }
-      let id = info.endpointId;
-      symbols.push(info.symbol);
-      if (queries[id] == undefined) {
-        // each id can have a different endpoint, but we cluster
-        // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id] + "/api/latest_price_feeds?binary=true&";
-        idCountPriceFeeds[id] = 0;
+      // we use the first endpoint for a given symbol even if there is another symbol with the same id
+      // and another
+      let idx = info[0].endpointId;
+      let feedId = feedIds[k];
+      queries.push(this.feedEndpoints[idx] + "/api/latest_price_feeds?binary=true&ids[]=" + feedId);
+      for (let j = 0; j < info.length; j++) {
+        if (symbols.has(feedId)) {
+          symbols[feedId].append(info[j].symbol);
+        } else {
+          symbols[feedId] = [info[j].symbol];
+        }
       }
-      queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";
-      orderEndpointNumber.push(id * 100 + idCountPriceFeeds[id]);
-      idCountPriceFeeds[id] = idCountPriceFeeds[id] + 1;
     }
 
     let data;
@@ -295,7 +293,7 @@ export default class PriceFeeds {
           if (q != undefined) {
             return this.fetchVAAQuery(q);
           } else {
-            return [[], []];
+            return { vaas: [], prices: [] };
           }
         })
       );
@@ -308,33 +306,30 @@ export default class PriceFeeds {
           if (q != undefined) {
             return this.fetchVAAQuery(q);
           } else {
-            return [[], []];
+            return { vaas: [], prices: [] };
           }
         })
       );
       console.log("success");
     }
 
-    // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
     const prices = new Array<number>();
     const mktClosed = new Array<boolean>();
     const timestamps = new Array<number>();
     const tsSecNow = Math.round(Date.now() / 1000);
-    for (let k = 0; k < orderEndpointNumber.length; k++) {
-      let endpointId = Math.floor(orderEndpointNumber[k] / 100);
-      let idWithinEndpoint = orderEndpointNumber[k] - 100 * endpointId;
-      priceFeedUpdates.push(data[endpointId][0][idWithinEndpoint]);
-      let pxInfo: PriceFeedFormat = data[endpointId][1][idWithinEndpoint];
+    for (let k = 0; k < feedIds.length; k++) {
+      let pxInfo: PriceFeedFormat = data[k].prices[0];
       let price = decNToFloat(BigNumber.from(pxInfo.price), -pxInfo.expo);
+      prices.push(price);
+      priceFeedUpdates.push(data[k].vaas[0]);
       let isMarketClosed = tsSecNow - pxInfo.publish_time > this.THRESHOLD_MARKET_CLOSED_SEC;
       mktClosed.push(isMarketClosed);
-      prices.push(price);
       timestamps.push(pxInfo.publish_time);
     }
-
     return {
       symbols: symbols,
+      ids: feedIds,
       priceFeedVaas: priceFeedUpdates,
       prices: prices,
       isMarketClosed: mktClosed,
@@ -353,7 +348,15 @@ export default class PriceFeeds {
   public calculateTriangulatedPricesFromFeedInfo(symbols: string[], feeds: PriceFeedSubmission): [number[], boolean[]] {
     let priceMap = new Map<string, [number, boolean]>();
     for (let j = 0; j < feeds.prices.length; j++) {
-      priceMap.set(feeds.symbols[j], [feeds.prices[j], feeds.isMarketClosed[j]]);
+      const syms = feeds.symbols[feeds.ids[j]];
+      if (syms == undefined) {
+        console.log("calculateTriangulatedPricesFromFeedInfo: could not find symbol for id ", feeds.ids[j]);
+        continue;
+      }
+      for (let k = 0; k < syms.length; k++) {
+        // add price feed for all symbols that use this id
+        priceMap.set(syms[k], [feeds.prices[j], feeds.isMarketClosed[j]]);
+      }
     }
     return this.triangulatePricesFromFeedPrices(symbols, priceMap);
   }
@@ -396,21 +399,21 @@ export default class PriceFeeds {
    * @param query query price-info from endpoint
    * @returns vaa and price info
    */
-  private async fetchVAAQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
+  private async fetchVAAQuery(query: string): Promise<{ vaas: string[]; prices: PriceFeedFormat[] }> {
     const headers = { headers: { "Content-Type": "application/json" } };
     let response = await fetch(query, headers);
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
     let values = (await response.json()) as Array<PythLatestPriceFeed>;
-    const priceFeedUpdates = new Array<string>();
-    const px = new Array<PriceFeedFormat>();
+    const vaas = new Array<string>();
+    const prices = new Array<PriceFeedFormat>();
     for (let k = 0; k < values.length; k++) {
       const vaa = values[k].vaa;
-      priceFeedUpdates.push("0x" + Buffer.from(vaa, "base64").toString("hex"));
-      px.push(values[k].price);
+      vaas.push("0x" + Buffer.from(vaa, "base64").toString("hex"));
+      prices.push(values[k].price);
     }
-    return [priceFeedUpdates, px];
+    return { vaas, prices };
   }
 
   /**
@@ -481,8 +484,8 @@ export default class PriceFeeds {
   static _constructFeedInfo(
     config: PriceFeedConfig,
     shuffleEndpoints: boolean
-  ): [Map<string, { symbol: string; endpointId: number }>, string[]] {
-    let feed = new Map<string, { symbol: string; endpointId: number }>();
+  ): [Map<string, { symbol: string; endpointId: number }[]>, string[]] {
+    let feed = new Map<string, [{ symbol: string; endpointId: number }]>();
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
@@ -509,7 +512,14 @@ export default class PriceFeeds {
           throw new Error(`priceFeeds: no endpoint found for ${type} check priceFeedConfig`);
         }
       }
-      feed.set(config.ids[k].id, { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });
+      // one id can have multiple symbols pointing to it
+      const id = config.ids[k].id;
+      const item = { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId };
+      if (feed.has(id)) {
+        feed.get(id)?.push(item);
+      } else {
+        feed.set(id, [item]);
+      }
     }
     return [feed, feedEndpoints];
   }

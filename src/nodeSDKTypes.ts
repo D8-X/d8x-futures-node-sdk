@@ -270,7 +270,8 @@ export interface PriceFeedConfig {
 }
 
 export interface PriceFeedSubmission {
-  symbols: string[];
+  symbols: Map<string, string[]>; //id -> symbols
+  ids: string[];
   priceFeedVaas: string[];
   prices: number[];
   isMarketClosed: boolean[];

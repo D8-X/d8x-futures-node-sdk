@@ -67,7 +67,7 @@ describe("priceFeed", () => {
   });
 
   it("get recent prices from market data directly", async () => {
-    let prices = await mktData.fetchLatestFeedPriceInfo("MATIC-USDC-USDC");
+    let prices = await mktData.fetchLatestFeedPriceInfo("BTC-USDT-USDT");
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -79,8 +79,17 @@ describe("priceFeed", () => {
     symbolSet.add("ETH-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
     let timestampSec = Math.floor(Date.now() / 1000);
+    let symbols = new Map<string, string[]>();
+    let ids = new Array<string>();
+    let s = ["BTC-USD", "ETH-USD", "USDC-USD"];
+    for (let j = 0; j < s.length; j++) {
+      const id = "0x" + j.toString();
+      symbols[id] = [s[j]];
+      ids.push(id);
+    }
     let fakeSubmission: PriceFeedSubmission = {
-      symbols: ["BTC-USD", "ETH-USD", "USDC-USD"],
+      symbols: symbols,
+      ids: ids,
       priceFeedVaas: ["", "", ""],
       prices: [20000, 1400, 0.95],
       isMarketClosed: [false, true, false],
@@ -96,7 +105,7 @@ describe("priceFeed", () => {
     expect(px[1][2]).toBeTruthy(); // market closed
   });
   it("fetch info from data handler", async () => {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("ETH-USD-MATIC");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("WOKB-USD-WOKB");
     console.log(l);
   });
 });
