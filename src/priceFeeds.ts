@@ -440,23 +440,15 @@ export default class PriceFeeds {
     }
     const priceFeedUpdates = new Array<string>();
     const px = new Array<PriceFeedFormat>();
-    const keys = Array.isArray(values) ? [] : Object.keys(values);
-    if (keys.length > 0) {
-      for (const k of keys) {
-        priceFeedUpdates.push("0x");
-        px.push({
-          conf: BigNumber.from(0),
-          expo: -18,
-          price: floatToDec18(values[k].value),
-          publish_time: values[k].timestamp,
-        });
-      }
-    } else {
-      for (let k = 0; k < values.length; k++) {
-        priceFeedUpdates.push("0x" + Buffer.from(values[k].id, "base64").toString("hex"));
-        px.push(values[k].price as PriceFeedFormat);
-      }
+    for (let k = 0; k < values.parsed.length; k++) {
+      // pyth v2 only provides one compressed vaa when querying multiple prices.
+      // contracts can only use separate ones. In case we get only one vaa,
+      // here we add the single vaa in each price-update
+      const idx = k % values.binary.data.length;
+      priceFeedUpdates.push("0x" + Buffer.from(values.binary.data[idx], "base64").toString("hex"));
+      px.push(values.parsed[k].price as PriceFeedFormat);
     }
+
     return [priceFeedUpdates, px];
   }
 
