@@ -10,14 +10,17 @@ jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
 let mktData: MarketData;
-
+let perp = "BTC-USD-STUSD";
 describe("priceFeed", () => {
   beforeAll(async () => {
     if (pk == undefined) {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("xlayer");
+    //config = PerpetualDataHandler.readSDKConfig("xlayer");
+    //perp="BTC-USDT-USDT"
+    config = PerpetualDataHandler.readSDKConfig("arbitrum");
+    perp = "BTC-USD-STUSD";
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -48,7 +51,7 @@ describe("priceFeed", () => {
 
   it("get recent prices and submission info for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
-    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("BTC-USDT-USDT");
+    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual(perp);
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -57,7 +60,7 @@ describe("priceFeed", () => {
     let symbolSet = new Set<string>();
     symbolSet.add("ETH-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
-    let prices = await priceFeeds.fetchPricesForPerpetual("ETH-USDC-USDC");
+    let prices = await priceFeeds.fetchPricesForPerpetual(perp);
     console.log("pyth price info = ", prices);
   });
   it("get recent prices", async () => {
@@ -67,7 +70,7 @@ describe("priceFeed", () => {
   });
 
   it("get recent prices from market data directly", async () => {
-    let prices = await mktData.fetchLatestFeedPriceInfo("BTC-USDT-USDT");
+    let prices = await mktData.fetchLatestFeedPriceInfo(perp);
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -105,7 +108,7 @@ describe("priceFeed", () => {
     expect(px[1][2]).toBeTruthy(); // market closed
   });
   it("fetch info from data handler", async () => {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("WOKB-USD-WOKB");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual(perp);
     console.log(l);
   });
 });
