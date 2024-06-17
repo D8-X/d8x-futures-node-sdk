@@ -1,5 +1,5 @@
 import MarketData from "../src/marketData";
-import { NodeSDKConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, PriceFeedConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import PriceFeeds from "../src/priceFeeds";
 
@@ -29,6 +29,51 @@ describe("priceFeed", () => {
     ];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
+  });
+
+  it("should correctly construct non-unique price id price feeds", async () => {
+    const FakePriceFeedsConfig: PriceFeedConfig = {
+      endpoints: [{ endpoints: ["https://hermes.pyth.network"], type: "pyth" }],
+      network: "pyth",
+      ids: [
+        {
+          symbol: "STUSD-USD",
+          id: "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+          type: "pyth",
+          origin: "Crypto.USDT/USD",
+        },
+        {
+          symbol: "anotherSTUSD-USD",
+          id: "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+          type: "pyth",
+          origin: "Crypto.USDT/USD",
+        },
+        {
+          symbol: "GBP-USD",
+          id: "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1",
+          type: "pyth",
+          origin: "FX.GBP/USD",
+        },
+      ],
+    };
+    let [priceFeeds, endpoints] = PriceFeeds._constructFeedInfo(FakePriceFeedsConfig, false);
+    console.log("FEEDS", priceFeeds, endpoints);
+    expect(priceFeeds).toEqual(
+      new Map(
+        Object.entries({
+          "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b": [
+            { symbol: "STUSD-USD", endpointId: 0 },
+            { symbol: "ANOTHERSTUSD-USD", endpointId: 0 },
+          ],
+          "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1": [
+            {
+              symbol: "GBP-USD",
+              endpointId: 0,
+            },
+          ],
+        })
+      )
+    );
   });
 
   it("trimEndpoint", async () => {
