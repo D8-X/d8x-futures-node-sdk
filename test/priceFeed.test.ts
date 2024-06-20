@@ -1,5 +1,5 @@
 import MarketData from "../src/marketData";
-import { NodeSDKConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, PriceFeedConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import PriceFeeds from "../src/priceFeeds";
 
@@ -10,14 +10,17 @@ jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
 let mktData: MarketData;
-
+let perp = "BTC-USD-STUSD";
 describe("priceFeed", () => {
   beforeAll(async () => {
     if (pk == undefined) {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
     }
-    config = PerpetualDataHandler.readSDKConfig("xlayer");
+    //config = PerpetualDataHandler.readSDKConfig("xlayer");
+    //perp="BTC-USDT-USDT"
+    config = PerpetualDataHandler.readSDKConfig("arbitrum");
+    perp = "BTC-USD-STUSD";
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -27,9 +30,73 @@ describe("priceFeed", () => {
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
   });
+
+  it("should correctly construct non-unique price id price feeds", async () => {
+    const FakePriceFeedsConfig: PriceFeedConfig = {
+      endpoints: [{ endpoints: ["https://hermes.pyth.network"], type: "pyth" }],
+      network: "pyth",
+      ids: [
+        {
+          symbol: "STUSD-USD",
+          id: "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+          type: "pyth",
+          origin: "Crypto.USDT/USD",
+        },
+        {
+          symbol: "anotherSTUSD-USD",
+          id: "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+          type: "pyth",
+          origin: "Crypto.USDT/USD",
+        },
+        {
+          symbol: "GBP-USD",
+          id: "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1",
+          type: "pyth",
+          origin: "FX.GBP/USD",
+        },
+      ],
+    };
+    let [priceFeeds, endpoints] = PriceFeeds._constructFeedInfo(FakePriceFeedsConfig, false);
+    console.log("FEEDS", priceFeeds, endpoints);
+    expect(priceFeeds).toEqual(
+      new Map(
+        Object.entries({
+          "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b": [
+            { symbol: "STUSD-USD", endpointId: 0 },
+            { symbol: "ANOTHERSTUSD-USD", endpointId: 0 },
+          ],
+          "0x84c2dde9633d93d1bcad84e7dc41c9d56578b7ec52fabedc1f335d673df0a7c1": [
+            {
+              symbol: "GBP-USD",
+              endpointId: 0,
+            },
+          ],
+        })
+      )
+    );
+  });
+
+  it("trimEndpoint", async () => {
+    let v = "https://blabla.xyz/api/";
+    let res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz").toBeTruthy;
+
+    v = "https://blabla.xyz/api";
+    res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz").toBeTruthy;
+
+    v = "https://blabla.xyz/";
+    res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz").toBeTruthy;
+
+    v = "https://blabla.xyz/api/blabla/";
+    res = PriceFeeds.trimEndpoint(v);
+    expect(res == "https://blabla.xyz/api/blabla").toBeTruthy;
+  });
+
   it("get recent prices and submission info for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
-    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual("BTC-USDT-USDT");
+    let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual(perp);
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -38,18 +105,17 @@ describe("priceFeed", () => {
     let symbolSet = new Set<string>();
     symbolSet.add("ETH-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
-    let prices = await priceFeeds.fetchPricesForPerpetual("ETH-USDC-USDC");
+    let prices = await priceFeeds.fetchPricesForPerpetual(perp);
     console.log("pyth price info = ", prices);
   });
   it("get recent prices", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
-    //let query = "https://pyth.testnet.quantena.tech/api/latest_price_feeds?ids[]=0x796d24444ff50728b58e94b1f53dc3a406b2f1ba9d0d0b91d4406c37491a6feb&ids[]=0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b";
     let prices = await priceFeeds.fetchAllFeedPrices();
     console.log("pyth price info = ", prices);
   });
 
   it("get recent prices from market data directly", async () => {
-    let prices = await mktData.fetchLatestFeedPriceInfo("MATIC-USDC-USDC");
+    let prices = await mktData.fetchLatestFeedPriceInfo(perp);
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
@@ -61,8 +127,17 @@ describe("priceFeed", () => {
     symbolSet.add("ETH-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
     let timestampSec = Math.floor(Date.now() / 1000);
+    let symbols = new Map<string, string[]>();
+    let ids = new Array<string>();
+    let s = ["BTC-USD", "ETH-USD", "USDC-USD"];
+    for (let j = 0; j < s.length; j++) {
+      const id = "0x" + j.toString();
+      symbols[id] = [s[j]];
+      ids.push(id);
+    }
     let fakeSubmission: PriceFeedSubmission = {
-      symbols: ["BTC-USD", "ETH-USD", "USDC-USD"],
+      symbols: symbols,
+      ids: ids,
       priceFeedVaas: ["", "", ""],
       prices: [20000, 1400, 0.95],
       isMarketClosed: [false, true, false],
@@ -78,7 +153,7 @@ describe("priceFeed", () => {
     expect(px[1][2]).toBeTruthy(); // market closed
   });
   it("fetch info from data handler", async () => {
-    let l = await mktData.fetchPriceSubmissionInfoForPerpetual("ETH-USD-MATIC");
+    let l = await mktData.fetchPriceSubmissionInfoForPerpetual(perp);
     console.log(l);
   });
 });

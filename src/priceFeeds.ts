@@ -1,7 +1,7 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
 import { decNToFloat, floatToDec18 } from "./d8XMath";
-import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythLatestPriceFeed } from "./nodeSDKTypes";
+import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythV2LatestPriceFeed } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
@@ -14,7 +14,7 @@ import OnChainPxFactory from "./onChainPxFactory";
 export default class PriceFeeds {
   private config: PriceFeedConfig;
   private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
-  private feedInfo: Map<string, { symbol: string; endpointId: number }>; // priceFeedId -> symbol, endpointId
+  private feedInfo: Map<string, { symbol: string; endpointId: number }[]>; // priceFeedId -> [symbol, endpointId]
   private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
   private triangulations: Map<string, [string[], boolean[]]>;
@@ -22,7 +22,7 @@ export default class PriceFeeds {
   private cache: Map<string, { timestamp: number; values: any }> = new Map();
   private onChainPxFeeds: Map<string, OnChainPxFeed>;
   // api formatting constants
-  private PYTH = { endpoint: "/latest_price_feeds?ids[]=", separator: "&ids[]=", suffix: "" };
+  private PYTH = { endpoint: "/v2/updates/price/latest?encoding=base64&ids[]=", separator: "&ids[]=", suffix: "" };
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
@@ -34,6 +34,9 @@ export default class PriceFeeds {
         for (let j = 0; j < this.config.endpoints.length; j++) {
           if (this.config.endpoints[j].type == dataHandler.config.priceFeedEndpoints[k].type) {
             this.config.endpoints[j] = dataHandler.config.priceFeedEndpoints[k];
+            for (let i = 0; i < this.config.endpoints[j].endpoints.length; i++) {
+              this.config.endpoints[j].endpoints[i] = PriceFeeds.trimEndpoint(this.config.endpoints[j].endpoints[i]);
+            }
             break;
           }
         }
@@ -52,13 +55,29 @@ export default class PriceFeeds {
   }
 
   /**
+   * We cut last / or legacy url format /api/ if any
+   * @param endp endpoint string
+   * @returns trimmed string
+   */
+  public static trimEndpoint(endp: string): string {
+    // cut last /
+    let regex = new RegExp("/$");
+    endp = endp.replace(regex, "");
+    regex = new RegExp("/api$");
+    endp = endp.replace(regex, "");
+    return endp;
+  }
+
+  /**
    * Pre-processing of triangulations for symbols, given the price feeds
    * @param symbols set of symbols we want to triangulate from price feeds
    */
   public initializeTriangulations(symbols: Set<string>) {
     let feedSymbols = new Array<string>();
     for (let [, value] of this.feedInfo) {
-      feedSymbols.push(value.symbol);
+      for (let j = 0; j < value.length; j++) {
+        feedSymbols.push(value[j].symbol);
+      }
     }
     for (let symbol of symbols.values()) {
       let triangulation = Triangulator.triangulate(feedSymbols, symbol);
@@ -160,6 +179,7 @@ export default class PriceFeeds {
    * Fetch the provided feed prices and bool whether market is closed or open
    * - requires the feeds to be defined in priceFeedConfig.json
    * - if symbols undefined, all feeds are queried
+   * - vaas are not of interest here
    * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or undefined
    * @returns mapping symbol-> [price, isMarketClosed]
    */
@@ -184,8 +204,8 @@ export default class PriceFeeds {
       if (apiFormat === undefined) {
         throw new Error(`API format for ${currFeed} unknown.`);
       }
-      // feedInfo: Map<string, {symbol:string, endpointId: number}>; // priceFeedId -> symbol, endpointId
-      let endpointId = this.feedInfo.get(currFeed.id)!.endpointId;
+      // feedInfo: Map<string, {symbol:string, endpointId: number}[]>; // priceFeedId -> (symbol, endpointId)[]
+      let endpointId = this.feedInfo.get(currFeed.id)![0].endpointId;
       symbolsOfEndpoint[endpointId].push(currFeed.symbol);
       if (queries[endpointId] == undefined) {
         // each id can have a different endpoint, but we cluster
@@ -201,8 +221,6 @@ export default class PriceFeeds {
     for (let k = 0; k < queries.length; k++) {
       if (queries[k] == undefined) {
         continue;
-      }
-      if (queries[k] == "onchain") {
       }
       let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k] + suffixes[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
@@ -246,29 +264,27 @@ export default class PriceFeeds {
    * and corresponding price information
    */
   public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
+    // get the feedIds that the contract uses
     let feedIds = this.dataHandler.getPriceIds(symbol);
-    let queries = new Array<string>(this.feedEndpoints.length);
-    // we need to preserve the order of the price feeds
-    let orderEndpointNumber = new Array<number>();
-    // count how many prices per endpoint
-    let idCountPriceFeeds = new Array<number>(this.feedEndpoints.length);
-    let symbols = new Array<string>();
+    let queries = new Array<string>();
+    let symbols = new Map<string, string[]>();
     for (let k = 0; k < feedIds.length; k++) {
       let info = this.feedInfo.get(feedIds[k]);
       if (info == undefined) {
         throw new Error(`priceFeeds: config for symbol ${symbol} insufficient`);
       }
-      let id = info.endpointId;
-      symbols.push(info.symbol);
-      if (queries[id] == undefined) {
-        // each id can have a different endpoint, but we cluster
-        // the queries into one per endpoint
-        queries[id] = this.feedEndpoints[id] + "/latest_price_feeds?binary=true&";
-        idCountPriceFeeds[id] = 0;
+      // we use the first endpoint for a given symbol even if there is another symbol with the same id
+      // and another
+      let idx = info[0].endpointId;
+      let feedId = feedIds[k];
+      queries.push(this.feedEndpoints[idx] + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId);
+      for (let j = 0; j < info.length; j++) {
+        if (symbols.has(feedId)) {
+          symbols[feedId].append(info[j].symbol);
+        } else {
+          symbols[feedId] = [info[j].symbol];
+        }
       }
-      queries[id] = queries[id] + "ids[]=" + feedIds[k] + "&";
-      orderEndpointNumber.push(id * 100 + idCountPriceFeeds[id]);
-      idCountPriceFeeds[id] = idCountPriceFeeds[id] + 1;
     }
 
     let data;
@@ -278,7 +294,7 @@ export default class PriceFeeds {
           if (q != undefined) {
             return this.fetchVAAQuery(q);
           } else {
-            return [[], []];
+            return { vaas: [], prices: [] };
           }
         })
       );
@@ -291,33 +307,30 @@ export default class PriceFeeds {
           if (q != undefined) {
             return this.fetchVAAQuery(q);
           } else {
-            return [[], []];
+            return { vaas: [], prices: [] };
           }
         })
       );
       console.log("success");
     }
 
-    // re-order arrays so we preserve the order of the feeds
     const priceFeedUpdates = new Array<string>();
     const prices = new Array<number>();
     const mktClosed = new Array<boolean>();
     const timestamps = new Array<number>();
     const tsSecNow = Math.round(Date.now() / 1000);
-    for (let k = 0; k < orderEndpointNumber.length; k++) {
-      let endpointId = Math.floor(orderEndpointNumber[k] / 100);
-      let idWithinEndpoint = orderEndpointNumber[k] - 100 * endpointId;
-      priceFeedUpdates.push(data[endpointId][0][idWithinEndpoint]);
-      let pxInfo: PriceFeedFormat = data[endpointId][1][idWithinEndpoint];
+    for (let k = 0; k < feedIds.length; k++) {
+      let pxInfo: PriceFeedFormat = data[k].prices[0];
       let price = decNToFloat(BigNumber.from(pxInfo.price), -pxInfo.expo);
+      prices.push(price);
+      priceFeedUpdates.push(data[k].vaas[0]);
       let isMarketClosed = tsSecNow - pxInfo.publish_time > this.THRESHOLD_MARKET_CLOSED_SEC;
       mktClosed.push(isMarketClosed);
-      prices.push(price);
       timestamps.push(pxInfo.publish_time);
     }
-
     return {
       symbols: symbols,
+      ids: feedIds,
       priceFeedVaas: priceFeedUpdates,
       prices: prices,
       isMarketClosed: mktClosed,
@@ -336,7 +349,15 @@ export default class PriceFeeds {
   public calculateTriangulatedPricesFromFeedInfo(symbols: string[], feeds: PriceFeedSubmission): [number[], boolean[]] {
     let priceMap = new Map<string, [number, boolean]>();
     for (let j = 0; j < feeds.prices.length; j++) {
-      priceMap.set(feeds.symbols[j], [feeds.prices[j], feeds.isMarketClosed[j]]);
+      const syms = feeds.symbols[feeds.ids[j]];
+      if (syms == undefined) {
+        console.log("calculateTriangulatedPricesFromFeedInfo: could not find symbol for id ", feeds.ids[j]);
+        continue;
+      }
+      for (let k = 0; k < syms.length; k++) {
+        // add price feed for all symbols that use this id
+        priceMap.set(syms[k], [feeds.prices[j], feeds.isMarketClosed[j]]);
+      }
     }
     return this.triangulatePricesFromFeedPrices(symbols, priceMap);
   }
@@ -376,24 +397,28 @@ export default class PriceFeeds {
 
   /**
    * Queries the REST endpoint and returns parsed VAA price data
+   * We expect one single id in the query,
+   * otherwise the VAA is a compressed VAA for all prices which is not suited
+   * for the smart contracts
    * @param query query price-info from endpoint
    * @returns vaa and price info
    */
-  private async fetchVAAQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
+  private async fetchVAAQuery(query: string): Promise<{ vaas: string[]; prices: PriceFeedFormat[] }> {
     const headers = { headers: { "Content-Type": "application/json" } };
     let response = await fetch(query, headers);
     if (!response.ok) {
       throw new Error(`Failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
-    let values = (await response.json()) as Array<PythLatestPriceFeed>;
-    const priceFeedUpdates = new Array<string>();
-    const px = new Array<PriceFeedFormat>();
-    for (let k = 0; k < values.length; k++) {
-      const vaa = values[k].vaa;
-      priceFeedUpdates.push("0x" + Buffer.from(vaa, "base64").toString("hex"));
-      px.push(values[k].price);
+    let values = (await response.json()) as PythV2LatestPriceFeed;
+    const vaas = new Array<string>();
+    const prices = new Array<PriceFeedFormat>();
+    for (let k = 0; k < values.parsed.length; k++) {
+      // see also fetchPriceQuery for idx
+      const idx = k % values.binary.data.length;
+      vaas.push("0x" + Buffer.from(values.binary.data[idx], "base64").toString("hex"));
+      prices.push(values.parsed[k].price);
     }
-    return [priceFeedUpdates, px];
+    return { vaas, prices };
   }
 
   /**
@@ -402,7 +427,7 @@ export default class PriceFeeds {
    * @returns vaa and price info
    */
   public async fetchPriceQuery(query: string): Promise<[string[], PriceFeedFormat[]]> {
-    let values: any;
+    let values: PythV2LatestPriceFeed;
     const cached = this.cache.get(query);
     const tsNow = Date.now() / 1_000;
     if (cached && cached.timestamp + 1 > tsNow) {
@@ -419,23 +444,15 @@ export default class PriceFeeds {
     }
     const priceFeedUpdates = new Array<string>();
     const px = new Array<PriceFeedFormat>();
-    const keys = Array.isArray(values) ? [] : Object.keys(values);
-    if (keys.length > 0) {
-      for (const k of keys) {
-        priceFeedUpdates.push("0x");
-        px.push({
-          conf: BigNumber.from(0),
-          expo: -18,
-          price: floatToDec18(values[k].value),
-          publish_time: values[k].timestamp,
-        });
-      }
-    } else {
-      for (let k = 0; k < values.length; k++) {
-        priceFeedUpdates.push("0x" + Buffer.from(values[k].id, "base64").toString("hex"));
-        px.push(values[k].price as PriceFeedFormat);
-      }
+    for (let k = 0; k < values.parsed.length; k++) {
+      // pyth v2 only provides one compressed vaa when querying multiple prices.
+      // contracts can only use separate ones. In case we get only one vaa,
+      // here we add the single vaa in each price-update
+      const idx = k % values.binary.data.length;
+      priceFeedUpdates.push("0x" + Buffer.from(values.binary.data[idx], "base64").toString("hex"));
+      px.push(values.parsed[k].price as PriceFeedFormat);
     }
+
     return [priceFeedUpdates, px];
   }
 
@@ -464,8 +481,8 @@ export default class PriceFeeds {
   static _constructFeedInfo(
     config: PriceFeedConfig,
     shuffleEndpoints: boolean
-  ): [Map<string, { symbol: string; endpointId: number }>, string[]] {
-    let feed = new Map<string, { symbol: string; endpointId: number }>();
+  ): [Map<string, { symbol: string; endpointId: number }[]>, string[]] {
+    let feed = new Map<string, [{ symbol: string; endpointId: number }]>();
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
@@ -492,7 +509,14 @@ export default class PriceFeeds {
           throw new Error(`priceFeeds: no endpoint found for ${type} check priceFeedConfig`);
         }
       }
-      feed.set(config.ids[k].id, { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId });
+      // one id can have multiple symbols pointing to it
+      const id = config.ids[k].id;
+      const item = { symbol: config.ids[k].symbol.toUpperCase(), endpointId: endpointId };
+      if (feed.has(id)) {
+        feed.get(id)?.push(item);
+      } else {
+        feed.set(id, [item]);
+      }
     }
     return [feed, feedEndpoints];
   }
