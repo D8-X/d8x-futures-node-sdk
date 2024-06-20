@@ -156,5 +156,17 @@
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
+    "name": "europaTestnet",
+    "chainId": 1444673419,
+    "version": 1,
+    "proxyAddr": "0xDF2406f251766747148F8aDE8EF2BB5fa343Db93",
+    "nodeURL": "https://testnet.skalenodes.com/v1/juicy-low-small-testnet",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   }
 ]
