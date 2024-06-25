@@ -400,7 +400,7 @@ export interface PerpetualData {
   fkStar: number; // signed trade size that minimizes the AMM risk
   //------- 8
   fAMMTargetDD: number; // parameter: target distance to default (=inverse of default probability)
-  fAMMMinSizeCC: number; // parameter: minimal size of AMM pool, regardless of current exposure
+  perpFlags: number; // parameter: minimal size of AMM pool, regardless of current exposure
   //------- 9
   fMinimalTraderExposureEMA: number; // parameter: minimal value for fCurrentTraderExposureEMA that we don't want to undershoot
   fMinimalAMMExposureEMA: number; // parameter: minimal abs value for fCurrentAMMExposureEMA that we don't want to undershoot
