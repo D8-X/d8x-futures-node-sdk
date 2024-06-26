@@ -130,7 +130,9 @@ export interface ExchangeInfo {
 export interface PoolState {
   isRunning: boolean;
   poolSymbol: string;
+  settleSymbol: string;
   marginTokenAddr: string;
+  settleTokenAddr: string;
   poolShareTokenAddr: string;
   defaultFundCashCC: number;
   pnlParticipantCashCC: number;

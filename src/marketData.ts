@@ -1555,6 +1555,8 @@ export default class MarketData extends PerpetualDataHandler {
       totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize),
       brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
       perpetuals: [],
+      settleSymbol: this.poolStaticInfos[poolId - 1].poolSettleSymbol,
+      settleTokenAddr: this.poolStaticInfos[poolId - 1].poolSettleTokenAddr,
     };
     return state;
   }
@@ -2063,6 +2065,8 @@ export default class MarketData extends PerpetualDataHandler {
           totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize!),
           brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize!),
           perpetuals: [],
+          settleSymbol: _poolStaticInfos[k].poolSettleSymbol,
+          settleTokenAddr: _poolStaticInfos[k].poolSettleTokenAddr,
         } as PoolState)
     );
     return poolStates;

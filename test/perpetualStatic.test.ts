@@ -2,7 +2,7 @@ import PerpetualDataHandler from "../src/perpetualDataHandler";
 import MarketData from "../src/marketData";
 import { NodeSDKConfig } from "../src/nodeSDKTypes";
 let config: NodeSDKConfig;
-let mktData;
+let mktData: MarketData;
 let RPC: string | undefined = <string>process.env.RPC;
 jest.setTimeout(150000);
 
@@ -26,6 +26,10 @@ describe("perpetualStatic", () => {
       console.log(s);
       let px = await mktData.fetchCollateralToSettlementConversion("BTC-USD-STUSD");
       console.log(`conversion STUSD to USDC = ${px}`);
+    });
+    it("pool static info", async () => {
+      let m = await mktData.exchangeInfo();
+      console.log(m.pools[0]);
     });
   });
 });
