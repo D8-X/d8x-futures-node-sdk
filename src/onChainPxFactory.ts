@@ -1,3 +1,5 @@
+import OnChainPxFeedRedStone from "./onChainPxFeedRedStone";
+import OnChainPxFeedAngle from "./onChainPxFeedAngle";
 import OnChainPxFeed from "./onChainPxFeed";
 
 export interface PriceFeedOnChainConfig {
@@ -12,7 +14,11 @@ export default class OnChainPxFeedFactory {
     let f = require("./config/priceFeedOnChain.json") as PriceFeedOnChainConfig[];
     for (let k = 0; k < f.length; k++) {
       if (f[k].name == symbol) {
-        return new OnChainPxFeed(f[k].pxFeedAddress, f[k].decimals, f[k].rpcs);
+        if (symbol == "WEETH-ETH") {
+          return new OnChainPxFeedRedStone(f[k].pxFeedAddress, f[k].decimals, f[k].rpcs);
+        } else if (symbol == "STUSD-USDC") {
+          return new OnChainPxFeedAngle(f[k].rpcs);
+        }
       }
     }
     return undefined;

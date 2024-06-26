@@ -15,6 +15,18 @@
         "origin": "Crypto.USDT/USD"
       },
       {
+        "symbol": "STUSD-USDC",
+        "id": "",
+        "type": "onchain",
+        "origin": ""
+      },
+      {
+        "symbol": "WEETH-ETH",
+        "id": "",
+        "type": "onchain",
+        "origin": ""
+      },
+      {
         "symbol": "BTC-USD",
         "id": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
         "type": "pyth",
@@ -85,12 +97,6 @@
         "id": "0xd6f83dfeaff95d596ddec26af2ee32f391c206a183b161b7980821860eeef2f5",
         "type": "pyth",
         "origin": "Crypto.OKB/USD"
-      },
-      {
-        "symbol": "WEETH-ETH",
-        "id": "",
-        "type": "onchain",
-        "origin": ""
       },
       {
         "symbol": "DOGE-USD",

@@ -1,9 +1,11 @@
+import OnChainPxFeedRedStone from "../src/onChainPxFeedRedStone";
 import OnChainPxFeed from "../src/onChainPxFeed";
 import OnChainPxFactory from "../src/onChainPxFactory";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import { NodeSDKConfig, ExchangeInfo } from "../src/nodeSDKTypes";
 import MarketData from "../src/marketData";
 import PriceFeeds from "../src/priceFeeds";
+
 jest.setTimeout(300000);
 
 let RPC: string = <string>process.env.RPC;
@@ -32,7 +34,7 @@ describe("onChainPxSources", () => {
   beforeAll(async () => {});
   it("instantiate and get price", async () => {
     let rpcs = ["https://arbitrum.llamarpc.com", "https://1rpc.io/arb"];
-    och = new OnChainPxFeed("0x119A190b510c9c0D5Ec301b60B2fE70A50356aE9", 8, rpcs);
+    och = new OnChainPxFeedRedStone("0x119A190b510c9c0D5Ec301b60B2fE70A50356aE9", 8, rpcs);
     px0 = await och.getPrice();
     expect(px0).toBeGreaterThan(1);
     console.log("price =", px0);
@@ -49,6 +51,13 @@ describe("onChainPxSources", () => {
     const px = await f.getPrice();
     console.log("price =", px);
     expect(px).toBeGreaterThanOrEqual(1);
+  });
+  describe("Angle", () => {
+    it("stUSD to USDC", async () => {
+      const f: OnChainPxFeed | undefined = OnChainPxFactory.createFeed("STUSD-USDC");
+      const px = await f!.getPrice();
+      console.log(`STUSD/USDC = ${px}`);
+    });
   });
   describe("onChainPxSources", () => {
     beforeAll(async () => {});
