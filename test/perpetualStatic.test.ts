@@ -17,13 +17,15 @@ describe("perpetualStatic", () => {
   });
 
   describe("Market Data", () => {
-    it("read all config types", async () => {
+    it("coll to settle conversion", async () => {
       mktData = new MarketData(config);
       await mktData.createProxyInstance();
       let info = await mktData.exchangeInfo();
       console.log(info);
       let s = mktData.getPerpetualStaticInfo("BTC-USD-STUSD");
       console.log(s);
+      let px = await mktData.fetchCollateralToSettlementConversion("BTC-USD-STUSD");
+      console.log(`conversion STUSD to USDC = ${px}`);
     });
   });
 });

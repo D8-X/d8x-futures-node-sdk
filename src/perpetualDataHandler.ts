@@ -277,6 +277,7 @@ export default class PerpetualDataHandler {
         shareTokenAddr: poolInfo.poolShareTokenAddr[j],
         oracleFactoryAddr: poolInfo.oracleFactory,
         isRunning: poolInfo.poolShareTokenAddr[j] != AddressZero,
+        MgnToSettleTriangulation: ["*", "1"], // correct later
       };
       this.poolStaticInfos.push(info);
     }
@@ -403,10 +404,12 @@ export default class PerpetualDataHandler {
         this.poolStaticInfos[poolId - 1].poolSettleTokenAddr = this.poolStaticInfos[poolId - 1].poolMarginTokenAddr;
         this.poolStaticInfos[poolId - 1].poolSettleTokenDecimals =
           this.poolStaticInfos[poolId - 1].poolMarginTokenDecimals;
+        this.poolStaticInfos[poolId - 1].MgnToSettleTriangulation = ["*", "1"];
       } else {
         this.poolStaticInfos[poolId - 1].poolSettleSymbol = s.settleCCY;
         this.poolStaticInfos[poolId - 1].poolSettleTokenAddr = s.settleCCYAddr;
         this.poolStaticInfos[poolId - 1].poolSettleTokenDecimals = s.settleTokenDecimals;
+        this.poolStaticInfos[poolId - 1].MgnToSettleTriangulation = s.triangulation;
       }
     }
   }
@@ -506,6 +509,34 @@ export default class PerpetualDataHandler {
    */
   public async fetchLatestFeedPriceInfo(symbol: string): Promise<PriceFeedSubmission> {
     return await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
+  }
+
+  /**
+   * fetchCollateralToSettlementConversion returns the price which converts the collateral
+   * currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+   * USDC, we get
+   * let px = fetchCollateralToSettlementConversion("BTC-USD-STUSD")
+   * valueInUSDC = collateralInSTUSD * px
+   * @param symbol either perpetual symbol of the form BTC-USD-MATIC or just collateral token
+   */
+  public async fetchCollateralToSettlementConversion(symbol: string): Promise<number> {
+    let j = this.getPoolStaticInfoIndexFromSymbol(symbol);
+    if (this.poolStaticInfos[j].poolMarginSymbol == this.poolStaticInfos[j].poolSettleSymbol) {
+      // settlement currency = collateral currency
+      return 1;
+    }
+    const triang = this.poolStaticInfos[j].MgnToSettleTriangulation;
+    let v = 1;
+    for (let k = 0; k < triang.length; k = k + 2) {
+      const sym = triang[k + 1];
+      const pxMap = await this.priceFeedGetter.fetchFeedPrices([sym]);
+      const vpxinfo = pxMap.get(sym);
+      if (vpxinfo == undefined) {
+        throw Error(`price ${sym} not available`);
+      }
+      v = triang[k] == "*" ? v * vpxinfo[0] : v / vpxinfo[0];
+    }
+    return v;
   }
 
   /**

@@ -34,6 +34,7 @@ export interface SettlementCcyItem {
   settleCCYAddr: string;
   collateralCCY: string;
   collateralCCYAddr: string;
+  triangulation: string[];
 }
 
 export interface MarginAccount {
@@ -59,6 +60,7 @@ export interface PoolStaticInfo {
   poolSettleSymbol: string;
   poolSettleTokenAddr: string;
   poolSettleTokenDecimals?: number;
+  MgnToSettleTriangulation: string[];
   shareTokenAddr: string;
   oracleFactoryAddr: string;
   isRunning: boolean;
