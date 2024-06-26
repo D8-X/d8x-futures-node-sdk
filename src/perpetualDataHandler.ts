@@ -67,6 +67,8 @@ import {
   type SmartContractOrder,
   type PerpetualData,
   LiquidityPoolData,
+  SettlementConfig,
+  SettlementCcyItem,
 } from "./nodeSDKTypes";
 import PriceFeeds from "./priceFeeds";
 import {
@@ -91,7 +93,7 @@ export default class PerpetualDataHandler {
   protected perpetualIdToSymbol: Map<number, string>; // maps unique perpetual id to symbol of the form BTC-USD-MATIC
   protected poolStaticInfos: Array<PoolStaticInfo>;
   protected symbolList: Map<string, string>; //mapping 4-digit symbol <-> long format
-
+  protected settlementConfig: SettlementConfig;
   // config
   public config: NodeSDKConfig;
   //map margin token of the form MATIC or ETH or USDC into
@@ -132,6 +134,7 @@ export default class PerpetualDataHandler {
    * PerpetualDataHandler.readSDKConfig.
    */
   public constructor(config: NodeSDKConfig) {
+    this.settlementConfig = require("./config/settlement.json") as SettlementConfig;
     this.config = config;
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
@@ -268,6 +271,9 @@ export default class PerpetualDataHandler {
         poolMarginSymbol: "", //fill later
         poolMarginTokenAddr: poolInfo.poolMarginTokenAddr[j],
         poolMarginTokenDecimals: decimals,
+        poolSettleSymbol: "", //fill later
+        poolSettleTokenAddr: poolInfo.poolMarginTokenAddr[j], //correct later
+        poolSettleTokenDecimals: decimals, //correct later
         shareTokenAddr: poolInfo.poolShareTokenAddr[j],
         oracleFactoryAddr: poolInfo.oracleFactory,
         isRunning: poolInfo.poolShareTokenAddr[j] != AddressZero,
@@ -351,6 +357,9 @@ export default class PerpetualDataHandler {
       this.symbolToTokenAddrMap.set(effectivePoolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       this.symbolToPerpStaticInfo.set(currentSymbol3, perpStaticInfos[j]);
     }
+
+    // handle settlement token.
+    this.initSettlementToken(perpStaticInfos);
     // pre-calculate all triangulation paths so we can easily get from
     // the prices of price-feeds to the index price required, e.g.
     // BTC-USDC : BTC-USD / USDC-USD
@@ -360,6 +369,45 @@ export default class PerpetualDataHandler {
     // fill this.perpetualIdToSymbol
     for (let [key, info] of this.symbolToPerpStaticInfo) {
       this.perpetualIdToSymbol.set(info.id, key);
+    }
+  }
+
+  /**
+   * Initializes settlement currency for all pools by
+   * completing this.poolStaticInfos with settlement currency info
+   * @param perpStaticInfos PerpetualStaticInfo array from contract call
+   */
+  private initSettlementToken(perpStaticInfos: PerpetualStaticInfo[]) {
+    let currPoolId = -1;
+    for (let j = 0; j < perpStaticInfos.length; j++) {
+      const poolId = perpStaticInfos[j].poolId;
+      if (poolId == currPoolId) {
+        continue;
+      }
+      currPoolId = poolId;
+      // We only assume the flag to be correct
+      // in the first perpetual of the pool
+      const flag = BigNumber.from(perpStaticInfos[j].perpFlags.toString());
+      // find settlement setting for this flag
+      let s: SettlementCcyItem | undefined = undefined;
+      for (let j = 0; j < this.settlementConfig.length; j++) {
+        const masked = flag.and(BigNumber.from(this.settlementConfig[j].perpFlags.toString()));
+        if (!masked.isZero()) {
+          s = this.settlementConfig[j];
+          break;
+        }
+      }
+      if (s == undefined) {
+        // no setting for given flag, settlement token = margin token
+        this.poolStaticInfos[poolId - 1].poolSettleSymbol = this.poolStaticInfos[poolId - 1].poolMarginSymbol;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenAddr = this.poolStaticInfos[poolId - 1].poolMarginTokenAddr;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenDecimals =
+          this.poolStaticInfos[poolId - 1].poolMarginTokenDecimals;
+      } else {
+        this.poolStaticInfos[poolId - 1].poolSettleSymbol = s.settleCCY;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenAddr = s.settleCCYAddr;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenDecimals = s.settleTokenDecimals;
+      }
     }
   }
 
@@ -555,6 +603,8 @@ export default class PerpetualDataHandler {
           lotSizeBC: ABK64x64ToFloat(perpInfos[j].fLotSizeBC),
           referralRebate: ABK64x64ToFloat(perpInfos[j].fReferralRebateCC),
           priceIds: perpInfos[j].priceIds,
+          isPyth: perpInfos[j].isPyth,
+          perpFlags: perpInfos[j].perpFlags,
         };
         infoArr.push(info);
       }
@@ -692,7 +742,7 @@ export default class PerpetualDataHandler {
         fTargetDFSize: ABK64x64ToFloat(BigNumber.from(orig.fTargetDFSize)), // target default fund size
         fkStar: ABK64x64ToFloat(BigNumber.from(orig.fkStar)), // signed trade size that minimizes the AMM risk
         fAMMTargetDD: ABK64x64ToFloat(BigNumber.from(orig.fAMMTargetDD)), // parameter: target distance to default (=inverse of default probability)
-        fAMMMinSizeCC: ABK64x64ToFloat(BigNumber.from(orig.fAMMMinSizeCC)), // parameter: minimal size of AMM pool, regardless of current exposure
+        perpFlags: Number(orig.perpFlags?.toString()), // flags for perpetual
         fMinimalTraderExposureEMA: ABK64x64ToFloat(BigNumber.from(orig.fMinimalTraderExposureEMA)), // parameter: minimal value for fCurrentTraderExposureEMA that we don't want to undershoot
         fMinimalAMMExposureEMA: ABK64x64ToFloat(BigNumber.from(orig.fMinimalAMMExposureEMA)), // parameter: minimal abs value for fCurrentAMMExposureEMA that we don't want to undershoot
         fSettlementS3PriceData: ABK64x64ToFloat(BigNumber.from(orig.fSettlementS3PriceData)), //quanto index

@@ -1584,6 +1584,8 @@ export default class MarketData extends PerpetualDataHandler {
       lotSizeBC: perpInfo.lotSizeBC,
       referralRebate: perpInfo.referralRebate,
       priceIds: perpInfo.priceIds,
+      isPyth: perpInfo.isPyth,
+      perpFlags: perpInfo.perpFlags,
     };
     return res;
   }
