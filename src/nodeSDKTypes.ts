@@ -56,10 +56,10 @@ export interface PoolStaticInfo {
   poolId: number;
   poolMarginSymbol: string;
   poolMarginTokenAddr: string;
-  poolMarginTokenDecimals?: number;
+  poolMarginTokenDecimals: number;
   poolSettleSymbol: string;
   poolSettleTokenAddr: string;
-  poolSettleTokenDecimals?: number;
+  poolSettleTokenDecimals: number;
   MgnToSettleTriangulation: string[];
   shareTokenAddr: string;
   oracleFactoryAddr: string;
