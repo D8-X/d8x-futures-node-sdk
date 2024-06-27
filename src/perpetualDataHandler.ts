@@ -243,7 +243,7 @@ export default class PerpetualDataHandler {
 
     const proxyCalls: Multicall3.Call3Struct[] = poolInfo.poolMarginTokenAddr.map((tokenAddr) => ({
       target: tokenAddr,
-      allowFailure: true,
+      allowFailure: false,
       callData: IERC20.encodeFunctionData("decimals"),
     }));
     proxyCalls.push({
@@ -262,10 +262,7 @@ export default class PerpetualDataHandler {
 
     // decimals
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
-      const decimals =
-        poolInfo.poolMarginTokenAddr[j] == ZERO_ADDRESS
-          ? undefined
-          : (IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number);
+      const decimals = IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number;
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
@@ -1726,7 +1723,7 @@ export default class PerpetualDataHandler {
   /**
    *
    * @param symbol Symbol of the form USDC
-   * @returns Address of the corresponding token
+   * @returns Address of the corresponding  margin token
    */
   public getMarginTokenFromSymbol(symbol: string): string | undefined {
     let pools = this.poolStaticInfos!;
@@ -1744,8 +1741,27 @@ export default class PerpetualDataHandler {
 
   /**
    *
+   * @param symbol Symbol of the form ETH-USD-WEETH
+   * @returns Address of the corresponding settlement token
+   */
+  public getSettlementTokenFromSymbol(symbol: string): string | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolSettleTokenAddr;
+      }
+      k++;
+    }
+    return undefined;
+  }
+
+  /**
+   *
    * @param symbol Symbol of the form USDC
-   * @returns Decimals of the corresponding token
+   * @returns Decimals of the corresponding margin token
    */
   public getMarginTokenDecimalsFromSymbol(symbol: string): number | undefined {
     let pools = this.poolStaticInfos!;
@@ -1755,6 +1771,25 @@ export default class PerpetualDataHandler {
       if (pools[k].poolId == poolId) {
         // pool found
         return pools[k].poolMarginTokenDecimals;
+      }
+      k++;
+    }
+    return undefined;
+  }
+
+  /**
+   *
+   * @param symbol Symbol of the form ETH-USD-WEETH
+   * @returns Decimals of the corresponding settlement token
+   */
+  public getSettlementTokenDecimalsFromSymbol(symbol: string): number | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolSettleTokenDecimals;
       }
       k++;
     }
