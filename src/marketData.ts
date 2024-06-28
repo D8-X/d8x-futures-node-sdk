@@ -961,7 +961,8 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.
+   * Gets the wallet balance in the settlement currency corresponding to a given perpetual symbol.
+   * The settlement currency is usually the same as the collateral currency.
    * @param address Address to check
    * @param symbol Symbol of the form ETH-USD-MATIC.
    * @returns Perpetual's collateral token balance of the given address.
@@ -981,10 +982,10 @@ export default class MarketData extends PerpetualDataHandler {
    */
   public async getWalletBalance(address: string, symbol: string, overrides?: CallOverrides): Promise<number> {
     let poolIdx = this.getPoolStaticInfoIndexFromSymbol(symbol);
-    let marginTokenAddr = this.poolStaticInfos[poolIdx].poolMarginTokenAddr;
-    let token = ERC20__factory.connect(marginTokenAddr, this.provider!);
+    let settleTokenAddr = this.poolStaticInfos[poolIdx].poolSettleTokenAddr;
+    let token = ERC20__factory.connect(settleTokenAddr, this.provider!);
     let walletBalance = await token.balanceOf(address, overrides || {});
-    let decimals = await token.decimals(overrides || {});
+    let decimals = this.poolStaticInfos[poolIdx].poolSettleTokenDecimals;
     return Number(formatUnits(walletBalance, decimals));
   }
 
