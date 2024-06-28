@@ -125,7 +125,7 @@
     "name": "arbitrum",
     "chainId": 42161,
     "version": 1,
-    "proxyAddr": "0x8f8BccE4c180B699F81499005281fA89440D1e95",
+    "proxyAddr": "0xE3F78A83fcF95C4fC33694d3023754258290e08c",
     "nodeURL": "https://arb1.arbitrum.io/rpc",
     "priceFeedConfigNetwork": "mainnet",
     "shareTokenABILocation": "./abi/ShareToken.json",
