@@ -1155,7 +1155,7 @@ export default class MarketData extends PerpetualDataHandler {
       .fetchPricesForPerpetual(symbol)
       .then((obj) => [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]]);
     const fS2S3 = [indexPriceInfo[0], indexPriceInfo[1]].map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber];
-
+    let coll2SettlePromise = this.fetchCollateralToSettlementConversion(symbol);
     const proxyCalls: Multicall3.Call3Struct[] = [
       // 0: traderState
       {
@@ -1166,7 +1166,7 @@ export default class MarketData extends PerpetualDataHandler {
 
       // 1: wallet balance
       {
-        target: poolInfo.poolMarginTokenAddr,
+        target: poolInfo.poolSettleTokenAddr,
         allowFailure: false,
         callData: IERC20.encodeFunctionData("balanceOf", [traderAddr]),
       },
@@ -1207,7 +1207,7 @@ export default class MarketData extends PerpetualDataHandler {
     // Max based on margin requirements:
     const walletBalance = decNToFloat(
       IERC20.decodeFunctionResult("balanceOf", encodedResults[1].returnData)[0],
-      poolInfo.poolMarginTokenDecimals!
+      poolInfo.poolSettleTokenDecimals!
     );
 
     const proxyCalls2: Multicall3.Call3Struct[] = [
@@ -1256,8 +1256,10 @@ export default class MarketData extends PerpetualDataHandler {
 
     const curPos = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
 
+    const px: number = await coll2SettlePromise;
+    const walletBalanceInMgnToken = walletBalance / px;
     const maxLongPosAccount = getMaxSignedPositionSize(
-      account.collateralCC + walletBalance + account.unrealizedFundingCollateralCCY,
+      account.collateralCC + walletBalanceInMgnToken + account.unrealizedFundingCollateralCCY,
       curPos,
       account.entryPrice * curPos,
       1,
@@ -1269,7 +1271,7 @@ export default class MarketData extends PerpetualDataHandler {
       account.collToQuoteConversion
     );
     const maxShortPosAccount = getMaxSignedPositionSize(
-      account.collateralCC + walletBalance + account.unrealizedFundingCollateralCCY,
+      account.collateralCC + walletBalanceInMgnToken + account.unrealizedFundingCollateralCCY,
       curPos,
       account.entryPrice * curPos,
       -1,
