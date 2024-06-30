@@ -67,6 +67,8 @@ import {
   type SmartContractOrder,
   type PerpetualData,
   LiquidityPoolData,
+  SettlementConfig,
+  SettlementCcyItem,
 } from "./nodeSDKTypes";
 import PriceFeeds from "./priceFeeds";
 import {
@@ -91,7 +93,7 @@ export default class PerpetualDataHandler {
   protected perpetualIdToSymbol: Map<number, string>; // maps unique perpetual id to symbol of the form BTC-USD-MATIC
   protected poolStaticInfos: Array<PoolStaticInfo>;
   protected symbolList: Map<string, string>; //mapping 4-digit symbol <-> long format
-
+  protected settlementConfig: SettlementConfig;
   // config
   public config: NodeSDKConfig;
   //map margin token of the form MATIC or ETH or USDC into
@@ -132,6 +134,7 @@ export default class PerpetualDataHandler {
    * PerpetualDataHandler.readSDKConfig.
    */
   public constructor(config: NodeSDKConfig) {
+    this.settlementConfig = require("./config/settlement.json") as SettlementConfig;
     this.config = config;
     this.symbolToPerpStaticInfo = new Map<string, PerpetualStaticInfo>();
     this.poolStaticInfos = new Array<PoolStaticInfo>();
@@ -240,7 +243,7 @@ export default class PerpetualDataHandler {
 
     const proxyCalls: Multicall3.Call3Struct[] = poolInfo.poolMarginTokenAddr.map((tokenAddr) => ({
       target: tokenAddr,
-      allowFailure: true,
+      allowFailure: false,
       callData: IERC20.encodeFunctionData("decimals"),
     }));
     proxyCalls.push({
@@ -259,18 +262,19 @@ export default class PerpetualDataHandler {
 
     // decimals
     for (let j = 0; j < poolInfo.nestedPerpetualIDs.length; j++) {
-      const decimals =
-        poolInfo.poolMarginTokenAddr[j] == ZERO_ADDRESS
-          ? undefined
-          : (IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number);
+      const decimals = IERC20.decodeFunctionResult("decimals", encodedResults[j].returnData)[0] as number;
       let info: PoolStaticInfo = {
         poolId: j + 1,
         poolMarginSymbol: "", //fill later
         poolMarginTokenAddr: poolInfo.poolMarginTokenAddr[j],
         poolMarginTokenDecimals: decimals,
+        poolSettleSymbol: "", //fill later
+        poolSettleTokenAddr: poolInfo.poolMarginTokenAddr[j], //correct later
+        poolSettleTokenDecimals: decimals, //correct later
         shareTokenAddr: poolInfo.poolShareTokenAddr[j],
         oracleFactoryAddr: poolInfo.oracleFactory,
         isRunning: poolInfo.poolShareTokenAddr[j] != AddressZero,
+        MgnToSettleTriangulation: ["*", "1"], // correct later
       };
       this.poolStaticInfos.push(info);
     }
@@ -351,6 +355,9 @@ export default class PerpetualDataHandler {
       this.symbolToTokenAddrMap.set(effectivePoolCCY, this.poolStaticInfos[perp.poolId - 1].poolMarginTokenAddr);
       this.symbolToPerpStaticInfo.set(currentSymbol3, perpStaticInfos[j]);
     }
+
+    // handle settlement token.
+    this.initSettlementToken(perpStaticInfos);
     // pre-calculate all triangulation paths so we can easily get from
     // the prices of price-feeds to the index price required, e.g.
     // BTC-USDC : BTC-USD / USDC-USD
@@ -360,6 +367,50 @@ export default class PerpetualDataHandler {
     // fill this.perpetualIdToSymbol
     for (let [key, info] of this.symbolToPerpStaticInfo) {
       this.perpetualIdToSymbol.set(info.id, key);
+    }
+  }
+
+  /**
+   * Initializes settlement currency for all pools by
+   * completing this.poolStaticInfos with settlement currency info
+   * @param perpStaticInfos PerpetualStaticInfo array from contract call
+   */
+  private initSettlementToken(perpStaticInfos: PerpetualStaticInfo[]) {
+    let currPoolId = -1;
+    for (let j = 0; j < perpStaticInfos.length; j++) {
+      const poolId = perpStaticInfos[j].poolId;
+      if (poolId == currPoolId) {
+        continue;
+      }
+      currPoolId = poolId;
+      // We only assume the flag to be correct
+      // in the first perpetual of the pool
+      const flag =
+        perpStaticInfos[j].perpFlags == undefined
+          ? BigNumber.from(0)
+          : BigNumber.from(perpStaticInfos[j].perpFlags.toString());
+      // find settlement setting for this flag
+      let s: SettlementCcyItem | undefined = undefined;
+      for (let j = 0; j < this.settlementConfig.length; j++) {
+        const masked = flag.and(BigNumber.from(this.settlementConfig[j].perpFlags.toString()));
+        if (!masked.isZero()) {
+          s = this.settlementConfig[j];
+          break;
+        }
+      }
+      if (s == undefined) {
+        // no setting for given flag, settlement token = margin token
+        this.poolStaticInfos[poolId - 1].poolSettleSymbol = this.poolStaticInfos[poolId - 1].poolMarginSymbol;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenAddr = this.poolStaticInfos[poolId - 1].poolMarginTokenAddr;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenDecimals =
+          this.poolStaticInfos[poolId - 1].poolMarginTokenDecimals;
+        this.poolStaticInfos[poolId - 1].MgnToSettleTriangulation = ["*", "1"];
+      } else {
+        this.poolStaticInfos[poolId - 1].poolSettleSymbol = s.settleCCY;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenAddr = s.settleCCYAddr;
+        this.poolStaticInfos[poolId - 1].poolSettleTokenDecimals = s.settleTokenDecimals;
+        this.poolStaticInfos[poolId - 1].MgnToSettleTriangulation = s.triangulation;
+      }
     }
   }
 
@@ -461,6 +512,34 @@ export default class PerpetualDataHandler {
   }
 
   /**
+   * fetchCollateralToSettlementConversion returns the price which converts the collateral
+   * currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+   * USDC, we get
+   * let px = fetchCollateralToSettlementConversion("BTC-USD-STUSD")
+   * valueInUSDC = collateralInSTUSD * px
+   * @param symbol either perpetual symbol of the form BTC-USD-MATIC or just collateral token
+   */
+  public async fetchCollateralToSettlementConversion(symbol: string): Promise<number> {
+    let j = this.getPoolStaticInfoIndexFromSymbol(symbol);
+    if (this.poolStaticInfos[j].poolMarginSymbol == this.poolStaticInfos[j].poolSettleSymbol) {
+      // settlement currency = collateral currency
+      return 1;
+    }
+    const triang = this.poolStaticInfos[j].MgnToSettleTriangulation;
+    let v = 1;
+    for (let k = 0; k < triang.length; k = k + 2) {
+      const sym = triang[k + 1];
+      const pxMap = await this.priceFeedGetter.fetchFeedPrices([sym]);
+      const vpxinfo = pxMap.get(sym);
+      if (vpxinfo == undefined) {
+        throw Error(`price ${sym} not available`);
+      }
+      v = triang[k] == "*" ? v * vpxinfo[0] : v / vpxinfo[0];
+    }
+    return v;
+  }
+
+  /**
    * Get list of required pyth price source IDs for given perpetual
    * @param symbol perpetual symbol, e.g., BTC-USD-MATIC
    * @returns list of required pyth price sources for this perpetual
@@ -555,6 +634,8 @@ export default class PerpetualDataHandler {
           lotSizeBC: ABK64x64ToFloat(perpInfos[j].fLotSizeBC),
           referralRebate: ABK64x64ToFloat(perpInfos[j].fReferralRebateCC),
           priceIds: perpInfos[j].priceIds,
+          isPyth: perpInfos[j].isPyth,
+          perpFlags: perpInfos[j].perpFlags,
         };
         infoArr.push(info);
       }
@@ -692,7 +773,7 @@ export default class PerpetualDataHandler {
         fTargetDFSize: ABK64x64ToFloat(BigNumber.from(orig.fTargetDFSize)), // target default fund size
         fkStar: ABK64x64ToFloat(BigNumber.from(orig.fkStar)), // signed trade size that minimizes the AMM risk
         fAMMTargetDD: ABK64x64ToFloat(BigNumber.from(orig.fAMMTargetDD)), // parameter: target distance to default (=inverse of default probability)
-        fAMMMinSizeCC: ABK64x64ToFloat(BigNumber.from(orig.fAMMMinSizeCC)), // parameter: minimal size of AMM pool, regardless of current exposure
+        perpFlags: Number(orig.perpFlags?.toString()), // flags for perpetual
         fMinimalTraderExposureEMA: ABK64x64ToFloat(BigNumber.from(orig.fMinimalTraderExposureEMA)), // parameter: minimal value for fCurrentTraderExposureEMA that we don't want to undershoot
         fMinimalAMMExposureEMA: ABK64x64ToFloat(BigNumber.from(orig.fMinimalAMMExposureEMA)), // parameter: minimal abs value for fCurrentAMMExposureEMA that we don't want to undershoot
         fSettlementS3PriceData: ABK64x64ToFloat(BigNumber.from(orig.fSettlementS3PriceData)), //quanto index
@@ -1645,7 +1726,7 @@ export default class PerpetualDataHandler {
   /**
    *
    * @param symbol Symbol of the form USDC
-   * @returns Address of the corresponding token
+   * @returns Address of the corresponding  margin token
    */
   public getMarginTokenFromSymbol(symbol: string): string | undefined {
     let pools = this.poolStaticInfos!;
@@ -1663,8 +1744,27 @@ export default class PerpetualDataHandler {
 
   /**
    *
+   * @param symbol Symbol of the form ETH-USD-WEETH
+   * @returns Address of the corresponding settlement token
+   */
+  public getSettlementTokenFromSymbol(symbol: string): string | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolSettleTokenAddr;
+      }
+      k++;
+    }
+    return undefined;
+  }
+
+  /**
+   *
    * @param symbol Symbol of the form USDC
-   * @returns Decimals of the corresponding token
+   * @returns Decimals of the corresponding margin token
    */
   public getMarginTokenDecimalsFromSymbol(symbol: string): number | undefined {
     let pools = this.poolStaticInfos!;
@@ -1674,6 +1774,25 @@ export default class PerpetualDataHandler {
       if (pools[k].poolId == poolId) {
         // pool found
         return pools[k].poolMarginTokenDecimals;
+      }
+      k++;
+    }
+    return undefined;
+  }
+
+  /**
+   *
+   * @param symbol Symbol of the form ETH-USD-WEETH
+   * @returns Decimals of the corresponding settlement token
+   */
+  public getSettlementTokenDecimalsFromSymbol(symbol: string): number | undefined {
+    let pools = this.poolStaticInfos!;
+    let poolId = PerpetualDataHandler._getPoolIdFromSymbol(symbol, this.poolStaticInfos);
+    let k = 0;
+    while (k < pools.length) {
+      if (pools[k].poolId == poolId) {
+        // pool found
+        return pools[k].poolSettleTokenDecimals;
       }
       k++;
     }

@@ -961,7 +961,8 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.
+   * Gets the wallet balance in the settlement currency corresponding to a given perpetual symbol.
+   * The settlement currency is usually the same as the collateral currency.
    * @param address Address to check
    * @param symbol Symbol of the form ETH-USD-MATIC.
    * @returns Perpetual's collateral token balance of the given address.
@@ -981,10 +982,10 @@ export default class MarketData extends PerpetualDataHandler {
    */
   public async getWalletBalance(address: string, symbol: string, overrides?: CallOverrides): Promise<number> {
     let poolIdx = this.getPoolStaticInfoIndexFromSymbol(symbol);
-    let marginTokenAddr = this.poolStaticInfos[poolIdx].poolMarginTokenAddr;
-    let token = ERC20__factory.connect(marginTokenAddr, this.provider!);
+    let settleTokenAddr = this.poolStaticInfos[poolIdx].poolSettleTokenAddr;
+    let token = ERC20__factory.connect(settleTokenAddr, this.provider!);
     let walletBalance = await token.balanceOf(address, overrides || {});
-    let decimals = await token.decimals(overrides || {});
+    let decimals = this.poolStaticInfos[poolIdx].poolSettleTokenDecimals;
     return Number(formatUnits(walletBalance, decimals));
   }
 
@@ -1155,7 +1156,7 @@ export default class MarketData extends PerpetualDataHandler {
       .fetchPricesForPerpetual(symbol)
       .then((obj) => [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]]);
     const fS2S3 = [indexPriceInfo[0], indexPriceInfo[1]].map((x) => floatToABK64x64(x)) as [BigNumber, BigNumber];
-
+    let coll2SettlePromise = this.fetchCollateralToSettlementConversion(symbol);
     const proxyCalls: Multicall3.Call3Struct[] = [
       // 0: traderState
       {
@@ -1166,7 +1167,7 @@ export default class MarketData extends PerpetualDataHandler {
 
       // 1: wallet balance
       {
-        target: poolInfo.poolMarginTokenAddr,
+        target: poolInfo.poolSettleTokenAddr,
         allowFailure: false,
         callData: IERC20.encodeFunctionData("balanceOf", [traderAddr]),
       },
@@ -1207,7 +1208,7 @@ export default class MarketData extends PerpetualDataHandler {
     // Max based on margin requirements:
     const walletBalance = decNToFloat(
       IERC20.decodeFunctionResult("balanceOf", encodedResults[1].returnData)[0],
-      poolInfo.poolMarginTokenDecimals!
+      poolInfo.poolSettleTokenDecimals!
     );
 
     const proxyCalls2: Multicall3.Call3Struct[] = [
@@ -1256,8 +1257,10 @@ export default class MarketData extends PerpetualDataHandler {
 
     const curPos = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
 
+    const px: number = await coll2SettlePromise;
+    const walletBalanceInMgnToken = walletBalance / px;
     const maxLongPosAccount = getMaxSignedPositionSize(
-      account.collateralCC + walletBalance + account.unrealizedFundingCollateralCCY,
+      account.collateralCC + walletBalanceInMgnToken + account.unrealizedFundingCollateralCCY,
       curPos,
       account.entryPrice * curPos,
       1,
@@ -1269,7 +1272,7 @@ export default class MarketData extends PerpetualDataHandler {
       account.collToQuoteConversion
     );
     const maxShortPosAccount = getMaxSignedPositionSize(
-      account.collateralCC + walletBalance + account.unrealizedFundingCollateralCCY,
+      account.collateralCC + walletBalanceInMgnToken + account.unrealizedFundingCollateralCCY,
       curPos,
       account.entryPrice * curPos,
       -1,
@@ -1555,6 +1558,8 @@ export default class MarketData extends PerpetualDataHandler {
       totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize),
       brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize),
       perpetuals: [],
+      settleSymbol: this.poolStaticInfos[poolId - 1].poolSettleSymbol,
+      settleTokenAddr: this.poolStaticInfos[poolId - 1].poolSettleTokenAddr,
     };
     return state;
   }
@@ -1584,6 +1589,8 @@ export default class MarketData extends PerpetualDataHandler {
       lotSizeBC: perpInfo.lotSizeBC,
       referralRebate: perpInfo.referralRebate,
       priceIds: perpInfo.priceIds,
+      isPyth: perpInfo.isPyth,
+      perpFlags: perpInfo.perpFlags,
     };
     return res;
   }
@@ -2061,6 +2068,8 @@ export default class MarketData extends PerpetualDataHandler {
           totalTargetAMMFundSizeCC: ABK64x64ToFloat(pool.fTargetAMMFundSize!),
           brokerCollateralLotSize: ABK64x64ToFloat(pool.fBrokerCollateralLotSize!),
           perpetuals: [],
+          settleSymbol: _poolStaticInfos[k].poolSettleSymbol,
+          settleTokenAddr: _poolStaticInfos[k].poolSettleTokenAddr,
         } as PoolState)
     );
     return poolStates;
