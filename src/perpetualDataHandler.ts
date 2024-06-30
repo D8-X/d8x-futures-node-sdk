@@ -385,7 +385,10 @@ export default class PerpetualDataHandler {
       currPoolId = poolId;
       // We only assume the flag to be correct
       // in the first perpetual of the pool
-      const flag = BigNumber.from(perpStaticInfos[j].perpFlags.toString());
+      const flag =
+        perpStaticInfos[j].perpFlags == undefined
+          ? BigNumber.from(0)
+          : BigNumber.from(perpStaticInfos[j].perpFlags.toString());
       // find settlement setting for this flag
       let s: SettlementCcyItem | undefined = undefined;
       for (let j = 0; j < this.settlementConfig.length; j++) {
