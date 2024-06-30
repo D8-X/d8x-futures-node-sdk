@@ -30,6 +30,10 @@ This class requires no private key and is blockchain read-only.
 No gas required for the queries here.</p></dd>
 <dt><a href="#OnChainPxFeed">OnChainPxFeed</a></dt>
 <dd><p>OnChainPxFeed: get a price from a chainlink-style oracle</p></dd>
+<dt><a href="#OnChainPxFeedAngle">OnChainPxFeedAngle</a></dt>
+<dd><p>OnChainPxFeedAngle: get STUSD-USDC exchange rate</p></dd>
+<dt><a href="#OnChainPxFeedRedStone">OnChainPxFeedRedStone</a></dt>
+<dd><p>OnChainPxFeedRedStone: get a price from a chainlink-style oracle</p></dd>
 <dt><a href="#OrderExecutorTool">OrderExecutorTool</a> ⇐ <code><a href="#WriteAccessHandler">WriteAccessHandler</a></code></dt>
 <dd><p>Functions to execute existing conditional orders from the limit order book. This class
 requires a private key and executes smart-contract interactions that require
@@ -85,6 +89,14 @@ so that signatures can be handled in frontend via wallet</p></dd>
 write access to the contracts.
 This class requires a private key and executes smart-contract interaction that
 require gas-payments.</p></dd>
+</dl>
+
+## Members
+
+<dl>
+<dt><a href="#default">default</a> ⇒</dt>
+<dd><p>Gets the price of one Angle stUSD in USDC from
+on-chain</p></dd>
 </dl>
 
 <a name="module_d8xMath"></a>
@@ -476,6 +488,7 @@ require gas-payments.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -484,6 +497,7 @@ require gas-payments.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -491,7 +505,9 @@ require gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_AccountTrade_new"></a>
@@ -830,6 +846,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### accountTrade.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### accountTrade.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -934,6 +963,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### accountTrade.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -1069,22 +1114,44 @@ main();
 ### accountTrade.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### accountTrade.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### accountTrade.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### accountTrade.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -1131,6 +1198,7 @@ require gas-payments.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -1139,6 +1207,7 @@ require gas-payments.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -1146,7 +1215,9 @@ require gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_BrokerTool_new"></a>
@@ -1667,6 +1738,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### brokerTool.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### brokerTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -1771,6 +1855,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### brokerTool.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -1906,22 +2006,44 @@ main();
 ### brokerTool.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### brokerTool.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### brokerTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### brokerTool.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -1960,6 +2082,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -1968,6 +2091,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -1975,7 +2099,9 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidatorTool_new"></a>
@@ -2256,6 +2382,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### liquidatorTool.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### liquidatorTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -2360,6 +2499,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### liquidatorTool.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -2495,22 +2650,44 @@ main();
 ### liquidatorTool.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### liquidatorTool.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### liquidatorTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### liquidatorTool.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -2547,6 +2724,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -2555,6 +2733,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -2562,7 +2741,9 @@ smart-contract interactions that require gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_LiquidityProviderTool_new"></a>
@@ -2782,6 +2963,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### liquidityProviderTool.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### liquidityProviderTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -2886,6 +3080,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### liquidityProviderTool.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -3021,22 +3231,44 @@ main();
 ### liquidityProviderTool.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### liquidityProviderTool.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### liquidityProviderTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### liquidityProviderTool.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -3097,6 +3329,7 @@ No gas required for the queries here.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -3105,6 +3338,7 @@ No gas required for the queries here.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -3112,7 +3346,9 @@ No gas required for the queries here.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_MarketData_new"></a>
@@ -3352,7 +3588,8 @@ main();
 <a name="MarketData+getWalletBalance"></a>
 
 ### marketData.getWalletBalance(address, symbol) ⇒
-<p>Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.</p>
+<p>Gets the wallet balance in the settlement currency corresponding to a given perpetual symbol.
+The settlement currency is usually the same as the collateral currency.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Perpetual's collateral token balance of the given address.</p>  
@@ -3896,6 +4133,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### marketData.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### marketData.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -4000,6 +4250,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### marketData.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -4135,22 +4401,44 @@ main();
 ### marketData.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### marketData.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### marketData.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### marketData.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -4169,6 +4457,18 @@ main();
 
 ## OnChainPxFeed
 <p>OnChainPxFeed: get a price from a chainlink-style oracle</p>
+
+**Kind**: global class  
+<a name="OnChainPxFeedAngle"></a>
+
+## OnChainPxFeedAngle
+<p>OnChainPxFeedAngle: get STUSD-USDC exchange rate</p>
+
+**Kind**: global class  
+<a name="OnChainPxFeedRedStone"></a>
+
+## OnChainPxFeedRedStone
+<p>OnChainPxFeedRedStone: get a price from a chainlink-style oracle</p>
 
 **Kind**: global class  
 <a name="OrderExecutorTool"></a>
@@ -4198,6 +4498,7 @@ gas-payments.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -4206,6 +4507,7 @@ gas-payments.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -4213,7 +4515,9 @@ gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_OrderExecutorTool_new"></a>
@@ -4540,6 +4844,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### orderExecutorTool.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### orderExecutorTool.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -4644,6 +4961,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### orderExecutorTool.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -4779,22 +5112,44 @@ main();
 ### orderExecutorTool.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### orderExecutorTool.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### orderExecutorTool.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### orderExecutorTool.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -4824,6 +5179,7 @@ common data and chain operations.</p>
         * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
         * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+        * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
         * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
         * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -4832,6 +5188,7 @@ common data and chain operations.</p>
         * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+        * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
         * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -4839,7 +5196,9 @@ common data and chain operations.</p>
         * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
         * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+        * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
         * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+        * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [.getPerpetualStaticInfo(_proxyContract, nestedPerpetualIDs, symbolList)](#PerpetualDataHandler.getPerpetualStaticInfo) ⇒
@@ -4920,6 +5279,18 @@ common data and chain operations.</p>
 and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### perpetualDataHandler.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### perpetualDataHandler.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -5016,6 +5387,21 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### perpetualDataHandler.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -5144,21 +5530,41 @@ main();
 
 ### perpetualDataHandler.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### perpetualDataHandler.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### perpetualDataHandler.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### perpetualDataHandler.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -6114,6 +6520,7 @@ so that signatures can be handled in frontend via wallet</p>
         * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
         * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
         * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+        * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
         * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
         * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
         * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -6122,6 +6529,7 @@ so that signatures can be handled in frontend via wallet</p>
         * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
         * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
         * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+        * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
         * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
         * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
         * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -6129,7 +6537,9 @@ so that signatures can be handled in frontend via wallet</p>
         * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
         * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
         * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+        * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
         * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+        * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
     * _static_
         * [.chainOrders(orders, ids)](#TraderInterface.chainOrders) ⇒
@@ -6619,7 +7029,8 @@ main();
 <a name="MarketData+getWalletBalance"></a>
 
 ### traderInterface.getWalletBalance(address, symbol) ⇒
-<p>Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.</p>
+<p>Gets the wallet balance in the settlement currency corresponding to a given perpetual symbol.
+The settlement currency is usually the same as the collateral currency.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getWalletBalance</code>](#MarketData+getWalletBalance)  
@@ -7183,6 +7594,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### traderInterface.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### traderInterface.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -7287,6 +7711,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### traderInterface.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -7422,22 +7862,44 @@ main();
 ### traderInterface.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### traderInterface.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### traderInterface.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### traderInterface.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -7487,6 +7949,7 @@ require gas-payments.</p>
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
     * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
     * [._fillSymbolMaps()](#PerpetualDataHandler+_fillSymbolMaps)
+    * [.initSettlementToken(perpStaticInfos)](#PerpetualDataHandler+initSettlementToken)
     * [.getSymbolFromPoolId(poolId)](#PerpetualDataHandler+getSymbolFromPoolId) ⇒ <code>symbol</code>
     * [.getPoolIdFromSymbol(symbol)](#PerpetualDataHandler+getPoolIdFromSymbol) ⇒ <code>number</code>
     * [.getPerpIdFromSymbol(symbol)](#PerpetualDataHandler+getPerpIdFromSymbol) ⇒ <code>number</code>
@@ -7495,6 +7958,7 @@ require gas-payments.</p>
     * [.fetchPriceSubmissionInfoForPerpetual(symbol)](#PerpetualDataHandler+fetchPriceSubmissionInfoForPerpetual) ⇒
     * [.getIndexSymbols(symbol)](#PerpetualDataHandler+getIndexSymbols) ⇒
     * [.fetchLatestFeedPriceInfo(symbol)](#PerpetualDataHandler+fetchLatestFeedPriceInfo) ⇒
+    * [.fetchCollateralToSettlementConversion(symbol)](#PerpetualDataHandler+fetchCollateralToSettlementConversion)
     * [.getPriceIds(symbol)](#PerpetualDataHandler+getPriceIds) ⇒
     * [.getPerpetualSymbolsInPool(poolSymbol)](#PerpetualDataHandler+getPerpetualSymbolsInPool) ⇒
     * [.getAllOpenOrders(symbol)](#PerpetualDataHandler+getAllOpenOrders) ⇒
@@ -7502,7 +7966,9 @@ require gas-payments.</p>
     * [.pollLimitOrders(symbol, numElements, [startAfter])](#PerpetualDataHandler+pollLimitOrders) ⇒
     * [.getPoolStaticInfoIndexFromSymbol(symbol)](#PerpetualDataHandler+getPoolStaticInfoIndexFromSymbol) ⇒
     * [.getMarginTokenFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenFromSymbol) ⇒
+    * [.getSettlementTokenFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenFromSymbol) ⇒
     * [.getMarginTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol) ⇒
+    * [.getSettlementTokenDecimalsFromSymbol(symbol)](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol) ⇒
     * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
 
 <a name="new_WriteAccessHandler_new"></a>
@@ -7612,6 +8078,19 @@ and this.nestedPerpetualIDs and this.symbolToPerpStaticInfo</p>
 
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 **Overrides**: [<code>\_fillSymbolMaps</code>](#PerpetualDataHandler+_fillSymbolMaps)  
+<a name="PerpetualDataHandler+initSettlementToken"></a>
+
+### writeAccessHandler.initSettlementToken(perpStaticInfos)
+<p>Initializes settlement currency for all pools by
+completing this.poolStaticInfos with settlement currency info</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>initSettlementToken</code>](#PerpetualDataHandler+initSettlementToken)  
+
+| Param | Description |
+| --- | --- |
+| perpStaticInfos | <p>PerpetualStaticInfo array from contract call</p> |
+
 <a name="PerpetualDataHandler+getSymbolFromPoolId"></a>
 
 ### writeAccessHandler.getSymbolFromPoolId(poolId) ⇒ <code>symbol</code>
@@ -7716,6 +8195,22 @@ and corresponding price information</p>
 | Param | Description |
 | --- | --- |
 | symbol | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
+
+<a name="PerpetualDataHandler+fetchCollateralToSettlementConversion"></a>
+
+### writeAccessHandler.fetchCollateralToSettlementConversion(symbol)
+<p>fetchCollateralToSettlementConversion returns the price which converts the collateral
+currency into settlement currency. For example if BTC-USD-STUSD has settlement currency
+USDC, we get
+let px = fetchCollateralToSettlementConversion(&quot;BTC-USD-STUSD&quot;)
+valueInUSDC = collateralInSTUSD * px</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>fetchCollateralToSettlementConversion</code>](#PerpetualDataHandler+fetchCollateralToSettlementConversion)  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>either perpetual symbol of the form BTC-USD-MATIC or just collateral token</p> |
 
 <a name="PerpetualDataHandler+getPriceIds"></a>
 
@@ -7851,22 +8346,44 @@ main();
 ### writeAccessHandler.getMarginTokenFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 **Overrides**: [<code>getMarginTokenFromSymbol</code>](#PerpetualDataHandler+getMarginTokenFromSymbol)  
-**Returns**: <p>Address of the corresponding token</p>  
+**Returns**: <p>Address of the corresponding  margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenFromSymbol"></a>
+
+### writeAccessHandler.getSettlementTokenFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getSettlementTokenFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenFromSymbol)  
+**Returns**: <p>Address of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getMarginTokenDecimalsFromSymbol"></a>
 
 ### writeAccessHandler.getMarginTokenDecimalsFromSymbol(symbol) ⇒
 **Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
 **Overrides**: [<code>getMarginTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getMarginTokenDecimalsFromSymbol)  
-**Returns**: <p>Decimals of the corresponding token</p>  
+**Returns**: <p>Decimals of the corresponding margin token</p>  
 
 | Param | Description |
 | --- | --- |
 | symbol | <p>Symbol of the form USDC</p> |
+
+<a name="PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol"></a>
+
+### writeAccessHandler.getSettlementTokenDecimalsFromSymbol(symbol) ⇒
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>getSettlementTokenDecimalsFromSymbol</code>](#PerpetualDataHandler+getSettlementTokenDecimalsFromSymbol)  
+**Returns**: <p>Decimals of the corresponding settlement token</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>Symbol of the form ETH-USD-WEETH</p> |
 
 <a name="PerpetualDataHandler+getABI"></a>
 
@@ -7880,4 +8397,17 @@ main();
 | Param | Description |
 | --- | --- |
 | contract | <p>name of contract: proxy|lob|sharetoken</p> |
+
+<a name="default"></a>
+
+## default ⇒
+<p>Gets the price of one Angle stUSD in USDC from
+on-chain</p>
+
+**Kind**: global variable  
+**Returns**: <p>STUSD-USDC</p>  
+
+| Param | Description |
+| --- | --- |
+| provider | <p>arbitrum provider</p> |
 

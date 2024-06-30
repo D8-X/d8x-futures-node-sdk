@@ -278,7 +278,8 @@ main();
 <a name="MarketData+getWalletBalance"></a>
 
 ### marketData.getWalletBalance(address, symbol) ⇒
-<p>Gets the wallet balance in the collateral currency corresponding to a given perpetual symbol.</p>
+<p>Gets the wallet balance in the settlement currency corresponding to a given perpetual symbol.
+The settlement currency is usually the same as the collateral currency.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
 **Returns**: <p>Perpetual's collateral token balance of the given address.</p>  
