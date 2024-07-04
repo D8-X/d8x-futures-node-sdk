@@ -25,7 +25,7 @@ describe("priceFeed", () => {
       config.nodeURL = RPC;
     }
     config.priceFeedEndpoints = [
-      { type: "pyth", endpoints: ["https://hermes.pyth.network/api"] }, //, "https://xc-testnet.pyth.network/api"] },
+      { type: "pyth", endpoints: ["https://hermes.pyth.network/api"], writeEndpoints: [] }, //, "https://xc-testnet.pyth.network/api"] },
     ];
     mktData = new MarketData(config);
     await mktData.createProxyInstance();
@@ -33,7 +33,7 @@ describe("priceFeed", () => {
 
   it("should correctly construct non-unique price id price feeds", async () => {
     const FakePriceFeedsConfig: PriceFeedConfig = {
-      endpoints: [{ endpoints: ["https://hermes.pyth.network"], type: "pyth" }],
+      endpoints: [{ endpoints: ["https://hermes.pyth.network"], type: "pyth", writeEndpoints: [] }],
       network: "pyth",
       ids: [
         {
@@ -155,5 +155,25 @@ describe("priceFeed", () => {
   it("fetch info from data handler", async () => {
     let l = await mktData.fetchPriceSubmissionInfoForPerpetual(perp);
     console.log(l);
+  });
+
+  it("should correctly override endpoints of same type", () => {
+    const result = PriceFeeds.overridePriceEndpointsOfSameType(
+      [
+        { endpoints: ["a", "b", "c"], type: "pyth", writeEndpoints: ["w1", "w2"] },
+        { endpoints: ["a", "b", "c"], type: "non-overriden-pyth", writeEndpoints: ["w-pyth-3"] },
+        { endpoints: ["a", "b", "c"], type: "pyth-2-empty-write", writeEndpoints: [] },
+      ],
+      [
+        { endpoints: ["user-provided-endpoint"], type: "pyth", writeEndpoints: ["w-user-1"] },
+        { endpoints: ["d", "e", "f"], type: "pyth-2-empty-write", writeEndpoints: ["write-1", "write-2"] },
+      ]
+    );
+
+    expect(result).toEqual([
+      { endpoints: ["user-provided-endpoint"], type: "pyth", writeEndpoints: ["w-user-1"] },
+      { endpoints: ["a", "b", "c"], type: "non-overriden-pyth", writeEndpoints: ["w-pyth-3"] },
+      { endpoints: ["d", "e", "f"], type: "pyth-2-empty-write", writeEndpoints: ["write-1", "write-2"] },
+    ]);
   });
 });

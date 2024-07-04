@@ -477,13 +477,15 @@ export default class PerpetualDataHandler {
    * Get PriceFeedSubmission data required for blockchain queries that involve price data, and the corresponding
    * triangulated prices for the indices S2 and S3
    * @param symbol pool symbol of the form "ETH-USD-MATIC"
+   * @param useWriteEndpoint use price feed endpoint for writing (submission).
    * @returns PriceFeedSubmission and prices for S2 and S3. [S2price, 0] if S3 not defined.
    */
   public async fetchPriceSubmissionInfoForPerpetual(
-    symbol: string
+    symbol: string,
+    useWriteEndpoint: boolean = false
   ): Promise<{ submission: PriceFeedSubmission; pxS2S3: [number, number] }> {
     // fetch prices from required price-feeds (REST)
-    return await this.priceFeedGetter.fetchFeedPriceInfoAndIndicesForPerpetual(symbol);
+    return await this.priceFeedGetter.fetchFeedPriceInfoAndIndicesForPerpetual(symbol, useWriteEndpoint);
   }
 
   /**
