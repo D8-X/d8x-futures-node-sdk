@@ -5,6 +5,7 @@ import PriceFeeds from "../src/priceFeeds";
 
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
+const SdkConfigName = "arbitrum";
 
 jest.setTimeout(150000);
 
@@ -19,8 +20,7 @@ describe("priceFeed", () => {
     }
     //config = PerpetualDataHandler.readSDKConfig("xlayer");
     //perp="BTC-USDT-USDT"
-    config = PerpetualDataHandler.readSDKConfig("arbitrum");
-    perp = "BTC-USD-STUSD";
+    config = PerpetualDataHandler.readSDKConfig(SdkConfigName);
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -156,7 +156,6 @@ describe("priceFeed", () => {
     let l = await mktData.fetchPriceSubmissionInfoForPerpetual(perp);
     console.log(l);
   });
-
   it("should correctly override endpoints of same type", () => {
     const result = PriceFeeds.overridePriceEndpointsOfSameType(
       [
@@ -175,5 +174,20 @@ describe("priceFeed", () => {
       { endpoints: ["a", "b", "c"], type: "non-overriden-pyth", writeEndpoints: ["w-pyth-3"] },
       { endpoints: ["d", "e", "f"], type: "pyth-2-empty-write", writeEndpoints: ["write-1", "write-2"] },
     ]);
+  });
+});
+
+describe("priceFeed configs", () => {
+  it("should not require to fill in write price feed endpoints in sdk config", async () => {
+    const cfg = PerpetualDataHandler.readSDKConfig(SdkConfigName);
+    cfg.priceFeedEndpoints = [
+      // No write endpoints
+      { type: "pyth", endpoints: ["test-url-price-feed"] },
+    ];
+    const md = new MarketData(cfg);
+    // Do not create proxy instance
+    // await md.createProxyInstance();
+    const priceFeeds = new PriceFeeds(md, cfg.priceFeedConfigNetwork);
+    expect(priceFeeds.writeFeedEndpoints.length).toBeGreaterThan(0);
   });
 });

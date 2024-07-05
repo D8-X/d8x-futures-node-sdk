@@ -22,9 +22,9 @@ export default class PriceFeeds {
   private config: PriceFeedConfig;
   // Read only price info endpoints. Used by default. feedEndpoints[endpointId]
   // = endpointstring
-  private feedEndpoints: Array<string>;
+  public feedEndpoints: Array<string>;
   // Endpoints which are used to fetch prices for submissions
-  private writeFeedEndpoints: Array<string> = [];
+  public writeFeedEndpoints: Array<string> = [];
   private feedInfo: Map<string, { symbol: string; endpointId: number }[]>; // priceFeedId -> [symbol, endpointId]
   private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
@@ -153,18 +153,16 @@ export default class PriceFeeds {
 
   /**
    * Get required information to be able to submit a blockchain transaction with
-   * price-update such as trade execution, liquidation
+   * price-update such as trade execution, liquidation. Uses write price feed endpoints.
    * @param symbol symbol of perpetual, e.g., BTC-USD-MATIC
-   * @param useWriteEndpoint use price feed endpoint for writing (submission).
    * @returns PriceFeedSubmission, index prices, market closed information
    */
   public async fetchFeedPriceInfoAndIndicesForPerpetual(
-    symbol: string,
-    useWriteEndpoint: boolean = true
+    symbol: string
   ): Promise<{ submission: PriceFeedSubmission; pxS2S3: [number, number]; mktClosed: [boolean, boolean] }> {
     let indexSymbols = this.dataHandler.getIndexSymbols(symbol);
     // fetch prices from required price-feeds (REST)
-    let submission: PriceFeedSubmission = await this.fetchLatestFeedPriceInfoForPerpetual(symbol, useWriteEndpoint);
+    let submission: PriceFeedSubmission = await this.fetchLatestFeedPriceInfoForPerpetual(symbol);
     // calculate index-prices from price-feeds
     let [_idxPrices, _mktClosed] = this.calculateTriangulatedPricesFromFeedInfo(
       indexSymbols.filter((x) => x != ""),
@@ -306,29 +304,20 @@ export default class PriceFeeds {
 
   /**
    * Get all configured feed prices via "latest_price_feeds".
-   * @param useWriteEndpoint use price feed endpoint for writing (submission).
    * @returns map of feed-price symbol to price/isMarketClosed
    */
   public async fetchAllFeedPrices(): Promise<Map<string, [number, boolean]>> {
     return this.fetchFeedPrices();
   }
 
-  public getEndpoint(endpointId: number, isWrite: boolean): string {
-    return isWrite ? this.writeFeedEndpoints[endpointId] : this.feedEndpoints[endpointId];
-  }
-
   /**
    * Get the latest prices for a given perpetual from the offchain oracle
-   * networks
+   * networks. Uses write price feed endpoints.
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
-   * @param useWriteEndpoint use price feed endpoint for writing (submission).
    * @returns array of price feed updates that can be submitted to the smart
    * contract and corresponding price information
    */
-  public async fetchLatestFeedPriceInfoForPerpetual(
-    symbol: string,
-    useWriteEndpoint: boolean = true
-  ): Promise<PriceFeedSubmission> {
+  public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
     // get the feedIds that the contract uses
     let feedIds = this.dataHandler.getPriceIds(symbol);
     let queries = new Array<string>();
@@ -342,9 +331,7 @@ export default class PriceFeeds {
       // and another
       let idx = info[0].endpointId;
       let feedId = feedIds[k];
-      queries.push(
-        this.getEndpoint(idx, useWriteEndpoint) + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId
-      );
+      queries.push(this.writeFeedEndpoints[idx] + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId);
 
       for (let j = 0; j < info.length; j++) {
         if (symbols.has(feedId)) {
