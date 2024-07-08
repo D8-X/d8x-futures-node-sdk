@@ -20,5 +20,10 @@
   "wETH": "WEETH",
   "OKB": "WOKB",
   "WIF": "WIF",
-  "PEPE": "PEPE"
+  "PEPE": "PEPE",
+  "SOL": "SOL",
+  "ZRO": "ZRO",
+  "ETHf": "ETHFI",
+  "ZK": "ZK",
+  "PNDL": "PENDLE"
 }
