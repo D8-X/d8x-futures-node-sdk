@@ -139,6 +139,12 @@
         "id": "0xcc03dc09298fb447e0bf9afdb760d5b24340fd2167fd33d8967dd8f9a141a2e8",
         "type": "pyth",
         "origin": "Crypto.ZK/USD"
+      },
+      {
+        "symbol": "PENDLE-USD",
+        "id": "0x9a4df90b25497f66b1afb012467e316e801ca3d839456db028892fe8c70c8016",
+        "type": "pyth",
+        "origin": "Crypto.PENDLE/USD"
       }
     ],
     "endpoints": [
