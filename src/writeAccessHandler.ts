@@ -87,21 +87,21 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @returns ContractTransaction
    */
   public async setAllowance(symbol: string, amount?: number, overrides?: Overrides): Promise<ContractTransaction> {
-    //extract margin-currency name
+    // extract margin-currency name
     let symbolarr = symbol.split("-");
     symbol = symbol.length == 3 ? symbolarr[2] : symbolarr[0];
-    //note: symbol is in long format
-    let marginTokenAddr = this.symbolToTokenAddrMap.get(symbol);
-    if (marginTokenAddr == undefined || this.signer == null) {
+    //
+    let settleTokenAddr = this.getSettlementTokenFromSymbol(symbol);
+    if (settleTokenAddr == undefined || this.signer == null) {
       throw Error("No margin token or signer defined, call createProxyInstance");
     }
     let amountDec18: BigNumber;
     if (amount == undefined) {
       amountDec18 = MAX_UINT_256;
     } else {
-      amountDec18 = floatToDecN(amount, this.getMarginTokenDecimalsFromSymbol(symbol)!);
+      amountDec18 = floatToDecN(amount, this.getSettlementTokenDecimalsFromSymbol(symbol)!);
     }
-    return WriteAccessHandler._setAllowance(marginTokenAddr, this.proxyAddr, this.signer, amountDec18, overrides);
+    return WriteAccessHandler._setAllowance(settleTokenAddr, this.proxyAddr, this.signer, amountDec18, overrides);
   }
 
   protected static async _setAllowance(
