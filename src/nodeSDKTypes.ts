@@ -20,7 +20,7 @@ export interface NodeSDKConfig {
   lobFactoryABI?: ContractInterface | undefined;
   lobABI?: ContractInterface | undefined;
   shareTokenABI?: ContractInterface | undefined;
-  priceFeedEndpoints?: Array<{ type: string; endpoints: string[] }>;
+  priceFeedEndpoints?: PriceFeedEndpointsOptionalWrite;
   multicall?: string;
 }
 
@@ -287,8 +287,24 @@ export interface TypeSafeOrder {
 export interface PriceFeedConfig {
   network: string;
   ids: Array<{ symbol: string; id: string; type: string; origin: string }>;
-  endpoints: Array<{ type: string; endpoints: string[] }>;
+  endpoints: PriceFeedEndpoints;
 }
+
+export interface PriceFeedEndpointsItem {
+  type: string | "odin" | "pyth" | "onchain";
+  // Read only endpoints. Used by default.
+  endpoints: string[];
+  // Price feed endpoints which are used for fetching prices which will be
+  // submitted for updates on chain.
+  writeEndpoints?: string[];
+}
+
+// For price feeds config
+export type PriceFeedEndpoints = Array<Required<PriceFeedEndpointsItem>>;
+
+// For SDK configuration writeEndpoints are set as optional for backwards
+// compatibility. See NodeSDKConfig interface.
+export type PriceFeedEndpointsOptionalWrite = Array<PriceFeedEndpointsItem>;
 
 export interface PriceFeedSubmission {
   symbols: Map<string, string[]>; //id -> symbols

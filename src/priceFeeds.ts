@@ -1,7 +1,14 @@
 import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
 import { decNToFloat, floatToDec18 } from "./d8XMath";
-import type { PriceFeedConfig, PriceFeedFormat, PriceFeedSubmission, PythV2LatestPriceFeed } from "./nodeSDKTypes";
+import type {
+  PriceFeedConfig,
+  PriceFeedEndpoints,
+  PriceFeedEndpointsOptionalWrite,
+  PriceFeedFormat,
+  PriceFeedSubmission,
+  PythV2LatestPriceFeed,
+} from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
@@ -13,7 +20,11 @@ import OnChainPxFactory from "./onChainPxFactory";
  */
 export default class PriceFeeds {
   private config: PriceFeedConfig;
-  private feedEndpoints: Array<string>; //feedEndpoints[endpointId] = endpointstring
+  // Read only price info endpoints. Used by default. feedEndpoints[endpointId]
+  // = endpointstring
+  public feedEndpoints: Array<string>;
+  // Endpoints which are used to fetch prices for submissions
+  public writeFeedEndpoints: Array<string> = [];
   private feedInfo: Map<string, { symbol: string; endpointId: number }[]>; // priceFeedId -> [symbol, endpointId]
   private dataHandler: PerpetualDataHandler;
   // store triangulation paths given the price feeds
@@ -27,21 +38,16 @@ export default class PriceFeeds {
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
-    // if SDK config contains custom price feed endpoints, these override the public/default ones
+
+    // if SDK config contains custom price feed endpoints, these override the
+    // public/default ones
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
-      // override price feed endpoints of same type
-      for (let k = 0; k < dataHandler.config.priceFeedEndpoints.length; k++) {
-        for (let j = 0; j < this.config.endpoints.length; j++) {
-          if (this.config.endpoints[j].type == dataHandler.config.priceFeedEndpoints[k].type) {
-            this.config.endpoints[j] = dataHandler.config.priceFeedEndpoints[k];
-            for (let i = 0; i < this.config.endpoints[j].endpoints.length; i++) {
-              this.config.endpoints[j].endpoints[i] = PriceFeeds.trimEndpoint(this.config.endpoints[j].endpoints[i]);
-            }
-            break;
-          }
-        }
-      }
+      this.config.endpoints = PriceFeeds.overridePriceEndpointsOfSameType(
+        this.config.endpoints,
+        dataHandler.config.priceFeedEndpoints
+      );
     }
+
     this.onChainPxFeeds = new Map<string, OnChainPxFeed>();
     for (let k = 0; k < this.config.ids.length; k++) {
       if (this.config.ids[k].type == "onchain") {
@@ -49,9 +55,54 @@ export default class PriceFeeds {
         this.onChainPxFeeds[sym] = OnChainPxFactory.createFeed(sym);
       }
     }
-    [this.feedInfo, this.feedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
+    [this.feedInfo, this.feedEndpoints, this.writeFeedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
+    // Deny providing no endpoints
+    if (this.feedEndpoints.length == 0) {
+      throw new Error("PriceFeeds: no endpoints provided in config");
+    }
+    if (this.writeFeedEndpoints.length == 0) {
+      throw new Error("PriceFeeds: no writeEndpoints provided in config");
+    }
+
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
+  }
+
+  // overridePriceEndpointsOfSameType overrides endpoints of config with same
+  // type endpoints provided by user and returns the updated price feed
+  // endpoints list.
+  public static overridePriceEndpointsOfSameType(
+    configEndpoints: PriceFeedEndpoints,
+    userProvidedEndpoints: PriceFeedEndpointsOptionalWrite
+  ): PriceFeedEndpoints {
+    let result = configEndpoints;
+    for (let k = 0; k < userProvidedEndpoints.length; k++) {
+      for (let j = 0; j < result.length; j++) {
+        if (result[j].type == userProvidedEndpoints[k].type) {
+          // read only endpoints
+          if (userProvidedEndpoints[k].endpoints.length > 0) {
+            result[j].endpoints = userProvidedEndpoints[k].endpoints;
+            for (let i = 0; i < result[j].endpoints.length; i++) {
+              result[j].endpoints[i] = PriceFeeds.trimEndpoint(result[j].endpoints[i]);
+            }
+          }
+
+          // write endpoints
+          if (
+            userProvidedEndpoints[k].writeEndpoints !== undefined &&
+            userProvidedEndpoints[k].writeEndpoints!.length > 0
+          ) {
+            result[j].writeEndpoints = userProvidedEndpoints[k].writeEndpoints!;
+            for (let i = 0; i < result[j].writeEndpoints.length; i++) {
+              result[j].writeEndpoints[i] = PriceFeeds.trimEndpoint(result[j].writeEndpoints[i]);
+            }
+          }
+
+          break;
+        }
+      }
+    }
+    return result;
   }
 
   /**
@@ -101,8 +152,8 @@ export default class PriceFeeds {
   }
 
   /**
-   * Get required information to be able to submit a blockchain transaction with price-update
-   * such as trade execution, liquidation
+   * Get required information to be able to submit a blockchain transaction with
+   * price-update such as trade execution, liquidation. Uses write price feed endpoints.
    * @param symbol symbol of perpetual, e.g., BTC-USD-MATIC
    * @returns PriceFeedSubmission, index prices, market closed information
    */
@@ -128,8 +179,9 @@ export default class PriceFeeds {
 
   /**
    * Get all prices/isMarketClosed for the provided symbols via
-   * "latest_price_feeds" and triangulation. Triangulation must be defined in config, unless
-   * it is a direct price feed.
+   * "latest_price_feeds" and triangulation. Triangulation must be defined in
+   * config, unless it is a direct price feed. Uses read endpoints.
+   * @param symbol perpetual symbol of the form BTC-USD-MATIC
    * @returns map of feed-price symbol to price/isMarketClosed
    */
   public async fetchPrices(symbols: string[]): Promise<Map<string, [number, boolean]>> {
@@ -179,8 +231,10 @@ export default class PriceFeeds {
    * Fetch the provided feed prices and bool whether market is closed or open
    * - requires the feeds to be defined in priceFeedConfig.json
    * - if symbols undefined, all feeds are queried
-   * - vaas are not of interest here
-   * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or undefined
+   * - vaas are not of interest here, therefore only readonly price feed
+   *   endpoints are used
+   * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or
+   * undefined
    * @returns mapping symbol-> [price, isMarketClosed]
    */
   public async fetchFeedPrices(symbols?: string[]): Promise<Map<string, [number, boolean]>> {
@@ -249,7 +303,7 @@ export default class PriceFeeds {
   }
 
   /**
-   * Get all configured feed prices via "latest_price_feeds"
+   * Get all configured feed prices via "latest_price_feeds".
    * @returns map of feed-price symbol to price/isMarketClosed
    */
   public async fetchAllFeedPrices(): Promise<Map<string, [number, boolean]>> {
@@ -258,10 +312,10 @@ export default class PriceFeeds {
 
   /**
    * Get the latest prices for a given perpetual from the offchain oracle
-   * networks
+   * networks. Uses write price feed endpoints.
    * @param symbol perpetual symbol of the form BTC-USD-MATIC
-   * @returns array of price feed updates that can be submitted to the smart contract
-   * and corresponding price information
+   * @returns array of price feed updates that can be submitted to the smart
+   * contract and corresponding price information
    */
   public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
     // get the feedIds that the contract uses
@@ -277,7 +331,8 @@ export default class PriceFeeds {
       // and another
       let idx = info[0].endpointId;
       let feedId = feedIds[k];
-      queries.push(this.feedEndpoints[idx] + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId);
+      queries.push(this.writeFeedEndpoints[idx] + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId);
+
       for (let j = 0; j < info.length; j++) {
         if (symbols.has(feedId)) {
           symbols[feedId].append(info[j].symbol);
@@ -481,11 +536,12 @@ export default class PriceFeeds {
   static _constructFeedInfo(
     config: PriceFeedConfig,
     shuffleEndpoints: boolean
-  ): [Map<string, { symbol: string; endpointId: number }[]>, string[]] {
+  ): [Map<string, { symbol: string; endpointId: number }[]>, string[], string[]] {
     let feed = new Map<string, [{ symbol: string; endpointId: number }]>();
     let endpointId = -1;
     let type = "";
     let feedEndpoints = new Array<string>();
+    let writeFeedEndpoints = new Array<string>();
 
     for (let k = 0; k < config.endpoints.length; k++) {
       const L = config.endpoints[k].endpoints.length;
@@ -493,7 +549,13 @@ export default class PriceFeeds {
       // if config has only one endpoint:
       endpointNr = Math.min(endpointNr, L - 1);
       feedEndpoints.push(config.endpoints[k].endpoints[endpointNr]);
+
+      // write endpoints
+      const n = config.endpoints[k].writeEndpoints.length;
+      const useEndpoint = Math.min(!shuffleEndpoints ? 0 : 1 + Math.floor(Math.random() * (n - 1)), n - 1);
+      writeFeedEndpoints.push(config.endpoints[k].writeEndpoints[useEndpoint]);
     }
+
     for (let k = 0; k < config.ids.length; k++) {
       if (type != config.ids[k].type) {
         type = config.ids[k].type;
@@ -518,6 +580,6 @@ export default class PriceFeeds {
         feed.set(id, [item]);
       }
     }
-    return [feed, feedEndpoints];
+    return [feed, feedEndpoints, writeFeedEndpoints];
   }
 }

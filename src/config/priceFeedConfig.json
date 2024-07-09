@@ -148,8 +148,12 @@
       }
     ],
     "endpoints": [
-      { "type": "pyth", "endpoints": ["https://hermes.pyth.network"] },
-      { "type": "onchain", "endpoints": [] }
+      {
+        "type": "pyth",
+        "endpoints": ["https://hermes.pyth.network"],
+        "writeEndpoints": ["https://hermes.pyth.network"]
+      },
+      { "type": "onchain", "endpoints": [], "writeEndpoints": [] }
     ]
   },
   {
@@ -228,6 +232,8 @@
         "origin": "Crypto.USDT/USD"
       }
     ],
-    "endpoints": [{ "type": "odin", "endpoints": ["https://odin.d8x.xyz"] }]
+    "endpoints": [
+      { "type": "odin", "endpoints": ["https://hermes.pyth.network"], "writeEndpoints": ["https://odin.d8x.xyz"] }
+    ]
   }
 ]
