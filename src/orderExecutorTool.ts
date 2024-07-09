@@ -2,7 +2,7 @@ import { Signer } from "@ethersproject/abstract-signer";
 import { BigNumber } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import { BlockTag, StaticJsonRpcProvider } from "@ethersproject/providers";
+import { BlockTag, StaticJsonRpcProvider, TransactionRequest } from "@ethersproject/providers";
 import { BUY_SIDE, MULTICALL_ADDRESS, OrderStatus, SELL_SIDE, ZERO_ADDRESS, ZERO_ORDER_ID } from "./constants";
 import { IPyth__factory, LimitOrderBook, LimitOrderBook__factory, Multicall3, Multicall3__factory } from "./contracts";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
@@ -88,7 +88,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     executorAddr?: string,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides
-  ): Promise<ContractTransaction | undefined> {
+  ): Promise<ContractTransaction> {
     return this.executeOrders(symbol, [orderId], executorAddr, submission, overrides);
   }
 
@@ -126,7 +126,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     executorAddr?: string,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
-  ): Promise<ContractTransaction | undefined> {
+  ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -182,11 +182,23 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
 
     if (overrides?.nonce !== undefined) {
-      const nonce = await overrides!.nonce;
+      const nonce = await overrides.nonce;
       overrides.nonce = BigNumber.from(nonce).add(nonceInc);
     }
 
-    let unsignedTx = {
+    if (overrides?.gasLimit !== undefined) {
+      overrides.gasLimit = await overrides.gasLimit;
+    }
+
+    if (overrides?.gasPrice !== undefined) {
+      overrides.gasPrice = await overrides.gasPrice;
+    }
+
+    if (value !== undefined) {
+      value = await value;
+    }
+
+    const unsignedTx: TransactionRequest = {
       to: this.getOrderBookContract(symbol).address,
       from: this.traderAddr,
       nonce: overrides?.nonce,
@@ -207,20 +219,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         ...overrides,
       };
       if (!overrides.gasLimit) {
-        // gas estimate failed - txn would probably revert, double check:
+        // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
         overrides = { gasLimit: this.gasLimit, value: unsignedTx.value, ...overrides };
-        try {
-          await this.getOrderBookContract(symbol).callStatic.executeOrders(
-            orderIds,
-            executorAddr,
-            submission.priceFeedVaas,
-            submission.timestamps,
-            overrides
-          );
-        } catch (e) {
-          console.log("Order cannot be executed:", e);
-          return undefined;
-        }
+        await this.getOrderBookContract(symbol).callStatic.executeOrders(
+          orderIds,
+          executorAddr,
+          submission.priceFeedVaas,
+          submission.timestamps,
+          overrides
+        );
       }
     }
     return await this.signer.sendTransaction(unsignedTx);
