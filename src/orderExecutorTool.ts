@@ -88,7 +88,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     executorAddr?: string,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransaction | undefined> {
     return this.executeOrders(symbol, [orderId], executorAddr, submission, overrides);
   }
 
@@ -126,7 +126,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     executorAddr?: string,
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransaction | undefined> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -206,6 +206,22 @@ export default class OrderExecutorTool extends WriteAccessHandler {
           .catch((_e) => undefined),
         ...overrides,
       };
+      if (!overrides.gasLimit) {
+        // gas estimate failed - txn would probably revert, double check:
+        overrides = { gasLimit: this.gasLimit, value: unsignedTx.value, ...overrides };
+        try {
+          await this.getOrderBookContract(symbol).callStatic.executeOrders(
+            orderIds,
+            executorAddr,
+            submission.priceFeedVaas,
+            submission.timestamps,
+            overrides
+          );
+        } catch (e) {
+          console.log("Order cannot be executed:", e);
+          return undefined;
+        }
+      }
     }
     return await this.signer.sendTransaction(unsignedTx);
   }
