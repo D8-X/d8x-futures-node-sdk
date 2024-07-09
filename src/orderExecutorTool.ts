@@ -89,59 +89,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides
   ): Promise<ContractTransaction> {
-    if (this.proxyContract == null || this.signer == null) {
-      throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
-    }
-    const orderBookSC = this.getOrderBookContract(symbol);
-    if (executorAddr == undefined) {
-      executorAddr = this.traderAddr;
-    }
-    if (submission == undefined) {
-      submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
-    }
-    if (submission.priceFeedVaas.length == 0) {
-      // we have at least 1 push oracle, so there must be at least 1 price feed to update
-      throw Error("executeOrder: no priceFeedVaas found for symbol " + symbol);
-    }
-    if (!overrides || overrides.value == undefined) {
-      overrides = {
-        // value: submission.timestamps.length * this.PRICE_UPDATE_FEE_GWEI,s
-        gasLimit: overrides?.gasLimit ?? this.gasLimit,
-        ...overrides,
-      } as PayableOverrides;
-    }
-
-    const pyth = IPyth__factory.connect(this.pythAddr!, this.signer);
-
-    // update first
-    const priceIds = this.symbolToPerpStaticInfo.get(symbol)!.priceIds;
-    try {
-      const pythTxn = await pyth.updatePriceFeedsIfNecessary(
-        submission.priceFeedVaas,
-        priceIds,
-        submission.timestamps,
-        {
-          value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
-          gasLimit: overrides?.gasLimit ?? this.gasLimit,
-        }
-      );
-    } catch (e) {
-      console.log(e);
-    }
-
-    const txData = await orderBookSC.interface.encodeFunctionData("executeOrders", [[orderId], executorAddr, [], []]);
-
-    let unsignedTx = {
-      to: orderBookSC.address,
-      from: this.traderAddr,
-      nonce: overrides.nonce, // populated by provider if undefined
-      data: txData,
-      value: overrides.value,
-      gasLimit: overrides.gasLimit, // always defined at this point
-      gasPrice: overrides.gasPrice, // populated by the provider if not specified
-      chainId: this.chainId,
-    };
-    return await this.signer.sendTransaction(unsignedTx);
+    return this.executeOrders(symbol, [orderId], executorAddr, submission, overrides);
   }
 
   /**
@@ -188,19 +136,15 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       ({ rpcURL, splitTx, ...overrides } = overrides);
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
-    const orderBookSC = LimitOrderBook__factory.connect(this.getOrderBookContract(symbol).address, provider);
+
     if (typeof executorAddr == "undefined") {
       executorAddr = this.traderAddr;
     }
     if (submission == undefined) {
       submission = await this.priceFeedGetter.fetchLatestFeedPriceInfoForPerpetual(symbol);
     }
-    if (!overrides || overrides.gasLimit == undefined) {
-      overrides = {
-        gasLimit: overrides?.gasLimit ?? this.gasLimit,
-        ...overrides,
-      } as PayableOverrides;
-    }
+
+    const iOB = LimitOrderBook__factory.createInterface();
 
     // update first
     let nonceInc = 0;
@@ -217,7 +161,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
           {
             value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
             gasLimit: overrides?.gasLimit ?? this.gasLimit,
-            nonce: overrides.nonce,
+            nonce: overrides?.nonce,
           }
         );
         nonceInc += 1;
@@ -226,9 +170,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         console.log(e);
       }
 
-      txData = orderBookSC.interface.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
+      txData = iOB.encodeFunctionData("executeOrders", [orderIds, executorAddr, [], []]);
     } else {
-      txData = orderBookSC.interface.encodeFunctionData("executeOrders", [
+      txData = iOB.encodeFunctionData("executeOrders", [
         orderIds,
         executorAddr,
         submission.priceFeedVaas,
@@ -241,17 +185,28 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       const nonce = await overrides!.nonce;
       overrides.nonce = BigNumber.from(nonce).add(nonceInc);
     }
+
     let unsignedTx = {
-      to: orderBookSC.address,
+      to: this.getOrderBookContract(symbol).address,
       from: this.traderAddr,
-      nonce: overrides.nonce,
+      nonce: overrides?.nonce,
       data: txData,
       value: value,
-      gasLimit: overrides.gasLimit,
+      gasLimit: overrides?.gasLimit,
       // gas price is populated by the provider if undefined
-      gasPrice: overrides.gasPrice,
+      gasPrice: overrides?.gasPrice,
       chainId: this.chainId,
     };
+    // no gas limit was specified, explicitly estimate
+    if (!overrides?.gasLimit) {
+      overrides = {
+        gasLimit: await this.signer
+          .estimateGas(unsignedTx)
+          .then((gas) => gas.mul(1100).div(1000))
+          .catch((_e) => undefined),
+        ...overrides,
+      };
+    }
     return await this.signer.sendTransaction(unsignedTx);
   }
 
