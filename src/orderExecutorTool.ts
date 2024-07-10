@@ -131,15 +131,16 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderIds: string[],
     executorAddr?: string,
     submission?: PriceFeedSubmission,
-    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
+    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean; maxGasLimit?: BigNumberish }
   ): Promise<TransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
     let rpcURL: string | undefined;
     let splitTx: boolean | undefined;
+    let maxGasLimit: BigNumberish | undefined;
     if (overrides) {
-      ({ rpcURL, splitTx, ...overrides } = overrides);
+      ({ rpcURL, splitTx, maxGasLimit, ...overrides } = overrides);
     }
     const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL);
 
@@ -216,16 +217,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     };
     // no gas limit was specified, explicitly estimate
     if (!overrides?.gasLimit) {
-      overrides = {
-        gasLimit: await this.signer
-          .estimateGas(unsignedTx)
-          .then((gas) => (gas * 1100n) / 1000n)
-          .catch((_e) => undefined),
-        ...overrides,
-      };
-      if (!overrides.gasLimit) {
+      let gasLimit = await this.signer
+        .estimateGas(unsignedTx)
+        .then((gas) => (gas * 1100n) / 1000n)
+        .catch((_e) => undefined);
+      if (!gasLimit) {
         // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
-        overrides = { gasLimit: this.gasLimit, value: unsignedTx.value, ...overrides };
+        overrides = { gasLimit: maxGasLimit ?? this.gasLimit, value: unsignedTx.value, ...overrides };
         await this.getOrderBookContract(symbol).executeOrders.staticCall(
           orderIds,
           executorAddr,
@@ -233,7 +231,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
           submission.timestamps,
           overrides
         );
+        gasLimit = BigInt(maxGasLimit ?? this.gasLimit);
       }
+      unsignedTx.gasLimit = gasLimit;
     }
     return await this.signer.sendTransaction(unsignedTx);
   }
