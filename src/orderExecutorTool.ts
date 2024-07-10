@@ -235,7 +235,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       }
       unsignedTx.gasLimit = gasLimit;
     }
-    return await this.signer.sendTransaction(unsignedTx);
+    return await this.signer.connect(provider).sendTransaction(unsignedTx);
   }
 
   /**
