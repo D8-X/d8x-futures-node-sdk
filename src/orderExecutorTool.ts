@@ -1,5 +1,5 @@
 import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumber } from "@ethersproject/bignumber";
+import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
 import { HashZero } from "@ethersproject/constants";
 import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
 import { BlockTag, StaticJsonRpcProvider, TransactionRequest } from "@ethersproject/providers";
@@ -125,7 +125,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orderIds: string[],
     executorAddr?: string,
     submission?: PriceFeedSubmission,
-    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
+    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean; maxGasLimit?: BigNumberish }
   ): Promise<ContractTransaction> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -211,26 +211,33 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     };
     // no gas limit was specified, explicitly estimate
     if (!overrides?.gasLimit) {
-      overrides = {
-        gasLimit: await this.signer
-          .estimateGas(unsignedTx)
-          .then((gas) => gas.mul(1100).div(1000))
-          .catch((_e) => undefined),
-        ...overrides,
-      };
-      if (!overrides.gasLimit) {
+      // given gas price might be conservative, which leads to a lower a gas estimate
+      //-> compensate with larger buffer
+      let gasLimit = await this.signer
+        .estimateGas(unsignedTx)
+        .then((gas) => gas.mul(1500).div(1000))
+        .catch((_e) => undefined);
+
+      if (!gasLimit) {
         // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
-        overrides = { gasLimit: this.gasLimit, value: unsignedTx.value, ...overrides };
-        await this.getOrderBookContract(symbol).callStatic.executeOrders(
+        overrides = {
+          ...overrides,
+          gasLimit: overrides?.maxGasLimit ?? this.gasLimit,
+          value: unsignedTx.value,
+        };
+        await this.getOrderBookContract(symbol, provider).callStatic.executeOrders(
           orderIds,
           executorAddr,
           submission.priceFeedVaas,
           submission.timestamps,
           overrides
         );
+        // it worked - use fallback
+        gasLimit = BigNumber.from(overrides?.maxGasLimit ?? this.gasLimit);
       }
+      unsignedTx.gasLimit = gasLimit;
     }
-    return await this.signer.sendTransaction(unsignedTx);
+    return await this.signer.connect(provider).sendTransaction(unsignedTx);
   }
 
   /**

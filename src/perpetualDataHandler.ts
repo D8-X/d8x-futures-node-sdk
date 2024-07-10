@@ -179,12 +179,12 @@ export default class PerpetualDataHandler {
    * @param symbol symbol of the form ETH-USD-MATIC
    * @returns order book contract for the perpetual
    */
-  public getOrderBookContract(symbol: string): Contract & LimitOrderBook {
+  public getOrderBookContract(symbol: string, provider?: Provider): Contract & LimitOrderBook {
     let orderBookAddr = this.symbolToPerpStaticInfo.get(symbol)?.limitOrderBookAddr;
     if (orderBookAddr == "" || orderBookAddr == undefined || this.signerOrProvider == null) {
       throw Error(`no limit order book found for ${symbol} or no signer`);
     }
-    let lobContract = LimitOrderBook__factory.connect(orderBookAddr, this.signerOrProvider);
+    let lobContract = LimitOrderBook__factory.connect(orderBookAddr, provider ?? this.signerOrProvider);
     return lobContract;
   }
 
