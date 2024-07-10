@@ -1,8 +1,5 @@
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { concat } from "@ethersproject/bytes";
-import { keccak256 } from "@ethersproject/keccak256";
-import { toUtf8Bytes } from "@ethersproject/strings";
 import { Buffer } from "buffer";
+import { AbiCoder, BigNumberish, concat, keccak256, toUtf8Bytes } from "ethers";
 import { type SmartContractOrder } from "./nodeSDKTypes";
 
 export default class TraderDigests {
@@ -30,11 +27,17 @@ export default class TraderDigests {
    * @returns digest
    * @ignore
    */
-  public createDigest(order: SmartContractOrder, chainId: number, isNewOrder: boolean, proxyAddress: string): string {
+  public createDigest(
+    order: SmartContractOrder,
+    chainId: BigNumberish,
+    isNewOrder: boolean,
+    proxyAddress: string
+  ): string {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
     );
+    const defaultAbiCoder = new AbiCoder();
     let domainSeparator = keccak256(
       defaultAbiCoder.encode(
         ["bytes32", "bytes32", "uint256", "address"],

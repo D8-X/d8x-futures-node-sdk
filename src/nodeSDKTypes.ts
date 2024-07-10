@@ -1,6 +1,4 @@
-import { BigNumber, type BigNumberish } from "@ethersproject/bignumber";
-import type { BytesLike } from "@ethersproject/bytes";
-import type { ContractInterface, ContractTransaction } from "@ethersproject/contracts";
+import { BigNumberish, BytesLike, ContractTransaction, ContractTransactionResponse, Interface } from "ethers";
 import { CollaterlCCY } from "./constants";
 
 export interface NodeSDKConfig {
@@ -16,10 +14,10 @@ export interface NodeSDKConfig {
   symbolListLocation: string;
   priceFeedConfigNetwork: string;
   gasLimit?: number | undefined;
-  proxyABI?: ContractInterface | undefined;
-  lobFactoryABI?: ContractInterface | undefined;
-  lobABI?: ContractInterface | undefined;
-  shareTokenABI?: ContractInterface | undefined;
+  proxyABI?: Interface | undefined;
+  lobFactoryABI?: Interface | undefined;
+  lobABI?: Interface | undefined;
+  shareTokenABI?: Interface | undefined;
   priceFeedEndpoints?: PriceFeedEndpointsOptionalWrite;
   multicall?: string;
 }
@@ -27,7 +25,7 @@ export interface NodeSDKConfig {
 export type SettlementConfig = SettlementCcyItem[];
 
 export interface SettlementCcyItem {
-  perpFlags: BigNumberish;
+  perpFlags: bigint;
   description: string;
   settleTokenDecimals: number;
   settleCCY: string;
@@ -79,7 +77,7 @@ export interface PerpetualStaticInfo {
   referralRebate: number;
   priceIds: string[];
   isPyth: boolean[];
-  perpFlags: BigNumberish;
+  perpFlags: bigint;
 }
 
 /*
@@ -156,7 +154,7 @@ export interface PerpetualState {
 }
 
 export interface OrderResponse {
-  tx: ContractTransaction;
+  tx: ContractTransactionResponse;
   orderId: string;
 }
 
@@ -195,16 +193,16 @@ export interface TradeEvent {
 /**
  * @global
  * @typedef {Object} SmartContractOrder
- * @property {BigNumberish} flags
+ * @property {bigint} flags
  * @property {number} iPerpetualId
  * @property {number} brokerFeeTbps
  * @property {string} traderAddr
  * @property {string} brokerAddr
  * @property {string} executorAddr
  * @property {BytesLike} brokerSignature
- * @property {BigNumberish} fAmount
- * @property {BigNumberish} fLimitPrice
- * @property {BigNumberish} fTriggerPrice
+ * @property {bigint} fAmount
+ * @property {bigint} fLimitPrice
+ * @property {bigint} fTriggerPrice
  * @property {number} leverageTDR
  * @property {number} iDeadline
  * @property {number} executionTimestamp
@@ -212,37 +210,52 @@ export interface TradeEvent {
  */
 export interface SmartContractOrder {
   flags: BigNumberish;
-  iPerpetualId: number;
-  brokerFeeTbps: number;
+  iPerpetualId: BigNumberish;
+  brokerFeeTbps: BigNumberish;
   traderAddr: string;
   brokerAddr: string;
   executorAddr: string;
   brokerSignature: BytesLike;
-  fAmount: BigNumberish;
-  fLimitPrice: BigNumberish;
-  fTriggerPrice: BigNumberish;
-  leverageTDR: number;
-  iDeadline: number;
-  executionTimestamp: number;
-  submittedTimestamp: number;
+  fAmount: bigint;
+  fLimitPrice: bigint;
+  fTriggerPrice: bigint;
+  leverageTDR: BigNumberish;
+  iDeadline: BigNumberish;
+  executionTimestamp: BigNumberish;
+  submittedTimestamp: BigNumberish;
 }
-
+// {
+//   leverageTDR: bigint;
+//   brokerFeeTbps: bigint;
+//   iPerpetualId: bigint;
+//   traderAddr: string;
+//   executionTimestamp: bigint;
+//   brokerAddr: string;
+//   submittedTimestamp: bigint;
+//   flags: bigint;
+//   iDeadline: bigint;
+//   executorAddr: string;
+//   fAmount: bigint;
+//   fLimitPrice: bigint;
+//   fTriggerPrice: bigint;
+//   brokerSignature: string;
+// };
 /**
  * @global
  * @typedef {Object} ClientOrder
- * @property {BigNumberish} flags
- * @property {BigNumberish} iPerpetualId
- * @property {BigNumberish} brokerFeeTbps
+ * @property {bigint} flags
+ * @property {bigint} iPerpetualId
+ * @property {bigint} brokerFeeTbps
  * @property {string} traderAddr
  * @property {string} brokerAddr
  * @property {string} executorAddr
  * @property {BytesLike} brokerSignature
- * @property {BigNumberish} fAmount
- * @property {BigNumberish} fLimitPrice
- * @property {BigNumberish} fTriggerPrice
- * @property {BigNumberish} leverageTDR
- * @property {BigNumberish} iDeadline
- * @property {BigNumberish} executionTimestamp
+ * @property {bigint} fAmount
+ * @property {bigint} fLimitPrice
+ * @property {bigint} fTriggerPrice
+ * @property {bigint} leverageTDR
+ * @property {bigint} iDeadline
+ * @property {bigint} executionTimestamp
  * @property {string} parentChildDigest1
  * @property {string} parentChildDigest2
  * @property {string} callbackTarget
@@ -255,9 +268,9 @@ export interface ClientOrder {
   brokerAddr: string;
   executorAddr: string;
   brokerSignature: BytesLike;
-  fAmount: BigNumberish;
-  fLimitPrice: BigNumberish;
-  fTriggerPrice: BigNumberish;
+  fAmount: bigint;
+  fLimitPrice: bigint;
+  fTriggerPrice: bigint;
   leverageTDR: BigNumberish;
   iDeadline: BigNumberish;
   executionTimestamp: BigNumberish;
@@ -316,9 +329,9 @@ export interface PriceFeedSubmission {
 }
 
 export interface PriceFeedFormat {
-  conf: BigNumber;
+  conf: bigint;
   expo: number;
-  price: BigNumber;
+  price: bigint;
   publish_time: number;
 }
 

@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, ZeroAddress } from "ethers";
 import TraderInterface from "../src/traderInterface";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
@@ -8,12 +8,12 @@ describe("Front-end-like functionality", () => {
   beforeAll(async () => {});
   it("order digest", async () => {
     let pk: string = <string>process.env.PK;
-    let config = PerpetualDataHandler.readSDKConfig("cardona");
+    let config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
     let apiInterface = new TraderInterface(config);
     await apiInterface.createProxyInstance();
     let wallet = new ethers.Wallet(pk);
     let order: Order = {
-      symbol: "BTC-USD-MATIC",
+      symbol: "BTC-USDC-USDC",
       side: "BUY",
       type: "MARKET",
       quantity: -0.05,
@@ -23,9 +23,9 @@ describe("Front-end-like functionality", () => {
     let orderSC = await apiInterface.createSmartContractOrder(order, wallet.address);
     let res = await apiInterface.orderDigest(orderSC);
     console.log(res);
-    let fee = await apiInterface.queryExchangeFee("MATIC", wallet.address, ethers.constants.AddressZero);
+    let fee = await apiInterface.queryExchangeFee("USDC", wallet.address, ZeroAddress);
     console.log("fee=", fee);
-    let vol = await apiInterface.getCurrentTraderVolume("MATIC", wallet.address);
+    let vol = await apiInterface.getCurrentTraderVolume("USDC", wallet.address);
     console.log("vol=", vol);
   });
 });

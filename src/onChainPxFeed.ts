@@ -1,4 +1,4 @@
-import { StaticJsonRpcProvider } from "@ethersproject/providers";
+import { JsonRpcProvider, Provider } from "ethers";
 
 /**
  * OnChainPxFeed: get a price from a chainlink-style oracle
@@ -7,7 +7,7 @@ export default abstract class OnChainPxFeed {
   public rpcs: string[];
   protected lastRpc: number = 0;
   protected lastPx: number | undefined;
-  protected provider: StaticJsonRpcProvider;
+  protected provider: Provider;
   protected lastResponseTs: number = 0;
 
   protected abstract fetchPrice(delay: boolean): Promise<void>;
@@ -15,12 +15,12 @@ export default abstract class OnChainPxFeed {
   public constructor(rpcs: string[]) {
     this.rpcs = rpcs;
     this.lastRpc = Math.floor(Math.random() * rpcs.length);
-    this.provider = new StaticJsonRpcProvider(this.rpcs[this.lastRpc]);
+    this.provider = new JsonRpcProvider(this.rpcs[this.lastRpc]);
   }
 
   protected setRpc() {
     this.lastRpc = (this.lastRpc + 1) % this.rpcs.length;
-    this.provider = new StaticJsonRpcProvider(this.rpcs[this.lastRpc]);
+    this.provider = new JsonRpcProvider(this.rpcs[this.lastRpc]);
   }
 
   public async getPrice(): Promise<number> {

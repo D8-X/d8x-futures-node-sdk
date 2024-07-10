@@ -1,9 +1,7 @@
-import { Contract } from "@ethersproject/contracts";
-import { StaticJsonRpcProvider } from "@ethersproject/providers";
 import { decNToFloat } from "./d8XMath";
-import { BigNumber } from "ethers";
 import { sleep } from "./utils";
 import OnChainPxFeed from "./onChainPxFeed";
+import { Contract, Provider } from "ethers";
 
 /**
  * OnChainPxFeedAngle: get STUSD-USDC exchange rate
@@ -49,7 +47,7 @@ export default class OnChainPxFeedAngle extends OnChainPxFeed {
  * @param provider arbitrum provider
  * @returns STUSD-USDC
  */
-export async function STUSDToUSDC(provider: StaticJsonRpcProvider): Promise<number> {
+export async function STUSDToUSDC(provider: Provider): Promise<number> {
   // ABIs for IERC4626 and ITransmuter contracts
   const ierc4626ABI = ["function previewMint(uint256) external view returns (uint256)"];
   const iTransmuterABI = ["function quoteOut(uint256, address, address) external view returns (uint256)"];
@@ -64,11 +62,11 @@ export async function STUSDToUSDC(provider: StaticJsonRpcProvider): Promise<numb
   const iTransmuterContract = new Contract(transmuterAddr, iTransmuterABI, provider);
 
   // Call previewMint to get amountUSDA
-  const ONE_STUSD = BigNumber.from(10).pow(BigNumber.from(18));
-  const amountUSDA: BigNumber = await ierc4626Contract.previewMint(ONE_STUSD);
+  const ONE_STUSD = 10n ** 18n; // BigNumber.from(10).pow(BigNumber.from(18));
+  const amountUSDA: bigint = await ierc4626Contract.previewMint(ONE_STUSD);
 
   // Call quoteOut to get amountIn
-  const amountUSDC: BigNumber = await iTransmuterContract.quoteOut(amountUSDA, USDC, USDA);
+  const amountUSDC: bigint = await iTransmuterContract.quoteOut(amountUSDA, USDC, USDA);
 
   return decNToFloat(amountUSDC, 6);
 }

@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcProvider } from "ethers";
 import {
   NodeSDKConfig,
   ExchangeInfo,
@@ -99,8 +99,8 @@ describe("readOnly", () => {
       wallet = new ethers.Wallet(pk);
     });
     it("Read ABI", () => {
-      let proxyABI = apiInterface.getABI("sharetoken") as string;
-      expect(proxyABI.length > 0).toBeTruthy;
+      let proxyABI = apiInterface.getABI("sharetoken");
+      expect(proxyABI != undefined).toBeTruthy;
     });
 
     it("order digest", async () => {
@@ -122,7 +122,7 @@ describe("readOnly", () => {
     });
     it("get proxy ABI", async () => {
       // Signer or provider
-      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      const provider = new JsonRpcProvider(config.nodeURL);
       // Address of the contract
       let contractAddr = apiInterface.getProxyAddress();
       // ABI as it would come from the API:
@@ -133,13 +133,13 @@ describe("readOnly", () => {
       expect(abi.length > 2).toBeTruthy;
       // contract instance
       let contract = new ethers.Contract(contractAddr, [abi], provider);
-      let px = await contract.getOraclePrice([toBytes4("USDC"), toBytes4("USD")]);
-      expect(px.gt(0)).toBeTruthy;
+      let px = (await contract.getOraclePrice([toBytes4("USDC"), toBytes4("USD")])) as bigint;
+      expect(px > 0).toBeTruthy;
       // console.log(`price of USDC-USD: ${ABK64x64ToFloat(px)}`);
     });
     it("get LOB ABI", async () => {
       // Signer or provider
-      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      const provider = new JsonRpcProvider(config.nodeURL);
       // Address of the contract
       let contractAddr = apiInterface.getOrderBookAddress("ETH-USDC-USDC");
       // ABI as it would come from the API:

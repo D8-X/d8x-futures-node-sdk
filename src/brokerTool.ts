@@ -1,7 +1,3 @@
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { Signer } from "@ethersproject/abstract-signer";
-import { CallOverrides, ContractTransaction, Overrides } from "@ethersproject/contracts";
-import { keccak256 } from "@ethersproject/keccak256";
 import { ABK64x64ToFloat } from "./d8XMath";
 import { NodeSDKConfig, Order, PerpetualStaticInfo, SmartContractOrder } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -9,6 +5,7 @@ import WriteAccessHandler from "./writeAccessHandler";
 
 import { Buffer } from "buffer";
 import AccountTrade from "./accountTrade";
+import { AbiCoder, BigNumberish, ContractTransactionResponse, keccak256, Overrides, Signer } from "ethers";
 /**
  * Functions for white-label partners to determine fees, deposit lots, and sign-up traders.
  * This class requires a private key and executes smart-contract interactions that
@@ -64,7 +61,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} Exchange fee for this white-label partner, in decimals (i.e. 0.1% is 0.001)
    */
-  public async getBrokerInducedFee(poolSymbolName: string, overrides?: CallOverrides): Promise<number | undefined> {
+  public async getBrokerInducedFee(poolSymbolName: string, overrides?: Overrides): Promise<number | undefined> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -103,7 +100,7 @@ export default class BrokerTool extends WriteAccessHandler {
   public async getFeeForBrokerDesignation(
     poolSymbolName: string,
     lots?: number,
-    overrides?: CallOverrides
+    overrides?: Overrides
   ): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -142,7 +139,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} Fee based solely on a white-label partner's traded volume in the corresponding pool, in decimals (i.e. 0.1% is 0.001).
    */
-  public async getFeeForBrokerVolume(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
+  public async getFeeForBrokerVolume(poolSymbolName: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -173,7 +170,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} Fee based solely on a white-label partner's D8X balance, in decimals (i.e. 0.1% is 0.001).
    */
-  public async getFeeForBrokerStake(brokerAddr?: string, overrides?: CallOverrides): Promise<number> {
+  public async getFeeForBrokerStake(brokerAddr?: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -219,7 +216,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} Fee in decimals (i.e. 0.1% is 0.001).
    */
-  public async determineExchangeFee(order: Order, traderAddr: string, overrides?: CallOverrides): Promise<number> {
+  public async determineExchangeFee(order: Order, traderAddr: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -251,7 +248,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} Current trading volume for this white-label partner, in USD.
    */
-  public async getCurrentBrokerVolume(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
+  public async getCurrentBrokerVolume(poolSymbolName: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -283,7 +280,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} White-label partner lot size in a given pool's currency, e.g. in MATIC for poolSymbolName MATIC.
    */
-  public async getLotSize(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
+  public async getLotSize(poolSymbolName: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -314,7 +311,7 @@ export default class BrokerTool extends WriteAccessHandler {
    *
    * @returns {number} Number of lots purchased by this white-label partner.
    */
-  public async getBrokerDesignation(poolSymbolName: string, overrides?: CallOverrides): Promise<number> {
+  public async getBrokerDesignation(poolSymbolName: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -349,7 +346,7 @@ export default class BrokerTool extends WriteAccessHandler {
     poolSymbolName: string,
     lots: number,
     overrides?: Overrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -490,19 +487,19 @@ export default class BrokerTool extends WriteAccessHandler {
   }
 
   private static async _signOrderFromRawData(
-    iPerpetualId: number,
-    brokerFeeTbps: number,
+    iPerpetualId: BigNumberish,
+    brokerFeeTbps: BigNumberish,
     traderAddr: string,
-    iDeadline: number,
+    iDeadline: BigNumberish,
     signer: Signer,
-    chainId: number,
+    chainId: BigNumberish,
     proxyAddress: string
   ) {
     const NAME = "Perpetual Trade Manager";
     const DOMAIN_TYPEHASH = keccak256(
       Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
     );
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     let domainSeparator = keccak256(
       abiCoder.encode(
         ["bytes32", "bytes32", "uint256", "address"],
@@ -532,7 +529,7 @@ export default class BrokerTool extends WriteAccessHandler {
     traderAddr: string,
     iDeadline: number,
     signer: Signer,
-    chainId: number,
+    chainId: BigNumberish,
     proxyAddress: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ): Promise<string> {
@@ -577,7 +574,7 @@ export default class BrokerTool extends WriteAccessHandler {
     poolSymbolName: string,
     newAddress: string,
     overrides?: Overrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransactionResponse> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

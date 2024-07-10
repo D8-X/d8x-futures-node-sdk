@@ -1,12 +1,11 @@
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { ethers } from "ethers";
+import { JsonRpcProvider, Wallet } from "ethers";
 import { APIReferralCodeSelectionPayload, APIReferPayload, APIReferralCodePayload } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import ReferralCodeSigner from "../src/referralCodeSigner";
 
 let pk: string;
 let RPC: string;
-let wallet: ethers.Wallet;
+let wallet: Wallet;
 let codeSigner: ReferralCodeSigner;
 let rc: APIReferralCodeSelectionPayload;
 
@@ -25,7 +24,7 @@ describe("referralCodeSigner", () => {
     } else {
       RPC = config.nodeURL;
     }
-    wallet = new ethers.Wallet(pk);
+    wallet = new Wallet(pk);
     rc = {
       code: "ABCD",
       traderAddr: wallet.address,

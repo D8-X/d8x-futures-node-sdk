@@ -1,5 +1,4 @@
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { ethers } from "ethers";
+import { ethers, JsonRpcProvider } from "ethers";
 // import AccountTrade from "../src/accountTrade";
 import LiquidityProviderTool from "../src/liquidityProviderTool";
 import MarketData from "../src/marketData";
@@ -45,12 +44,12 @@ describe("LP: write and spoil gas and tokens", () => {
     it("deposit", async () => {
       // let tx0 = await liqProvTool.setAllowance("USDC", 1_200_000);
       // console.log("allowance tx hash=", tx0.hash);
-      let tx = await liqProvTool.addLiquidity("MATIC", 1_200);
+      let tx = await liqProvTool.addLiquidity("USDC", 1_200);
       await tx.wait();
       console.log("deposit tx hash=", tx.hash);
     });
     it("getParticipationValue", async () => {
-      let val2 = await mktData.getParticipationValue(wallet.address, "MATIC");
+      let val2 = await mktData.getParticipationValue(wallet.address, "USDC");
       console.log("pool sharetoken value via mkt", val2);
     });
     //it("initiate", async () => {

@@ -1,9 +1,7 @@
-import { Contract } from "@ethersproject/contracts";
-import { StaticJsonRpcProvider } from "@ethersproject/providers";
 import { decNToFloat } from "./d8XMath";
-import { BigNumber } from "ethers";
 import { sleep } from "./utils";
 import OnChainPxFeed from "./onChainPxFeed";
+import { Contract } from "ethers";
 
 /**
  * OnChainPxFeedRedStone: get a price from a chainlink-style oracle

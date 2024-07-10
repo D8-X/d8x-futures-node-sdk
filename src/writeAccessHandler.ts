@@ -1,11 +1,16 @@
-import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumber } from "@ethersproject/bignumber";
-import { CallOverrides, Contract, ContractTransaction, Overrides, PayableOverrides } from "@ethersproject/contracts";
-import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
-import { parseEther } from "@ethersproject/units";
-import { Wallet } from "@ethersproject/wallet";
+import {
+  Contract,
+  ContractTransactionResponse,
+  JsonRpcProvider,
+  Overrides,
+  parseEther,
+  Provider,
+  Signer,
+  Wallet,
+} from "ethers";
 import { MAX_UINT_256, MULTICALL_ADDRESS } from "./constants";
 import { ERC20__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
+import { PayableOverrides } from "./contracts/common";
 import { floatToDecN } from "./d8XMath";
 import MarketData from "./marketData";
 import { type NodeSDKConfig } from "./nodeSDKTypes";
@@ -39,7 +44,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     }
   }
 
-  public async createProxyInstance(provider?: Provider, overrides?: CallOverrides): Promise<void>;
+  public async createProxyInstance(provider?: Provider, overrides?: Overrides): Promise<void>;
 
   public async createProxyInstance(marketData: MarketData): Promise<void>;
 
@@ -49,9 +54,9 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * about perpetual currencies
    * @param provider optional provider
    */
-  public async createProxyInstance(providerOrMarketData?: Provider | MarketData, overrides?: CallOverrides) {
-    if (providerOrMarketData == undefined || Provider.isProvider(providerOrMarketData)) {
-      this.provider = providerOrMarketData ?? new StaticJsonRpcProvider(this.nodeURL);
+  public async createProxyInstance(providerOrMarketData?: Provider | MarketData, overrides?: Overrides) {
+    if (providerOrMarketData == undefined || !("createProxyInstance" in providerOrMarketData)) {
+      this.provider = providerOrMarketData ?? new JsonRpcProvider(this.nodeURL, this.network, { staticNetwork: true });
       if (!this.signer) {
         const wallet = new Wallet(this.privateKey!);
         this.signer = wallet.connect(this.provider);
@@ -60,7 +65,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     } else {
       const mktData = providerOrMarketData;
       this.nodeURL = mktData.config.nodeURL;
-      this.provider = new StaticJsonRpcProvider(mktData.config.nodeURL);
+      this.provider = new JsonRpcProvider(mktData.config.nodeURL, mktData.network, { staticNetwork: true });
       this.proxyContract = new Contract(mktData.getProxyAddress(), this.config.proxyABI!, this.provider);
       this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
@@ -84,9 +89,13 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * Set allowance for ar margin token (e.g., MATIC, ETH, USDC)
    * @param symbol token in 'long-form' such as MATIC, symbol also fine (ETH-USD-MATIC)
    * @param amount optional, amount to approve if not 'infinity'
-   * @returns ContractTransaction
+   * @returns Contract Transaction
    */
-  public async setAllowance(symbol: string, amount?: number, overrides?: Overrides): Promise<ContractTransaction> {
+  public async setAllowance(
+    symbol: string,
+    amount?: number,
+    overrides?: Overrides
+  ): Promise<ContractTransactionResponse> {
     // extract margin-currency name
     let symbolarr = symbol.split("-");
     symbol = symbol.length == 3 ? symbolarr[2] : symbolarr[0];
@@ -95,7 +104,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     if (settleTokenAddr == undefined || this.signer == null) {
       throw Error("No margin token or signer defined, call createProxyInstance");
     }
-    let amountDec18: BigNumber;
+    let amountDec18: bigint;
     if (amount == undefined) {
       amountDec18 = MAX_UINT_256;
     } else {
@@ -108,9 +117,9 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     tokenAddr: string,
     proxyAddr: string,
     signer: Signer,
-    amount: BigNumber,
+    amount: bigint,
     overrides?: Overrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransactionResponse> {
     const marginToken = ERC20__factory.connect(tokenAddr, signer);
     return await marginToken.approve(proxyAddr, amount, overrides || {});
   }
@@ -134,7 +143,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
     symbol: string,
     amountToPay: string,
     overrides?: PayableOverrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransactionResponse> {
     if (this.signer == null) {
       throw Error("no wallet initialized. Use createProxyInstance().");
     }

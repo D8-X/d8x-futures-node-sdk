@@ -1,7 +1,5 @@
-import { Signer } from "@ethersproject/abstract-signer";
-import { BigNumber } from "@ethersproject/bignumber";
-import type { CallOverrides, ContractTransaction, PayableOverrides } from "@ethersproject/contracts";
-import { StaticJsonRpcProvider } from "@ethersproject/providers";
+import { ContractTransactionResponse, JsonRpcProvider, Overrides, Signer, TransactionResponse } from "ethers";
+import { PayableOverrides } from "./contracts/common";
 import { IPyth__factory } from "./contracts/factories";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import type { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
@@ -49,7 +47,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (overrides) {
       ({ rpcURL, ...overrides } = overrides);
     }
-    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL, this.network, { staticNetwork: true });
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     if (priceUpdates == undefined) {
       priceUpdates = await this.fetchLatestFeedPriceInfo(symbol);
@@ -101,7 +99,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     liquidatorAddr: string = "",
     submission?: PriceFeedSubmission,
     overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
-  ): Promise<ContractTransaction> {
+  ): Promise<TransactionResponse> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
@@ -115,7 +113,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (overrides) {
       ({ rpcURL, splitTx, ...overrides } = overrides);
     }
-    const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
+    const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL, this.network, { staticNetwork: true });
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
@@ -166,9 +164,8 @@ export default class LiquidatorTool extends WriteAccessHandler {
       ]);
       value = this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length;
     }
-    if (overrides?.nonce !== undefined) {
-      const nonce = await overrides!.nonce;
-      overrides.nonce = BigNumber.from(nonce).add(nonceInc);
+    if (!!overrides?.nonce) {
+      overrides.nonce = overrides.nonce + nonceInc;
     }
     let unsignedTx = {
       to: this.proxyAddr,
@@ -213,7 +210,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     symbol: string,
     traderAddr: string,
     indexPrices?: [number, number],
-    overrides?: CallOverrides
+    overrides?: Overrides
   ): Promise<boolean> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -228,7 +225,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     let traderState = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [BigNumber, BigNumber],
+      indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [bigint, bigint],
       overrides || {}
     );
     if (traderState[idx_notional].eq(0)) {
@@ -269,7 +266,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *
    * @returns {number} Number of active accounts.
    */
-  public async countActivePerpAccounts(symbol: string, overrides?: CallOverrides): Promise<number> {
+  public async countActivePerpAccounts(symbol: string, overrides?: Overrides): Promise<number> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -304,7 +301,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     symbol: string,
     from: number,
     to: number,
-    overrides?: CallOverrides
+    overrides?: Overrides
   ): Promise<string[]> {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
@@ -333,7 +330,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
    *
    * @returns {string[]} Array of addresses.
    */
-  public async getAllActiveAccounts(symbol: string, overrides?: CallOverrides): Promise<string[]> {
+  public async getAllActiveAccounts(symbol: string, overrides?: Overrides): Promise<string[]> {
     // checks are done inside the intermediate functions
     let totalAccounts = await this.countActivePerpAccounts(symbol);
     return await this.getActiveAccountsByChunks(symbol, 0, totalAccounts, overrides);

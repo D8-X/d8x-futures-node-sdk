@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
+import { BigNumberish } from "ethers";
 import { DECIMALS, ONE_64x64 } from "./constants";
 
 /**
@@ -12,7 +12,7 @@ import { DECIMALS, ONE_64x64 } from "./constants";
  * @param  {BigNumber|number} x number in ABDK-format/2^35
  * @returns {number} x/2^64 in number-format (float)
  */
-export function ABDK29ToFloat(x: BigNumber | number): number {
+export function ABDK29ToFloat(x: bigint | number): number {
   return Number(x) / 2 ** 29;
 }
 
@@ -22,22 +22,21 @@ export function ABDK29ToFloat(x: BigNumber | number): number {
  * @param  {BigNumberish|number} x number in ABDK-format or 2^29
  * @returns {number} x/2^64 in number-format (float)
  */
-export function ABK64x64ToFloat(x: BigNumberish | number): number {
+export function ABK64x64ToFloat(x: bigint | number): number {
   if (typeof x == "number") {
     return x / 2 ** 29;
   }
-  x = BigNumber.from(x);
-  let s = x.lt(0) ? -1 : 1;
-  x = x.mul(s);
-  let xInt = x.div(ONE_64x64);
-  let dec18 = BigNumber.from(10).pow(BigNumber.from(18));
-  let xDec = x.sub(xInt.mul(ONE_64x64));
-  xDec = xDec.mul(dec18).div(ONE_64x64);
+  let s = x < 0n ? -1n : 1n;
+  x = x * s;
+  let xInt = x / ONE_64x64;
+  let dec18 = 10n ** 18n; // BigNumber.from(10).pow(BigNumber.from(18));
+  let xDec = x - xInt * ONE_64x64;
+  xDec = (xDec * dec18) / ONE_64x64;
   let k = 18 - xDec.toString().length;
   // console.assert(k >= 0);
   let sPad = "0".repeat(k);
   let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
-  return parseFloat(NumberStr) * s;
+  return parseFloat(NumberStr) * Number(s);
 }
 
 /**
@@ -45,18 +44,19 @@ export function ABK64x64ToFloat(x: BigNumberish | number): number {
  * @param {BigNumberish} x BigNumber in Dec-N format
  * @returns {number} x as a float (number)
  */
-export function decNToFloat(x: BigNumberish, numDec: number) {
+export function decNToFloat(x: BigNumberish, numDec: BigNumberish): number {
   //x: BigNumber in DecN format to float
-  const DECIMALS = BigNumber.from(10).pow(BigNumber.from(numDec));
-  x = BigNumber.from(x);
-  let s = x.lt(0) ? -1 : 1;
-  x = x.mul(s);
-  let xInt = x.div(DECIMALS);
-  let xDec = x.sub(xInt.mul(DECIMALS));
-  let k = numDec - xDec.toString().length;
+  const DECIMALS = 10n ** BigInt(numDec); // BigNumber.from(10).pow(BigNumber.from(numDec));
+  x = BigInt(x);
+  numDec = BigInt(numDec);
+  let s = x < 0n ? -1n : 1n;
+  x = x * s;
+  let xInt = x / DECIMALS;
+  let xDec = x - xInt * DECIMALS;
+  let k = Number(numDec) - xDec.toString().length;
   let sPad = "0".repeat(k);
   let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
-  return parseFloat(NumberStr) * s;
+  return parseFloat(NumberStr) * Number(s);
 }
 
 /**
@@ -66,38 +66,38 @@ export function decNToFloat(x: BigNumberish, numDec: number) {
  */
 export function dec18ToFloat(x: BigNumberish): number {
   //x: BigNumber in Dec18 format to float
-  x = BigNumber.from(x);
-  let s = x.lt(0) ? -1 : 1;
-  x = x.mul(s);
-  let xInt = x.div(DECIMALS);
-  let xDec = x.sub(xInt.mul(DECIMALS));
+  x = BigInt(x);
+  let s = x < 0n ? -1n : 1n;
+  x = x * s;
+  let xInt = x / DECIMALS;
+  let xDec = x - xInt * DECIMALS;
   let k = 18 - xDec.toString().length;
   let sPad = "0".repeat(k);
   let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
-  return parseFloat(NumberStr) * s;
+  return parseFloat(NumberStr) * Number(s);
 }
 
 /**
  * Converts x into ABDK64x64 format
  * @param {number} x   number (float)
- * @returns {BigNumber} x^64 in big number format
+ * @returns {bigint} x^64 in big number format
  */
-export function floatToABK64x64(x: number): BigNumber {
+export function floatToABK64x64(x: number): bigint {
   // convert float to ABK64x64 bigint-format
   // Create string from number with 18 decimals
   if (x === 0) {
-    return BigNumber.from(0);
+    return 0n;
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
   let strX = Number(x).toFixed(18);
   const arrX = strX.split(".");
-  let xInt = BigNumber.from(arrX[0]);
-  let xDec = BigNumber.from(arrX[1]);
-  let xIntBig = xInt.mul(ONE_64x64);
-  let dec18 = BigNumber.from(10).pow(BigNumber.from(18));
-  let xDecBig = xDec.mul(ONE_64x64).div(dec18);
-  return xIntBig.add(xDecBig).mul(sg);
+  let xInt = BigInt(arrX[0]);
+  let xDec = BigInt(arrX[1]);
+  let xIntBig = xInt * ONE_64x64;
+  let dec18 = 10n ** 18n; //BigNumber.from(10).pow(BigNumber.from(18));
+  let xDecBig = (xDec * ONE_64x64) / dec18;
+  return (xIntBig + xDecBig) * BigInt(sg);
 }
 
 /**
@@ -105,19 +105,19 @@ export function floatToABK64x64(x: number): BigNumber {
  * @param {number} x number (float)
  * @returns {BigNumber} x as a BigNumber in Dec18 format
  */
-export function floatToDec18(x: number): BigNumber {
+export function floatToDec18(x: number): bigint {
   // float number to dec 18
   if (x === 0) {
-    return BigNumber.from(0);
+    return 0n;
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
   let strX = x.toFixed(18);
   const arrX = strX.split(".");
-  let xInt = BigNumber.from(arrX[0]);
-  let xDec = BigNumber.from(arrX[1]);
-  let xIntBig = xInt.mul(DECIMALS);
-  return xIntBig.add(xDec).mul(sg);
+  let xInt = BigInt(arrX[0]);
+  let xDec = BigInt(arrX[1]);
+  let xIntBig = xInt * DECIMALS;
+  return (xIntBig + xDec) * BigInt(sg);
 }
 
 /**
@@ -126,19 +126,19 @@ export function floatToDec18(x: number): BigNumber {
  * @param {number} decimals number of decimals
  * @returns {BigNumber} x as a BigNumber in Dec18 format
  */
-export function floatToDecN(x: number, decimals: number): BigNumber {
+export function floatToDecN(x: number, decimals: number): bigint {
   // float number to dec 18
   if (x === 0) {
-    return BigNumber.from(0);
+    return 0n;
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
   let strX = x.toFixed(decimals);
   const arrX = strX.split(".");
-  let xInt = BigNumber.from(arrX[0]);
-  let xDec = BigNumber.from(arrX[1]);
-  let xIntBig = xInt.mul(BigNumber.from(10).pow(BigNumber.from(decimals)));
-  return xIntBig.add(xDec).mul(sg);
+  let xInt = BigInt(arrX[0]);
+  let xDec = BigInt(arrX[1]);
+  let xIntBig = xInt * 10n ** BigInt(decimals);
+  return (xIntBig + xDec) * BigInt(sg);
 }
 
 /**
@@ -189,22 +189,22 @@ export function roundToLotString(x: number, lot: number, precision: number = 7):
 
 /**
  *
- * @param {BigNumber} x
- * @param {BigNumber} y
- * @returns {BigNumber} x * y
+ * @param {bigint} x
+ * @param {bigint} y
+ * @returns {bigint} x * y
  */
-export function mul64x64(x: BigNumber, y: BigNumber) {
-  return x.mul(y).div(ONE_64x64);
+export function mul64x64(x: bigint, y: bigint): bigint {
+  return (x * y) / ONE_64x64;
 }
 
 /**
  *
- * @param {BigNumber} x
- * @param {BigNumber} y
- * @returns {BigNumber} x / y
+ * @param {bigint} x
+ * @param {bigint} y
+ * @returns {bigint} x / y
  */
-export function div64x64(x: BigNumber, y: BigNumber) {
-  return x.mul(ONE_64x64).div(y);
+export function div64x64(x: bigint, y: bigint): bigint {
+  return (x * ONE_64x64) / y;
 }
 
 /**

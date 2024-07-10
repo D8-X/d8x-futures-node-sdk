@@ -1,8 +1,4 @@
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { Signer } from "@ethersproject/abstract-signer";
-import { keccak256 } from "@ethersproject/keccak256";
-import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
-import { Wallet, verifyMessage } from "@ethersproject/wallet";
+import { AbiCoder, JsonRpcProvider, keccak256, Provider, Signer, verifyMessage, Wallet } from "ethers";
 import type { APIReferPayload, APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
 
 /**
@@ -31,7 +27,7 @@ export default class ReferralCodeSigner {
     if (typeof signer == "string") {
       const wallet = this.createSignerInstance(signer);
       this.signingFun = (x: string | Uint8Array) => wallet.signMessage(x);
-    } else if (Signer.isSigner(signer)) {
+    } else if ("signMessage" in signer) {
       this.signingFun = (x: string | Uint8Array) => signer.signMessage(x);
     } else {
       this.signingFun = signer;
@@ -39,7 +35,7 @@ export default class ReferralCodeSigner {
   }
 
   public createSignerInstance(_privateKey: string): Signer {
-    this.provider = new StaticJsonRpcProvider(this.rpcURL);
+    this.provider = new JsonRpcProvider(this.rpcURL);
     const wallet = new Wallet(_privateKey);
     return wallet.connect(this.provider);
   }
@@ -120,7 +116,7 @@ export default class ReferralCodeSigner {
   }
 
   private static _referralNewToMessage(rc: APIReferPayload): string {
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     const passOnPercTwoDigitsFormat = Math.round(rc.passOnPercTDF);
     let digest = keccak256(
       abiCoder.encode(
@@ -137,7 +133,7 @@ export default class ReferralCodeSigner {
    * @returns the hex-string to be signed
    */
   private static _referralCodeNewCodePayloadToMessage(rc: APIReferralCodePayload): string {
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     const passOnPercTwoDigitsFormat = Math.round(rc.passOnPercTDF);
     let digest = keccak256(
       abiCoder.encode(
@@ -154,7 +150,7 @@ export default class ReferralCodeSigner {
    * @returns the hex-string to be signed
    */
   private static _codeSelectionPayloadToMessage(rc: APIReferralCodeSelectionPayload): string {
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     let digest = keccak256(
       abiCoder.encode(["string", "address", "uint256"], [rc.code, rc.traderAddr, Math.round(rc.createdOn)])
     );

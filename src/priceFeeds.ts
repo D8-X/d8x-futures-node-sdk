@@ -1,4 +1,3 @@
-import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
 import { decNToFloat, floatToDec18 } from "./d8XMath";
 import type {
@@ -279,7 +278,7 @@ export default class PriceFeeds {
       let [, pxInfo]: [string[], PriceFeedFormat[]] = await this.fetchPriceQuery(queries[k] + suffixes[k]);
       let tsSecNow = Math.round(Date.now() / 1000);
       for (let j = 0; j < pxInfo.length; j++) {
-        let price = decNToFloat(BigNumber.from(pxInfo[j].price), -pxInfo[j].expo);
+        let price = decNToFloat(BigInt(pxInfo[j].price), -pxInfo[j].expo);
         let isMarketClosed = tsSecNow - pxInfo[j].publish_time > this.THRESHOLD_MARKET_CLOSED_SEC;
         resultPrices.set(symbolsOfEndpoint[k][j], [price, isMarketClosed]);
       }
@@ -376,7 +375,7 @@ export default class PriceFeeds {
     const tsSecNow = Math.round(Date.now() / 1000);
     for (let k = 0; k < feedIds.length; k++) {
       let pxInfo: PriceFeedFormat = data[k].prices[0];
-      let price = decNToFloat(BigNumber.from(pxInfo.price), -pxInfo.expo);
+      let price = decNToFloat(BigInt(pxInfo.price), -pxInfo.expo);
       prices.push(price);
       priceFeedUpdates.push(data[k].vaas[0]);
       let isMarketClosed = tsSecNow - pxInfo.publish_time > this.THRESHOLD_MARKET_CLOSED_SEC;
