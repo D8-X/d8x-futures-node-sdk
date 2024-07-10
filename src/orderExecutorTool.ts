@@ -219,7 +219,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     if (!overrides?.gasLimit) {
       let gasLimit = await this.signer
         .estimateGas(unsignedTx)
-        .then((gas) => (gas * 1100n) / 1000n)
+        .then((gas) => (gas * 1500n) / 1000n)
         .catch((_e) => undefined);
       if (!gasLimit) {
         // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
