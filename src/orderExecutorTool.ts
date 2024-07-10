@@ -132,8 +132,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     let rpcURL: string | undefined;
     let splitTx: boolean | undefined;
+    let maxGasLimit: BigNumberish | undefined;
     if (overrides) {
-      ({ rpcURL, splitTx, ...overrides } = overrides);
+      ({ rpcURL, splitTx, maxGasLimit, ...overrides } = overrides);
     }
     const provider = new StaticJsonRpcProvider(rpcURL ?? this.nodeURL);
 
@@ -222,7 +223,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
         overrides = {
           ...overrides,
-          gasLimit: overrides?.maxGasLimit ?? this.gasLimit,
+          gasLimit: maxGasLimit ?? this.gasLimit,
           value: unsignedTx.value,
         };
         await this.getOrderBookContract(symbol, provider).callStatic.executeOrders(
@@ -233,7 +234,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
           overrides
         );
         // it worked - use fallback
-        gasLimit = BigNumber.from(overrides?.maxGasLimit ?? this.gasLimit);
+        gasLimit = BigNumber.from(maxGasLimit ?? this.gasLimit);
       }
       unsignedTx.gasLimit = gasLimit;
     }
