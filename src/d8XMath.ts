@@ -401,3 +401,24 @@ export function getDepositAmountForLvgTrade(
   let b = (Math.abs(pos0 + tradeAmnt) * S2Mark) / S3 / targetLvg;
   return -(b0 + pnl - b);
 }
+
+/**
+ * Convert a perpetual price to probability (predtictive markets)
+ * @param px Perpetual price
+ * @returns Probability in [0,1]
+ */
+export function priceToProb(px: number) {
+  if (px <= 0) {
+    throw new Error(`Price must be positive: ${px}`);
+  }
+  return Math.log(px);
+}
+
+/**
+ * Convert a probability to a predictive market price
+ * @param prob Probability in [0,1]
+ * @returns Perpetual price
+ */
+export function probToPrice(prob: number) {
+  return Math.exp(prob);
+}

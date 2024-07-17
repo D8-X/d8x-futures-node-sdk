@@ -1,10 +1,11 @@
 import { Contract, ContractTransactionResponse, Overrides, Signer } from "ethers";
-import { ZERO_ORDER_ID } from "./constants";
-import { ABK64x64ToFloat, floatToDec18, floatToDecN } from "./d8XMath";
+import { MASK_PREDICTIVE_MARKET, ZERO_ORDER_ID } from "./constants";
+import { ABK64x64ToFloat, floatToDec18, floatToDecN, priceToProb, probToPrice } from "./d8XMath";
 import MarketData from "./marketData";
 import type { ClientOrder, NodeSDKConfig, Order, SmartContractOrder } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import TraderDigests from "./traderDigests";
+import { containsFlag } from "./utils";
 /**
  * Interface that can be used by front-end that wraps all private functions
  * so that signatures can be handled in frontend via wallet
@@ -161,6 +162,18 @@ export default class TraderInterface extends MarketData {
    * @returns Smart contract type order struct
    */
   public createSmartContractOrder(order: Order, traderAddr: string): SmartContractOrder {
+    const sInfo = this.symbolToPerpStaticInfo.get(order.symbol);
+    if (!sInfo) {
+      throw new Error(`No perpetual static info found for symbol ${order.symbol}`);
+    }
+    if (containsFlag(sInfo.perpFlags, MASK_PREDICTIVE_MARKET)) {
+      if (order.limitPrice !== undefined) {
+        order.limitPrice = probToPrice(order.limitPrice);
+      }
+      if (order.stopPrice !== undefined) {
+        order.stopPrice = probToPrice(order.stopPrice);
+      }
+    }
     let scOrder = TraderInterface.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
     return scOrder;
   }

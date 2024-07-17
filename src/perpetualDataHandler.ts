@@ -20,6 +20,7 @@ import {
   MASK_KEEP_POS_LEVERAGE,
   MASK_LIMIT_ORDER,
   MASK_MARKET_ORDER,
+  MASK_PREDICTIVE_MARKET,
   MASK_STOP_ORDER,
   MAX_64x64,
   MULTICALL_ADDRESS,
@@ -1898,5 +1899,17 @@ export default class PerpetualDataHandler {
       brokerSignature: order.brokerSignature.toString(),
       callbackTarget: order.callbackTarget,
     };
+  }
+
+  public static isPredictiveMarket(staticInfo: PerpetualStaticInfo) {
+    return containsFlag(staticInfo.perpFlags, MASK_PREDICTIVE_MARKET);
+  }
+
+  public isPredictiveMarket(symbol: string) {
+    const sInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (!sInfo) {
+      throw new Error(`No perpetual found for symbol ${symbol}`);
+    }
+    return containsFlag(sInfo.perpFlags, MASK_PREDICTIVE_MARKET);
   }
 }
