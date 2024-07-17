@@ -50,13 +50,15 @@ async function trade() {
 async function main() {
   let c = PerpetualDataHandler.getAvailableConfigs();
   console.log(c);
-  let config = PerpetualDataHandler.readSDKConfig(196);
+  let config = PerpetualDataHandler.readSDKConfig(195);
 
   let mktData = new MarketData(config);
 
   await mktData.createProxyInstance();
 
-  let v = mktData.getPerpetualSymbolsInPool("WOKB");
+  let p = await mktData.fetchLatestFeedPriceInfo("TRUMP24-USD-USDC");
+  console.log(p);
+  let v = mktData.getPerpetualSymbolsInPool("USDC");
 
   console.log(v);
   let info = await mktData.exchangeInfo();
