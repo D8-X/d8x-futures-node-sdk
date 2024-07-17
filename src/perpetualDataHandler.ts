@@ -57,6 +57,8 @@ import {
   div64x64,
   floatToABK64x64,
   dec18ToFloat,
+  priceToProb,
+  probToPrice,
 } from "./d8XMath";
 import {
   TokenOverride,
@@ -1331,13 +1333,13 @@ export default class PerpetualDataHandler {
     symbolToPerpInfoMap: Map<string, PerpetualStaticInfo>
   ): Order {
     // find symbol of perpetual id
-    let symbol = PerpetualDataHandler._getByValue(symbolToPerpInfoMap, Number(order.iPerpetualId), "id");
+    const symbol = PerpetualDataHandler._getByValue(symbolToPerpInfoMap, Number(order.iPerpetualId), "id");
     if (symbol == undefined) {
       throw new Error(`Perpetual id ${order.iPerpetualId} not found. Check with marketData.exchangeInfo().`);
     }
-    let side = order.fAmount > BigInt(0) ? BUY_SIDE : SELL_SIDE;
-    let limitPrice, stopPrice;
-    let fLimitPrice: bigint | undefined = BigInt(order.fLimitPrice);
+    const side = order.fAmount > BigInt(0) ? BUY_SIDE : SELL_SIDE;
+    let limitPrice: number | undefined, stopPrice: number | undefined;
+    const fLimitPrice = BigInt(order.fLimitPrice);
     if (fLimitPrice == 0n) {
       limitPrice = side == BUY_SIDE ? undefined : 0;
     } else if (fLimitPrice == MAX_64x64) {
@@ -1345,11 +1347,17 @@ export default class PerpetualDataHandler {
     } else {
       limitPrice = ABK64x64ToFloat(fLimitPrice);
     }
-    let fStopPrice: bigint | undefined = BigInt(order.fTriggerPrice);
+    const fStopPrice: bigint = BigInt(order.fTriggerPrice);
     if (fStopPrice == 0n || fStopPrice == MAX_64x64) {
       stopPrice = undefined;
     } else {
       stopPrice = ABK64x64ToFloat(fStopPrice);
+    }
+    // adjust prices for market type
+    const sInfo = symbolToPerpInfoMap.get(symbol)!;
+    if (PerpetualDataHandler.isPredictiveMarket(sInfo)) {
+      limitPrice = limitPrice !== undefined ? priceToProb(limitPrice) : limitPrice;
+      stopPrice = stopPrice !== undefined ? priceToProb(stopPrice) : stopPrice;
     }
     let userOrder: Order = {
       symbol: symbol!,
@@ -1400,6 +1408,7 @@ export default class PerpetualDataHandler {
     } else {
       throw Error(`invalid side in order spec, use ${BUY_SIDE} or ${SELL_SIDE}`);
     }
+    const isPred = PerpetualDataHandler.isPredictiveMarket(perpStaticInfo.get(order.symbol)!);
     let fLimitPrice: bigint;
     if (order.limitPrice == undefined) {
       // we need to set the limit price to infinity or zero for
@@ -1408,13 +1417,16 @@ export default class PerpetualDataHandler {
       // we set the limit to 0 or infinity
       fLimitPrice = order.side == BUY_SIDE ? MAX_64x64 : BigInt(0);
     } else {
-      fLimitPrice = floatToABK64x64(order.limitPrice);
+      fLimitPrice = floatToABK64x64(isPred ? probToPrice(order.limitPrice) : order.limitPrice);
     }
 
-    let iDeadline = order.deadline == undefined ? Date.now() / 1000 + ORDER_MAX_DURATION_SEC : order.deadline;
-    let fTriggerPrice = order.stopPrice == undefined ? BigInt(0) : floatToABK64x64(order.stopPrice);
+    const iDeadline = order.deadline == undefined ? Date.now() / 1000 + ORDER_MAX_DURATION_SEC : order.deadline;
+    const fTriggerPrice =
+      order.stopPrice == undefined
+        ? BigInt(0)
+        : floatToABK64x64(isPred ? probToPrice(order.stopPrice) : order.stopPrice);
 
-    let smOrder: SmartContractOrder = {
+    const smOrder: SmartContractOrder = {
       flags: flags,
       iPerpetualId: perpetualId,
       brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
