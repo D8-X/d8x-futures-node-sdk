@@ -1356,8 +1356,8 @@ export default class PerpetualDataHandler {
     // adjust prices for market type
     const sInfo = symbolToPerpInfoMap.get(symbol)!;
     if (PerpetualDataHandler.isPredictiveMarket(sInfo)) {
-      limitPrice = limitPrice !== undefined ? priceToProb(limitPrice) : limitPrice;
-      stopPrice = stopPrice !== undefined ? priceToProb(stopPrice) : stopPrice;
+      limitPrice = limitPrice !== undefined && limitPrice !== 0 ? priceToProb(limitPrice) : limitPrice;
+      stopPrice = stopPrice !== undefined && stopPrice !== 0 ? priceToProb(stopPrice) : stopPrice;
     }
     let userOrder: Order = {
       symbol: symbol!,
@@ -1919,8 +1919,7 @@ export default class PerpetualDataHandler {
    * @returns True if this is a predictive market
    */
   public static isPredictiveMarket(staticInfo: PerpetualStaticInfo) {
-    // TODO: fix this
-    return true; // for testing
-    // return containsFlag(staticInfo.perpFlags, MASK_PREDICTIVE_MARKET);
+    // return true; // for testing
+    return containsFlag(staticInfo.perpFlags, MASK_PREDICTIVE_MARKET);
   }
 }
