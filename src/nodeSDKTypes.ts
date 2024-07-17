@@ -77,7 +77,7 @@ export interface PerpetualStaticInfo {
   referralRebate: number;
   priceIds: string[];
   isPyth: boolean[];
-  perpFlags: BigInt;
+  perpFlags: bigint;
 }
 
 /*
