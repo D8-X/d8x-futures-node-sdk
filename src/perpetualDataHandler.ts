@@ -648,7 +648,7 @@ export default class PerpetualDataHandler {
           referralRebate: ABK64x64ToFloat(perpInfos[j].fReferralRebateCC),
           priceIds: perpInfos[j].priceIds,
           isPyth: perpInfos[j].isPyth,
-          perpFlags: Number(perpInfos[j].perpFlags),
+          perpFlags: BigInt(perpInfos[j].perpFlags.toString()),
         };
         infoArr.push(info);
       }
@@ -1337,7 +1337,7 @@ export default class PerpetualDataHandler {
     if (symbol == undefined) {
       throw new Error(`Perpetual id ${order.iPerpetualId} not found. Check with marketData.exchangeInfo().`);
     }
-    const side = order.fAmount > BigInt(0) ? BUY_SIDE : SELL_SIDE;
+    const side = BigInt(order.fAmount.toString()) > BigInt(0) ? BUY_SIDE : SELL_SIDE;
     let limitPrice: number | undefined, stopPrice: number | undefined;
     const fLimitPrice = BigInt(order.fLimitPrice);
     if (fLimitPrice == 0n) {
