@@ -160,7 +160,7 @@
         "writeEndpoints": ["https://hermes.pyth.network"]
       },
       { "type": "onchain", "endpoints": [], "writeEndpoints": [] },
-      { "type": "polymarket", "endpoints": [], "writeEndpoints": [] }
+      { "type": "polymarket", "endpoints": [], "writeEndpoints": ["https://odin-poly.d8x.xyz"] }
     ]
   },
   {
@@ -247,7 +247,7 @@
     ],
     "endpoints": [
       { "type": "odin", "endpoints": ["https://hermes.pyth.network"], "writeEndpoints": ["https://odin.d8x.xyz"] },
-      { "type": "polymarket", "endpoints": [""], "writeEndpoints": [] }
+      { "type": "polymarket", "endpoints": [""], "writeEndpoints": ["https://odin-poly.d8x.xyz"] }
     ]
   }
 ]
