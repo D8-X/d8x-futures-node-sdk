@@ -12,6 +12,8 @@ import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
 import OnChainPxFactory from "./onChainPxFactory";
+import PolyMktsPxFeed from "./polyMktsPxFeed";
+import { sleep } from "./utils";
 /**
  * This class communicates with the REST API that provides price-data that is
  * to be submitted to the smart contracts for certain functions such as
@@ -34,10 +36,12 @@ export default class PriceFeeds {
   // api formatting constants
   private PYTH = { endpoint: "/v2/updates/price/latest?encoding=base64&ids[]=", separator: "&ids[]=", suffix: "" };
 
+  private polyMktsPxFeed: PolyMktsPxFeed;
+
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
-
+    this.polyMktsPxFeed = new PolyMktsPxFeed(this.config);
     // if SDK config contains custom price feed endpoints, these override the
     // public/default ones
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
@@ -51,7 +55,7 @@ export default class PriceFeeds {
     for (let k = 0; k < this.config.ids.length; k++) {
       if (this.config.ids[k].type == "onchain") {
         let sym = this.config.ids[k].symbol;
-        this.onChainPxFeeds[sym] = OnChainPxFactory.createFeed(sym);
+        this.onChainPxFeeds.set(sym, OnChainPxFactory.createFeed(sym)!);
       }
     }
     [this.feedInfo, this.feedEndpoints, this.writeFeedEndpoints] = PriceFeeds._constructFeedInfo(this.config, false);
@@ -244,6 +248,7 @@ export default class PriceFeeds {
       symbolsOfEndpoint.push([]);
     }
     let onChainSyms: string[] = [];
+    let polyMktSyms: string[] = [];
     for (let k = 0; k < this.config.ids.length; k++) {
       let currFeed = this.config.ids[k];
       if (symbols != undefined && !symbols.includes(currFeed.symbol)) {
@@ -251,6 +256,10 @@ export default class PriceFeeds {
       }
       if (currFeed.type == "onchain") {
         onChainSyms.push(currFeed.symbol);
+        continue;
+      }
+      if (currFeed.type == "polymarket") {
+        polyMktSyms.push(currFeed.symbol);
         continue;
       }
       const apiFormat = { pyth: this.PYTH, odin: this.PYTH }[currFeed.type];
@@ -270,6 +279,7 @@ export default class PriceFeeds {
       }
     }
     let onChainPromise = this.queryOnChainPxFeeds(onChainSyms);
+    let polyMktsPromise = this.queryPolyMktsPxFeeds(polyMktSyms);
     let resultPrices = new Map<string, [number, boolean]>();
     for (let k = 0; k < queries.length; k++) {
       if (queries[k] == undefined) {
@@ -288,6 +298,14 @@ export default class PriceFeeds {
       let sym = onChainSyms[k];
       resultPrices.set(sym, [onChPxs[k], false]);
     }
+    let polyPxs = await polyMktsPromise;
+    for (let k = 0; k < polyPxs.length; k++) {
+      let sym = polyMktSyms[k];
+      if (polyPxs[k] == -1) {
+        continue;
+      }
+      resultPrices.set(sym, [polyPxs[k], false]);
+    }
     return resultPrices;
   }
 
@@ -295,8 +313,26 @@ export default class PriceFeeds {
     let prices: number[] = new Array<number>();
     for (let k = 0; k < symbols.length; k++) {
       let sym = symbols[k];
-      let price = await this.onChainPxFeeds[sym].getPrice();
+      const feed = this.onChainPxFeeds.get(sym);
+      let price = await feed!.getPrice();
       prices.push(price);
+    }
+    return prices;
+  }
+
+  private async queryPolyMktsPxFeeds(symbols: string[]) {
+    let prices: number[] = new Array<number>();
+    for (let k = 0; k < symbols.length; k++) {
+      try {
+        let price = await this.polyMktsPxFeed.fetchPriceForSym(symbols[k]);
+        prices.push(price);
+      } catch (error) {
+        console.log("fetchPriceForSym failed for " + symbols[k]);
+        prices.push(-1);
+      }
+      if (k > 0) {
+        await sleep(0.25);
+      }
     }
     return prices;
   }
@@ -327,16 +363,17 @@ export default class PriceFeeds {
         throw new Error(`priceFeeds: config for symbol ${symbol} insufficient`);
       }
       // we use the first endpoint for a given symbol even if there is another symbol with the same id
-      // and another
       let idx = info[0].endpointId;
       let feedId = feedIds[k];
       queries.push(this.writeFeedEndpoints[idx] + "/v2/updates/price/latest?encoding=base64&ids[]=" + feedId);
 
       for (let j = 0; j < info.length; j++) {
         if (symbols.has(feedId)) {
-          symbols[feedId].append(info[j].symbol);
+          let v = symbols.get(feedId);
+          v!.push(info[j].symbol);
+          symbols.set(feedId, v!);
         } else {
-          symbols[feedId] = [info[j].symbol];
+          symbols.set(feedId, [info[j].symbol]);
         }
       }
     }
@@ -403,7 +440,7 @@ export default class PriceFeeds {
   public calculateTriangulatedPricesFromFeedInfo(symbols: string[], feeds: PriceFeedSubmission): [number[], boolean[]] {
     let priceMap = new Map<string, [number, boolean]>();
     for (let j = 0; j < feeds.prices.length; j++) {
-      const syms = feeds.symbols[feeds.ids[j]];
+      const syms = feeds.symbols.get(feeds.ids[j]);
       if (syms == undefined) {
         console.log("calculateTriangulatedPricesFromFeedInfo: could not find symbol for id ", feeds.ids[j]);
         continue;

@@ -2,7 +2,7 @@ import MarketData from "../src/marketData";
 import { NodeSDKConfig, PriceFeedConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import PriceFeeds from "../src/priceFeeds";
-
+import PolyMktsPxFeed from "../src/polyMktsPxFeed";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 const SdkConfigName = "arbitrum";
@@ -12,6 +12,20 @@ jest.setTimeout(150000);
 let config: NodeSDKConfig;
 let mktData: MarketData;
 let perp = "BTC-USD-STUSD";
+describe("priceFeed", () => {
+  it("polymarket feed", async () => {
+    const tokenIdHex = "0x6ada66b0220f72b49d81cb8dfeec380b656e4f5fa8a179b371e7628463b4e964";
+    const tokenIdDec = PolyMktsPxFeed.hexToDecimalString(tokenIdHex);
+    const cnf: PriceFeedConfig = {
+      network: "blabla",
+      ids: [],
+      endpoints: [],
+    };
+    let pm = new PolyMktsPxFeed(cnf);
+    let px = await pm.fetchPrice(tokenIdDec);
+    console.log("polymarket price:", px);
+  });
+});
 describe("priceFeed", () => {
   beforeAll(async () => {
     if (pk == undefined) {
@@ -132,7 +146,7 @@ describe("priceFeed", () => {
     let s = ["BTC-USD", "ETH-USD", "USDC-USD"];
     for (let j = 0; j < s.length; j++) {
       const id = "0x" + j.toString();
-      symbols[id] = [s[j]];
+      symbols.set(id, [s[j]]);
       ids.push(id);
     }
     let fakeSubmission: PriceFeedSubmission = {
