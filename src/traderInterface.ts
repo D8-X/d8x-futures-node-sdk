@@ -166,7 +166,7 @@ export default class TraderInterface extends MarketData {
     if (!sInfo) {
       throw new Error(`No perpetual static info found for symbol ${order.symbol}`);
     }
-    if (containsFlag(sInfo.perpFlags, MASK_PREDICTIVE_MARKET)) {
+    if (containsFlag(BigInt(sInfo.perpFlags), MASK_PREDICTIVE_MARKET)) {
       if (order.limitPrice !== undefined) {
         order.limitPrice = probToPrice(order.limitPrice);
       }

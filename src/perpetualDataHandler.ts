@@ -646,7 +646,7 @@ export default class PerpetualDataHandler {
           referralRebate: ABK64x64ToFloat(perpInfos[j].fReferralRebateCC),
           priceIds: perpInfos[j].priceIds,
           isPyth: perpInfos[j].isPyth,
-          perpFlags: perpInfos[j].perpFlags,
+          perpFlags: Number(perpInfos[j].perpFlags),
         };
         infoArr.push(info);
       }
