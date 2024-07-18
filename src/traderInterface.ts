@@ -1,5 +1,5 @@
 import { Contract, ContractTransactionResponse, Overrides, Signer } from "ethers";
-import { MASK_PREDICTIVE_MARKET, ZERO_ORDER_ID } from "./constants";
+import { MASK_PREDICTION_MARKET, ZERO_ORDER_ID } from "./constants";
 import { ABK64x64ToFloat, floatToDec18, floatToDecN, priceToProb, probToPrice } from "./d8XMath";
 import MarketData from "./marketData";
 import type { ClientOrder, NodeSDKConfig, Order, SmartContractOrder } from "./nodeSDKTypes";
@@ -166,7 +166,7 @@ export default class TraderInterface extends MarketData {
     if (!sInfo) {
       throw new Error(`No perpetual static info found for symbol ${order.symbol}`);
     }
-    if (containsFlag(BigInt(sInfo.perpFlags), MASK_PREDICTIVE_MARKET)) {
+    if (containsFlag(BigInt(sInfo.perpFlags), MASK_PREDICTION_MARKET)) {
       // convert prob to actual price
       if (order.limitPrice !== undefined) {
         order.limitPrice = probToPrice(order.limitPrice);

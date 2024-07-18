@@ -20,7 +20,7 @@ import {
   MASK_KEEP_POS_LEVERAGE,
   MASK_LIMIT_ORDER,
   MASK_MARKET_ORDER,
-  MASK_PREDICTIVE_MARKET,
+  MASK_PREDICTION_MARKET,
   MASK_STOP_ORDER,
   MAX_64x64,
   MULTICALL_ADDRESS,
@@ -1355,7 +1355,7 @@ export default class PerpetualDataHandler {
     }
     // adjust prices for market type
     const sInfo = symbolToPerpInfoMap.get(symbol)!;
-    if (PerpetualDataHandler.isPredictiveMarket(sInfo)) {
+    if (PerpetualDataHandler.isPredictionMarket(sInfo)) {
       limitPrice = limitPrice !== undefined && limitPrice !== 0 ? priceToProb(limitPrice) : limitPrice;
       stopPrice = stopPrice !== undefined && stopPrice !== 0 ? priceToProb(stopPrice) : stopPrice;
     }
@@ -1408,7 +1408,7 @@ export default class PerpetualDataHandler {
     } else {
       throw Error(`invalid side in order spec, use ${BUY_SIDE} or ${SELL_SIDE}`);
     }
-    const isPred = PerpetualDataHandler.isPredictiveMarket(perpStaticInfo.get(order.symbol)!);
+    const isPred = PerpetualDataHandler.isPredictionMarket(perpStaticInfo.get(order.symbol)!);
     let fLimitPrice: bigint;
     if (order.limitPrice == undefined) {
       // we need to set the limit price to infinity or zero for
@@ -1918,8 +1918,8 @@ export default class PerpetualDataHandler {
    * @param staticInfo Perpetual static info
    * @returns True if this is a predictive market
    */
-  public static isPredictiveMarket(staticInfo: PerpetualStaticInfo) {
+  public static isPredictionMarket(staticInfo: PerpetualStaticInfo) {
     // return true; // for testing
-    return containsFlag(staticInfo.perpFlags, MASK_PREDICTIVE_MARKET);
+    return containsFlag(staticInfo.perpFlags, MASK_PREDICTION_MARKET);
   }
 }

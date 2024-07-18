@@ -30,7 +30,7 @@ export const MASK_LIMIT_ORDER = BigInt("0x04000000");
 export const MASK_MARKET_ORDER = BigInt("0x40000000");
 export const MASK_STOP_ORDER = BigInt("0x20000000");
 export const MASK_KEEP_POS_LEVERAGE = BigInt("0x08000000");
-export const MASK_PREDICTIVE_MARKET = 2n;
+export const MASK_PREDICTION_MARKET = 2n;
 
 export const ORDER_TYPE_LIMIT = "LIMIT";
 export const ORDER_TYPE_MARKET = "MARKET";
