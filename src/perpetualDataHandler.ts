@@ -1914,9 +1914,22 @@ export default class PerpetualDataHandler {
   }
 
   /**
-   * Determines whether a given perpetual represents a predictive market
+   * Determines whether a given perpetual represents a prediction market
+   * @param symbol perpetual symbol of the form TRUMP24-USD-USDC
+   * @returns True if this is a prediction market
+   */
+  public isPredictionMarket(symbol: string): boolean {
+    let staticInfo = this.symbolToPerpStaticInfo.get(symbol);
+    if (staticInfo == undefined) {
+      throw new Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
+    }
+    return PerpetualDataHandler.isPredictionMarket(staticInfo);
+  }
+
+  /**
+   * Determines whether a given perpetual represents a prediction market
    * @param staticInfo Perpetual static info
-   * @returns True if this is a predictive market
+   * @returns True if this is a prediction market
    */
   public static isPredictionMarket(staticInfo: PerpetualStaticInfo) {
     // return true; // for testing
