@@ -53,8 +53,9 @@ async function main() {
   let config = PerpetualDataHandler.readSDKConfig(195);
 
   let mktData = new MarketData(config);
-
   await mktData.createProxyInstance();
+  let isP = mktData.isPredictionMarket("TRUMP24-USD-USDC");
+  console.log(isP);
 
   let p = await mktData.fetchLatestFeedPriceInfo("TRUMP24-USD-USDC");
   console.log(p);

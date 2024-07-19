@@ -411,7 +411,7 @@ export function priceToProb(px: number) {
   if (px <= 0) {
     throw new Error(`Price must be positive: ${px}`);
   }
-  return Math.log(px);
+  return px - 1;
 }
 
 /**
@@ -420,5 +420,5 @@ export function priceToProb(px: number) {
  * @returns Perpetual price
  */
 export function probToPrice(prob: number) {
-  return Math.exp(prob);
+  return 1 + prob;
 }
