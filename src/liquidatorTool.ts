@@ -241,7 +241,11 @@ export default class LiquidatorTool extends WriteAccessHandler {
     const pos = ABK64x64ToFloat(traderState[idx_marginAccountPositionBC]);
     const marginbalance = ABK64x64ToFloat(traderState[idx_marginBalance]);
     const coll2quote = ABK64x64ToFloat(traderState[idx_collateralToQuoteConversion]);
-    const base2collateral = indexPrices[0] / coll2quote;
+    let base2collateral = indexPrices[0] / coll2quote;
+    if (this.isPredictionMarket(symbol)) {
+      // flat margin rate for prediction markets
+      base2collateral = 1;
+    }
     const threshold = Math.abs(pos * base2collateral * maintMgnRate);
     return marginbalance >= threshold;
   }
