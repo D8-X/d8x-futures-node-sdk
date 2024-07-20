@@ -780,7 +780,7 @@ export default class PerpetualDataHandler {
         fTargetDFSize: ABK64x64ToFloat(BigInt(orig.fTargetDFSize)), // target default fund size
         fkStar: ABK64x64ToFloat(BigInt(orig.fkStar)), // signed trade size that minimizes the AMM risk
         fAMMTargetDD: ABK64x64ToFloat(BigInt(orig.fAMMTargetDD)), // parameter: target distance to default (=inverse of default probability)
-        perpFlags: Number(orig.perpFlags?.toString()), // flags for perpetual
+        perpFlags: BigInt(orig.perpFlags?.toString()), // flags for perpetual
         fMinimalTraderExposureEMA: ABK64x64ToFloat(BigInt(orig.fMinimalTraderExposureEMA)), // parameter: minimal value for fCurrentTraderExposureEMA that we don't want to undershoot
         fMinimalAMMExposureEMA: ABK64x64ToFloat(BigInt(orig.fMinimalAMMExposureEMA)), // parameter: minimal abs value for fCurrentAMMExposureEMA that we don't want to undershoot
         fSettlementS3PriceData: ABK64x64ToFloat(BigInt(orig.fSettlementS3PriceData)), //quanto index
