@@ -1,3 +1,4 @@
+import { probToPrice } from "./d8XMath";
 import type { PriceFeedConfig } from "./nodeSDKTypes";
 
 interface PolyConfig {
@@ -53,7 +54,7 @@ export default class PolyMktsPxFeed {
     }
     const data = await response.json();
     const px = Number(data.mid);
-    return Math.exp(px);
+    return probToPrice(px);
   }
 
   static hexToDecimalString(hexString: string): string {
