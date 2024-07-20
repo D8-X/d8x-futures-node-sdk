@@ -9,7 +9,7 @@ interface PolyConfig {
 
 /**
  * PolyMktsPxFeed gets prices from the official polymarket api
- * and applies the exp(px) transformation
+ * and applies the 1+px transformation
  *
  */
 export default class PolyMktsPxFeed {
