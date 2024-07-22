@@ -1,0 +1,15 @@
+diff --git a/node_modules/jsdoc/lib/jsdoc/util/dumper.js b/node_modules/jsdoc/lib/jsdoc/util/dumper.js
+index 515c972..ec2a144 100644
+--- a/node_modules/jsdoc/lib/jsdoc/util/dumper.js
++++ b/node_modules/jsdoc/lib/jsdoc/util/dumper.js
+@@ -4,6 +4,10 @@
+  */
+ const util = require('util');
+ 
++BigInt.prototype.toJSON = function () {
++	return this.toString();
++};
++
+ const OBJECT_WALKER_KEY = 'hasBeenSeenByWalkerDumper';
+ const SET_DEFINED = (typeof Set !== 'undefined');
+ 
