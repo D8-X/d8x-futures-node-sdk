@@ -30,7 +30,8 @@
     "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublish": "yarn build",
     "prepare": "npm run build",
-    "typechain": "typechain --target ethers-v6 --out-dir ./src/contracts './src/abi/**/*.json'"
+    "typechain": "typechain --target ethers-v6 --out-dir ./src/contracts './src/abi/**/*.json'",
+    "postinstall": "patch-package"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -60,6 +61,7 @@
     "jsdoc-babel": "^0.5.0",
     "jsdoc-to-markdown": "^7.1.1",
     "json2md": "^2.0.0",
+    "patch-package": "^8.0.0",
     "prettier": "^2.8.7",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
