@@ -2697,6 +2697,52 @@
   {
     "inputs": [
       {
+        "internalType": "uint24[]",
+        "name": "_perpetualIds",
+        "type": "uint24[]"
+      },
+      {
+        "internalType": "address",
+        "name": "_traderAddress",
+        "type": "address"
+      }
+    ],
+    "name": "getMarginAccounts",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "int128",
+            "name": "fLockedInValueQC",
+            "type": "int128"
+          },
+          {
+            "internalType": "int128",
+            "name": "fCashCC",
+            "type": "int128"
+          },
+          {
+            "internalType": "int128",
+            "name": "fPositionBC",
+            "type": "int128"
+          },
+          {
+            "internalType": "int128",
+            "name": "fUnitAccumulatedFundingStart",
+            "type": "int128"
+          }
+        ],
+        "internalType": "struct PerpStorage.MarginAccount[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint24",
         "name": "_perpetualId",
         "type": "uint24"

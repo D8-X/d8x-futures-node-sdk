@@ -601,6 +601,7 @@ export default class MarketData extends PerpetualDataHandler {
     const perpetualState = PerpetualDataHandler._parseAMMState(
       order.symbol,
       ammState,
+      [0n, 0n], // not used below
       indexPriceInfo,
       this.symbolToPerpStaticInfo
     );
@@ -1505,7 +1506,7 @@ export default class MarketData extends PerpetualDataHandler {
     indexPriceInfo?: [number, number, boolean, boolean],
     overrides?: Overrides
   ): Promise<PerpetualState> {
-    if (this.proxyContract == null) {
+    if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (indexPriceInfo == undefined) {
@@ -1516,6 +1517,7 @@ export default class MarketData extends PerpetualDataHandler {
       symbol,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
+      this.multicall,
       indexPriceInfo,
       overrides
     );
@@ -1996,6 +1998,7 @@ export default class MarketData extends PerpetualDataHandler {
     let iFrom = 1;
     let poolStates: Array<PoolState> = [];
     let perpStates: Array<PerpetualState> = [];
+    let longShort: Array<[bigint, bigint]> = [];
     while (iFrom <= numPools) {
       const proxyCalls: Multicall3.Call3Struct[] = [
         // getLiquidityPools
@@ -2012,7 +2015,16 @@ export default class MarketData extends PerpetualDataHandler {
             _nestedPerpetualIDs.slice(iFrom - 1, iFrom + chunkSize - 1).flat(), // from-to does not include "to"
           ]),
         },
+        {
+          target: _proxyContract.target,
+          allowFailure: false,
+          callData: _proxyContract.interface.encodeFunctionData("getMarginAccounts", [
+            _nestedPerpetualIDs.slice(iFrom - 1, iFrom + chunkSize - 1).flat(), // from-to does not include "to"
+            ZERO_ADDRESS,
+          ]),
+        },
       ];
+
       // multicall
       const encodedResults = await _multicall.aggregate3.staticCall(proxyCalls, overrides || {});
       const pools = _proxyContract.interface.decodeFunctionResult(
@@ -2022,13 +2034,30 @@ export default class MarketData extends PerpetualDataHandler {
       const perps = _proxyContract.interface.decodeFunctionResult(
         "getPerpetuals",
         encodedResults[1].returnData
-      )[0] as any[];
-
+      )[0] as PerpStorage.PerpetualDataStructOutput[];
+      const margins = _proxyContract.interface.decodeFunctionResult(
+        "getMarginAccounts",
+        encodedResults[2].returnData
+      )[0] as PerpStorage.MarginAccountStructOutput[];
+      longShort = longShort.concat(MarketData._marginAccountsToPosBC(margins, perps));
       poolStates = poolStates.concat(MarketData._poolDataToPoolState(pools, _poolStaticInfos));
-      perpStates = perpStates.concat(MarketData._perpetualDataToPerpetualState(perps, _symbolList));
+      perpStates = perpStates.concat(MarketData._perpetualDataToPerpetualState(perps, longShort, _symbolList));
       iFrom = iFrom + chunkSize + 1;
     }
     return { pools: poolStates, perpetuals: perpStates };
+  }
+
+  protected static _marginAccountsToPosBC(
+    ms: PerpStorage.MarginAccountStructOutput[],
+    p: PerpStorage.PerpetualDataStructOutput[]
+  ): Array<[bigint, bigint]> {
+    let longShort = new Array<[bigint, bigint]>();
+    for (let k = 0; k < ms.length; k++) {
+      const oi = p[k].fOpenInterest;
+      const ammPos = ms[k].fPositionBC;
+      longShort.push(PerpetualDataHandler._oiAndAmmPosToLongShort(oi, ammPos));
+    }
+    return longShort;
   }
 
   /**
@@ -2068,21 +2097,29 @@ export default class MarketData extends PerpetualDataHandler {
    */
   protected static _perpetualDataToPerpetualState(
     _perpetuals: any[],
+    _longShortBC: [bigint, bigint][],
     _symbolList: Map<string, string>
   ): PerpetualState[] {
-    const perpStates = _perpetuals.map((perp) => ({
-      id: Number(perp.id!),
-      state: PERP_STATE_STR[perp.state!],
-      baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY!, _symbolList)!,
-      quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY!, _symbolList)!,
-      indexPrice: 0, //fill later
-      collToQuoteIndexPrice: 0, //fill later
-      markPrice: ABK64x64ToFloat(perp.currentMarkPremiumRate!.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
-      midPrice: 0, // fill later
-      currentFundingRateBps: 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate!),
-      openInterestBC: ABK64x64ToFloat(perp.fOpenInterest!),
-      isMarketClosed: false, //fill later
-    }));
+    const perpStates = new Array<PerpetualState>();
+    for (let k = 0; k < _perpetuals.length; k++) {
+      const perp = _perpetuals[k];
+      perpStates.push({
+        //PerpetualState
+        id: Number(perp.id!),
+        state: PERP_STATE_STR[perp.state!],
+        baseCurrency: contractSymbolToSymbol(perp.S2BaseCCY!, _symbolList)!,
+        quoteCurrency: contractSymbolToSymbol(perp.S2QuoteCCY!, _symbolList)!,
+        indexPrice: 0, //fill later
+        collToQuoteIndexPrice: 0, //fill later
+        markPrice: ABK64x64ToFloat(perp.currentMarkPremiumRate!.fPrice), // fill later: indexS2 * (1 + markPremiumRate),
+        midPrice: 0, // fill later
+        currentFundingRateBps: 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate!),
+        openInterestBC: ABK64x64ToFloat(perp.fOpenInterest!),
+        isMarketClosed: false, //fill later
+        longBC: ABK64x64ToFloat(_longShortBC[k][0]),
+        shortBC: ABK64x64ToFloat(_longShortBC[k][1]),
+      });
+    }
     return perpStates;
   }
 

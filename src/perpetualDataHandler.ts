@@ -1172,6 +1172,7 @@ export default class PerpetualDataHandler {
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
+    _multicall: Multicall3,
     indexPrices: [number, number, boolean, boolean],
     overrides?: Overrides
   ): Promise<PerpetualState> {
@@ -1183,17 +1184,56 @@ export default class PerpetualDataHandler {
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
       S3 = 1;
     }
-    let ammState = await _proxyContract.getAMMState(
-      perpId,
-      [S2, S3].map(floatToABK64x64) as [bigint, bigint],
-      overrides || {}
-    );
-    return PerpetualDataHandler._parseAMMState(symbol, ammState, indexPrices, symbolToPerpStaticInfo);
+    // multicall
+    const proxyCalls: Multicall3.Call3Struct[] = [
+      {
+        target: _proxyContract.target,
+        allowFailure: false,
+        callData: _proxyContract.interface.encodeFunctionData("getAMMState", [
+          perpId,
+          [S2, S3].map(floatToABK64x64) as [bigint, bigint],
+        ]),
+      },
+      {
+        target: _proxyContract.target,
+        allowFailure: false,
+        callData: _proxyContract.interface.encodeFunctionData("getMarginAccounts", [[perpId], ZERO_ADDRESS]),
+      },
+    ];
+    // multicall
+    const encodedResults = await _multicall.aggregate3.staticCall(proxyCalls, overrides || {});
+    let ammState = _proxyContract.interface.decodeFunctionResult("getAMMState", encodedResults[0].returnData)[0];
+    const margin = _proxyContract.interface.decodeFunctionResult(
+      "getMarginAccounts",
+      encodedResults[1].returnData
+    )[0] as any;
+
+    let longShort = PerpetualDataHandler._oiAndAmmPosToLongShort(ammState[11], margin[0].fPositionBC);
+    return PerpetualDataHandler._parseAMMState(symbol, ammState, longShort, indexPrices, symbolToPerpStaticInfo);
+  }
+
+  /**
+   * Calculate long and short exposures from open interest and long/short
+   * @param oi open interest
+   * @param ammPos amm net exposure
+   * @returns long, short exposure
+   */
+  protected static _oiAndAmmPosToLongShort(oi: bigint, ammPos: bigint): [bigint, bigint] {
+    let short, long: bigint;
+    if (ammPos > 0n) {
+      short = oi;
+      long = oi - ammPos;
+    } else {
+      long = oi;
+      short = oi + ammPos;
+    }
+    return [long, short];
   }
 
   protected static _parseAMMState(
     symbol: string,
     ammState: bigint[],
+    longShort: [bigint, bigint],
     indexPrices: [number, number, boolean, boolean],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ) {
@@ -1219,6 +1259,8 @@ export default class PerpetualDataHandler {
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
       isMarketClosed: indexPrices[2] || indexPrices[3],
+      longBC: ABK64x64ToFloat(longShort[0]),
+      shortBC: ABK64x64ToFloat(longShort[1]),
     };
     return state;
   }

@@ -150,6 +150,8 @@ export interface PerpetualState {
   midPrice: number;
   currentFundingRateBps: number;
   openInterestBC: number;
+  longBC: number;
+  shortBC: number;
   isMarketClosed: boolean;
 }
 
