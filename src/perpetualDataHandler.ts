@@ -1416,10 +1416,10 @@ export default class PerpetualDataHandler {
       leverage: Number(order.leverageTDR) / 100,
       deadline: Number(order.iDeadline),
       executionTimestamp: Number(order.executionTimestamp),
-      submittedTimestamp: "submittedTimestamp" in order ? Number(order.submittedTimestamp) : undefined,
+      submittedTimestamp: order["submittedTimestamp"] ? Number(order["submittedTimestamp"]) : undefined,
       parentChildOrderIds:
-        "parentChildDigest1" && "parentChildDigest2" in order
-          ? [order.parentChildDigest1.toString(), order.parentChildDigest2.toString()]
+        order["parentChildDigest1"] && order["parentChildDigest2"]
+          ? [order["parentChildDigest1"].toString(), order["parentChildDigest2"].toString()]
           : undefined,
     };
     return userOrder;
@@ -1557,12 +1557,7 @@ export default class PerpetualDataHandler {
       executionTimestamp: obOrder.executionTimestamp,
     } as SmartContractOrder;
     const order = PerpetualDataHandler.fromSmartContractOrder(scOrder, perpStaticInfo);
-    if (
-      obOrder.parentChildDigest1.toString() != ZERO_ORDER_ID ||
-      obOrder.parentChildDigest2.toString() != ZERO_ORDER_ID
-    ) {
-      order.parentChildOrderIds = [obOrder.parentChildDigest1.toString(), obOrder.parentChildDigest2.toString()];
-    }
+    order.parentChildOrderIds = [obOrder.parentChildDigest1.toString(), obOrder.parentChildDigest2.toString()];
     return order;
   }
 
