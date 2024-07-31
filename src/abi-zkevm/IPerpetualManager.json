@@ -3036,7 +3036,7 @@
           },
           {
             "internalType": "int128",
-            "name": "fAMMMinSizeCC",
+            "name": "perpFlags",
             "type": "int128"
           },
           {
@@ -3443,7 +3443,7 @@
           },
           {
             "internalType": "int128",
-            "name": "fAMMMinSizeCC",
+            "name": "perpFlags",
             "type": "int128"
           },
           {
