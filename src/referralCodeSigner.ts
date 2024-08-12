@@ -151,8 +151,10 @@ export default class ReferralCodeSigner {
    */
   public static referralCodeNewCodePayloadToTypedData(rc: APIReferralCodePayload) {
     return {
-      types: ["string", "address", "uint32", "uint256"],
-      data: [rc.code, rc.referrerAddr, Math.round(rc.passOnPercTDF), Math.round(rc.createdOn)],
+      code: rc.code,
+      referrerAddr: rc.referrerAddr,
+      passOnPercTDF: Math.round(rc.passOnPercTDF),
+      createdOn: Math.round(rc.createdOn),
     };
   }
 
