@@ -217,14 +217,11 @@ export default class ReferralCodeSigner {
     try {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
-      console.log({ typedData });
       const signerAddress = verifyTypedData({}, { NewCode: referralTypes.NewCode }, typedData, rc.signature);
-      console.log({ signerAddress });
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
       console.log(err);
       // digest (1.x.x)
-      console.log("trying old method");
       try {
         let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
         let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
@@ -242,12 +239,26 @@ export default class ReferralCodeSigner {
       return false;
     }
     try {
-      let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
-      let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-      const signerAddress = verifyMessage(digestBuffer, rc.signature);
+      // typed-data (^2.x.x)
+      const typedData = ReferralCodeSigner.codeSelectionPayloadToTypedData(rc);
+      const signerAddress = verifyTypedData(
+        {},
+        { CodeSelection: referralTypes.CodeSelection },
+        typedData,
+        rc.signature
+      );
       return rc.traderAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
-      return false;
+      console.log(err);
+      // digest (1.x.x)
+      try {
+        let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
+        let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+        const signerAddress = verifyMessage(digestBuffer, rc.signature);
+        return rc.traderAddr.toLowerCase() == signerAddress.toLowerCase();
+      } catch (err) {
+        return false;
+      }
     }
   }
 }
