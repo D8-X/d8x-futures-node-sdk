@@ -218,7 +218,7 @@ export default class ReferralCodeSigner {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
       console.log({ typedData });
-      const signerAddress = verifyTypedData({}, referralTypes, typedData, rc.signature);
+      const signerAddress = verifyTypedData({}, { NewCode: referralTypes.NewCode }, typedData, rc.signature);
       console.log({ signerAddress });
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
