@@ -193,7 +193,7 @@ export default class ReferralCodeSigner {
   public static codeSelectionPayloadToTypedData(rc: APIReferralCodeSelectionPayload) {
     return {
       code: rc.code,
-      traderAddr: rc.traderAddr,
+      traderAddr: rc.traderAddr as `0x${string}`,
       createdOn: BigInt(Math.round(rc.createdOn)),
     };
   }
