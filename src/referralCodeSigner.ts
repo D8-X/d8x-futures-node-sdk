@@ -137,7 +137,7 @@ export default class ReferralCodeSigner {
       parentAddr: rc.parentAddr as `0x${string}`,
       referToAddr: rc.referToAddr as `0x${string}`,
       passOnPercTDF: Math.round(rc.passOnPercTDF),
-      createdOn: Math.round(rc.createdOn),
+      createdOn: BigInt(Math.round(rc.createdOn)),
     };
   }
 
@@ -168,7 +168,7 @@ export default class ReferralCodeSigner {
       code: rc.code,
       referrerAddr: rc.referrerAddr as `0x${string}`,
       passOnPercTDF: Math.round(rc.passOnPercTDF),
-      createdOn: Math.round(rc.createdOn),
+      createdOn: BigInt(Math.round(rc.createdOn)),
     };
   }
 
@@ -194,7 +194,7 @@ export default class ReferralCodeSigner {
     return {
       code: rc.code,
       traderAddr: rc.traderAddr,
-      createdOn: Math.round(rc.createdOn),
+      createdOn: BigInt(Math.round(rc.createdOn)),
     };
   }
 
