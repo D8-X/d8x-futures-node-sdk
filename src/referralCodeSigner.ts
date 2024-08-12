@@ -217,10 +217,13 @@ export default class ReferralCodeSigner {
     try {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
+      console.log({ typedData });
       const signerAddress = verifyTypedData({}, referralTypes, typedData, rc.signature);
+      console.log({ signerAddress });
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
       // digest (1.x.x)
+      console.log("trying old method");
       try {
         let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
         let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
