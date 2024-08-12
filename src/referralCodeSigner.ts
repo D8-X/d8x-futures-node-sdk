@@ -1,5 +1,10 @@
-import { AbiCoder, JsonRpcProvider, keccak256, Provider, Signer, verifyMessage, Wallet } from "ethers";
-import type { APIReferPayload, APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
+import { AbiCoder, JsonRpcProvider, keccak256, Provider, Signer, verifyMessage, verifyTypedData, Wallet } from "ethers";
+import {
+  APIReferPayload,
+  APIReferralCodePayload,
+  APIReferralCodeSelectionPayload,
+  referralTypes,
+} from "./nodeSDKTypes";
 
 /**
  * This is a 'standalone' class that deals with signatures
@@ -210,12 +215,20 @@ export default class ReferralCodeSigner {
       return false;
     }
     try {
-      let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
-      let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-      const signerAddress = verifyMessage(digestBuffer, rc.signature);
+      // typed-data (^2.x.x)
+      const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
+      const signerAddress = verifyTypedData({}, referralTypes, typedData, rc.signature);
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
-      return false;
+      // digest (1.x.x)
+      try {
+        let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
+        let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+        const signerAddress = verifyMessage(digestBuffer, rc.signature);
+        return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
+      } catch (err) {
+        return false;
+      }
     }
   }
 

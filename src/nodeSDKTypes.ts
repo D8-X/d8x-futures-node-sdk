@@ -523,4 +523,4 @@ export const referralTypes = {
     { name: "traderAddr", type: "address" },
     { name: "createdOn", type: "uint256" },
   ],
-} as const;
+};
