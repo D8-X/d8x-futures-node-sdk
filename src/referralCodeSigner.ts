@@ -222,6 +222,7 @@ export default class ReferralCodeSigner {
       console.log({ signerAddress });
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
+      console.log(err);
       // digest (1.x.x)
       console.log("trying old method");
       try {
@@ -230,6 +231,7 @@ export default class ReferralCodeSigner {
         const signerAddress = verifyMessage(digestBuffer, rc.signature);
         return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
       } catch (err) {
+        console.log(err);
         return false;
       }
     }
