@@ -145,6 +145,18 @@ export default class ReferralCodeSigner {
   }
 
   /**
+   * Convert payload to data to be signed
+   * @param rc payload
+   * @returns types and data to be signed
+   */
+  public static referralCodeNewCodePayloadToTypedData(rc: APIReferralCodePayload) {
+    return {
+      types: ["string", "address", "uint32", "uint256"],
+      data: [rc.code, rc.referrerAddr, Math.round(rc.passOnPercTDF), Math.round(rc.createdOn)],
+    };
+  }
+
+  /**
    * Create digest for APIReferralCodeSelectionPayload that is to be signed
    * @param rc payload
    * @returns the hex-string to be signed
