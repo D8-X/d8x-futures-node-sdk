@@ -497,3 +497,30 @@ export interface LiquidityPoolData {
   totalSupplyShareToken: number; // state
   fBrokerFundCashCC: number; // state: amount of cash in broker fund
 }
+
+// referral types:
+
+export const referralTypes = {
+  //  ["string", "address", "uint32", "uint256"],
+  //  [rc.code, rc.referrerAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]
+  NewCode: [
+    { name: "code", type: "string" },
+    { name: "referrerAddr", type: "address" },
+    { name: "passOnPercTDF", type: "uint32" },
+    { name: "createdOn", type: "uint256" },
+  ],
+  // ["address", "address", "uint32", "uint256"],
+  // [rc.parentAddr, rc.referToAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]
+  NewReferral: [
+    { name: "parentAddr", type: "address" },
+    { name: "referToAddr", type: "address" },
+    { name: "passOnPercTDF", type: "uint32" },
+    { name: "createdOn", type: "uint256" },
+  ],
+  // ["string", "address", "uint256"], [rc.code, rc.traderAddr, Math.round(rc.createdOn)]
+  CodeSelection: [
+    { name: "code", type: "string" },
+    { name: "traderAddr", type: "address" },
+    { name: "createdOn", type: "uint256" },
+  ],
+} as const;
