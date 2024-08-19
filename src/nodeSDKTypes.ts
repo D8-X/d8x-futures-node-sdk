@@ -499,7 +499,9 @@ export interface LiquidityPoolData {
 }
 
 // referral types:
-
+export const referralDomain = {
+  name: "Referral System",
+};
 export const referralTypes = {
   //  ["string", "address", "uint32", "uint256"],
   //  [rc.code, rc.referrerAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]

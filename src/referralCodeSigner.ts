@@ -14,6 +14,7 @@ import {
   APIReferPayload,
   APIReferralCodePayload,
   APIReferralCodeSelectionPayload,
+  referralDomain,
   referralTypes,
 } from "./nodeSDKTypes";
 
@@ -97,7 +98,7 @@ export default class ReferralCodeSigner {
   public async getSignatureForNewReferral(rp: APIReferPayload): Promise<string> {
     if (this.signingTypedDataFun != undefined) {
       return await this.signingTypedDataFun(
-        { name: "Referral System" },
+        referralDomain,
         {
           NewReferral: referralTypes.NewReferral,
         },
@@ -113,7 +114,7 @@ export default class ReferralCodeSigner {
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
     if (this.signingTypedDataFun != undefined) {
       return await this.signingTypedDataFun(
-        { name: "Referral System" },
+        referralDomain,
         {
           NewCode: referralTypes.NewCode,
         },
@@ -129,7 +130,7 @@ export default class ReferralCodeSigner {
   public async getSignatureForCodeSelection(rc: APIReferralCodeSelectionPayload): Promise<string> {
     if (this.signingTypedDataFun != undefined) {
       return await this.signingTypedDataFun(
-        { name: "Referral System" },
+        referralDomain,
         {
           CodeSelection: referralTypes.CodeSelection,
         },
@@ -294,7 +295,7 @@ export default class ReferralCodeSigner {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
       const signerAddress = verifyTypedData(
-        { name: "Referral System" },
+        referralDomain,
         { NewCode: referralTypes.NewCode },
         typedData,
         rc.signature
@@ -323,7 +324,7 @@ export default class ReferralCodeSigner {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.codeSelectionPayloadToTypedData(rc);
       const signerAddress = verifyTypedData(
-        { name: "Referral System" },
+        referralDomain,
         { CodeSelection: referralTypes.CodeSelection },
         typedData,
         rc.signature
