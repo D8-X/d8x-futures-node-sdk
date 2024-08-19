@@ -99,12 +99,7 @@ export default class ReferralCodeSigner {
       return await this.signingTypedDataFun(
         { name: "Referral System" },
         {
-          NewReferral: [
-            { name: "parentAddr", type: "address" },
-            { name: "referToAddr", type: "address" },
-            { name: "passOnPercTDF", type: "uint32" },
-            { name: "createdOn", type: "uint256" },
-          ],
+          NewReferral: referralTypes.NewReferral,
         },
         ReferralCodeSigner.newReferralPayloadToTypedData(rp)
       );
@@ -120,12 +115,7 @@ export default class ReferralCodeSigner {
       return await this.signingTypedDataFun(
         { name: "Referral System" },
         {
-          NewCode: [
-            { name: "code", type: "string" },
-            { name: "referrerAddr", type: "address" },
-            { name: "passOnPercTDF", type: "uint32" },
-            { name: "createdOn", type: "uint256" },
-          ],
+          NewCode: referralTypes.NewCode,
         },
         ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc)
       );
@@ -141,11 +131,7 @@ export default class ReferralCodeSigner {
       return await this.signingTypedDataFun(
         { name: "Referral System" },
         {
-          CodeSelection: [
-            { name: "code", type: "string" },
-            { name: "traderAddr", type: "address" },
-            { name: "createdOn", type: "uint256" },
-          ],
+          CodeSelection: referralTypes.CodeSelection,
         },
         ReferralCodeSigner.codeSelectionPayloadToTypedData(rc)
       );
@@ -229,10 +215,10 @@ export default class ReferralCodeSigner {
    */
   public static newReferralPayloadToTypedData(rc: APIReferPayload) {
     return {
-      parentAddr: rc.parentAddr as `0x${string}`,
-      referToAddr: rc.referToAddr as `0x${string}`,
-      passOnPercTDF: Math.round(rc.passOnPercTDF),
-      createdOn: BigInt(Math.round(rc.createdOn)),
+      ParentAddr: rc.parentAddr as `0x${string}`,
+      ReferToAddr: rc.referToAddr as `0x${string}`,
+      PassOnPercTDF: Math.round(rc.passOnPercTDF),
+      CreatedOn: BigInt(Math.round(rc.createdOn)),
     };
   }
 
@@ -260,10 +246,10 @@ export default class ReferralCodeSigner {
    */
   public static referralCodeNewCodePayloadToTypedData(rc: APIReferralCodePayload) {
     return {
-      code: rc.code,
-      referrerAddr: rc.referrerAddr as `0x${string}`,
-      passOnPercTDF: Math.round(rc.passOnPercTDF),
-      createdOn: BigInt(Math.round(rc.createdOn)),
+      Code: rc.code,
+      ReferrerAddr: rc.referrerAddr as `0x${string}`,
+      PassOnPercTDF: Math.round(rc.passOnPercTDF),
+      CreatedOn: BigInt(Math.round(rc.createdOn)),
     };
   }
 
@@ -287,9 +273,9 @@ export default class ReferralCodeSigner {
    */
   public static codeSelectionPayloadToTypedData(rc: APIReferralCodeSelectionPayload) {
     return {
-      code: rc.code,
-      traderAddr: rc.traderAddr as `0x${string}`,
-      createdOn: BigInt(Math.round(rc.createdOn)),
+      Code: rc.code,
+      TraderAddr: rc.traderAddr as `0x${string}`,
+      CreatedOn: BigInt(Math.round(rc.createdOn)),
     };
   }
 
