@@ -1,4 +1,15 @@
-import { AbiCoder, JsonRpcProvider, keccak256, Provider, Signer, verifyMessage, verifyTypedData, Wallet } from "ethers";
+import {
+  AbiCoder,
+  JsonRpcProvider,
+  keccak256,
+  Provider,
+  Signer,
+  TypedDataDomain,
+  TypedDataField,
+  verifyMessage,
+  verifyTypedData,
+  Wallet,
+} from "ethers";
 import {
   APIReferPayload,
   APIReferralCodePayload,
@@ -19,11 +30,26 @@ import {
 export default class ReferralCodeSigner {
   private provider: Provider | undefined;
   private rpcURL: string;
-  private signingFun: (x: string | Uint8Array) => Promise<string>;
+  private signingFun: ((x: string | Uint8Array) => Promise<string>) | undefined;
+  private signingTypedDataFun:
+    | ((
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => Promise<string>)
+    | undefined;
   private address: string;
 
   constructor(
-    signer: Signer | string | ((x: string | Uint8Array) => Promise<string>),
+    signer:
+      | Signer
+      | string
+      | ((x: string | Uint8Array) => Promise<string>)
+      | ((
+          domain: TypedDataDomain,
+          types: Record<string, TypedDataField[]>,
+          value: Record<string, any>
+        ) => Promise<string>),
     address: string,
     _rpcURL: string
   ) {
@@ -32,38 +58,102 @@ export default class ReferralCodeSigner {
     if (typeof signer == "string") {
       const wallet = this.createSignerInstance(signer);
       this.signingFun = (x: string | Uint8Array) => wallet.signMessage(x);
+      this.signingTypedDataFun = (
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => wallet.signTypedData(domain, types, value);
     } else if ("signMessage" in signer) {
       this.signingFun = (x: string | Uint8Array) => signer.signMessage(x);
+      this.signingTypedDataFun = (
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => signer.signTypedData(domain, types, value);
+    } else if (signer.length === 1) {
+      this.signingFun = signer as (x: string | Uint8Array) => Promise<string>;
     } else {
-      this.signingFun = signer;
+      this.signingTypedDataFun = signer as (
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => Promise<string>;
     }
   }
 
   public createSignerInstance(_privateKey: string): Signer {
     this.provider = new JsonRpcProvider(this.rpcURL);
     const wallet = new Wallet(_privateKey);
-    return wallet.connect(this.provider);
+    wallet.connect(this.provider);
+    this.signingFun = (x: string | Uint8Array) => wallet.signMessage(x);
+    this.signingTypedDataFun = (
+      domain: TypedDataDomain,
+      types: Record<string, TypedDataField[]>,
+      value: Record<string, any>
+    ) => wallet.signTypedData(domain, types, value);
+    return wallet;
   }
 
   public async getSignatureForNewReferral(rp: APIReferPayload): Promise<string> {
-    if (this.signingFun == undefined) {
+    if (this.signingTypedDataFun != undefined) {
+      return await this.signingTypedDataFun(
+        { name: "Referral System" },
+        {
+          NewReferral: [
+            { name: "parentAddr", type: "address" },
+            { name: "referToAddr", type: "address" },
+            { name: "passOnPercTDF", type: "uint32" },
+            { name: "createdOn", type: "uint256" },
+          ],
+        },
+        ReferralCodeSigner.newReferralPayloadToTypedData(rp)
+      );
+    } else if (this.signingFun != undefined) {
+      return await ReferralCodeSigner.getSignatureForNewReferral(rp, this.signingFun);
+    } else {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForNewReferral(rp, this.signingFun);
   }
 
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
-    if (this.signingFun == undefined) {
+    if (this.signingTypedDataFun != undefined) {
+      return await this.signingTypedDataFun(
+        { name: "Referral System" },
+        {
+          NewCode: [
+            { name: "code", type: "string" },
+            { name: "referrerAddr", type: "address" },
+            { name: "passOnPercTDF", type: "uint32" },
+            { name: "createdOn", type: "uint256" },
+          ],
+        },
+        ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc)
+      );
+    } else if (this.signingFun != undefined) {
+      return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signingFun);
+    } else {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signingFun);
   }
 
   public async getSignatureForCodeSelection(rc: APIReferralCodeSelectionPayload): Promise<string> {
-    if (this.signingFun == undefined) {
+    if (this.signingTypedDataFun != undefined) {
+      return await this.signingTypedDataFun(
+        { name: "Referral System" },
+        {
+          CodeSelection: [
+            { name: "code", type: "string" },
+            { name: "traderAddr", type: "address" },
+            { name: "createdOn", type: "uint256" },
+          ],
+        },
+        ReferralCodeSigner.codeSelectionPayloadToTypedData(rc)
+      );
+    } else if (this.signingFun != undefined) {
+      return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signingFun);
+    } else {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signingFun);
   }
 
   public async getAddress(): Promise<string> {
@@ -217,7 +307,12 @@ export default class ReferralCodeSigner {
     try {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
-      const signerAddress = verifyTypedData({}, { NewCode: referralTypes.NewCode }, typedData, rc.signature);
+      const signerAddress = verifyTypedData(
+        { name: "Referral System" },
+        { NewCode: referralTypes.NewCode },
+        typedData,
+        rc.signature
+      );
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
       console.log(err);
@@ -242,7 +337,7 @@ export default class ReferralCodeSigner {
       // typed-data (^2.x.x)
       const typedData = ReferralCodeSigner.codeSelectionPayloadToTypedData(rc);
       const signerAddress = verifyTypedData(
-        {},
+        { name: "Referral System" },
         { CodeSelection: referralTypes.CodeSelection },
         typedData,
         rc.signature

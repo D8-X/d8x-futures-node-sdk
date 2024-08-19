@@ -38,7 +38,7 @@ describe("referralCodeSigner", () => {
     let S = await codeSigner.getSignatureForCodeSelection(rc);
     console.log(S);
     rc.signature = S;
-    if (!(await ReferralCodeSigner.checkCodeSelectionSignature(rc))) {
+    if (!ReferralCodeSigner.checkCodeSelectionSignature(rc)) {
       throw Error("ops didn't fly");
     }
   });
