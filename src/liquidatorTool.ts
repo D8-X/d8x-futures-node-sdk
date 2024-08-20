@@ -3,6 +3,7 @@ import { PayableOverrides } from "./contracts/common";
 import { IPyth__factory } from "./contracts/factories";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import type { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
+import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
 
 /**
@@ -222,13 +223,13 @@ export default class LiquidatorTool extends WriteAccessHandler {
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
       indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
     }
-    let traderState = await this.proxyContract.getTraderState(
+    let traderState: bigint[] = await this.proxyContract.getTraderState(
       perpID,
       traderAddr,
       indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [bigint, bigint],
       overrides || {}
     );
-    if (traderState[idx_notional].eq(0)) {
+    if (traderState[idx_notional] == 0n) {
       // trader does not have open position
       return true;
     }
