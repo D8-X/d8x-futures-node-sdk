@@ -106,6 +106,10 @@ describe("referralCodeSigner", () => {
       signature: "",
     };
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let typedData = ReferralCodeSigner.newReferralPayloadToTypedData(rcp);
+    const hash = TypedDataEncoder.hashStruct("NewReferral", { NewReferral: referralTypes.NewReferral }, typedData);
+    console.log("payload", typedData, "\ntyped data hash", hash);
+
     let S = await codeSigner.getSignatureForNewReferral(rcp);
     rcp.signature = S;
     console.log("new referral = ", rcp);
