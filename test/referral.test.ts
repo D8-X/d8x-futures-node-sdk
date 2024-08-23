@@ -1,5 +1,10 @@
-import { JsonRpcProvider, Wallet } from "ethers";
-import { APIReferralCodeSelectionPayload, APIReferPayload, APIReferralCodePayload } from "../src/nodeSDKTypes";
+import { JsonRpcProvider, TypedDataEncoder, Wallet } from "ethers";
+import {
+  APIReferralCodeSelectionPayload,
+  APIReferPayload,
+  APIReferralCodePayload,
+  referralTypes,
+} from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import ReferralCodeSigner from "../src/referralCodeSigner";
 
@@ -35,11 +40,28 @@ describe("referralCodeSigner", () => {
 
   it("init with pk", async () => {
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let typedData = ReferralCodeSigner.codeSelectionPayloadToTypedData(rc);
+    const hash = TypedDataEncoder.hashStruct(
+      "CodeSelection",
+      { CodeSelection: referralTypes.CodeSelection },
+      typedData
+    );
     let S = await codeSigner.getSignatureForCodeSelection(rc);
-    console.log(S);
+    let S2 = await wallet.signTypedData(
+      { name: "Referral System" },
+      { CodeSelection: referralTypes.CodeSelection },
+      typedData
+    );
+
+    console.log("payload", rc, "\ntyped data hash", hash, "\ndigest signature", S, "\ntyped data signature", S2);
+
     rc.signature = S;
-    if (!(await ReferralCodeSigner.checkCodeSelectionSignature(rc))) {
-      throw Error("ops didn't fly");
+    if (!ReferralCodeSigner.checkCodeSelectionSignature(rc)) {
+      throw Error("ops didn't fly 1");
+    }
+    rc.signature = S2;
+    if (!ReferralCodeSigner.checkCodeSelectionSignature(rc)) {
+      throw Error("ops didn't fly 2");
     }
   });
 
@@ -66,6 +88,10 @@ describe("referralCodeSigner", () => {
       signature: "",
     };
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rcp);
+    const hash = TypedDataEncoder.hashStruct("NewCode", { NewCode: referralTypes.NewCode }, typedData);
+    console.log("payload", typedData, "\ntyped data hash", hash);
+
     let S = await codeSigner.getSignatureForNewCode(rcp);
     rcp.signature = S;
     console.log("new code");
@@ -80,11 +106,15 @@ describe("referralCodeSigner", () => {
       signature: "",
     };
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    let typedData = ReferralCodeSigner.newReferralPayloadToTypedData(rcp);
+    const hash = TypedDataEncoder.hashStruct("NewReferral", { NewReferral: referralTypes.NewReferral }, typedData);
+    console.log("payload", typedData, "\ntyped data hash", hash);
+
     let S = await codeSigner.getSignatureForNewReferral(rcp);
     rcp.signature = S;
     console.log("new referral = ", rcp);
   });
-  it("signature for code selection", async () => {
+  it("signature for code selection from digest", async () => {
     let ts = Math.round(Date.now() / 1000);
     let rcp: APIReferralCodeSelectionPayload = {
       code: "DOUBLE_AG",
@@ -94,6 +124,24 @@ describe("referralCodeSigner", () => {
     };
     codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
     let S = await codeSigner.getSignatureForCodeSelection(rcp);
+    rcp.signature = S;
+    console.log(rcp);
+  });
+
+  it("signature for code selection from typed data", async () => {
+    let ts = Math.round(Date.now() / 1000);
+    let rcp: APIReferralCodeSelectionPayload = {
+      code: "DOUBLE_AG",
+      traderAddr: wallet.address,
+      createdOn: ts,
+      signature: "",
+    };
+    codeSigner = new ReferralCodeSigner(pk, wallet.address, RPC);
+    const S = await wallet.signTypedData(
+      { name: "Referral System" },
+      { CodeSelection: referralTypes.CodeSelection },
+      ReferralCodeSigner.codeSelectionPayloadToTypedData(rcp)
+    );
     rcp.signature = S;
     console.log(rcp);
   });

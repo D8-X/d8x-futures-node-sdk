@@ -507,29 +507,31 @@ export interface LiquidityPoolData {
 }
 
 // referral types:
-
+export const referralDomain = {
+  name: "Referral System",
+};
 export const referralTypes = {
   //  ["string", "address", "uint32", "uint256"],
   //  [rc.code, rc.referrerAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]
   NewCode: [
-    { name: "code", type: "string" },
-    { name: "referrerAddr", type: "address" },
-    { name: "passOnPercTDF", type: "uint32" },
-    { name: "createdOn", type: "uint256" },
+    { name: "Code", type: "string" },
+    { name: "ReferrerAddr", type: "address" },
+    { name: "PassOnPercTDF", type: "uint32" },
+    { name: "CreatedOn", type: "uint256" },
   ],
   // ["address", "address", "uint32", "uint256"],
   // [rc.parentAddr, rc.referToAddr, passOnPercTwoDigitsFormat, Math.round(rc.createdOn)]
   NewReferral: [
-    { name: "parentAddr", type: "address" },
-    { name: "referToAddr", type: "address" },
-    { name: "passOnPercTDF", type: "uint32" },
-    { name: "createdOn", type: "uint256" },
+    { name: "ParentAddr", type: "address" },
+    { name: "ReferToAddr", type: "address" },
+    { name: "PassOnPercTDF", type: "uint32" },
+    { name: "CreatedOn", type: "uint256" },
   ],
   // ["string", "address", "uint256"], [rc.code, rc.traderAddr, Math.round(rc.createdOn)]
   CodeSelection: [
-    { name: "code", type: "string" },
-    { name: "traderAddr", type: "address" },
-    { name: "createdOn", type: "uint256" },
+    { name: "Code", type: "string" },
+    { name: "TraderAddr", type: "address" },
+    { name: "CreatedOn", type: "uint256" },
   ],
 };
 

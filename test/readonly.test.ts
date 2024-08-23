@@ -40,7 +40,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeAll(() => {
-    config = PerpetualDataHandler.readSDKConfig("x1");
+    config = PerpetualDataHandler.readSDKConfig("zkevm");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -394,9 +394,19 @@ describe("readOnly", () => {
     it("get margin info if collateral is removed", async () => {
       let mgnBefore = (await mktData.positionRisk(wallet.address, "ETH-USDC-USDC"))[0];
       let deposit = -2;
-      let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
-      console.log("mgnBefore:", mgnBefore);
-      console.log("mgnAfter :", mgnAfter);
+      let errored = false;
+      try {
+        let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
+        console.log("mgnBefore:", mgnBefore);
+        console.log("mgnAfter :", mgnAfter);
+      } catch (e) {
+        errored = true;
+        console.log(e);
+      }
+      expect(
+        errored ==
+          deposit + mgnBefore.collateralCC + mgnBefore.unrealizedPnlQuoteCCY / mgnBefore.collToQuoteConversion < 0
+      ).toBeTruthy();
     });
 
     it("get pool id", async () => {
