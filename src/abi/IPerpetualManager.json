@@ -1513,6 +1513,25 @@
   {
     "inputs": [
       {
+        "internalType": "uint16",
+        "name": "num",
+        "type": "uint16"
+      }
+    ],
+    "name": "decodeUint16Float",
+    "outputs": [
+      {
+        "internalType": "int128",
+        "name": "",
+        "type": "int128"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint8",
         "name": "_iPoolIdx",
         "type": "uint8"
@@ -1927,6 +1946,25 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int128",
+        "name": "_p",
+        "type": "int128"
+      }
+    ],
+    "name": "entropy",
+    "outputs": [
+      {
+        "internalType": "int128",
+        "name": "",
+        "type": "int128"
+      }
+    ],
+    "stateMutability": "pure",
     "type": "function"
   },
   {
@@ -2818,8 +2856,13 @@
     "outputs": [
       {
         "internalType": "int128",
-        "name": "fPrice",
+        "name": "",
         "type": "int128"
+      },
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
       }
     ],
     "stateMutability": "view",
@@ -4179,6 +4222,50 @@
   {
     "inputs": [
       {
+        "internalType": "int128",
+        "name": "_fPx",
+        "type": "int128"
+      },
+      {
+        "internalType": "int128",
+        "name": "_fm",
+        "type": "int128"
+      },
+      {
+        "internalType": "int128",
+        "name": "_fTotLong",
+        "type": "int128"
+      },
+      {
+        "internalType": "int128",
+        "name": "_fTotShort",
+        "type": "int128"
+      },
+      {
+        "internalType": "int128",
+        "name": "_fTradeAmt",
+        "type": "int128"
+      },
+      {
+        "internalType": "int128",
+        "name": "_fMgnRate",
+        "type": "int128"
+      }
+    ],
+    "name": "prdMktsLvgFee",
+    "outputs": [
+      {
+        "internalType": "int128",
+        "name": "",
+        "type": "int128"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "uint16",
@@ -4275,6 +4362,30 @@
   {
     "inputs": [
       {
+        "internalType": "int128",
+        "name": "_amount",
+        "type": "int128"
+      },
+      {
+        "internalType": "uint64",
+        "name": "_params",
+        "type": "uint64"
+      }
+    ],
+    "name": "priceImpact",
+    "outputs": [
+      {
+        "internalType": "int128",
+        "name": "",
+        "type": "int128"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint8",
         "name": "_poolId",
         "type": "uint8"
@@ -4305,12 +4416,12 @@
     "inputs": [
       {
         "internalType": "uint24[]",
-        "name": "perpetualIds",
+        "name": "_perpetualIds",
         "type": "uint24[]"
       },
       {
         "internalType": "int128[]",
-        "name": "idxPriceDataPairs",
+        "name": "_idxPriceDataPairs",
         "type": "int128[]"
       }
     ],
@@ -4341,6 +4452,16 @@
         "internalType": "int128[2]",
         "name": "_fIndexPrice",
         "type": "int128[2]"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_confTbps",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint64",
+        "name": "_params",
+        "type": "uint64"
       }
     ],
     "name": "queryPerpetualPrice",

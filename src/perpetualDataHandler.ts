@@ -59,6 +59,8 @@ import {
   dec18ToFloat,
   priceToProb,
   probToPrice,
+  pmFindLiquidationPrice,
+  pmMaintenanceMarginRate,
 } from "./d8XMath";
 import {
   TokenOverride,
@@ -76,6 +78,7 @@ import {
   LiquidityPoolData,
   SettlementConfig,
   SettlementCcyItem,
+  IdxPriceInfo,
 } from "./nodeSDKTypes";
 import PriceFeeds from "./priceFeeds";
 import {
@@ -855,7 +858,8 @@ export default class PerpetualDataHandler {
     symbol: string,
     traderState: bigint[],
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _pxS2S3: [number, number]
+    pxInfo: IdxPriceInfo,
+    isPredMkt: boolean
   ): MarginAccount {
     const idx_cash = 3;
     const idx_notional = 4;
@@ -877,8 +881,9 @@ export default class PerpetualDataHandler {
       [S2Liq, S3Liq, tau, pnl, unpaidFundingCC] = PerpetualDataHandler._calculateLiquidationPrice(
         symbol,
         traderState,
-        _pxS2S3[0],
-        symbolToPerpStaticInfo
+        pxInfo.s2,
+        symbolToPerpStaticInfo,
+        isPredMkt
       );
       fLockedIn = traderState[idx_locked_in];
       side = traderState[idx_notional] > 0n ? BUY_SIDE : SELL_SIDE;
@@ -907,7 +912,7 @@ export default class PerpetualDataHandler {
    * @param symbol Perpetual symbol
    * @param symbolToPerpStaticInfo Symbol to perp static info mapping
    * @param _proxyContract Proxy contract instance
-   * @param _pxS2S3 Prices [S2, S3]
+   * @param _pxInfo index price info
    * @param overrides Optional overrides for eth_call
    * @returns A Margin account
    */
@@ -916,7 +921,8 @@ export default class PerpetualDataHandler {
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
-    _pxS2S3: [number, number],
+    _pxInfo: IdxPriceInfo,
+    isPredMkt: boolean,
     overrides?: Overrides
   ): Promise<MarginAccount> {
     let perpId = Number(symbol);
@@ -926,10 +932,16 @@ export default class PerpetualDataHandler {
     let traderState = await _proxyContract.getTraderState(
       perpId,
       traderAddr,
-      _pxS2S3.map((x) => floatToABK64x64(x)) as [bigint, bigint],
+      [_pxInfo.ema, _pxInfo.s3].map((x) => floatToABK64x64(x)) as [bigint, bigint],
       overrides || {}
     );
-    return PerpetualDataHandler.buildMarginAccountFromState(symbol, traderState, symbolToPerpStaticInfo, _pxS2S3);
+    return PerpetualDataHandler.buildMarginAccountFromState(
+      symbol,
+      traderState,
+      symbolToPerpStaticInfo,
+      _pxInfo,
+      isPredMkt
+    );
   }
 
   /**
@@ -1093,7 +1105,7 @@ export default class PerpetualDataHandler {
    * @param symbolToPerpStaticInfo Symbol to perp static info mapping
    * @param _multicall Multicall3 contract instance
    * @param _proxyContract Proxy contract instance
-   * @param _pxS2S3s  List of price pairs, [[S2, S3] (1st perp), [S2, S3] (2nd perp), ... ]
+   * @param _pxInfo  List of price info
    * @param overrides Optional eth_call overrides
    * @returns List of margin accounts
    */
@@ -1103,15 +1115,16 @@ export default class PerpetualDataHandler {
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _multicall: Multicall3,
     _proxyContract: Contract,
-    _pxS2S3s: number[][],
+    _pxInfo: IdxPriceInfo[],
+    isPredMkt: boolean[],
     overrides?: Overrides
   ): Promise<MarginAccount[]> {
     if (
       traderAddrs.length != symbols.length ||
-      traderAddrs.length != _pxS2S3s.length ||
-      symbols.length != _pxS2S3s.length
+      traderAddrs.length != _pxInfo.length ||
+      symbols.length != _pxInfo.length
     ) {
-      throw new Error("traderAddr, symbol and pxS2S3 should all have the same length");
+      throw new Error("traderAddr, symbol and _pxInfo should all have the same length");
     }
     const proxyCalls: Multicall3.Call3Struct[] = traderAddrs.map((_addr, i) => ({
       target: _proxyContract.target,
@@ -1119,7 +1132,7 @@ export default class PerpetualDataHandler {
       callData: _proxyContract.interface.encodeFunctionData("getTraderState", [
         PerpetualDataHandler.symbolToPerpetualId(symbols[i], symbolToPerpStaticInfo),
         _addr,
-        _pxS2S3s[i].map((x) => floatToABK64x64(x)) as [bigint, bigint],
+        [_pxInfo[i].ema, _pxInfo[i].s3].map((x) => floatToABK64x64(x)) as [bigint, bigint],
       ]),
     }));
     const encodedResults = await _multicall.aggregate3.staticCall(proxyCalls, overrides || {});
@@ -1128,10 +1141,13 @@ export default class PerpetualDataHandler {
       return _proxyContract.interface.decodeFunctionResult("getTraderState", returnData)[0];
     });
     return traderStates.map((traderState, i) =>
-      PerpetualDataHandler.buildMarginAccountFromState(symbols[i], traderState, symbolToPerpStaticInfo, [
-        _pxS2S3s[i][0],
-        _pxS2S3s[i][1],
-      ])
+      PerpetualDataHandler.buildMarginAccountFromState(
+        symbols[i],
+        traderState,
+        symbolToPerpStaticInfo,
+        _pxInfo[i],
+        isPredMkt[i]
+      )
     );
   }
 
@@ -1141,6 +1157,8 @@ export default class PerpetualDataHandler {
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
     indexPrices: [number, number],
+    conf: bigint,
+    params: bigint,
     overrides?: Overrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
@@ -1149,23 +1167,41 @@ export default class PerpetualDataHandler {
       perpId,
       floatToABK64x64(tradeAmount),
       fIndexPrices as [bigint, bigint],
+      conf,
+      params,
       overrides || {}
     );
     return ABK64x64ToFloat(fPrice);
   }
 
+  /**
+   *
+   * @param symbol                  perpetual symbol of the form BTC-USDC-USDC
+   * @param symbolToPerpStaticInfo  mapping
+   * @param _proxyContract          contract instance
+   * @param indexPrices             IdxPriceInfo
+   * @param isPredMkt               true if prediction market perpetual
+   * @param overrides
+   * @returns mark price
+   */
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
-    indexPrices: [number, number],
+    indexPrices: IdxPriceInfo,
+    isPredMkt: boolean,
     overrides?: Overrides
   ): Promise<number> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
-    let [S2, S3] = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x));
+    let [S2, S3] = [indexPrices.s2, indexPrices.s3].map((x) =>
+      floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)
+    );
     let ammState = await _proxyContract.getAMMState(perpId, [S2, S3], overrides || {});
     // ammState[6] == S2 == indexPrices[0] up to rounding errors (indexPrices is most accurate)
-    return indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+    if (isPredMkt) {
+      return indexPrices.ema + ABK64x64ToFloat(ammState[8]);
+    }
+    return indexPrices.s2 * (1 + ABK64x64ToFloat(ammState[8]));
   }
 
   protected static async _queryPerpetualState(
@@ -1173,16 +1209,15 @@ export default class PerpetualDataHandler {
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
     _proxyContract: Contract,
     _multicall: Multicall3,
-    indexPrices: [number, number, boolean, boolean],
+    indexPrices: IdxPriceInfo,
     overrides?: Overrides
   ): Promise<PerpetualState> {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
-    let [S2, S3] = [indexPrices[0], indexPrices[1]];
     if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
-      S3 = S2;
+      indexPrices.s3 = indexPrices.s2;
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
-      S3 = 1;
+      indexPrices.s3 = 1;
     }
     // multicall
     const proxyCalls: Multicall3.Call3Struct[] = [
@@ -1191,7 +1226,7 @@ export default class PerpetualDataHandler {
         allowFailure: false,
         callData: _proxyContract.interface.encodeFunctionData("getAMMState", [
           perpId,
-          [S2, S3].map(floatToABK64x64) as [bigint, bigint],
+          [indexPrices.s2, indexPrices.s3].map(floatToABK64x64) as [bigint, bigint],
         ]),
       },
       {
@@ -1234,19 +1269,18 @@ export default class PerpetualDataHandler {
     symbol: string,
     ammState: bigint[],
     longShort: [bigint, bigint],
-    indexPrices: [number, number, boolean, boolean],
+    indexPrices: IdxPriceInfo,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
   ) {
     let perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, symbolToPerpStaticInfo);
     let staticInfo = symbolToPerpStaticInfo.get(symbol)!;
     let ccy = symbol.split("-");
-    let [S2, S3] = [indexPrices[0], indexPrices[1]];
+    let [S2, S3] = [indexPrices.s2, indexPrices.s3];
     if (staticInfo.collateralCurrencyType == CollaterlCCY.BASE) {
       S3 = S2;
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
       S3 = 1;
     }
-    let markPrice = S2 * (1 + ABK64x64ToFloat(ammState[8]));
     let state: PerpetualState = {
       id: perpId,
       state: PERP_STATE_STR[Number(ammState[13])],
@@ -1254,11 +1288,11 @@ export default class PerpetualDataHandler {
       quoteCurrency: ccy[1],
       indexPrice: S2,
       collToQuoteIndexPrice: S3,
-      markPrice: markPrice,
+      markPremium: ABK64x64ToFloat(ammState[8]),
       midPrice: ABK64x64ToFloat(ammState[10]),
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
-      isMarketClosed: indexPrices[2] || indexPrices[3],
+      isMarketClosed: indexPrices.s2MktClosed || indexPrices.s3MktClosed,
       longBC: ABK64x64ToFloat(longShort[0]),
       shortBC: ABK64x64ToFloat(longShort[1]),
     };
@@ -1277,7 +1311,8 @@ export default class PerpetualDataHandler {
     symbol: string,
     traderState: bigint[],
     S2: number,
-    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>
+    symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
+    isPredMarket: boolean
   ): [number, number, number, number, number] {
     const idx_availableCashCC = 2;
     const idx_cash = 3;
@@ -1292,14 +1327,22 @@ export default class PerpetualDataHandler {
     if (perpInfo == undefined) {
       throw new Error(`no info for perpetual ${symbol}`);
     }
-    let tau = perpInfo.maintenanceMarginRate;
-    let lockedInValueQC = ABK64x64ToFloat(traderState[idx_locked_in]);
-    let position = ABK64x64ToFloat(traderState[idx_notional]);
-    let cashCC = ABK64x64ToFloat(traderState[idx_availableCashCC]);
-    let Sm = ABK64x64ToFloat(traderState[idx_mark_price]);
-    let unpaidFundingCC = ABK64x64ToFloat(traderState[idx_availableCashCC] - traderState[idx_cash]);
+    const tau = perpInfo.maintenanceMarginRate;
+    const lockedInValueQC = ABK64x64ToFloat(traderState[idx_locked_in]);
+    const position = ABK64x64ToFloat(traderState[idx_notional]);
+    const cashCC = ABK64x64ToFloat(traderState[idx_availableCashCC]);
+    const Sm = ABK64x64ToFloat(traderState[idx_mark_price]);
+    const unpaidFundingCC = ABK64x64ToFloat(traderState[idx_availableCashCC] - traderState[idx_cash]);
     let unpaidFunding = unpaidFundingCC;
 
+    if (isPredMarket) {
+      const S2Liq = pmFindLiquidationPrice(position, S3Liq, lockedInValueQC, cashCC, tau, S2);
+      let pnl = position * Sm - lockedInValueQC + unpaidFunding / S3Liq;
+      // liquidation margin rate
+      const tauLiq = pmMaintenanceMarginRate(position, S2Liq, tau);
+      return [S2Liq, S3Liq, tauLiq, pnl, unpaidFundingCC];
+    }
+    // regular perpetuals:
     if (perpInfo.collateralCurrencyType == CollaterlCCY.BASE) {
       S2Liq = calculateLiquidationPriceCollateralBase(lockedInValueQC, position, cashCC, tau);
       S3Liq = S2Liq;
@@ -1397,7 +1440,7 @@ export default class PerpetualDataHandler {
     }
     // adjust prices for market type
     const sInfo = symbolToPerpInfoMap.get(symbol)!;
-    if (PerpetualDataHandler.isPredictionMarket(sInfo)) {
+    if (PerpetualDataHandler.isPredictionMarketStatic(sInfo)) {
       limitPrice = limitPrice !== undefined && limitPrice !== 0 ? priceToProb(limitPrice) : limitPrice;
       stopPrice = stopPrice !== undefined && stopPrice !== 0 ? priceToProb(stopPrice) : stopPrice;
     }
@@ -1416,10 +1459,10 @@ export default class PerpetualDataHandler {
       leverage: Number(order.leverageTDR) / 100,
       deadline: Number(order.iDeadline),
       executionTimestamp: Number(order.executionTimestamp),
-      submittedTimestamp: order["submittedTimestamp"] ? Number(order["submittedTimestamp"]) : undefined,
+      submittedTimestamp: "submittedTimestamp" in order ? Number(order.submittedTimestamp) : undefined,
       parentChildOrderIds:
-        order["parentChildDigest1"] && order["parentChildDigest2"]
-          ? [order["parentChildDigest1"].toString(), order["parentChildDigest2"].toString()]
+        "parentChildDigest1" && "parentChildDigest2" in order
+          ? [order.parentChildDigest1.toString(), order.parentChildDigest2.toString()]
           : undefined,
     };
     return userOrder;
@@ -1450,7 +1493,7 @@ export default class PerpetualDataHandler {
     } else {
       throw Error(`invalid side in order spec, use ${BUY_SIDE} or ${SELL_SIDE}`);
     }
-    const isPred = PerpetualDataHandler.isPredictionMarket(perpStaticInfo.get(order.symbol)!);
+    const isPred = PerpetualDataHandler.isPredictionMarketStatic(perpStaticInfo.get(order.symbol)!);
     let fLimitPrice: bigint;
     if (order.limitPrice == undefined) {
       // we need to set the limit price to infinity or zero for
@@ -1960,7 +2003,7 @@ export default class PerpetualDataHandler {
     if (staticInfo == undefined) {
       throw new Error(`Perpetual with symbol ${symbol} not found. Check symbol or use createProxyInstance().`);
     }
-    return PerpetualDataHandler.isPredictionMarket(staticInfo);
+    return PerpetualDataHandler.isPredictionMarketStatic(staticInfo);
   }
 
   /**
@@ -1968,8 +2011,7 @@ export default class PerpetualDataHandler {
    * @param staticInfo Perpetual static info
    * @returns True if this is a prediction market
    */
-  public static isPredictionMarket(staticInfo: PerpetualStaticInfo) {
-    // return true; // for testing
+  public static isPredictionMarketStatic(staticInfo: PerpetualStaticInfo) {
     return containsFlag(staticInfo.perpFlags, MASK_PREDICTION_MARKET);
   }
 }

@@ -7,6 +7,8 @@ import type {
   PriceFeedFormat,
   PriceFeedSubmission,
   PythV2LatestPriceFeed,
+  IdxPriceInfo,
+  PredMktPriceInfo,
 } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import Triangulator from "./triangulator";
@@ -41,7 +43,7 @@ export default class PriceFeeds {
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
     let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
     this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
-    this.polyMktsPxFeed = new PolyMktsPxFeed(this.config);
+
     // if SDK config contains custom price feed endpoints, these override the
     // public/default ones
     if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
@@ -66,7 +68,8 @@ export default class PriceFeeds {
     if (this.writeFeedEndpoints.length == 0) {
       throw new Error("PriceFeeds: no writeEndpoints provided in config");
     }
-
+    const idx = Math.floor(Math.random() * this.writeFeedEndpoints.length);
+    this.polyMktsPxFeed = new PolyMktsPxFeed(this.config, this.writeFeedEndpoints[idx]);
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
   }
@@ -200,10 +203,25 @@ export default class PriceFeeds {
   /**
    * Get index prices and market closed information for the given perpetual
    * @param symbol perpetual symbol such as ETH-USD-MATIC
-   * @returns Index prices and market closed information
+   * @returns Index prices and market closed information; for prediction markets also
+   * ema, confidence, and order book parameters.
    */
-  public async fetchPricesForPerpetual(symbol: string): Promise<{ idxPrices: number[]; mktClosed: boolean[] }> {
+  public async fetchPricesForPerpetual(symbol: string): Promise<IdxPriceInfo> {
     let indexSymbols = this.dataHandler.getIndexSymbols(symbol).filter((x) => x != "");
+    if (this.dataHandler.isPredictionMarket(symbol)) {
+      let priceObj = await this.polyMktsPxFeed.fetchPriceForSym(indexSymbols[0]);
+      const s3map = await this.fetchFeedPrices([indexSymbols[1]]);
+      const s3 = s3map.get(indexSymbols[1])!;
+      return {
+        s2: priceObj.s2,
+        s3: s3[0],
+        ema: priceObj.ema,
+        s2MktClosed: priceObj.s2MktClosed,
+        s3MktClosed: s3[1],
+        conf: priceObj.conf,
+        predMktCLOBParams: priceObj.predMktCLOBParams,
+      } as IdxPriceInfo;
+    }
     // determine relevant price feeds
     let feedSymbols = new Array<string>();
     for (let sym of indexSymbols) {
@@ -222,12 +240,15 @@ export default class PriceFeeds {
     let feedPrices = await this.fetchFeedPrices(feedSymbols);
     // triangulate
     let [prices, mktClosed] = this.triangulatePricesFromFeedPrices(indexSymbols, feedPrices);
-    // ensure we return an array of 2 in all cases
-    if (prices.length == 1) {
-      prices.push(0);
-      mktClosed.push(false);
-    }
-    return { idxPrices: prices, mktClosed: mktClosed };
+    return {
+      s2: prices[0],
+      s3: prices[1],
+      ema: prices[0],
+      s2MktClosed: mktClosed[0],
+      s3MktClosed: mktClosed[1],
+      conf: BigInt(0),
+      predMktCLOBParams: BigInt(0),
+    } as IdxPriceInfo;
   }
 
   /**
@@ -238,7 +259,8 @@ export default class PriceFeeds {
    *   endpoints are used
    * @param symbols array of feed-price symbols (e.g., [btc-usd, eth-usd]) or
    * undefined
-   * @returns mapping symbol-> [price, isMarketClosed]
+   * @returns mapping symbol-> [price, isMarketClosed], also has an entry
+   * <symbol>:ema for each polymarket symbol that maps to the ema price
    */
   public async fetchFeedPrices(symbols?: string[]): Promise<Map<string, [number, boolean]>> {
     let queries = new Array<string>(this.feedEndpoints.length);
@@ -301,10 +323,11 @@ export default class PriceFeeds {
     let polyPxs = await polyMktsPromise;
     for (let k = 0; k < polyPxs.length; k++) {
       let sym = polyMktSyms[k];
-      if (polyPxs[k] == -1) {
+      if (polyPxs[k] == undefined) {
         continue;
       }
-      resultPrices.set(sym, [polyPxs[k], false]);
+      resultPrices.set(sym, [polyPxs[k]!.s2, polyPxs[k]!.s2MktClosed]);
+      resultPrices.set(sym + ":ema", [polyPxs[k]!.ema, polyPxs[k]!.s2MktClosed]);
     }
     return resultPrices;
   }
@@ -320,15 +343,16 @@ export default class PriceFeeds {
     return prices;
   }
 
+  // returns an array with two values per symbol: price, ema
   private async queryPolyMktsPxFeeds(symbols: string[]) {
-    let prices: number[] = new Array<number>();
+    let prices = new Array<PredMktPriceInfo | undefined>();
     for (let k = 0; k < symbols.length; k++) {
       try {
-        let price = await this.polyMktsPxFeed.fetchPriceForSym(symbols[k]);
-        prices.push(price);
+        let info = await this.polyMktsPxFeed.fetchPriceForSym(symbols[k]);
+        prices.push(info);
       } catch (error) {
         console.log("fetchPriceForSym failed for " + symbols[k]);
-        prices.push(-1);
+        prices.push(undefined);
       }
       if (k > 0) {
         await sleep(0.25);

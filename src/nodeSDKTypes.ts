@@ -146,7 +146,7 @@ export interface PerpetualState {
   quoteCurrency: string;
   indexPrice: number;
   collToQuoteIndexPrice: number;
-  markPrice: number;
+  markPremium: number;
   midPrice: number;
   currentFundingRateBps: number;
   openInterestBC: number;
@@ -306,7 +306,7 @@ export interface PriceFeedConfig {
 }
 
 export interface PriceFeedEndpointsItem {
-  type: string | "odin" | "pyth" | "onchain";
+  type: string | "odin" | "pyth" | "onchain" | "polymarket";
   // Read only endpoints. Used by default.
   endpoints: string[];
   // Price feed endpoints which are used for fetching prices which will be
@@ -334,6 +334,14 @@ export interface PriceFeedFormat {
   conf: bigint;
   expo: number;
   price: bigint;
+  publish_time: number;
+}
+
+// json version of PriceFeedFormat
+export interface PriceFeedJson {
+  conf: string;
+  expo: number;
+  price: string;
   publish_time: number;
 }
 
@@ -524,3 +532,23 @@ export const referralTypes = {
     { name: "createdOn", type: "uint256" },
   ],
 };
+
+// Price information that can be used for
+// prediction markets and regular markets
+export interface IdxPriceInfo {
+  s2: number;
+  s3: number;
+  ema: number;
+  s2MktClosed: boolean;
+  s3MktClosed: boolean;
+  conf: bigint;
+  predMktCLOBParams: bigint;
+}
+
+export interface PredMktPriceInfo {
+  s2: number;
+  ema: number;
+  s2MktClosed: boolean;
+  conf: bigint;
+  predMktCLOBParams: bigint;
+}

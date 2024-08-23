@@ -1,5 +1,5 @@
 import { probToPrice } from "./d8XMath";
-import type { PriceFeedConfig } from "./nodeSDKTypes";
+import type { PriceFeedConfig, PriceFeedJson, PredMktPriceInfo } from "./nodeSDKTypes";
 
 interface PolyConfig {
   sym: string;
@@ -14,8 +14,9 @@ interface PolyConfig {
  */
 export default class PolyMktsPxFeed {
   private ids: Map<string, PolyConfig>;
+  private oracleEndpoint: string;
 
-  constructor(config: PriceFeedConfig) {
+  constructor(config: PriceFeedConfig, oracleEndpoint: string) {
     this.ids = new Map<string, PolyConfig>();
     for (let k = 0; k < config.ids.length; k++) {
       if (config.ids[k].type == "polymarket") {
@@ -29,21 +30,45 @@ export default class PolyMktsPxFeed {
         this.ids.set(sym, el);
       }
     }
+
+    this.oracleEndpoint = oracleEndpoint.replace(/\/$/, "") + "v2/updates/price/latest?encoding=base64&ids[]=";
   }
 
   public isPolyMktsSym(sym: string) {
     return this.ids.get(sym) == undefined;
   }
 
-  public async fetchPriceForSym(sym: string): Promise<number> {
+  // returns index price, ema price, conf in tbps, parameters for order book
+  public async fetchPriceForSym(sym: string): Promise<PredMktPriceInfo> {
     const mkt = this.ids.get(sym);
     if (mkt == undefined) {
       throw new Error(`symbol not in polymarket universe: ${sym}`);
     }
-    return this.fetchPrice(mkt.idDec);
+    return this.fetchPrice(mkt.id);
   }
 
-  public async fetchPrice(tokenIdDec: string): Promise<number> {
+  // fetch price of the form 1+p from oracle, also fetches ema
+  public async fetchPrice(tokenIdHex: string): Promise<PredMktPriceInfo> {
+    const query = this.oracleEndpoint + tokenIdHex;
+    let response = await fetch(query);
+    if (response.status !== 200) {
+      throw new Error(`unexpected status code: ${response.status}`);
+    }
+    if (!response.ok) {
+      throw new Error(`failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
+    }
+    const data = await response.json();
+    const emaObj = data.parsed.ema_price as PriceFeedJson;
+    const pxObj = data.parsed.price as PriceFeedJson;
+
+    const px = Number(pxObj.price) * Math.pow(10, pxObj.expo);
+    const ema = Number(emaObj.price) * Math.pow(10, emaObj.expo);
+    const params = BigInt(emaObj.conf);
+    const conf = BigInt(pxObj.conf);
+    return { s2: px, ema: ema, s2MktClosed: false, conf: conf, predMktCLOBParams: params } as PredMktPriceInfo;
+  }
+
+  public async fetchPriceFromAPI(tokenIdDec: string): Promise<number> {
     const query = "https://clob.polymarket.com/midpoint?token_id=" + tokenIdDec;
     let response = await fetch(query);
     if (response.status !== 200) {

@@ -1,7 +1,7 @@
 import { ContractTransactionResponse, JsonRpcProvider, Overrides, Signer, TransactionResponse } from "ethers";
 import { PayableOverrides } from "./contracts/common";
 import { IPyth__factory } from "./contracts/factories";
-import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
+import { ABK64x64ToFloat, floatToABK64x64, entropy } from "./d8XMath";
 import type { NodeSDKConfig, PriceFeedSubmission } from "./nodeSDKTypes";
 import WriteAccessHandler from "./writeAccessHandler";
 
@@ -220,14 +220,17 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (indexPrices == undefined) {
       // fetch from API
       let obj = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
-      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
+
+      indexPrices = [
+        obj.ema, // ema (pred mkts) or s2
+        obj.s3, // s3
+      ];
     }
-    let traderState = await this.proxyContract.getTraderState(
-      perpID,
-      traderAddr,
-      indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [bigint, bigint],
-      overrides || {}
-    );
+    const fIdxPx = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
+      bigint,
+      bigint
+    ];
+    let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, fIdxPx, overrides || {});
     if (traderState[idx_notional].eq(0)) {
       // trader does not have open position
       return true;
@@ -241,13 +244,26 @@ export default class LiquidatorTool extends WriteAccessHandler {
     const pos = ABK64x64ToFloat(traderState[idx_marginAccountPositionBC]);
     const marginbalance = ABK64x64ToFloat(traderState[idx_marginBalance]);
     const coll2quote = ABK64x64ToFloat(traderState[idx_collateralToQuoteConversion]);
-    let base2collateral = indexPrices[0] / coll2quote;
+    let threshold: number;
     if (this.isPredictionMarket(symbol)) {
-      // flat margin rate for prediction markets
-      base2collateral = 1;
+      const idx_markPrice = 8;
+      const markPrice = ABK64x64ToFloat(traderState[idx_markPrice]);
+      threshold = LiquidatorTool.maintenanceMarginPredMkts(maintMgnRate, pos, coll2quote, markPrice);
+    } else {
+      const base2collateral = indexPrices[0] / coll2quote;
+      threshold = Math.abs(pos * base2collateral * maintMgnRate);
     }
-    const threshold = Math.abs(pos * base2collateral * maintMgnRate);
     return marginbalance >= threshold;
+  }
+
+  public static maintenanceMarginPredMkts(maintMgnRateBase: number, pos: number, s3: number, markPx: number) {
+    let p = markPx - 1;
+    // p: price = 1+prob
+    if (pos < 0) {
+      p = 1 - p;
+    }
+    const tau = maintMgnRateBase + (0.4 - maintMgnRateBase) * entropy(p);
+    return (Math.abs(pos) * p * tau) / s3;
   }
 
   /**

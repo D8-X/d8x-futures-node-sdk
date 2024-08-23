@@ -383,6 +383,7 @@ export function getNewPositionLeverage(
  * @param {number} price - price to trade amount 'tradeAmnt'
  * @param {number} S3 - collateral to quote conversion (=S2 if base-collateral, =1 if quote collateral, = index S3 if quanto)
  * @param {number} S2Mark - mark price
+ * @param {boolean} isPredMkt - true if prediction market
  * @returns {number} Amount to be deposited to have the given leverage when trading into position pos before fees
  */
 export function getDepositAmountForLvgTrade(
@@ -392,11 +393,25 @@ export function getDepositAmountForLvgTrade(
   targetLvg: number,
   price: number,
   S3: number,
-  S2Mark: number
+  S2Mark: number,
+  isPredMkt: boolean
 ) {
   let pnl = (tradeAmnt * (S2Mark - price)) / S3;
+  let S2MarkBefore = S2Mark;
+  if (isPredMkt) {
+    // adjust mark price to 'probability'
+    S2Mark = S2Mark - 1;
+    S2MarkBefore = S2Mark;
+    if (pos0 < 0) {
+      S2MarkBefore = 1 - S2Mark;
+    }
+    if (pos0 + tradeAmnt < 0) {
+      S2Mark = 1 - S2Mark;
+    }
+  }
   if (targetLvg == 0) {
-    targetLvg = (Math.abs(pos0) * S2Mark) / S3 / b0;
+    // use current leverage
+    targetLvg = (Math.abs(pos0) * S2MarkBefore) / S3 / b0;
   }
   let b = (Math.abs(pos0 + tradeAmnt) * S2Mark) / S3 / targetLvg;
   return -(b0 + pnl - b);
@@ -421,4 +436,291 @@ export function priceToProb(px: number) {
  */
 export function probToPrice(prob: number) {
   return 1 + prob;
+}
+
+// shannon entropy
+export function entropy(prob: number) {
+  if (prob < 1e-15 || prob - 1 > 1e-15) {
+    return 0;
+  }
+  return -prob * Math.log2(prob) - (1 - prob) * Math.log2(1 - prob);
+}
+
+/**
+ * Maintenance margin requirement for prediction markets
+ * @param pos signed position
+ * @param s2 mark price
+ * @param s3 collateral to quote conversion
+ * @param m base margin rate
+ * @returns required margin balance
+ */
+function pmMarginThresh(pos: number, s2: number, s3: number, m: number | undefined = 0.18) {
+  let p = s2 - 1;
+  if (pos < 0) {
+    p = 1 - p;
+  }
+  const h = entropy(p);
+  const tau = m + (0.4 - m) * h;
+  return (Math.abs(pos) * p * tau) / s3;
+}
+
+export function pmMaintenanceMarginRate(pos: number, s2: number, m: number | undefined = 0.18): number {
+  let p = s2 - 1;
+  if (pos < 0) {
+    p = 1 - p;
+  }
+  const h = entropy(p);
+  return m + (0.4 - m) * h;
+}
+
+/**
+ * Calculate the expected loss for a prediction market trade used for
+ * prediction market fees
+ * @param p probability derived from mark price (long)
+ * @param m maximal maintenance rate from which we defer the actual maintenance margin rate
+ * @param totLong total long in base currency
+ * @param totShort total short
+ * @param tradeAmt signed trade amount, can be zero
+ * @param tradeMgnRate margin rate of the trader
+ */
+export function expectedLoss(
+  p: number,
+  m: number,
+  totLong: number,
+  totShort: number,
+  tradeAmt: number,
+  tradeMgnRate: number
+): number {
+  // maintenance margin rate
+  m = (0.4 - m) * entropy(p) + m;
+  let dlm = 0;
+  let dl = 0;
+  let dsm = 0;
+  let ds = 0;
+  if (tradeAmt > 0) {
+    dlm = p * tradeAmt * tradeMgnRate;
+    dl = tradeAmt;
+  } else if (tradeAmt < 0) {
+    dsm = (1 - p) * Math.abs(tradeAmt) * tradeMgnRate;
+    ds = Math.abs(tradeAmt);
+  }
+  const a = Math.max(0, dl + totLong - m * totShort - dsm);
+  const b = Math.max(0, ds + totShort - m * totLong + dsm);
+  return p * (1 - p) * (a + b);
+}
+
+/**
+ * Exchange fee as a rate for prediction markets
+ * @param prob long probability
+ * @param m max maintenance margin rate (0.18)
+ * @param totShort
+ * @param totLong
+ * @param tradeAmt trade amount in base currency
+ * @param tradeMgnRate margin rate for this trade
+ * @returns fee relative to tradeAmt
+ */
+export function pmExchangeFee(
+  prob: number,
+  m: number,
+  totShort: number,
+  totLong: number,
+  tradeAmt: number,
+  tradeMgnRate: number
+): number {
+  const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
+  const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate);
+  const fee = (el1 - el0) / Math.abs(tradeAmt);
+  return Math.max(fee, 0.001);
+}
+
+/**
+ * Margin balance for prediction markets
+ * @param pos signed position
+ * @param s2 mark price
+ * @param s3 collateral to quote conversion
+ * @param ell locked in value
+ * @param mc margin cash in collateral currency
+ * @returns current margin balance
+ */
+function pmMarginBalance(pos: number, s2: number, s3: number, ell: number, mc: number): number {
+  return (pos * s2) / s3 - ell / s3 + mc;
+}
+
+function pmExcessBalance(pos: number, s2: number, s3: number, ell: number, mc: number, m: number | undefined): number {
+  return pmMarginBalance(pos, mc, s2, s3, ell) - pmMarginThresh(pos, s2, s3, m);
+}
+
+// finds the liquidation price for prediction markets
+// using Newton's algorithm
+export function pmFindLiquidationPrice(
+  pos: number,
+  s3: number,
+  ell: number,
+  mc: number,
+  baseMarginRate: number | undefined,
+  s2Start: number | undefined = 0.5
+): number {
+  const delta_s = 0.01;
+  let s = 100;
+  let s_new = s2Start;
+
+  while (Math.abs(s_new - s) > 0.01) {
+    s = s_new;
+    const f = Math.pow(pmExcessBalance(pos, s, s3, ell, mc, baseMarginRate), 2);
+    const ds = (Math.pow(pmExcessBalance(pos, s + delta_s, s3, ell, mc, baseMarginRate), 2) - f) / delta_s;
+    s_new = s - f / ds;
+
+    if (s_new < 1) {
+      return 1;
+    }
+    if (s_new > 2) {
+      return 2;
+    }
+  }
+  return s;
+}
+
+/**
+ * Calculate the excess margin defined as
+ * excess := margin balance - trading fee - initial margin threshold
+ * for the given trade and position
+ * @param tradeAmt
+ * @param currentCashCC
+ * @param currentPos
+ * @param currentLockedInQC
+ * @param limitPrice
+ * @param Sm
+ * @param S3
+ * @param totLong
+ * @param totShort
+ * @returns
+ */
+function excessMargin(
+  tradeAmt: number,
+  currentCashCC: number,
+  currentPos: number,
+  currentLockedInQC: number,
+  limitPrice: number,
+  Sm: number,
+  S3: number,
+  totLong: number,
+  totShort: number
+): number {
+  const m = 0.18; //max maintenance margin rate
+  const m0 = 0.2; //max initial margin rate
+  const pos = currentPos + tradeAmt;
+  let p = Sm - 1;
+  if (pos < 0) {
+    p = 2 - Sm; //=1-(Sm-1)
+  }
+  const h = entropy(p);
+  const tau = m0 + (0.5 - m0) * h;
+  const thresh = Math.abs(pos) * p * tau;
+  const b0 = currentCashCC + Math.abs(currentPos) * Sm - currentLockedInQC + Math.max(0, tradeAmt * (Sm - limitPrice));
+  // b0 + margin - fee > threshold
+  // margin = threshold - b0 + fee
+  const fee_cc = pmExchangeFee(p, m, totShort, totLong, tradeAmt, tau) / S3;
+
+  // missing: referral rebate
+  return b0 / S3 - thresh / S3 - fee_cc;
+}
+
+/**
+ * Find maximal trade size (short dir=-1 or long dir=1) for prediction
+ * markets.
+ * @param dir
+ * @param currentPosition
+ * @param currentCashCC
+ * @param currentLockedInValue
+ * @param limitPrice
+ * @param Sm
+ * @param S3
+ * @param totLong
+ * @param totShort
+ * @param maxShort
+ * @param maxLong
+ * @returns signed max trade size
+ */
+export function pmFindMaxTradeSize(
+  dir: number,
+  currentPosition: number,
+  currentCashCC: number,
+  currentLockedInValue: number,
+  limitPrice: number,
+  Sm: number,
+  S3: number,
+  totLong: number,
+  totShort: number,
+  maxShort: number,
+  maxLong: number
+): number {
+  if (dir < 0) {
+    dir = -1;
+  } else {
+    dir = 1;
+  }
+  const lot = 10;
+  const deltaS = 1; //for derivative
+  const f0 = excessMargin(
+    dir * deltaS,
+    currentCashCC,
+    currentPosition,
+    currentLockedInValue,
+    limitPrice,
+    Sm,
+    S3,
+    totLong,
+    totShort
+  );
+  if (f0 < lot) {
+    // no trade possible
+    return 0;
+  }
+  // numerically find maximal trade size
+  let sNew = dir * lot * 10;
+  let s = 2 * sNew;
+  while (true) {
+    let count = 0;
+    while (Math.abs(sNew - s) > 1 && count < 100) {
+      s = sNew;
+      const f =
+        excessMargin(s, currentCashCC, currentPosition, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort) **
+        2;
+      const f2 =
+        excessMargin(
+          s + deltaS,
+          currentCashCC,
+          currentPosition,
+          currentLockedInValue,
+          limitPrice,
+          Sm,
+          S3,
+          totLong,
+          totShort
+        ) ** 2;
+      let ds = (f2 - f) / deltaS;
+      sNew = s - f / ds;
+      count += 1;
+    }
+    if (count < 100) {
+      break;
+    }
+    // Newton algorithm failed,
+    // choose new starting value
+    if (dir > 0) {
+      sNew = Math.random() * (maxLong - currentPosition);
+    } else {
+      sNew = -Math.random() * (Math.abs(maxShort) + currentPosition);
+    }
+  }
+  // ensure trade maximal trade sNew does not exceed
+  // the contract limits
+  if (currentPosition + sNew < maxShort) {
+    sNew = maxShort - currentPosition;
+  } else if (currentPosition + sNew > maxLong) {
+    sNew = maxLong - currentPosition;
+  }
+  // round trade size down to lot
+  sNew = Math.sign(sNew) * Math.floor(Math.abs(sNew) / lot) * lot;
+  return sNew;
 }

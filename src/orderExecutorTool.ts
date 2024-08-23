@@ -13,6 +13,7 @@ import { IPyth__factory, LimitOrderBook__factory, Multicall3, Multicall3__factor
 import { PayableOverrides } from "./contracts/common";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import {
+  IdxPriceInfo,
   type NodeSDKConfig,
   type Order,
   type PerpetualStaticInfo,
@@ -367,15 +368,14 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     order: Order,
     orderId: string,
     blockTimestamp?: number,
-    indexPrices?: [number, number],
+    indexPrices?: IdxPriceInfo,
     overrides?: Overrides & { rpcURL?: string }
   ): Promise<boolean> {
     if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
     if (indexPrices == undefined) {
-      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
-      indexPrices = [obj.idxPrices[0], obj.idxPrices[1]];
+      indexPrices = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
     }
     let rpcURL: string | undefined;
     if (overrides) {
@@ -383,10 +383,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL, this.network, { staticNetwork: true });
 
-    const fS2S3 = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
-      bigint,
-      bigint
-    ];
+    const fS2S3 = [indexPrices.s2, indexPrices.s3].map((x) =>
+      floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)
+    ) as [bigint, bigint];
     const perpId = this.getPerpIdFromSymbol(order.symbol);
     const fAmount = floatToABK64x64(order.quantity * (order.side == BUY_SIDE ? 1 : -1));
     const orderBook = this.getOrderBookContract(order.symbol).connect(provider);
@@ -526,7 +525,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orders: Order[],
     orderIds: string[],
     blockTimestamp?: number,
-    indexPrices?: [number, number, boolean, boolean],
+    indexPrices?: IdxPriceInfo,
     overrides?: Overrides & { rpcURL?: string }
   ): Promise<boolean[]> {
     const MAX_ORDERS_CHECKED = 10;
@@ -561,7 +560,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     orders: Order[],
     orderIds: string[],
     blockTimestamp?: number,
-    indexPrices?: [number, number, boolean, boolean],
+    indexPrices?: IdxPriceInfo,
     overrides?: Overrides & { rpcURL?: string }
   ): Promise<boolean[]> {
     if (orders.length == 0) {
@@ -574,10 +573,9 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       throw Error("all orders in a batch must have the same symbol");
     }
     if (indexPrices == undefined) {
-      let obj = await this.priceFeedGetter.fetchPricesForPerpetual(orders[0].symbol);
-      indexPrices = [obj.idxPrices[0], obj.idxPrices[1], obj.mktClosed[0], obj.mktClosed[1]];
+      indexPrices = await this.priceFeedGetter.fetchPricesForPerpetual(orders[0].symbol);
     }
-    if (indexPrices[2] || indexPrices[3]) {
+    if (indexPrices.s2MktClosed || indexPrices.s3MktClosed) {
       // market closed
       return orders.map(() => false);
     }
@@ -587,7 +585,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     }
     const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL, this.network, { staticNetwork: true });
 
-    const fS2S3 = [indexPrices[0], indexPrices[1]].map((x) =>
+    const fS2S3 = [indexPrices.s2, indexPrices.s3].map((x) =>
       floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)
     ) as [bigint, bigint];
     const perpId = this.getPerpIdFromSymbol(orders[0].symbol);

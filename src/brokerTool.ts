@@ -1,4 +1,4 @@
-import { ABK64x64ToFloat } from "./d8XMath";
+import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import { NodeSDKConfig, Order, PerpetualStaticInfo, SmartContractOrder } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
 import WriteAccessHandler from "./writeAccessHandler";
@@ -6,6 +6,7 @@ import WriteAccessHandler from "./writeAccessHandler";
 import { Buffer } from "buffer";
 import AccountTrade from "./accountTrade";
 import { AbiCoder, BigNumberish, ContractTransactionResponse, keccak256, Overrides, Signer } from "ethers";
+import { BUY_SIDE } from "./constants";
 /**
  * Functions for white-label partners to determine fees, deposit lots, and sign-up traders.
  * This class requires a private key and executes smart-contract interactions that
@@ -184,10 +185,14 @@ export default class BrokerTool extends WriteAccessHandler {
   /**
    * Determine exchange fee based on an order and a trader.
    * This is the fee charged by the exchange only, excluding the white-label partner fee,
-   * and it takes into account whether the order given here has been signed by a white-label partner or not.
+   * For regular perpetuals, the result takes into account whether the order given here has been
+   * signed by a white-label partner or not.
    * Use this, for instance, to verify that the fee to be charged for a given order is as expected,
    * before and after signing it with brokerTool.signOrder.
    * This fee is equal or lower than the white-label partner induced fee, provided the order is properly signed.
+   *
+   * For prediction markets, the correct fee is to be applied as tradeamt * fee/s3.
+   *
    * @param {Order} order Order structure. As a minimum the structure needs to
    * specify symbol, side, type and quantity.
    * @param {string} traderAddr Address of the trader for whom to determine the fee.
@@ -220,6 +225,15 @@ export default class BrokerTool extends WriteAccessHandler {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
+    if (this.isPredictionMarket(order.symbol)) {
+      const id = BrokerTool.symbolToPerpetualId(order.symbol, this.symbolToPerpStaticInfo);
+      const fAmount = order.side == BUY_SIDE ? floatToABK64x64(order.quantity) : floatToABK64x64(-order.quantity);
+      const lvgTdr = order.leverage == undefined ? 0 : Math.round(100 * order.leverage);
+      const feeTbps = await this.proxyContract.getExchangeFeePrdMkts(id, fAmount, lvgTdr);
+
+      return feeTbps / 100_000;
+    }
+    // regular markets
     let scOrder = AccountTrade.toSmartContractOrder(order, traderAddr, this.symbolToPerpStaticInfo);
     let feeTbps = await this.proxyContract.determineExchangeFee(scOrder, overrides || {});
     return feeTbps / 100_000;
