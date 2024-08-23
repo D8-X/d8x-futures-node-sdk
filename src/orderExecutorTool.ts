@@ -644,8 +644,8 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         perpId,
         fAmount,
         fS2S3,
-        indexPrices.conf,
-        indexPrices.predMktCLOBParams,
+        indexPrices!.conf,
+        indexPrices!.predMktCLOBParams,
       ]),
     }));
     proxyCalls = proxyCalls.concat(priceCalls);
@@ -675,7 +675,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       "getAMMState",
       encodedResults[0].returnData
     )[0] as bigint[];
-    let markprice;
+    let markprice: number;
     if (isPred) {
       markprice = indexPrices.ema + ABK64x64ToFloat(ammState[8]);
     } else {

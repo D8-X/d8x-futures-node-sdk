@@ -175,7 +175,7 @@ export default class PerpetualEventHandler {
     perp.state = perpState.state;
     perp.indexPrice = perpState.indexPrice;
     perp.collToQuoteIndexPrice = perpState.collToQuoteIndexPrice;
-    perp.markPrice = perpState.markPrice;
+    perp.markPremium = perpState.markPremium;
     perp.midPrice = perpState.midPrice;
     perp.currentFundingRateBps = perpState.currentFundingRateBps;
     perp.openInterestBC = perpState.openInterestBC;
@@ -197,7 +197,7 @@ export default class PerpetualEventHandler {
     fMarkPricePremium: bigint,
     fSpotIndexPrice: bigint
   ): void {
-    let [newMidPrice, newMarkPrice, newIndexPrice] = PerpetualEventHandler.ConvertUpdateMarkPrice(
+    let [newMidPrice, newMarkPricePrem, newIndexPrice] = PerpetualEventHandler.ConvertUpdateMarkPrice(
       fMidPricePremium,
       fMarkPricePremium,
       fSpotIndexPrice
@@ -207,7 +207,7 @@ export default class PerpetualEventHandler {
       return;
     }
     perpetual.midPrice = newMidPrice;
-    perpetual.markPrice = newMarkPrice;
+    perpetual.markPremium = newMarkPricePrem;
     perpetual.indexPrice = newIndexPrice;
   }
 
@@ -436,18 +436,17 @@ export default class PerpetualEventHandler {
    * )
    * @param fMarkPricePremium premium rate in ABDK format
    * @param fSpotIndexPrice spot index price in ABDK format
-   * @returns mark price and spot index in float
+   * @returns midPrice, markPricePremium, indexPrice in float
    */
   private static ConvertUpdateMarkPrice(
     fMidPricePremium: bigint,
     fMarkPricePremium: bigint,
     fSpotIndexPrice: bigint
   ): [number, number, number] {
-    let fMarkPrice = mul64x64(fSpotIndexPrice, ONE_64x64 + fMarkPricePremium);
     let fMidPrice = mul64x64(fSpotIndexPrice, ONE_64x64 + fMidPricePremium);
     let midPrice = ABK64x64ToFloat(fMidPrice);
-    let markPrice = ABK64x64ToFloat(fMarkPrice);
+    let markPricePremium = ABK64x64ToFloat(fMarkPricePremium);
     let indexPrice = ABK64x64ToFloat(fSpotIndexPrice);
-    return [midPrice, markPrice, indexPrice];
+    return [midPrice, markPricePremium, indexPrice];
   }
 }
