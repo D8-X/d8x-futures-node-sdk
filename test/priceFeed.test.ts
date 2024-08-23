@@ -5,33 +5,29 @@ import PriceFeeds from "../src/priceFeeds";
 import PolyMktsPxFeed from "../src/polyMktsPxFeed";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
-const SdkConfigName = "arbitrum";
+const SdkConfigName = "x1";
 
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
 let mktData: MarketData;
-let perp = "BTC-USD-STUSD";
+let perp = "BTC-USDC-USDC";
 describe("priceFeed", () => {
   it("polymarket feed", async () => {
-    const tokenIdHex = "0x6ada66b0220f72b49d81cb8dfeec380b656e4f5fa8a179b371e7628463b4e964";
+    const tokenIdHex = "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7";
     const tokenIdDec = PolyMktsPxFeed.hexToDecimalString(tokenIdHex);
     const cnf: PriceFeedConfig = {
       network: "blabla",
       ids: [],
       endpoints: [],
     };
-    let pm = new PolyMktsPxFeed(cnf);
-    let px = await pm.fetchPrice(tokenIdDec);
+    let pm = new PolyMktsPxFeed(cnf, "https://odin-poly.d8x.xyz");
+    let px = await pm.fetchPrice(tokenIdHex);
     console.log("polymarket price:", px);
   });
 });
 describe("priceFeed", () => {
   beforeAll(async () => {
-    if (pk == undefined) {
-      console.log(`Define private key: export PK="CA52A..."`);
-      expect(false);
-    }
     //config = PerpetualDataHandler.readSDKConfig("xlayer");
     //perp="BTC-USDT-USDT"
     config = PerpetualDataHandler.readSDKConfig(SdkConfigName);
@@ -117,7 +113,7 @@ describe("priceFeed", () => {
   it("get recent prices for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
     let symbolSet = new Set<string>();
-    symbolSet.add("ETH-USDC");
+    symbolSet.add("BTC-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
     let prices = await priceFeeds.fetchPricesForPerpetual(perp);
     console.log("pyth price info = ", prices);

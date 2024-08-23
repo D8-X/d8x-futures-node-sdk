@@ -31,7 +31,7 @@ export default class PolyMktsPxFeed {
       }
     }
 
-    this.oracleEndpoint = oracleEndpoint.replace(/\/$/, "") + "v2/updates/price/latest?encoding=base64&ids[]=";
+    this.oracleEndpoint = oracleEndpoint.replace(/\/$/, "") + "/v2/updates/price/latest?encoding=base64&ids[]=";
   }
 
   public isPolyMktsSym(sym: string) {
@@ -58,8 +58,8 @@ export default class PolyMktsPxFeed {
       throw new Error(`failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
     const data = await response.json();
-    const emaObj = data.parsed.ema_price as PriceFeedJson;
-    const pxObj = data.parsed.price as PriceFeedJson;
+    const emaObj = data.parsed[0].ema_price as PriceFeedJson;
+    const pxObj = data.parsed[0].price as PriceFeedJson;
 
     const px = Number(pxObj.price) * Math.pow(10, pxObj.expo);
     const ema = Number(emaObj.price) * Math.pow(10, emaObj.expo);
