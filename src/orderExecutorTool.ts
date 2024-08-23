@@ -374,6 +374,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     if (this.proxyContract == null || this.multicall == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
+    const isPred = this.isPredictionMarket(order.symbol);
     if (indexPrices == undefined) {
       indexPrices = await this.priceFeedGetter.fetchPricesForPerpetual(order.symbol);
     }
@@ -395,7 +396,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       {
         target: this.proxyContract.target,
         allowFailure: true,
-        callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [perpId, fAmount, fS2S3]),
+        callData: this.proxyContract.interface.encodeFunctionData("queryPerpetualPrice", [
+          perpId,
+          fAmount,
+          fS2S3,
+          indexPrices.conf,
+          indexPrices.predMktCLOBParams,
+        ]),
       },
       // 1: amm state to get the mark price
       {
@@ -473,7 +480,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     } else {
       ammState = await this.proxyContract.getAMMState(perpId, fS2S3);
     }
-    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+    let markPrice;
+    const idx_markPremRate = 8;
+    if (isPred) {
+      markPrice = indexPrices.ema + ABK64x64ToFloat(ammState[idx_markPremRate]);
+    } else {
+      markPrice = indexPrices.s2 * (1 + ABK64x64ToFloat(ammState[idx_markPremRate]));
+    }
 
     // price
     let fOrderPrice: bigint;
@@ -483,7 +496,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
         encodedResults[0].returnData
       )[0] as bigint;
     } else {
-      fOrderPrice = await this.proxyContract.queryPerpetualPrice(perpId, fAmount, fS2S3);
+      fOrderPrice = await this.proxyContract.queryPerpetualPrice(
+        perpId,
+        fAmount,
+        fS2S3,
+        indexPrices.conf,
+        indexPrices.predMktCLOBParams
+      );
     }
     const orderPrice = ABK64x64ToFloat(fOrderPrice);
 
@@ -584,7 +603,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       ({ rpcURL, ...overrides } = overrides);
     }
     const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL, this.network, { staticNetwork: true });
-
+    const isPred = this.isPredictionMarket(orders[0].symbol);
     const fS2S3 = [indexPrices.s2, indexPrices.s3].map((x) =>
       floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)
     ) as [bigint, bigint];
@@ -621,7 +640,13 @@ export default class OrderExecutorTool extends WriteAccessHandler {
     const priceCalls: Multicall3.Call3Struct[] = fAmounts.map((fAmount) => ({
       target: this.proxyContract!.target,
       allowFailure: false,
-      callData: this.proxyContract!.interface.encodeFunctionData("queryPerpetualPrice", [perpId, fAmount, fS2S3]),
+      callData: this.proxyContract!.interface.encodeFunctionData("queryPerpetualPrice", [
+        perpId,
+        fAmount,
+        fS2S3,
+        indexPrices.conf,
+        indexPrices.predMktCLOBParams,
+      ]),
     }));
     proxyCalls = proxyCalls.concat(priceCalls);
 
@@ -650,7 +675,12 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       "getAMMState",
       encodedResults[0].returnData
     )[0] as bigint[];
-    const markPrice = indexPrices[0] * (1 + ABK64x64ToFloat(ammState[8]));
+    let markprice;
+    if (isPred) {
+      markprice = indexPrices.ema + ABK64x64ToFloat(ammState[8]);
+    } else {
+      markprice = indexPrices.s2 * (1 + ABK64x64ToFloat(ammState[8]));
+    }
 
     // block timestamp
     const ts = this.multicall.interface.decodeFunctionResult(
@@ -697,7 +727,7 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       if (!isOrderOpen[idx] || !isParentReady[idx]) {
         return false;
       }
-      return this._isTradeable(o, orderPrices[idx], markPrice, blockTimestamp!, this.symbolToPerpStaticInfo);
+      return this._isTradeable(o, orderPrices[idx], markprice, blockTimestamp!, this.symbolToPerpStaticInfo);
     });
   }
 

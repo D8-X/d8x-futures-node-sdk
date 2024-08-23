@@ -496,6 +496,8 @@ export default class MarketData extends PerpetualDataHandler {
           perpId,
           floatToABK64x64(tradeAmountBC),
           [fS2, fS3],
+          indexPriceInfo.conf,
+          indexPriceInfo.predMktCLOBParams,
         ]),
       },
       // 2: max long pos
@@ -551,10 +553,13 @@ export default class MarketData extends PerpetualDataHandler {
           encodedResults[1].returnData
         )[0];
       } else {
-        fPrice = await this.proxyContract.queryPerpetualPrice(perpId, floatToABK64x64(tradeAmountBC), [
-          indexPriceInfo.s2,
-          indexPriceInfo.s3,
-        ]);
+        fPrice = await this.proxyContract.queryPerpetualPrice(
+          perpId,
+          floatToABK64x64(tradeAmountBC),
+          [indexPriceInfo.s2, indexPriceInfo.s3],
+          indexPriceInfo.conf,
+          indexPriceInfo.predMktCLOBParams
+        );
       }
       ammPrice = ABK64x64ToFloat(fPrice);
     }
