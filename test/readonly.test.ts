@@ -40,7 +40,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeAll(() => {
-    config = PerpetualDataHandler.readSDKConfig("zkevm");
+    config = PerpetualDataHandler.readSDKConfig("x1");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
