@@ -68,8 +68,7 @@ export default class PriceFeeds {
     if (this.writeFeedEndpoints.length == 0) {
       throw new Error("PriceFeeds: no writeEndpoints provided in config");
     }
-    const idx = Math.floor(Math.random() * this.writeFeedEndpoints.length);
-    this.polyMktsPxFeed = new PolyMktsPxFeed(this.config, this.writeFeedEndpoints[idx]);
+    this.polyMktsPxFeed = new PolyMktsPxFeed(this.config);
     this.dataHandler = dataHandler;
     this.triangulations = new Map<string, [string[], boolean[]]>();
   }
@@ -352,6 +351,7 @@ export default class PriceFeeds {
         prices.push(info);
       } catch (error) {
         console.log("fetchPriceForSym failed for " + symbols[k]);
+        console.log(error);
         prices.push(undefined);
       }
       if (k > 0) {

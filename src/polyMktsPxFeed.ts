@@ -16,8 +16,19 @@ export default class PolyMktsPxFeed {
   private ids: Map<string, PolyConfig>;
   private oracleEndpoint: string;
 
-  constructor(config: PriceFeedConfig, oracleEndpoint: string) {
+  constructor(config: PriceFeedConfig) {
     this.ids = new Map<string, PolyConfig>();
+    this.oracleEndpoint = "";
+    for (let k = 0; k < config.endpoints.length; k++) {
+      if (config.endpoints[k].type == "polymarket") {
+        let endp = config.endpoints[k].writeEndpoints;
+        this.oracleEndpoint = endp[Math.floor(Math.random() * endp.length)];
+        break;
+      }
+    }
+    if (this.oracleEndpoint == "") {
+      throw Error("no polymarkets write endpoint defined in priceFeedConfig");
+    }
     for (let k = 0; k < config.ids.length; k++) {
       if (config.ids[k].type == "polymarket") {
         const sym = config.ids[k].symbol;
@@ -31,7 +42,7 @@ export default class PolyMktsPxFeed {
       }
     }
 
-    this.oracleEndpoint = oracleEndpoint.replace(/\/$/, "") + "/v2/updates/price/latest?encoding=base64&ids[]=";
+    this.oracleEndpoint = this.oracleEndpoint.replace(/\/$/, "") + "/v2/updates/price/latest?encoding=base64&ids[]=";
   }
 
   public isPolyMktsSym(sym: string) {
