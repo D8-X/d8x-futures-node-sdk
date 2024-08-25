@@ -43,7 +43,7 @@ const flushPromises = () => {
 
 describe("Front-end-like functionality", () => {
   beforeAll(async () => {
-    const chainId = 80001;
+    const chainId = 195;
     config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
@@ -209,6 +209,6 @@ describe("Front-end-like functionality", () => {
     let perpDataAfter = eventHandler.getPerpetualData(symbol);
 
     // await flushPromises();
-    expect(perpDataAfter!.markPrice != perpDataBefore!.markPrice);
+    expect(perpDataAfter!.markPremium != perpDataBefore!.markPremium);
   });
 });
