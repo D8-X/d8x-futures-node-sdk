@@ -19,9 +19,9 @@ describe("priceFeed", () => {
     const cnf: PriceFeedConfig = {
       network: "blabla",
       ids: [],
-      endpoints: [],
+      endpoints: [{ type: "polymarket", endpoints: [""], writeEndpoints: ["https://odin-poly.d8x.xyz"] }],
     };
-    let pm = new PolyMktsPxFeed(cnf, "https://odin-poly.d8x.xyz");
+    let pm = new PolyMktsPxFeed(cnf);
     let px = await pm.fetchPrice(tokenIdHex);
     console.log("polymarket price:", px);
   });

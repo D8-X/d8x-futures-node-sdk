@@ -9,8 +9,8 @@ let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
 async function trade() {
-  const sym = "WOKB-USD-WOKB"; //"ETH-USD-WEETH"; //
-  let config = PerpetualDataHandler.readSDKConfig(196); //42161); //
+  const sym = "TRUMP24-USD-USDC"; //"ETH-USD-WEETH"; //
+  let config = PerpetualDataHandler.readSDKConfig(195); //42161); //
   if (RPC != undefined) {
     config.nodeURL = RPC;
   }
@@ -23,11 +23,12 @@ async function trade() {
     symbol: sym,
     side: "SELL",
     type: "MARKET",
-    quantity: 2,
-    leverage: 2,
+    quantity: 100,
+    leverage: 1.25,
     executionTimestamp: Date.now() / 1000 - 10,
   };
   let resp: OrderResponse;
+
   /*
   let orderId = "";
   try {
@@ -38,12 +39,13 @@ async function trade() {
     orderId = resp.orderId;
   } catch (err) {
     console.log("Error=", err);
-  }*/
-  const orderId = "0xc1e068db1b15de6e27d77c79c3d8a508e049bab56ae0f829021b41f181b5a1f0";
+  }
+  */
+  const orderId = "0x2c68a080d1cee7f8a56ad1df66857ff4d394b18e3e8193bdd08547791e8cee81";
   console.log("order submitted id=", orderId);
   const oex = new OrderExecutorTool(config, pk);
   await oex.createProxyInstance();
-  let tx = await oex.executeOrder("BS-BS-BS", orderId);
+  let tx = await oex.executeOrder("TRUMP24-USD-USDC", orderId);
   console.log(tx);
 }
 
@@ -67,5 +69,5 @@ async function main() {
 
   //await trade();
 }
-main();
-//trade();
+//main();
+trade();
