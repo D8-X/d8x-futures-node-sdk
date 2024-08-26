@@ -1266,7 +1266,7 @@ export default class MarketData extends PerpetualDataHandler {
       maxLongPosPerp
     );
     const maxLong = pmFindMaxTradeSize(
-      -1,
+      1,
       currentPositionBC,
       availCashCC,
       account.entryPrice * currentPositionBC,
