@@ -40,7 +40,7 @@ async function trade() {
     console.log("Error=", err);
   }
   */
-  const orderId = "0x133edc14fdbda2b0d2dba13d0421541a0c5d715f4982fc2573a023f2d1b7037b";
+  const orderId = "0x3652693db133624ca9fe3fe1b7caf8f73415dc1507f877e0c6441fddf6a2c92e";
   console.log("order submitted id=", orderId);
   const oex = new OrderExecutorTool(config, pk);
   await oex.createProxyInstance();
