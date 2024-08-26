@@ -1,7 +1,7 @@
 import { Buffer } from "buffer";
 import { BigNumberish, Contract, ContractTransaction, ContractTransactionResponse, Overrides, Signer } from "ethers";
 import { ZERO_ADDRESS } from "./constants";
-import { LimitOrderBook } from "./contracts";
+import { IPerpetualManager, LimitOrderBook } from "./contracts";
 import { PayableOverrides } from "./contracts/common";
 import { ABK64x64ToFloat, floatToABK64x64 } from "./d8XMath";
 import MarketData from "./marketData";
@@ -176,7 +176,7 @@ export default class AccountTrade extends WriteAccessHandler {
     }
     let poolId = PerpetualDataHandler._getPoolIdFromSymbol(poolSymbolName, this.poolStaticInfos);
     let feeTbps = await this.proxyContract.queryExchangeFee(poolId, this.traderAddr, brokerAddr, overrides || {});
-    return feeTbps / 100_000;
+    return Number(feeTbps) / 100_000;
   }
 
   /**
@@ -254,7 +254,7 @@ export default class AccountTrade extends WriteAccessHandler {
     order: Order,
     traderAddr: string,
     symbolToPerpetualMap: Map<string, PerpetualStaticInfo>,
-    proxyContract: Contract,
+    proxyContract: IPerpetualManager,
     orderBookContract: LimitOrderBook,
     chainId: BigNumberish,
     signer: Signer,

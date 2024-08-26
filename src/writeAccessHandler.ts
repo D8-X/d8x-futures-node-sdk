@@ -9,7 +9,7 @@ import {
   Wallet,
 } from "ethers";
 import { MAX_UINT_256, MULTICALL_ADDRESS } from "./constants";
-import { ERC20__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
+import { ERC20__factory, IPerpetualManager__factory, MockTokenSwap__factory, Multicall3__factory } from "./contracts";
 import { PayableOverrides } from "./contracts/common";
 import { floatToDecN } from "./d8XMath";
 import MarketData from "./marketData";
@@ -66,7 +66,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
       const mktData = providerOrMarketData;
       this.nodeURL = mktData.config.nodeURL;
       this.provider = new JsonRpcProvider(mktData.config.nodeURL, mktData.network, { staticNetwork: true });
-      this.proxyContract = new Contract(mktData.getProxyAddress(), this.config.proxyABI!, this.provider);
+      this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
       this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
         nestedPerpetualIDs: this.nestedPerpetualIDs,

@@ -2304,6 +2304,35 @@
     {
         "inputs": [
             {
+                "internalType": "uint24",
+                "name": "_perpetualId",
+                "type": "uint24"
+            },
+            {
+                "internalType": "int128",
+                "name": "_fAmount",
+                "type": "int128"
+            },
+            {
+                "internalType": "uint16",
+                "name": "_leverageTDR",
+                "type": "uint16"
+            }
+        ],
+        "name": "getExchangeFeePrdMkts",
+        "outputs": [
+            {
+                "internalType": "uint16",
+                "name": "",
+                "type": "uint16"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
                 "internalType": "uint32",
                 "name": "_brokerDesignation",
                 "type": "uint32"

@@ -223,7 +223,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
 
       indexPrices = [
         obj.ema, // ema (pred mkts) or s2
-        obj.s3, // s3
+        obj.s3 ?? 0, // s3
       ];
     }
     const fIdxPx = indexPrices.map((x) => floatToABK64x64(x == undefined || Number.isNaN(x) ? 0 : x)) as [
@@ -231,7 +231,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
       bigint
     ];
     let traderState = await this.proxyContract.getTraderState(perpID, traderAddr, fIdxPx, overrides || {});
-    if (traderState[idx_notional].eq(0)) {
+    if (traderState[idx_notional] === 0n) {
       // trader does not have open position
       return true;
     }

@@ -539,10 +539,10 @@ export const referralTypes = {
 // prediction markets and regular markets
 export interface IdxPriceInfo {
   s2: number;
-  s3: number;
+  s3?: number;
   ema: number;
   s2MktClosed: boolean;
-  s3MktClosed: boolean;
+  s3MktClosed?: boolean;
   conf: bigint;
   predMktCLOBParams: bigint;
 }

@@ -16,6 +16,7 @@ import {
 } from "./constants";
 import {
   ERC20__factory,
+  IPerpetualManager__factory,
   LimitOrderBook__factory,
   Multicall3__factory,
   type LimitOrderBook,
@@ -114,7 +115,7 @@ export default class MarketData extends PerpetualDataHandler {
       const mktData = providerOrMarketData;
       this.nodeURL = mktData.config.nodeURL;
       this.provider = new JsonRpcProvider(mktData.config.nodeURL, mktData.network, { staticNetwork: true });
-      this.proxyContract = new Contract(mktData.getProxyAddress(), this.config.proxyABI!, this.provider);
+      this.proxyContract = IPerpetualManager__factory.connect(mktData.getProxyAddress(), this.provider);
       this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.provider);
       ({
         nestedPerpetualIDs: this.nestedPerpetualIDs,
@@ -179,9 +180,9 @@ export default class MarketData extends PerpetualDataHandler {
    * }
    * main();
    *
-   * @returns {Contract} read-only proxy instance
+   * @returns read-only proxy instance
    */
-  public getReadOnlyProxyInstance(): Contract {
+  public getReadOnlyProxyInstance() {
     if (this.proxyContract == null) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
@@ -478,7 +479,7 @@ export default class MarketData extends PerpetualDataHandler {
     const isPredMkt = this.isPredictionMarket(symbol);
     // create all calls
     const perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3, indexPriceInfo.ema].map((x) =>
+    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3 ?? 0, indexPriceInfo.ema].map((x) =>
       floatToABK64x64(x)
     ) as [bigint, bigint, bigint];
     const proxyCalls: Multicall3.Call3Struct[] = [
@@ -556,7 +557,7 @@ export default class MarketData extends PerpetualDataHandler {
         fPrice = await this.proxyContract.queryPerpetualPrice(
           perpId,
           floatToABK64x64(tradeAmountBC),
-          [indexPriceInfo.s2, indexPriceInfo.s3],
+          [indexPriceInfo.s2, indexPriceInfo.s3 ?? 0],
           indexPriceInfo.conf,
           indexPriceInfo.predMktCLOBParams
         );
@@ -1185,7 +1186,7 @@ export default class MarketData extends PerpetualDataHandler {
     const perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     const poolInfo = this.poolStaticInfos[this.getPoolStaticInfoIndexFromSymbol(symbol)];
     const indexPriceInfo = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
-    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3, indexPriceInfo.ema].map((x) =>
+    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3 ?? 0, indexPriceInfo.ema].map((x) =>
       floatToABK64x64(x)
     ) as [bigint, bigint, bigint];
     const proxyCalls: Multicall3.Call3Struct[] = [
@@ -1258,7 +1259,7 @@ export default class MarketData extends PerpetualDataHandler {
       account.entryPrice * currentPositionBC,
       Sm,
       Sm,
-      indexPriceInfo.s3,
+      indexPriceInfo.s3 ?? 0,
       totLong,
       totShort,
       maxShortPosPerp,
@@ -1271,7 +1272,7 @@ export default class MarketData extends PerpetualDataHandler {
       account.entryPrice * currentPositionBC,
       Sm,
       Sm,
-      indexPriceInfo.s3,
+      indexPriceInfo.s3 ?? 0,
       totLong,
       totShort,
       maxShortPosPerp,
@@ -1355,7 +1356,7 @@ export default class MarketData extends PerpetualDataHandler {
     const isPredMkt = false;
     const indexPriceInfo = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
     let coll2SettlePromise = this.fetchCollateralToSettlementConversion(symbol);
-    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3, indexPriceInfo.ema].map((x) =>
+    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3 ?? 0, indexPriceInfo.ema].map((x) =>
       floatToABK64x64(x)
     ) as [bigint, bigint, bigint];
     if (!this.proxyContract || !this.multicall) {
@@ -1516,12 +1517,11 @@ export default class MarketData extends PerpetualDataHandler {
    *
    * @returns {number} Price of index in given currency.
    */
-  public async getOraclePrice(base: string, quote: string, overrides?: Overrides): Promise<number | undefined> {
+  public async getOraclePrice(base: string, quote: string, overrides?: Overrides) {
     if (!this.proxyContract) {
       throw Error("no proxy contract initialized. Use createProxyInstance().");
     }
-    let px = await this.proxyContract.getOraclePrice([toBytes4(base), toBytes4(quote)], overrides || {});
-    return px == undefined ? undefined : ABK64x64ToFloat(px);
+    return await this.proxyContract.getOraclePrice([toBytes4(base), toBytes4(quote)], overrides || {});
   }
 
   /**
@@ -1669,7 +1669,7 @@ export default class MarketData extends PerpetualDataHandler {
       quantity,
       this.symbolToPerpStaticInfo,
       this.proxyContract,
-      [priceInfo.s2, priceInfo.s3], //s2,s3
+      [priceInfo.s2, priceInfo.s3 ?? 0], //s2,s3
       priceInfo.conf, //conf
       priceInfo.predMktCLOBParams, //params
       overrides

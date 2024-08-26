@@ -37,6 +37,7 @@ import {
 } from "./constants";
 import {
   ERC20__factory,
+  IPerpetualManager__factory,
   LimitOrderBook,
   LimitOrderBookFactory,
   LimitOrderBookFactory__factory,
@@ -45,7 +46,7 @@ import {
   Multicall3__factory,
   OracleFactory__factory,
 } from "./contracts";
-import { IPerpetualInfo } from "./contracts/IPerpetualManager";
+import { IPerpetualInfo, IPerpetualManager } from "./contracts/IPerpetualManager";
 import { IClientOrder, IPerpetualOrder } from "./contracts/LimitOrderBook";
 
 import {
@@ -111,7 +112,7 @@ export default class PerpetualDataHandler {
   protected symbolToTokenAddrMap: Map<string, string>;
   public chainId: bigint;
   public network: Network;
-  protected proxyContract: Contract | null = null;
+  protected proxyContract: IPerpetualManager | null = null;
   protected proxyABI: Interface;
   protected proxyAddr: string;
   // oracle
@@ -181,7 +182,7 @@ export default class PerpetualDataHandler {
     if (network.chainId !== this.chainId) {
       throw new Error(`Provider: chain id ${network.chainId} does not match config (${this.chainId})`);
     }
-    this.proxyContract = new Contract(this.proxyAddr, this.config.proxyABI!, signerOrProvider);
+    this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
     this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
   }
@@ -616,7 +617,7 @@ export default class PerpetualDataHandler {
    * @returns array with PerpetualStaticInfo for each perpetual
    */
   public static async getPerpetualStaticInfo(
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     nestedPerpetualIDs: Array<Array<number>>,
     symbolList: Map<string, string>,
     overrides?: Overrides
@@ -695,7 +696,7 @@ export default class PerpetualDataHandler {
   public static async _getLiquidityPools(
     fromIdx: number,
     toIdx: number,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     _symbolList: Map<string, string>,
     overrides?: Overrides
   ): Promise<LiquidityPoolData[]> {
@@ -742,7 +743,7 @@ export default class PerpetualDataHandler {
    */
   public static async _getPerpetuals(
     ids: number[],
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     _symbolList: Map<string, string>,
     overrides?: Overrides
   ): Promise<PerpetualData[]> {
@@ -813,7 +814,7 @@ export default class PerpetualDataHandler {
   }
 
   public static async getPoolStaticInfo(
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     overrides?: Overrides
   ): Promise<{
     nestedPerpetualIDs: Array<Array<number>>;
@@ -932,7 +933,7 @@ export default class PerpetualDataHandler {
     let traderState = await _proxyContract.getTraderState(
       perpId,
       traderAddr,
-      [_pxInfo.ema, _pxInfo.s3].map((x) => floatToABK64x64(x)) as [bigint, bigint],
+      [_pxInfo.ema, _pxInfo.s3 ?? 0].map((x) => floatToABK64x64(x)) as [bigint, bigint],
       overrides || {}
     );
     return PerpetualDataHandler.buildMarginAccountFromState(
@@ -1132,7 +1133,7 @@ export default class PerpetualDataHandler {
       callData: _proxyContract.interface.encodeFunctionData("getTraderState", [
         PerpetualDataHandler.symbolToPerpetualId(symbols[i], symbolToPerpStaticInfo),
         _addr,
-        [_pxInfo[i].ema, _pxInfo[i].s3].map((x) => floatToABK64x64(x)) as [bigint, bigint],
+        [_pxInfo[i].ema, _pxInfo[i].s3 ?? 0].map((x) => floatToABK64x64(x)) as [bigint, bigint],
       ]),
     }));
     const encodedResults = await _multicall.aggregate3.staticCall(proxyCalls, overrides || {});
@@ -1155,7 +1156,7 @@ export default class PerpetualDataHandler {
     symbol: string,
     tradeAmount: number,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     indexPrices: [number, number],
     conf: bigint,
     params: bigint,
@@ -1187,7 +1188,7 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualMarkPrice(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     indexPrices: IdxPriceInfo,
     isPredMkt: boolean,
     overrides?: Overrides
@@ -1207,7 +1208,7 @@ export default class PerpetualDataHandler {
   protected static async _queryPerpetualState(
     symbol: string,
     symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
-    _proxyContract: Contract,
+    _proxyContract: IPerpetualManager,
     _multicall: Multicall3,
     indexPrices: IdxPriceInfo,
     overrides?: Overrides
@@ -1226,7 +1227,7 @@ export default class PerpetualDataHandler {
         allowFailure: false,
         callData: _proxyContract.interface.encodeFunctionData("getAMMState", [
           perpId,
-          [indexPrices.s2, indexPrices.s3].map(floatToABK64x64) as [bigint, bigint],
+          [indexPrices.s2, indexPrices.s3 ?? 0].map(floatToABK64x64) as [bigint, bigint],
         ]),
       },
       {
@@ -1287,12 +1288,12 @@ export default class PerpetualDataHandler {
       baseCurrency: ccy[0],
       quoteCurrency: ccy[1],
       indexPrice: S2,
-      collToQuoteIndexPrice: S3,
+      collToQuoteIndexPrice: S3 ?? (ccy[0] === ccy[1] ? S2 : 1),
       markPremium: ABK64x64ToFloat(ammState[8]),
       midPrice: ABK64x64ToFloat(ammState[10]),
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),
-      isMarketClosed: indexPrices.s2MktClosed || indexPrices.s3MktClosed,
+      isMarketClosed: indexPrices.s2MktClosed || (indexPrices.s3MktClosed !== undefined && indexPrices.s3MktClosed),
       longBC: ABK64x64ToFloat(longShort[0]),
       shortBC: ABK64x64ToFloat(longShort[1]),
     };
