@@ -246,7 +246,7 @@
       }
     ],
     "endpoints": [
-      { "type": "odin", "endpoints": ["https://hermes.pyth.network"], "writeEndpoints": ["https://odin.d8x.xyz"] },
+      { "type": "odin", "endpoints": ["https://hermes.pyth.network"], "writeEndpoints": ["https://odin-poly.d8x.xyz"] },
       { "type": "polymarket", "endpoints": [""], "writeEndpoints": ["https://odin-poly.d8x.xyz"] }
     ]
   }

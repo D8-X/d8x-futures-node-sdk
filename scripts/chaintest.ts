@@ -10,7 +10,7 @@ let RPC: string = <string>process.env.RPC;
 
 async function trade() {
   const sym = "TRUMP24-USD-USDC"; //"ETH-USD-WEETH"; //
-  let config = PerpetualDataHandler.readSDKConfig(195); //42161); //
+  let config = PerpetualDataHandler.readSDKConfig(421614); //42161); //
   if (RPC != undefined) {
     config.nodeURL = RPC;
   }
@@ -28,11 +28,10 @@ async function trade() {
     executionTimestamp: Date.now() / 1000 - 10,
   };
   let resp: OrderResponse;
-
   /*
   let orderId = "";
   try {
-    resp = await accTrade.order(order, undefined, { gasLimit: 800_000 });
+    resp = await accTrade.order(order, undefined, { gasLimit: 2_000_000 });
     console.log("orderId =", resp.orderId);
     console.log("txn:", resp.tx);
     // execute trade
@@ -41,7 +40,7 @@ async function trade() {
     console.log("Error=", err);
   }
   */
-  const orderId = "0x2c68a080d1cee7f8a56ad1df66857ff4d394b18e3e8193bdd08547791e8cee81";
+  const orderId = "0x133edc14fdbda2b0d2dba13d0421541a0c5d715f4982fc2573a023f2d1b7037b";
   console.log("order submitted id=", orderId);
   const oex = new OrderExecutorTool(config, pk);
   await oex.createProxyInstance();
