@@ -749,12 +749,20 @@ export default class MarketData extends PerpetualDataHandler {
     let newMarginCashCC = currentMarginCashCC + deltaCashCC + traderDepositCC;
     let newEntryPrice = newPositionBC == 0 ? 0 : Math.abs(newLockedInValueQC / newPositionBC);
     let newMarginBalanceCC = newMarginCashCC + (newPositionBC * Sm - newLockedInValueQC) / S3;
-    let newLeverage =
-      newPositionBC == 0
-        ? 0
-        : newMarginBalanceCC <= 0
-        ? Infinity
-        : (Math.abs(newPositionBC) * Sm) / S3 / newMarginBalanceCC;
+
+    let newLeverage: number;
+    if (newPositionBC === 0) {
+      newLeverage = 0;
+    } else if (newMarginBalanceCC <= 0) {
+      newLeverage = Infinity;
+    } else {
+      let p = Sm;
+      if (isPredMkt) {
+        p -= 1;
+        p = newPositionBC > 0 ? p : 1 - p;
+      }
+      newLeverage = Math.abs(newPositionBC * p) / S3 / newMarginBalanceCC;
+    }
 
     // Liquidation params
     let [S2Liq, S3Liq, tau] = MarketData._getLiquidationParams(
