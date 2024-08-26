@@ -225,15 +225,6 @@ export default class OrderExecutorTool extends WriteAccessHandler {
       if (!gasLimit) {
         // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
         overrides = { gasLimit: maxGasLimit ?? this.gasLimit, value: unsignedTx.value, ...overrides };
-        let tx = await this.getOrderBookContract(symbol).executeOrders(
-          orderIds,
-          executorAddr,
-          submission.priceFeedVaas,
-          submission.timestamps,
-          overrides
-        );
-        console.log("tx=", tx.hash);
-        console.log(submission);
         await this.getOrderBookContract(symbol).executeOrders.staticCall(
           orderIds,
           executorAddr,
