@@ -28,24 +28,24 @@ async function trade() {
     executionTimestamp: Date.now() / 1000 - 10,
   };
   let resp: OrderResponse;
-  /*
+
   let orderId = "";
   try {
     resp = await accTrade.order(order, undefined, { gasLimit: 2_000_000 });
     console.log("orderId =", resp.orderId);
-    console.log("txn:", resp.tx);
+    console.log("txn:", resp.tx.hash);
     // execute trade
     orderId = resp.orderId;
   } catch (err) {
     console.log("Error=", err);
   }
-  */
-  const orderId = "0x3652693db133624ca9fe3fe1b7caf8f73415dc1507f877e0c6441fddf6a2c92e";
+
+  //const orderId = "0x222eaf02de29ba33b9a5127bab46f24d12e45b4c3b290228b977420792776280";
   console.log("order submitted id=", orderId);
   const oex = new OrderExecutorTool(config, pk);
   await oex.createProxyInstance();
   let tx = await oex.executeOrder("TRUMP24-USD-USDC", orderId);
-  console.log(tx);
+  console.log(tx.hash);
 }
 
 async function main() {
