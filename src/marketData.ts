@@ -557,7 +557,7 @@ export default class MarketData extends PerpetualDataHandler {
         fPrice = await this.proxyContract.queryPerpetualPrice(
           perpId,
           floatToABK64x64(tradeAmountBC),
-          [indexPriceInfo.s2, indexPriceInfo.s3 ?? 0],
+          [floatToABK64x64(indexPriceInfo.s2), floatToABK64x64(indexPriceInfo.s3 ?? 0)],
           indexPriceInfo.conf,
           indexPriceInfo.predMktCLOBParams
         );
