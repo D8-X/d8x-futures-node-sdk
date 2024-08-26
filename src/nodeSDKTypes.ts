@@ -147,6 +147,7 @@ export interface PerpetualState {
   indexPrice: number;
   collToQuoteIndexPrice: number;
   markPremium: number;
+  markPrice: number;
   midPrice: number;
   currentFundingRateBps: number;
   openInterestBC: number;

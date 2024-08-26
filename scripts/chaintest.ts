@@ -14,6 +14,14 @@ async function trade() {
   if (RPC != undefined) {
     config.nodeURL = RPC;
   }
+
+  let mktData = new MarketData(config);
+  await mktData.createProxyInstance();
+  let symbol = mktData.getSymbolFromPerpId(100000);
+  console.log(`symbolFromPerpetualId ${100000} -> ${symbol}`);
+  // exchangeInfo to determine pools and perpetuals
+  let info = await mktData.exchangeInfo();
+
   const accTrade = new AccountTrade(config, pk);
   await accTrade.createProxyInstance();
   //let tx = await accTrade.setAllowance(sym);

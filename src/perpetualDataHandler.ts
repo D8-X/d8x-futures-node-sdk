@@ -1282,6 +1282,15 @@ export default class PerpetualDataHandler {
     } else if (staticInfo.collateralCurrencyType == CollaterlCCY.QUOTE) {
       S3 = 1;
     }
+    const isPred = PerpetualDataHandler.isPredictionMarketStatic(staticInfo);
+    let markPrice: number;
+    if (isPred) {
+      // ema + premium
+      markPrice = indexPrices.ema + ABK64x64ToFloat(ammState[8]);
+    } else {
+      // S2 * (1+premium)
+      markPrice = indexPrices.s2 * (1 + ABK64x64ToFloat(ammState[8]));
+    }
     let state: PerpetualState = {
       id: perpId,
       state: PERP_STATE_STR[Number(ammState[13])],
@@ -1290,6 +1299,7 @@ export default class PerpetualDataHandler {
       indexPrice: S2,
       collToQuoteIndexPrice: S3 ?? (ccy[0] === ccy[1] ? S2 : 1),
       markPremium: ABK64x64ToFloat(ammState[8]),
+      markPrice: markPrice,
       midPrice: ABK64x64ToFloat(ammState[10]),
       currentFundingRateBps: ABK64x64ToFloat(ammState[14]) * 1e4,
       openInterestBC: ABK64x64ToFloat(ammState[11]),

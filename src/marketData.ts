@@ -2293,6 +2293,7 @@ export default class MarketData extends PerpetualDataHandler {
         indexPrice: 0, //fill later
         collToQuoteIndexPrice: 0, //fill later
         markPremium: ABK64x64ToFloat(perp.currentMarkPremiumRate!.fPrice),
+        markPrice: 0, //fill later
         midPrice: 0, // fill later
         currentFundingRateBps: 1e4 * ABK64x64ToFloat(perp.fCurrentFundingRate!),
         openInterestBC: ABK64x64ToFloat(perp.fOpenInterest!),
@@ -2376,6 +2377,18 @@ export default class MarketData extends PerpetualDataHandler {
         indexS3 = idxPriceS3Pair[0];
       }
       perp.collToQuoteIndexPrice = indexS3;
+
+      const emaKey = info!.S2Symbol + ":ema";
+      let markPrice: number;
+      if (idxPriceMap.has(emaKey)) {
+        let ema: number;
+        let res = idxPriceMap.get(emaKey);
+        ema = res![0];
+        markPrice = ema + perp.markPremium;
+      } else {
+        markPrice = perp.indexPrice * (1 + perp.markPremium);
+      }
+      perp.markPrice = markPrice;
       perp.midPrice = midPriceMap.get(symbol3s!)!;
       // which pool?
       const poolId = info!.poolId;
