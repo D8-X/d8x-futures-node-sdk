@@ -466,7 +466,7 @@ function pmMarginThresh(pos: number, s2: number, s3: number, m: number | undefin
 
 /**
  * Maintenance margin rate for prediction markets.
- * @param posSign sign of position in base currency (can be signed position or {-1, 1})
+ * @param posSign sign of position in base currency (can be signed position or -1, 1)
  * @param sm  mark-price (=1+p)
  * @param m   max margin rate from fInitialMarginRate
  * @returns margin rate to be applied (Math.abs(pos) * p * tau) / s3;
@@ -482,7 +482,7 @@ export function pmMaintenanceMarginRate(posSign: number, sm: number, m: number |
 
 /**
  * Maintenance margin rate for prediction markets.
- * @param posSign sign of position in base currency (can be signed position or {-1, 1})
+ * @param posSign sign of position in base currency (can be signed position or -1, 1)
  * @param sm  mark-price (=1+p)
  * @param m   max margin rate from fMaintenanceMarginRate
  * @returns margin rate to be applied (Math.abs(pos) * p * tau) / s3;
@@ -616,7 +616,7 @@ export function pmFindLiquidationPrice(
  * @param S3
  * @param totLong
  * @param totShort
- * @returns
+ * @returns excess margin as defined above
  */
 function excessMargin(
   tradeAmt: number,
