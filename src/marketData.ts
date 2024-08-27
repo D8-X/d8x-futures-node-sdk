@@ -813,8 +813,16 @@ export default class MarketData extends PerpetualDataHandler {
     maxMaintMgnRate: number,
     Sm: number,
     tradeAmtBC: number,
+    traderPosBC: number,
     tradeMgnRate: number
   ): number {
+    const isClose = Math.sign(traderPosBC) != Math.sign(tradeAmtBC);
+    const isFlip =
+      Math.abs(traderPosBC + tradeAmtBC) > 0.01 && Math.sign(traderPosBC + tradeAmtBC) != Math.sign(traderPosBC);
+    if (isClose && !isFlip) {
+      // 0.1cents if is close
+      return 0.001;
+    }
     return pmExchangeFee(Sm - 1, maxMaintMgnRate, state.shortBC, state.longBC, tradeAmtBC, tradeMgnRate);
   }
 
