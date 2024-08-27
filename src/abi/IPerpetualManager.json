@@ -1095,7 +1095,7 @@
       {
         "indexed": false,
         "internalType": "int128",
-        "name": "fSpotIndexPrice",
+        "name": "fMarkIndexPrice",
         "type": "int128"
       }
     ],
