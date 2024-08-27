@@ -229,7 +229,7 @@ export default class BrokerTool extends WriteAccessHandler {
       const id = BrokerTool.symbolToPerpetualId(order.symbol, this.symbolToPerpStaticInfo);
       const fAmount = order.side == BUY_SIDE ? floatToABK64x64(order.quantity) : floatToABK64x64(-order.quantity);
       const lvgTdr = order.leverage == undefined ? 0 : Math.round(100 * order.leverage);
-      const feeTbps = await this.proxyContract.getExchangeFeePrdMkts(id, fAmount, lvgTdr);
+      const feeTbps = await this.proxyContract.getExchangeFeePrdMkts(id, fAmount, lvgTdr, traderAddr);
 
       return Number(feeTbps) / 100_000;
     }

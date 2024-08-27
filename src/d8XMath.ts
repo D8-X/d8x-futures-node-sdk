@@ -534,6 +534,7 @@ export function expectedLoss(
 
 /**
  * Exchange fee as a rate for prediction markets
+ * For opening trades only
  * @param prob long probability
  * @param m max maintenance margin rate (0.18)
  * @param totShort

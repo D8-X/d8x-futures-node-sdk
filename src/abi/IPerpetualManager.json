@@ -2317,6 +2317,11 @@
         "internalType": "uint16",
         "name": "_leverageTDR",
         "type": "uint16"
+      },
+      {
+        "internalType": "address",
+        "name": "_traderAddr",
+        "type": "address"
       }
     ],
     "name": "getExchangeFeePrdMkts",
