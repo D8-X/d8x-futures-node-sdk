@@ -464,13 +464,36 @@ function pmMarginThresh(pos: number, s2: number, s3: number, m: number | undefin
   return (Math.abs(pos) * p * tau) / s3;
 }
 
-export function pmMaintenanceMarginRate(pos: number, s2: number, m: number | undefined = 0.18): number {
-  let p = s2 - 1;
-  if (pos < 0) {
+/**
+ * Maintenance margin rate for prediction markets.
+ * @param posSign sign of position in base currency (can be signed position or {-1, 1})
+ * @param sm  mark-price (=1+p)
+ * @param m   max margin rate from fInitialMarginRate
+ * @returns margin rate to be applied (Math.abs(pos) * p * tau) / s3;
+ */
+export function pmMaintenanceMarginRate(posSign: number, sm: number, m: number | undefined = 0.18): number {
+  let p = sm - 1;
+  if (posSign < 0) {
     p = 1 - p;
   }
   const h = entropy(p);
   return m + (0.4 - m) * h;
+}
+
+/**
+ * Maintenance margin rate for prediction markets.
+ * @param posSign sign of position in base currency (can be signed position or {-1, 1})
+ * @param sm  mark-price (=1+p)
+ * @param m   max margin rate from fMaintenanceMarginRate
+ * @returns margin rate to be applied (Math.abs(pos) * p * tau) / s3;
+ */
+export function pmInitialMarginRate(posSign: number, sm: number, m: number | undefined = 0.2): number {
+  let p = sm - 1;
+  if (posSign < 0) {
+    p = 1 - p;
+  }
+  const h = entropy(p);
+  return m + (0.5 - m) * h;
 }
 
 /**
