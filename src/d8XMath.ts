@@ -628,8 +628,7 @@ function excessMargin(
   Sm: number,
   S3: number,
   totLong: number,
-  totShort: number,
-  targetMarginRate?: number
+  totShort: number
 ): number {
   const m = 0.18; //max maintenance margin rate
   const m0 = 0.2; //max initial margin rate
@@ -639,11 +638,7 @@ function excessMargin(
     p = 2 - Sm; //=1-(Sm-1)
   }
   const h = entropy(p);
-  const minMarginRate = m0 + (0.5 - m0) * h;
-  if (targetMarginRate && targetMarginRate < minMarginRate) {
-    return 0;
-  }
-  const tau = targetMarginRate ?? minMarginRate;
+  const tau = m0 + (0.5 - m0) * h;
   const thresh = Math.abs(pos) * p * tau;
   const b0 = currentCashCC + Math.abs(currentPos) * Sm - currentLockedInQC + Math.max(0, tradeAmt * (Sm - limitPrice));
   // b0 + margin - fee > threshold
@@ -681,8 +676,7 @@ export function pmFindMaxTradeSize(
   totLong: number,
   totShort: number,
   maxShort: number,
-  maxLong: number,
-  targetMarginRate?: number
+  maxLong: number
 ): number {
   if (dir < 0) {
     dir = -1;
@@ -700,8 +694,7 @@ export function pmFindMaxTradeSize(
     Sm,
     S3,
     totLong,
-    totShort,
-    targetMarginRate
+    totShort
   );
   if (f0 < lot) {
     // no trade possible
@@ -715,18 +708,8 @@ export function pmFindMaxTradeSize(
     while (Math.abs(sNew - s) > 1 && count < 100) {
       s = sNew;
       const f =
-        excessMargin(
-          s,
-          currentCashCC,
-          currentPosition,
-          currentLockedInValue,
-          limitPrice,
-          Sm,
-          S3,
-          totLong,
-          totShort,
-          targetMarginRate
-        ) ** 2;
+        excessMargin(s, currentCashCC, currentPosition, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort) **
+        2;
       const f2 =
         excessMargin(
           s + deltaS,
@@ -737,8 +720,7 @@ export function pmFindMaxTradeSize(
           Sm,
           S3,
           totLong,
-          totShort,
-          targetMarginRate
+          totShort
         ) ** 2;
       let ds = (f2 - f) / deltaS;
       sNew = s - f / ds;
