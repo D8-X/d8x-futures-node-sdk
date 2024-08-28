@@ -2505,4 +2505,34 @@ export default class MarketData extends PerpetualDataHandler {
   public async fetchPricesForPerpetual(symbol: string): Promise<IdxPriceInfo> {
     return this.priceFeedGetter.fetchPricesForPerpetual(symbol);
   }
+
+  /**
+   *
+   * @param symbol symbol of the form "TRUMP24-USD"
+   * @returns question for given symbol
+   */
+  public async fetchPrdMktQuestion(symbol: string): Promise<string> {
+    const c = this.priceFeedGetter.getConfig().ids;
+    let j = -1;
+    for (let k = 0; k < c.length; k++) {
+      if (c[k].symbol == symbol) {
+        j = k;
+        break;
+      }
+    }
+    if (j == -1) {
+      throw Error("${symbol} not found");
+    }
+    let origin = c[j].origin;
+    const query = "https://clob.polymarket.com/markets/" + origin;
+    let response = await fetch(query);
+    if (response.status !== 200) {
+      throw new Error(`unexpected status code: ${response.status}`);
+    }
+    if (!response.ok) {
+      throw new Error(`failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
+    }
+    const data = await response.json();
+    return data.question;
+  }
 }

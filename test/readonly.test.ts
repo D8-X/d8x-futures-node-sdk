@@ -40,7 +40,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeAll(() => {
-    config = PerpetualDataHandler.readSDKConfig("x1");
+    config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -169,6 +169,10 @@ describe("readOnly", () => {
       mktData = new MarketData(config);
       wallet = new ethers.Wallet(pk);
       await mktData.createProxyInstance();
+    });
+    it("fetchPrdMktQuestion", async () => {
+      let q = await mktData.fetchPrdMktQuestion("TRUMP24-USD");
+      console.log(q);
     });
     it("init from instance", async () => {
       let mktData2 = new MarketData(config);

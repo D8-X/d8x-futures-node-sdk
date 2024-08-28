@@ -73,6 +73,9 @@ export default class PriceFeeds {
     this.triangulations = new Map<string, [string[], boolean[]]>();
   }
 
+  public getConfig(): PriceFeedConfig {
+    return this.config;
+  }
   // overridePriceEndpointsOfSameType overrides endpoints of config with same
   // type endpoints provided by user and returns the updated price feed
   // endpoints list.
