@@ -2507,7 +2507,7 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   *
+   * fetch prediction markets question
    * @param symbol symbol of the form "TRUMP24-USD"
    * @returns question for given symbol
    */
