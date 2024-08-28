@@ -566,11 +566,18 @@ export function pmExchangeFee(
  * @param mc margin cash in collateral currency
  * @returns current margin balance
  */
-function pmMarginBalance(pos: number, s2: number, s3: number, ell: number, mc: number): number {
+export function pmMarginBalance(pos: number, s2: number, s3: number, ell: number, mc: number): number {
   return (pos * s2) / s3 - ell / s3 + mc;
 }
 
-function pmExcessBalance(pos: number, s2: number, s3: number, ell: number, mc: number, m: number | undefined): number {
+export function pmExcessBalance(
+  pos: number,
+  s2: number,
+  s3: number,
+  ell: number,
+  mc: number,
+  m: number | undefined
+): number {
   return pmMarginBalance(pos, mc, s2, s3, ell) - pmMarginThresh(pos, s2, s3, m);
 }
 
