@@ -528,7 +528,7 @@ export function expectedLoss(
     ds = Math.abs(tradeAmt);
   }
   const a = Math.max(0, dl + totLong - m * totShort - dsm);
-  const b = Math.max(0, ds + totShort - m * totLong + dsm);
+  const b = Math.max(0, ds + totShort - m * totLong - dlm);
   return p * (1 - p) * (a + b);
 }
 
