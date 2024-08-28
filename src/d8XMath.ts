@@ -650,8 +650,240 @@ function excessMargin(
 }
 
 /**
+ * Internal function to find the deposit amount required
+ * for a given trade amount and target leverage
+ * @param tradeAmt
+ * @param targetLvg
+ * @param price
+ * @param S3
+ * @param S2Mark
+ * @returns
+ */
+function pmGetDepositAmtForLvgTrade(
+  tradeAmt: number,
+  targetLvg: number,
+  price: number,
+  S3: number,
+  S2Mark: number
+): number {
+  const pnl = (tradeAmt * (S2Mark - price)) / S3;
+  let p = S2Mark - 1;
+  if (tradeAmt < 0) {
+    p = 1 - p;
+  }
+  const b = (Math.abs(tradeAmt) * p) / S3 / targetLvg;
+  const amt = -(pnl - b);
+  // check:
+  //bal = amt+pnl
+  //pos_val = (np.abs(trade_amt) * p) / S3
+  //lvg = pos_val/bal
+  //assert(np.abs(lvg-targetLvg)<0.1)
+  return amt;
+}
+
+/**
+ * Internal function to calculate cash over initial margin rate
+ * after a trade of size tradeAmt in prediction markets
+ * @param tradeAmt
+ * @param lvg
+ * @param walletBalCC
+ * @param currentCashCC
+ * @param currentPosition
+ * @param currentLockedInValue
+ * @param slippage
+ * @param S2
+ * @param Sm
+ * @param S3
+ * @param totLong
+ * @param totShort
+ * @returns
+ */
+function pmExcessCashAtLvg(
+  tradeAmt: number,
+  lvg: number,
+  walletBalCC: number,
+  currentCashCC: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  slippage: number,
+  S2: number,
+  Sm: number,
+  S3: number,
+  totLong: number,
+  totShort: number
+): number {
+  //determine deposit amount for given leverage
+  const limitPrice = S2 * (1 + Math.sign(tradeAmt) * slippage);
+  const depositFromWallet = pmGetDepositAmtForLvgTrade(tradeAmt, lvg, limitPrice, S3, Sm);
+  const m0 = 0.18;
+  //leverage fee
+  let p0 = Sm - 1;
+  if (tradeAmt < 0) {
+    p0 = 2 - Sm; //=1-(Sm-1)
+  }
+  const feeCc = pmExchangeFee(p0, m0, totShort, totLong, tradeAmt, 1 / lvg) / S3;
+
+  //excess cash
+  let exc = walletBalCC - depositFromWallet - feeCc;
+
+  // margin balance
+  let pos = currentPosition + tradeAmt;
+  let p = Sm - 1;
+  if (pos < 0) {
+    p = 2 - Sm;
+  }
+  const h = entropy(p);
+  const tau = m0 + (0.5 - m0) * h;
+  const thresh = Math.abs(pos) * p * tau;
+  const b0 =
+    depositFromWallet +
+    currentCashCC +
+    Math.abs(currentPosition) * Sm -
+    currentLockedInValue +
+    Math.max(0, tradeAmt * (Sm - limitPrice));
+  // b0 - fee > threshold
+  // b0 - fee - threshold > 0
+  // extra_cash = b0 - fee - threshold
+  // missing: referral rebate
+  const bal = b0 / S3 - thresh / S3 - feeCc;
+  exc = exc + bal;
+  return exc;
+}
+
+/**
  * Find maximal trade size (short dir=-1 or long dir=1) for prediction
- * markets.
+ * markets at provided leverage and incorporating the current position
+ * and wallet balance.
+ * Factors in lot size and global max short/long
+ * @param dir
+ * @param lvg
+ * @param walletBalCC
+ * @param slippage  slippage percent
+ * @param currentPosition
+ * @param currentCashCC
+ * @param currentLockedInValue
+ * @param S2
+ * @param Sm
+ * @param S3
+ * @param totLong
+ * @param totShort
+ * @param maxShort
+ * @param maxLong
+ * @returns
+ */
+export function pmFindMaxPersonalTradeSizeAtLeverage(
+  dir: number,
+  lvg: number,
+  walletBalCC: number,
+  slippage: number,
+  currentPosition: number,
+  currentCashCC: number,
+  currentLockedInValue: number,
+  S2: number,
+  Sm: number,
+  S3: number,
+  totLong: number,
+  totShort: number,
+  maxShort: number,
+  maxLong: number
+): number {
+  if (dir < 0) {
+    dir = -1;
+  } else {
+    dir = 1;
+  }
+  const lot = 10;
+  const deltaS = 1; //for derivative
+  const f0 = pmExcessCashAtLvg(
+    dir * deltaS,
+    lvg,
+    walletBalCC,
+    currentCashCC,
+    currentPosition,
+    currentLockedInValue,
+    slippage,
+    S2,
+    Sm,
+    S3,
+    totLong,
+    totShort
+  );
+  if (f0 < lot) {
+    // no trade possible
+    return 0;
+  }
+  // numerically find maximal trade size
+  let sNew = dir * lot * 10;
+  let s = 2 * sNew;
+  while (true) {
+    let count = 0;
+    while (Math.abs(sNew - s) > 1 && count < 100) {
+      s = sNew;
+      const f =
+        pmExcessCashAtLvg(
+          s,
+          lvg,
+          walletBalCC,
+          currentCashCC,
+          currentPosition,
+          currentLockedInValue,
+          slippage,
+          S2,
+          Sm,
+          S3,
+          totLong,
+          totShort
+        ) ** 2;
+      const f2 =
+        pmExcessCashAtLvg(
+          s + deltaS,
+          lvg,
+          walletBalCC,
+          currentCashCC,
+          currentPosition,
+          currentLockedInValue,
+          slippage,
+          S2,
+          Sm,
+          S3,
+          totLong,
+          totShort
+        ) ** 2;
+      let ds = (f2 - f) / deltaS;
+      if (ds == 0) {
+        sNew = s + Math.random() * ds - ds / 2;
+      } else {
+        sNew = s - f / ds;
+      }
+      count += 1;
+    }
+    if (count < 100) {
+      break;
+    }
+    // Newton algorithm failed,
+    // choose new starting value
+    if (dir > 0) {
+      sNew = Math.random() * (maxLong - currentPosition);
+    } else {
+      sNew = -Math.random() * (Math.abs(maxShort) + currentPosition);
+    }
+  }
+  // ensure trade maximal trade sNew does not exceed
+  // the contract limits
+  if (currentPosition + sNew < maxShort) {
+    sNew = maxShort - currentPosition;
+  } else if (currentPosition + sNew > maxLong) {
+    sNew = maxLong - currentPosition;
+  }
+  // round trade size down to lot
+  sNew = Math.sign(sNew) * Math.floor(Math.abs(sNew) / lot) * lot;
+  return sNew;
+}
+
+/**
+ * Find maximal trade size (short dir=-1 or long dir=1) for prediction
+ * markets at maximal leverage and incorporating the current position.
+ * Agnostic about wallet balance.
  * @param dir
  * @param currentPosition
  * @param currentCashCC
