@@ -78,7 +78,7 @@ describe("utils", () => {
   });
   it("read config", async function () {
     // get config by chain id (latest version)
-    const chainId = 1101;
+    const chainId = "arbitrumSepolia";
     config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
