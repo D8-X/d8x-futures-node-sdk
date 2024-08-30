@@ -1,7 +1,8 @@
 import { ethers, ZeroAddress } from "ethers";
 import TraderInterface from "../src/traderInterface";
+import MarketData from "../src/marketData";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
-import { NodeSDKConfig, ExchangeInfo, Order } from "../src/nodeSDKTypes";
+import { NodeSDKConfig, ExchangeInfo, Order, PerpetualState } from "../src/nodeSDKTypes";
 import { pmFindMaxPersonalTradeSizeAtLeverage, pmExchangeFee } from "../src/d8XMath";
 // npm link "@d8x/perpetuals-sdk"
 jest.setTimeout(300000);
@@ -42,16 +43,31 @@ describe("Front-end-like functionality", () => {
     expect(s).toBeCloseTo(expected, 4);
   });
   it("exchange fee", async () => {
-    const prob = 1.3839300926543954 - 1;
+    //const prob = 1.3839300926543954 - 1;
+    const prob = 1.4338 - 1;
     const m = 0.18;
     const totShort = 200;
     const totLong = 0;
-    const tradeAmt = 200;
+    const tradeAmt = -8000;
     const lvgs = [1, 1.4, 2];
     for (let k = 0; k < lvgs.length; k++) {
       let f = pmExchangeFee(prob, m, totShort, totLong, tradeAmt, 1 / lvgs[k]);
       console.log(f);
     }
+    console.log("done");
+  });
+  it("exchange fee 2", async () => {
+    const mark = 1.4338;
+    let state = { shortBC: 200, longBC: 0 };
+    const tradeAmt = 8960;
+    const traderPosBC = 0;
+    const lvgs = [1, 1.4, 2];
+    for (let k = 0; k < lvgs.length; k++) {
+      // @ts-ignore
+      let f = MarketData.exchangeFeePrdMkts(state, 0.18, mark, tradeAmt, traderPosBC, 1 / lvgs[k]);
+      console.log(f);
+    }
+
     console.log("done");
   });
   it("order digest", async () => {
