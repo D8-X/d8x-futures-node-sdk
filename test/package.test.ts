@@ -41,7 +41,7 @@ describe("Front-end-like functionality", () => {
     const expected = Math.floor(267.221800621 / 10) * 10;
     expect(s).toBeCloseTo(expected, 4);
   });
-  it("order digest", async () => {
+  it("exchange fee", async () => {
     const prob = 1.3839300926543954 - 1;
     const m = 0.18;
     const totShort = 200;
