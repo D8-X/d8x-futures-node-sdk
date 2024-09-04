@@ -93,7 +93,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "artio",
@@ -118,7 +119,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "xlayer",
@@ -130,7 +132,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "bartio",
@@ -142,7 +145,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "europaTestnet",

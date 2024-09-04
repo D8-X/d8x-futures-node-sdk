@@ -22,10 +22,11 @@ import { sleep } from "./utils";
  * trader liquidations, trade executions, change of trader margin amount.
  */
 export default class PriceFeeds {
-  private config: PriceFeedConfig;
+  private config: PriceFeedConfig | undefined;
+  private priceFeedConfigNetwork: string;
   // Read only price info endpoints. Used by default. feedEndpoints[endpointId]
   // = endpointstring
-  public feedEndpoints: Array<string>;
+  public feedEndpoints: Array<string> = [];
   // Endpoints which are used to fetch prices for submissions
   public writeFeedEndpoints: Array<string> = [];
   private feedInfo: Map<string, { symbol: string; endpointId: number }[]>; // priceFeedId -> [symbol, endpointId]
@@ -38,22 +39,47 @@ export default class PriceFeeds {
   // api formatting constants
   private PYTH = { endpoint: "/v2/updates/price/latest?encoding=base64&ids[]=", separator: "&ids[]=", suffix: "" };
 
-  private polyMktsPxFeed: PolyMktsPxFeed;
+  private polyMktsPxFeed: PolyMktsPxFeed | undefined;
 
   constructor(dataHandler: PerpetualDataHandler, priceFeedConfigNetwork: string) {
-    let configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
-    this.config = PriceFeeds._selectConfig(configs, priceFeedConfigNetwork);
+    this.priceFeedConfigNetwork = priceFeedConfigNetwork;
+    this.onChainPxFeeds = new Map<string, OnChainPxFeed>();
+    this.dataHandler = dataHandler;
+    this.triangulations = new Map<string, [string[], boolean[]]>();
+    this.feedInfo = new Map<string, { symbol: string; endpointId: number }[]>();
+  }
+
+  /**
+   * initialization function. Gathers config from config-hub if url
+   * specified
+   */
+  public async init() {
+    let configs: PriceFeedConfig[];
+    const configSrc = this.dataHandler.config.configSource;
+    if (configSrc == "" || configSrc == undefined) {
+      // embedded config
+      configs = require("./config/priceFeedConfig.json") as PriceFeedConfig[];
+    } else {
+      //load remote config
+      const res = await fetch(configSrc + "/priceFeedConfig.json");
+      if (res.status !== 200) {
+        throw new Error(`failed to fetch priceFeedConfig status code: ${res.status}`);
+      }
+      if (!res.ok) {
+        throw new Error(`failed to fetch config (${res.status}): ${res.statusText} ${configSrc}`);
+      }
+      configs = await res.json();
+    }
+    this.config = PriceFeeds._selectConfig(configs, this.priceFeedConfigNetwork);
 
     // if SDK config contains custom price feed endpoints, these override the
     // public/default ones
-    if (dataHandler.config.priceFeedEndpoints && dataHandler.config.priceFeedEndpoints.length > 0) {
+    if (this.dataHandler.config.priceFeedEndpoints && this.dataHandler.config.priceFeedEndpoints.length > 0) {
       this.config.endpoints = PriceFeeds.overridePriceEndpointsOfSameType(
         this.config.endpoints,
-        dataHandler.config.priceFeedEndpoints
+        this.dataHandler.config.priceFeedEndpoints
       );
     }
-
-    this.onChainPxFeeds = new Map<string, OnChainPxFeed>();
     for (let k = 0; k < this.config.ids.length; k++) {
       if (this.config.ids[k].type == "onchain") {
         let sym = this.config.ids[k].symbol;
@@ -69,11 +95,12 @@ export default class PriceFeeds {
       throw new Error("PriceFeeds: no writeEndpoints provided in config");
     }
     this.polyMktsPxFeed = new PolyMktsPxFeed(this.config);
-    this.dataHandler = dataHandler;
-    this.triangulations = new Map<string, [string[], boolean[]]>();
   }
 
   public getConfig(): PriceFeedConfig {
+    if (this.config == undefined) {
+      throw Error("init() required");
+    }
     return this.config;
   }
   // overridePriceEndpointsOfSameType overrides endpoints of config with same
@@ -209,6 +236,9 @@ export default class PriceFeeds {
    * ema, confidence, and order book parameters.
    */
   public async fetchPricesForPerpetual(symbol: string): Promise<IdxPriceInfo> {
+    if (this.polyMktsPxFeed == undefined) {
+      throw Error("init() required");
+    }
     let indexSymbols = this.dataHandler.getIndexSymbols(symbol).filter((x) => x != "");
     if (this.dataHandler.isPredictionMarket(symbol)) {
       let priceObj = await this.polyMktsPxFeed.fetchPriceForSym(indexSymbols[0]);
@@ -265,6 +295,9 @@ export default class PriceFeeds {
    * <symbol>:ema for each polymarket symbol that maps to the ema price
    */
   public async fetchFeedPrices(symbols?: string[]): Promise<Map<string, [number, boolean]>> {
+    if (this.config == undefined) {
+      throw Error("init() required");
+    }
     let queries = new Array<string>(this.feedEndpoints.length);
     let suffixes = new Array<string>(queries.length);
     let symbolsOfEndpoint: string[][] = [];
@@ -347,6 +380,9 @@ export default class PriceFeeds {
 
   // returns an array with two values per symbol: price, ema
   private async queryPolyMktsPxFeeds(symbols: string[]) {
+    if (this.polyMktsPxFeed == undefined) {
+      throw Error("init() required");
+    }
     let prices = new Array<PredMktPriceInfo | undefined>();
     for (let k = 0; k < symbols.length; k++) {
       try {
@@ -380,6 +416,9 @@ export default class PriceFeeds {
    * contract and corresponding price information
    */
   public async fetchLatestFeedPriceInfoForPerpetual(symbol: string): Promise<PriceFeedSubmission> {
+    if (this.config == undefined) {
+      throw Error("init() required");
+    }
     // get the feedIds that the contract uses
     let feedIds = this.dataHandler.getPriceIds(symbol);
     let queries = new Array<string>();
