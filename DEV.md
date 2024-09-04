@@ -8,6 +8,13 @@
 - clone this repo
 - open directory of repo and type `yarn` to install packages
 
+### Remote Configs
+
+Some configuration files are fetched from github.com/D8-X/sync-hub/:
+
+- `priceFeedConfig.json`, see priceFeeds.ts
+- `symbolList.json`, see perpetualDataHandler.ts
+
 ### Test
 
 `yarn test`

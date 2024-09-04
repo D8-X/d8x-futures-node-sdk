@@ -6,6 +6,7 @@ export interface NodeSDKConfig {
   chainId: number;
   version: number;
   nodeURL: string;
+  configSource: string;
   proxyAddr: string;
   proxyABILocation: string;
   shareTokenABILocation: string;

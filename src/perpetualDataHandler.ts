@@ -166,6 +166,7 @@ export default class PerpetualDataHandler {
   }
 
   protected async initContractsAndData(signerOrProvider: Signer | Provider, overrides?: Overrides) {
+    await this.fetchSymbolList();
     this.signerOrProvider = signerOrProvider;
     // check network
     let network: Network;
@@ -185,6 +186,24 @@ export default class PerpetualDataHandler {
     this.proxyContract = IPerpetualManager__factory.connect(this.proxyAddr, signerOrProvider);
     this.multicall = Multicall3__factory.connect(this.config.multicall ?? MULTICALL_ADDRESS, this.signerOrProvider);
     await this._fillSymbolMaps(overrides);
+  }
+
+  /**
+   * sets the symbollist if a remote config url is specified
+   */
+  private async fetchSymbolList() {
+    if (this.config.configSource == "" || this.config.configSource == undefined) {
+      return;
+    }
+    const res = await fetch(this.config.configSource + "/symbolList.json");
+    if (res.status !== 200) {
+      throw new Error(`failed to fetch symbolList status code: ${res.status}`);
+    }
+    if (!res.ok) {
+      throw new Error(`failed to fetch config (${res.status}): ${res.statusText} ${this.config.configSource}`);
+    }
+    let symlist = await res.json();
+    this.symbolList = new Map<string, string>(Object.entries(symlist));
   }
 
   /**

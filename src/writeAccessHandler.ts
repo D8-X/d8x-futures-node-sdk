@@ -55,6 +55,7 @@ export default class WriteAccessHandler extends PerpetualDataHandler {
    * @param provider optional provider
    */
   public async createProxyInstance(providerOrMarketData?: Provider | MarketData, overrides?: Overrides) {
+    await this.priceFeedGetter.init();
     if (providerOrMarketData == undefined || !("createProxyInstance" in providerOrMarketData)) {
       this.provider = providerOrMarketData ?? new JsonRpcProvider(this.nodeURL, this.network, { staticNetwork: true });
       if (!this.signer) {

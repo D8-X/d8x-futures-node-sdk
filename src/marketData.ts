@@ -108,6 +108,7 @@ export default class MarketData extends PerpetualDataHandler {
    * @param providerOrMarketData optional provider or existing market data instance
    */
   public async createProxyInstance(providerOrMarketData?: Provider | MarketData, overrides?: Overrides): Promise<void> {
+    await this.priceFeedGetter.init();
     if (providerOrMarketData == undefined || !("createProxyInstance" in providerOrMarketData)) {
       this.provider = providerOrMarketData ?? new JsonRpcProvider(this.nodeURL);
       await this.initContractsAndData(this.provider, overrides);
