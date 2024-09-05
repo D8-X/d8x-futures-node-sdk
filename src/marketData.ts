@@ -2508,11 +2508,11 @@ export default class MarketData extends PerpetualDataHandler {
   }
 
   /**
-   * fetch prediction markets question
+   * fetch prediction markets meta data
    * @param symbol symbol of the form "TRUMP24-USD"
    * @returns question for given symbol
    */
-  public async fetchPrdMktQuestion(symbol: string): Promise<string> {
+  public async fetchPrdMktMetaData(symbol: string): Promise<string> {
     const c = this.priceFeedGetter.getConfig().ids;
     let j = -1;
     for (let k = 0; k < c.length; k++) {
@@ -2534,6 +2534,6 @@ export default class MarketData extends PerpetualDataHandler {
       throw new Error(`failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
     const data = await response.json();
-    return data.question;
+    return data;
   }
 }

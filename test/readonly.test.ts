@@ -170,8 +170,10 @@ describe("readOnly", () => {
       wallet = new ethers.Wallet(pk);
       await mktData.createProxyInstance();
     });
-    it("fetchPrdMktQuestion", async () => {
-      let q = await mktData.fetchPrdMktQuestion("TRUMP24-USD");
+    it("fetchPrdMktMetaData", async () => {
+      let q = await mktData.fetchPrdMktMetaData("TRUMP24-USD");
+      console.log(q);
+      q = await mktData.fetchPrdMktMetaData("BTLJ-USD");
       console.log(q);
     });
     it("init from instance", async () => {
