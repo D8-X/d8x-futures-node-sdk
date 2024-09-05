@@ -153,6 +153,9 @@ on-chain</p></dd>
     * [~pmExchangeFee(prob, m, totShort, totLong, tradeAmt, tradeMgnRate)](#module_d8xMath..pmExchangeFee) ⇒
     * [~pmMarginBalance(pos, s2, s3, ell, mc)](#module_d8xMath..pmMarginBalance) ⇒
     * [~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3, totLong, totShort)](#module_d8xMath..excessMargin) ⇒
+    * [~pmGetDepositAmtForLvgTrade(tradeAmt, targetLvg, price, S3, S2Mark)](#module_d8xMath..pmGetDepositAmtForLvgTrade) ⇒
+    * [~pmExcessCashAtLvg(tradeAmt, lvg, walletBalCC, currentCashCC, currentPosition, currentLockedInValue, slippage, S2, Sm, S3, totLong, totShort)](#module_d8xMath..pmExcessCashAtLvg) ⇒
+    * [~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, totLong, totShort, maxShort, maxLong)](#module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage) ⇒
     * [~pmFindMaxTradeSize(dir, currentPosition, currentCashCC, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort, maxShort, maxLong)](#module_d8xMath..pmFindMaxTradeSize) ⇒
 
 <a name="module_d8xMath..ABDK29ToFloat"></a>
@@ -479,7 +482,8 @@ prediction market fees</p>
 <a name="module_d8xMath..pmExchangeFee"></a>
 
 ### d8xMath~pmExchangeFee(prob, m, totShort, totLong, tradeAmt, tradeMgnRate) ⇒
-<p>Exchange fee as a rate for prediction markets</p>
+<p>Exchange fee as a rate for prediction markets
+For opening trades only</p>
 
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
 **Returns**: <p>fee relative to tradeAmt</p>  
@@ -531,11 +535,81 @@ for the given trade and position</p>
 | totLong | 
 | totShort | 
 
+<a name="module_d8xMath..pmGetDepositAmtForLvgTrade"></a>
+
+### d8xMath~pmGetDepositAmtForLvgTrade(tradeAmt, targetLvg, price, S3, S2Mark) ⇒
+<p>Internal function to find the deposit amount required
+for a given trade amount and target leverage</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>deposit amount</p>  
+
+| Param |
+| --- |
+| tradeAmt | 
+| targetLvg | 
+| price | 
+| S3 | 
+| S2Mark | 
+
+<a name="module_d8xMath..pmExcessCashAtLvg"></a>
+
+### d8xMath~pmExcessCashAtLvg(tradeAmt, lvg, walletBalCC, currentCashCC, currentPosition, currentLockedInValue, slippage, S2, Sm, S3, totLong, totShort) ⇒
+<p>Internal function to calculate cash over initial margin rate
+after a trade of size tradeAmt in prediction markets</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>excess cash</p>  
+
+| Param |
+| --- |
+| tradeAmt | 
+| lvg | 
+| walletBalCC | 
+| currentCashCC | 
+| currentPosition | 
+| currentLockedInValue | 
+| slippage | 
+| S2 | 
+| Sm | 
+| S3 | 
+| totLong | 
+| totShort | 
+
+<a name="module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage"></a>
+
+### d8xMath~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, totLong, totShort, maxShort, maxLong) ⇒
+<p>Find maximal trade size (short dir=-1 or long dir=1) for prediction
+markets at provided leverage and incorporating the current position
+and wallet balance.
+Factors in lot size and global max short/long</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>max trade size</p>  
+
+| Param | Description |
+| --- | --- |
+| dir |  |
+| lvg |  |
+| walletBalCC |  |
+| slippage | <p>slippage percent</p> |
+| currentPosition |  |
+| currentCashCC |  |
+| currentLockedInValue |  |
+| S2 |  |
+| Sm |  |
+| S3 |  |
+| totLong |  |
+| totShort |  |
+| maxShort |  |
+| maxLong |  |
+
 <a name="module_d8xMath..pmFindMaxTradeSize"></a>
 
 ### d8xMath~pmFindMaxTradeSize(dir, currentPosition, currentCashCC, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort, maxShort, maxLong) ⇒
 <p>Find maximal trade size (short dir=-1 or long dir=1) for prediction
-markets.</p>
+markets at maximal leverage and incorporating the current position.
+Agnostic about wallet balance.</p>
 
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
 **Returns**: <p>signed max trade size</p>  
@@ -680,6 +754,7 @@ require gas-payments.</p>
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
+    * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -994,6 +1069,13 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | symbol | <p>Pool margin token e.g. MATIC</p> |
 | amountToPay | <p>Amount in chain currency, e.g. &quot;0.1&quot; for 0.1 MATIC</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### accountTrade.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>AccountTrade</code>](#AccountTrade)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### accountTrade.getOrderBookContract(symbol) ⇒
@@ -1418,6 +1500,7 @@ require gas-payments.</p>
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
+    * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -1916,6 +1999,13 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | symbol | <p>Pool margin token e.g. MATIC</p> |
 | amountToPay | <p>Amount in chain currency, e.g. &quot;0.1&quot; for 0.1 MATIC</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### brokerTool.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### brokerTool.getOrderBookContract(symbol) ⇒
@@ -2332,6 +2422,7 @@ and executes smart-contract interactions that require gas-payments.</p>
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
+    * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -2588,6 +2679,13 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | symbol | <p>Pool margin token e.g. MATIC</p> |
 | amountToPay | <p>Amount in chain currency, e.g. &quot;0.1&quot; for 0.1 MATIC</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### liquidatorTool.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>LiquidatorTool</code>](#LiquidatorTool)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### liquidatorTool.getOrderBookContract(symbol) ⇒
@@ -3002,6 +3100,7 @@ smart-contract interactions that require gas-payments.</p>
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
+    * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -3197,6 +3296,13 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | symbol | <p>Pool margin token e.g. MATIC</p> |
 | amountToPay | <p>Amount in chain currency, e.g. &quot;0.1&quot; for 0.1 MATIC</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### liquidityProviderTool.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>LiquidityProviderTool</code>](#LiquidityProviderTool)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### liquidityProviderTool.getOrderBookContract(symbol) ⇒
@@ -3637,6 +3743,8 @@ No gas required for the queries here.</p>
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
         * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
         * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
+        * [.fetchPrdMktMetaData(symbol)](#MarketData+fetchPrdMktMetaData) ⇒
+        * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
         * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -4417,6 +4525,25 @@ main();
 | --- | --- |
 | symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
 
+<a name="MarketData+fetchPrdMktMetaData"></a>
+
+### marketData.fetchPrdMktMetaData(symbol) ⇒
+<p>fetch prediction markets meta data</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>question for given symbol</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form &quot;TRUMP24-USD&quot;</p> |
+
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### marketData.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### marketData.getOrderBookContract(symbol) ⇒
@@ -4870,6 +4997,7 @@ gas-payments.</p>
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
+    * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -5172,6 +5300,13 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | symbol | <p>Pool margin token e.g. MATIC</p> |
 | amountToPay | <p>Amount in chain currency, e.g. &quot;0.1&quot; for 0.1 MATIC</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### orderExecutorTool.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>OrderExecutorTool</code>](#OrderExecutorTool)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### orderExecutorTool.getOrderBookContract(symbol) ⇒
@@ -5579,6 +5714,7 @@ common data and chain operations.</p>
 * [PerpetualDataHandler](#PerpetualDataHandler)
     * [new PerpetualDataHandler(config)](#new_PerpetualDataHandler_new)
     * _instance_
+        * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
         * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -5642,6 +5778,12 @@ common data and chain operations.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### perpetualDataHandler.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### perpetualDataHandler.getOrderBookContract(symbol) ⇒
@@ -6645,6 +6787,7 @@ trader liquidations, trade executions, change of trader margin amount.</p>
 
 * [PriceFeeds](#PriceFeeds)
     * _instance_
+        * [.init()](#PriceFeeds+init)
         * [.initializeTriangulations(symbols)](#PriceFeeds+initializeTriangulations)
         * [.getTriangulations()](#PriceFeeds+getTriangulations) ⇒
         * [.setTriangulations()](#PriceFeeds+setTriangulations)
@@ -6663,6 +6806,13 @@ trader liquidations, trade executions, change of trader margin amount.</p>
         * [._selectConfig(configs, network)](#PriceFeeds._selectConfig) ⇒
         * [._constructFeedInfo(config)](#PriceFeeds._constructFeedInfo) ⇒
 
+<a name="PriceFeeds+init"></a>
+
+### priceFeeds.init()
+<p>initialization function. Gathers config from config-hub if url
+specified</p>
+
+**Kind**: instance method of [<code>PriceFeeds</code>](#PriceFeeds)  
 <a name="PriceFeeds+initializeTriangulations"></a>
 
 ### priceFeeds.initializeTriangulations(symbols)
@@ -7044,6 +7194,8 @@ so that signatures can be handled in frontend via wallet</p>
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
         * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
         * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
+        * [.fetchPrdMktMetaData(symbol)](#MarketData+fetchPrdMktMetaData) ⇒
+        * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
         * [.getLiquidityPools(fromIdx, toIdx, overrides)](#PerpetualDataHandler+getLiquidityPools) ⇒
@@ -8093,6 +8245,26 @@ main();
 | --- | --- |
 | symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
 
+<a name="MarketData+fetchPrdMktMetaData"></a>
+
+### traderInterface.fetchPrdMktMetaData(symbol) ⇒
+<p>fetch prediction markets meta data</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>fetchPrdMktMetaData</code>](#MarketData+fetchPrdMktMetaData)  
+**Returns**: <p>question for given symbol</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form &quot;TRUMP24-USD&quot;</p> |
+
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### traderInterface.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### traderInterface.getOrderBookContract(symbol) ⇒
@@ -8507,6 +8679,7 @@ require gas-payments.</p>
     * [.setAllowance(symbol, amount)](#WriteAccessHandler+setAllowance) ⇒
     * [.getAddress()](#WriteAccessHandler+getAddress) ⇒ <code>string</code>
     * [.swapForMockToken(symbol, amountToPay)](#WriteAccessHandler+swapForMockToken) ⇒
+    * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
     * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
     * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
     * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -8592,6 +8765,13 @@ into a mock token used for trading on testnet, with a rate of 1:100_000</p>
 | symbol | <p>Pool margin token e.g. MATIC</p> |
 | amountToPay | <p>Amount in chain currency, e.g. &quot;0.1&quot; for 0.1 MATIC</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### writeAccessHandler.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>WriteAccessHandler</code>](#WriteAccessHandler)  
+**Overrides**: [<code>fetchSymbolList</code>](#PerpetualDataHandler+fetchSymbolList)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### writeAccessHandler.getOrderBookContract(symbol) ⇒

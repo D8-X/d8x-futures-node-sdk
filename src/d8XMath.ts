@@ -664,7 +664,7 @@ function excessMargin(
  * @param price
  * @param S3
  * @param S2Mark
- * @returns
+ * @returns deposit amount
  */
 function pmGetDepositAmtForLvgTrade(
   tradeAmt: number,
@@ -703,7 +703,7 @@ function pmGetDepositAmtForLvgTrade(
  * @param S3
  * @param totLong
  * @param totShort
- * @returns
+ * @returns excess cash
  */
 function pmExcessCashAtLvg(
   tradeAmt: number,
@@ -776,7 +776,7 @@ function pmExcessCashAtLvg(
  * @param totShort
  * @param maxShort
  * @param maxLong
- * @returns
+ * @returns max trade size
  */
 export function pmFindMaxPersonalTradeSizeAtLeverage(
   dir: number,

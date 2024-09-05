@@ -42,6 +42,7 @@ No gas required for the queries here.</p>
         * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
         * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
         * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
+        * [.fetchPrdMktMetaData(symbol)](#MarketData+fetchPrdMktMetaData) ⇒
     * _static_
         * [.exchangeFeePrdMkts(state, maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate)](#MarketData.exchangeFeePrdMkts) ⇒
 
@@ -794,6 +795,18 @@ main();
 | Param | Description |
 | --- | --- |
 | symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
+
+<a name="MarketData+fetchPrdMktMetaData"></a>
+
+### marketData.fetchPrdMktMetaData(symbol) ⇒
+<p>fetch prediction markets meta data</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>question for given symbol</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form &quot;TRUMP24-USD&quot;</p> |
 
 <a name="MarketData.exchangeFeePrdMkts"></a>
 

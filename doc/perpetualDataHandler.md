@@ -9,6 +9,7 @@ common data and chain operations.</p>
 * [PerpetualDataHandler](#PerpetualDataHandler)
     * [new PerpetualDataHandler(config)](#new_PerpetualDataHandler_new)
     * _instance_
+        * [.fetchSymbolList()](#PerpetualDataHandler+fetchSymbolList)
         * [.getOrderBookContract(symbol)](#PerpetualDataHandler+getOrderBookContract) ⇒
         * [.getOrderBookAddress(symbol)](#PerpetualDataHandler+getOrderBookAddress) ⇒
         * [.getPerpetuals(ids, overrides)](#PerpetualDataHandler+getPerpetuals) ⇒
@@ -72,6 +73,12 @@ common data and chain operations.</p>
 | --- | --- | --- |
 | config | <code>NodeSDKConfig</code> | <p>Configuration object, see PerpetualDataHandler.readSDKConfig.</p> |
 
+<a name="PerpetualDataHandler+fetchSymbolList"></a>
+
+### perpetualDataHandler.fetchSymbolList()
+<p>sets the symbollist if a remote config url is specified</p>
+
+**Kind**: instance method of [<code>PerpetualDataHandler</code>](#PerpetualDataHandler)  
 <a name="PerpetualDataHandler+getOrderBookContract"></a>
 
 ### perpetualDataHandler.getOrderBookContract(symbol) ⇒
