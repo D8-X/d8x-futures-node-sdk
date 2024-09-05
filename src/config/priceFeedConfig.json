@@ -3,6 +3,12 @@
     "network": "mainnet",
     "ids": [
       {
+        "symbol": "BTLJ-USD",
+        "id": "0xE40F3EF726A04AD63510BAF90238F6BCACF4365DB2A38E02A6E8623C2BEDC97D",
+        "type": "polymarket",
+        "origin": "0x3157ea263270be44bd68a3d6bde1f6f639be2746974f65de24e00ea6378d7838"
+      },
+      {
         "symbol": "TRUMP24-USD",
         "id": "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7",
         "type": "polymarket",
@@ -166,6 +172,12 @@
   {
     "network": "odin",
     "ids": [
+      {
+        "symbol": "BTLJ-USD",
+        "id": "0xE40F3EF726A04AD63510BAF90238F6BCACF4365DB2A38E02A6E8623C2BEDC97D",
+        "type": "polymarket",
+        "origin": "0x3157ea263270be44bd68a3d6bde1f6f639be2746974f65de24e00ea6378d7838"
+      },
       {
         "symbol": "TRUMP24-USD",
         "id": "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7",
