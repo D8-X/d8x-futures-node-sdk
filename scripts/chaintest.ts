@@ -9,7 +9,7 @@ let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
 async function trade() {
-  const sym = "TRUMP24-USD-USDC"; //"ETH-USD-WEETH"; //
+  const sym = "BTLJ-USD-USDC"; //"ETH-USD-WEETH"; //
   let config = PerpetualDataHandler.readSDKConfig(421614); //42161); //
   if (RPC != undefined) {
     config.nodeURL = RPC;
