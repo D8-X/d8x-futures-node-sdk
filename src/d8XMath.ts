@@ -578,7 +578,7 @@ export function pmExcessBalance(
   mc: number,
   m: number | undefined
 ): number {
-  return pmMarginBalance(pos, mc, s2, s3, ell) - pmMarginThresh(pos, s2, s3, m);
+  return pmMarginBalance(pos, s2, s3, ell, mc) - pmMarginThresh(pos, s2, s3, m);
 }
 
 // finds the liquidation price for prediction markets
