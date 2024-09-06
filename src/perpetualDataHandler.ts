@@ -926,6 +926,27 @@ export default class PerpetualDataHandler {
     return mgn;
   }
 
+  public async getMarginAccount(
+    traderAddr: string,
+    symbol: string,
+    idxPriceInfo: IdxPriceInfo,
+    overrides?: Overrides
+  ): Promise<MarginAccount> {
+    if (this.proxyContract == null) {
+      throw Error("no proxy contract initialized. Use createProxyInstance().");
+    }
+    const isPred = this.isPredictionMarket(symbol);
+    return PerpetualDataHandler.getMarginAccount(
+      traderAddr,
+      symbol,
+      this.symbolToPerpStaticInfo,
+      new Contract(this.proxyAddr, this.config.proxyABI!, this.provider),
+      idxPriceInfo,
+      isPred,
+      overrides
+    );
+  }
+
   /**
    * Get trader state from the blockchain and parse into a human-readable margin account
    * @param traderAddr Trader address
