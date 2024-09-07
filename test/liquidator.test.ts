@@ -44,6 +44,7 @@ describe("liquidation functionality", () => {
       }
       let m = await liquidator.getMarginAccount(addr[k], sym, indexPrices);
       let p = await marketData.positionRisk(addr[k]);
+      let exch = await marketData.exchangeInfo();
       console.log(
         `${sym} : addr=${addr[k]} pos=${pos} s2=${indexPrices.s2} liqprice=${m.liquidationPrice} ${p[0].liquidationPrice}`
       );
