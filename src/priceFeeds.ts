@@ -226,6 +226,14 @@ export default class PriceFeeds {
     for (let k = 0; k < symbols.length; k++) {
       symMap.set(symbols[k], [prices[k], mktClosed[k]]);
     }
+    // set emas
+    for (const key of feedPrices.keys()) {
+      if (!key.includes(":ema")) {
+        continue;
+      }
+      let p = feedPrices.get(key);
+      symMap.set(key, p!);
+    }
     return symMap;
   }
 
