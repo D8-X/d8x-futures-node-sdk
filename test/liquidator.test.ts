@@ -32,8 +32,8 @@ describe("liquidation functionality", () => {
     await marketData.createProxyInstance();
   });
   it("liquidatable accounts", async () => {
-    //const sym = "BTLJ-USD-USDC";
-    const sym = "TRUMP24-USD-USDC";
+    const sym = "BTLJ-USD-USDC";
+    //const sym = "TRUMP24-USD-USDC";
     let addr = await liquidator.getAllActiveAccounts(sym);
     let indexPrices = await marketData.fetchPricesForPerpetual(sym);
     for (let k = 0; k < addr.length; k++) {
@@ -42,6 +42,11 @@ describe("liquidation functionality", () => {
       if (traderState.side == SELL_SIDE) {
         pos = -pos;
       }
+      let m = await liquidator.getMarginAccount(addr[k], sym, indexPrices);
+      let p = await marketData.positionRisk(addr[k]);
+      console.log(
+        `${sym} : addr=${addr[k]} pos=${pos} s2=${indexPrices.s2} liqprice=${m.liquidationPrice} ${p[0].liquidationPrice}`
+      );
       const markPrice = traderState.markPrice;
       const prem = markPrice - indexPrices.s2;
       console.log("premium=", prem);
@@ -57,6 +62,7 @@ describe("liquidation functionality", () => {
       const isSafe2 = await liquidator.isMaintenanceMarginSafe(sym, addr[k], [indexPrices.ema, indexPrices.s3!]);
       console.log(isSafe1);
       console.log(isSafe2);
+      expect(isSafe1 == isSafe2).toBeTruthy();
     }
   });
 });
