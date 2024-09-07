@@ -2401,7 +2401,7 @@ export default class MarketData extends PerpetualDataHandler {
         let ema: number;
         let res = idxPriceMap.get(emaKey);
         ema = res![0];
-        markPrice = ema + perp.markPremium;
+        markPrice = Math.min(Math.max(ema + perp.markPremium, 0), 1);
       } else {
         markPrice = perp.indexPrice * (1 + perp.markPremium);
       }
