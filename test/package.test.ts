@@ -46,19 +46,16 @@ describe("Front-end-like functionality", () => {
     //const prob = 1.3839300926543954 - 1;
     const prob = 1.4338 - 1;
     const m = 0.18;
-    const totShort = 200;
-    const totLong = 0;
     const tradeAmt = -8000;
     const lvgs = [1, 1.4, 2];
     for (let k = 0; k < lvgs.length; k++) {
-      let f = pmExchangeFee(prob, m, totShort, totLong, tradeAmt, 1 / lvgs[k]);
+      let f = pmExchangeFee(prob, m, tradeAmt, 1 / lvgs[k]);
       console.log(f);
     }
     console.log("done");
   });
   it("exchange fee 2", async () => {
     const mark = 1.4233;
-    let state = { shortBC: 100, longBC: 7670 };
     const tradeAmts = [1000, 2440, 6660];
     const traderPosBC = 1000;
     const lvgs = [1];
@@ -66,7 +63,7 @@ describe("Front-end-like functionality", () => {
       let tradeAmt = tradeAmts[j];
       for (let k = 0; k < lvgs.length; k++) {
         // @ts-ignore
-        let f = MarketData.exchangeFeePrdMkts(state, 0.18, mark, tradeAmt, traderPosBC, 1 / lvgs[k]);
+        let f = MarketData.exchangeFeePrdMkts(0.18, mark, tradeAmt, traderPosBC, 1 / lvgs[k]);
         console.log(`lvg  = ${lvgs[k]}, tradeAmt=${tradeAmt} -> fee=${f}`);
       }
     }

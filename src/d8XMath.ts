@@ -505,6 +505,7 @@ export function pmInitialMarginRate(posSign: number, sm: number, m: number | und
  * @param totShort total short
  * @param tradeAmt signed trade amount, can be zero
  * @param tradeMgnRate margin rate of the trader
+ * @returns expected loss in dollars
  */
 export function expectedLoss(
   p: number,
@@ -532,7 +533,18 @@ export function expectedLoss(
   return p * (1 - p) * Math.max(0, a + b);
 }
 
-function newFee(p: number, m: number, tradeAmt: number, tradeMgnRate: number) {
+/**
+ * Equivalent to
+ * const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
+ * const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate)
+ * const fee = (el1 - el0) / Math.abs(tradeAmt);
+ * @param p prob long probability
+ * @param m max maintenance margin rate (0.18)
+ * @param tradeAmt trade amount in base currency
+ * @param tradeMgnRate margin rate for this trade
+ * @returns dollar fee
+ */
+function expectedLossImpact(p: number, m: number, tradeAmt: number, tradeMgnRate: number) {
   m = (0.4 - m) * entropy(p) + m;
   let dlm = 0;
   let dl = 0;
@@ -556,26 +568,18 @@ function newFee(p: number, m: number, tradeAmt: number, tradeMgnRate: number) {
  * For opening trades only
  * @param prob long probability
  * @param m max maintenance margin rate (0.18)
- * @param totShort
- * @param totLong
  * @param tradeAmt trade amount in base currency
  * @param tradeMgnRate margin rate for this trade
- * @returns fee relative to tradeAmt
+ * @returns dollar fee relative to tradeAmt
  */
-export function pmExchangeFee(
-  prob: number,
-  m: number,
-  totShort: number,
-  totLong: number,
-  tradeAmt: number,
-  tradeMgnRate: number
-): number {
-  const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
-  const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate);
-  console.log("el0=", el0);
-  console.log("el1=", el1);
-  const fee = (el1 - el0) / Math.abs(tradeAmt);
-  console.log("diff=", el1 - el0);
+export function pmExchangeFee(prob: number, m: number, tradeAmt: number, tradeMgnRate: number): number {
+  /*
+  equivalent:
+    const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
+    const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate);
+    const fee = (el1 - el0) / Math.abs(tradeAmt);
+  */
+  let fee = expectedLossImpact(prob, m, tradeAmt, tradeMgnRate) / Math.abs(tradeAmt);
   return Math.max(fee, 0.001);
 }
 
@@ -644,8 +648,6 @@ export function pmFindLiquidationPrice(
  * @param limitPrice
  * @param Sm
  * @param S3
- * @param totLong
- * @param totShort
  * @returns excess margin as defined above
  */
 function excessMargin(
@@ -655,9 +657,7 @@ function excessMargin(
   currentLockedInQC: number,
   limitPrice: number,
   Sm: number,
-  S3: number,
-  totLong: number,
-  totShort: number
+  S3: number
 ): number {
   const m = 0.18; //max maintenance margin rate
   const m0 = 0.2; //max initial margin rate
@@ -672,7 +672,7 @@ function excessMargin(
   const b0 = currentCashCC + Math.abs(currentPos) * Sm - currentLockedInQC + Math.max(0, tradeAmt * (Sm - limitPrice));
   // b0 + margin - fee > threshold
   // margin = threshold - b0 + fee
-  const fee_cc = pmExchangeFee(p, m, totShort, totLong, tradeAmt, tau) / S3;
+  const fee_cc = pmExchangeFee(p, m, tradeAmt, tau) / S3;
 
   // missing: referral rebate
   return b0 / S3 - thresh / S3 - fee_cc;
@@ -737,9 +737,7 @@ function pmExcessCashAtLvg(
   slippage: number,
   S2: number,
   Sm: number,
-  S3: number,
-  totLong: number,
-  totShort: number
+  S3: number
 ): number {
   //determine deposit amount for given leverage
   const limitPrice = S2 * (1 + Math.sign(tradeAmt) * slippage);
@@ -750,7 +748,7 @@ function pmExcessCashAtLvg(
   if (tradeAmt < 0) {
     p0 = 2 - Sm; //=1-(Sm-1)
   }
-  const feeCc = pmExchangeFee(p0, m0, totShort, totLong, tradeAmt, 1 / lvg) / S3;
+  const feeCc = pmExchangeFee(p0, m0, tradeAmt, 1 / lvg) / S3;
 
   //excess cash
   let exc = walletBalCC - depositFromWallet - feeCc;
@@ -833,9 +831,7 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
     slippage,
     S2,
     Sm,
-    S3,
-    totLong,
-    totShort
+    S3
   );
   if (f0 < lot) {
     // no trade possible
@@ -859,9 +855,7 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
           slippage,
           S2,
           Sm,
-          S3,
-          totLong,
-          totShort
+          S3
         ) ** 2;
       const f2 =
         pmExcessCashAtLvg(
@@ -874,9 +868,7 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
           slippage,
           S2,
           Sm,
-          S3,
-          totLong,
-          totShort
+          S3
         ) ** 2;
       let ds = (f2 - f) / deltaS;
       if (ds == 0) {
@@ -934,8 +926,6 @@ export function pmFindMaxTradeSize(
   limitPrice: number,
   Sm: number,
   S3: number,
-  totLong: number,
-  totShort: number,
   maxShort: number,
   maxLong: number
 ): number {
@@ -946,17 +936,7 @@ export function pmFindMaxTradeSize(
   }
   const lot = 10;
   const deltaS = 1; //for derivative
-  const f0 = excessMargin(
-    dir * deltaS,
-    currentCashCC,
-    currentPosition,
-    currentLockedInValue,
-    limitPrice,
-    Sm,
-    S3,
-    totLong,
-    totShort
-  );
+  const f0 = excessMargin(dir * deltaS, currentCashCC, currentPosition, currentLockedInValue, limitPrice, Sm, S3);
   if (f0 < lot) {
     // no trade possible
     return 0;
@@ -968,21 +948,9 @@ export function pmFindMaxTradeSize(
     let count = 0;
     while (Math.abs(sNew - s) > 1 && count < 100) {
       s = sNew;
-      const f =
-        excessMargin(s, currentCashCC, currentPosition, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort) **
-        2;
+      const f = excessMargin(s, currentCashCC, currentPosition, currentLockedInValue, limitPrice, Sm, S3) ** 2;
       const f2 =
-        excessMargin(
-          s + deltaS,
-          currentCashCC,
-          currentPosition,
-          currentLockedInValue,
-          limitPrice,
-          Sm,
-          S3,
-          totLong,
-          totShort
-        ) ** 2;
+        excessMargin(s + deltaS, currentCashCC, currentPosition, currentLockedInValue, limitPrice, Sm, S3) ** 2;
       let ds = (f2 - f) / deltaS;
       sNew = s - f / ds;
       count += 1;

@@ -804,7 +804,6 @@ export default class MarketData extends PerpetualDataHandler {
 
   /**
    * Fee is relative to base-currency amount (=trade amount)
-   * @param state current perpetual state (need longBC and shortBC)
    * @param maxMaintMgnRate maintenance margin rate param for pred mkts
    * @param Sm Mark price
    * @param tradeAmtBC signed trade amount
@@ -812,7 +811,6 @@ export default class MarketData extends PerpetualDataHandler {
    * @returns relative exchange fee in decimals
    */
   public static exchangeFeePrdMkts(
-    state: PerpetualState,
     maxMaintMgnRate: number,
     Sm: number,
     tradeAmtBC: number,
@@ -826,7 +824,7 @@ export default class MarketData extends PerpetualDataHandler {
       // 0.1cents if is close
       return 0.001;
     }
-    return pmExchangeFee(Sm - 1, maxMaintMgnRate, state.shortBC, state.longBC, tradeAmtBC, tradeMgnRate);
+    return pmExchangeFee(Sm - 1, maxMaintMgnRate, tradeAmtBC, tradeMgnRate);
   }
 
   /**
@@ -1279,8 +1277,6 @@ export default class MarketData extends PerpetualDataHandler {
       Sm,
       Sm,
       indexPriceInfo.s3 ?? 0,
-      totLong,
-      totShort,
       maxShortPosPerp,
       maxLongPosPerp
     );
@@ -1292,8 +1288,6 @@ export default class MarketData extends PerpetualDataHandler {
       Sm,
       Sm,
       indexPriceInfo.s3 ?? 0,
-      totLong,
-      totShort,
       maxShortPosPerp,
       maxLongPosPerp
     );
