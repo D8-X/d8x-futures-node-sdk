@@ -532,6 +532,25 @@ export function expectedLoss(
   return p * (1 - p) * Math.max(0, a + b);
 }
 
+function newFee(p: number, m: number, tradeAmt: number, tradeMgnRate: number) {
+  m = (0.4 - m) * entropy(p) + m;
+  let dlm = 0;
+  let dl = 0;
+  let dsm = 0;
+  let ds = 0;
+  if (tradeAmt > 0) {
+    dlm = p * tradeAmt * tradeMgnRate;
+    dl = tradeAmt;
+  } else if (tradeAmt < 0) {
+    dsm = (1 - p) * Math.abs(tradeAmt) * tradeMgnRate;
+    ds = Math.abs(tradeAmt);
+  }
+  //long: p * (1 - p) max(0, dl-dlm) = p * (1 - p) max(0, tradeAmt - p * tradeAmt * tradeMgnRate)
+  const a = dl - dsm;
+  const b = ds - dlm;
+  return p * (1 - p) * Math.max(0, a + b);
+}
+
 /**
  * Exchange fee as a rate for prediction markets
  * For opening trades only
@@ -553,7 +572,10 @@ export function pmExchangeFee(
 ): number {
   const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
   const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate);
+  console.log("el0=", el0);
+  console.log("el1=", el1);
   const fee = (el1 - el0) / Math.abs(tradeAmt);
+  console.log("diff=", el1 - el0);
   return Math.max(fee, 0.001);
 }
 
