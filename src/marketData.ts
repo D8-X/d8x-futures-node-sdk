@@ -705,7 +705,9 @@ export default class MarketData extends PerpetualDataHandler {
     }
     let newSide = newPositionBC > 0 ? BUY_SIDE : newPositionBC < 0 ? SELL_SIDE : CLOSED_SIDE;
 
-    let tradingFeeCC = (Math.abs(tradeAmountBC) * tradingFeeTbps * 1e-5 * S2) / S3;
+    let tradingFeeCC = isPredMkt
+      ? (Math.abs(tradeAmountBC) * tradingFeeTbps * 1e-5) / S3
+      : (Math.abs(tradeAmountBC) * tradingFeeTbps * 1e-5 * S2) / S3;
     let referralFeeCC = this.symbolToPerpStaticInfo.get(account.symbol)!.referralRebate;
     // Trade type:
     let isClose = newPositionBC == 0 || newPositionBC * tradeAmountBC < 0;
