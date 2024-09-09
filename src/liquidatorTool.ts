@@ -127,12 +127,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    if (!overrides || overrides.gasLimit == undefined) {
-      overrides = {
-        gasLimit: overrides?.gasLimit ?? this.gasLimit,
-        ...overrides,
-      } as PayableOverrides;
-    }
+
     // update first
     let nonceInc = 0;
     let txData: string;
@@ -148,7 +143,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
           {
             value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
             gasLimit: overrides?.gasLimit ?? this.gasLimit,
-            nonce: overrides.nonce,
+            nonce: overrides?.nonce,
           }
         );
         nonceInc += 1;
@@ -173,18 +168,26 @@ export default class LiquidatorTool extends WriteAccessHandler {
       ]);
       value = this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length;
     }
-    if (!!overrides?.nonce) {
+    if (overrides?.nonce != undefined) {
       overrides.nonce = overrides.nonce + nonceInc;
+    }
+
+    if (overrides?.gasLimit !== undefined) {
+      overrides.gasLimit = await overrides.gasLimit;
+    }
+
+    if (overrides?.gasPrice !== undefined) {
+      overrides.gasPrice = await overrides.gasPrice;
     }
     let unsignedTx = {
       to: this.proxyAddr,
       from: this.traderAddr,
-      nonce: overrides.nonce,
+      nonce: overrides?.nonce,
       data: txData,
       value: value,
-      gasLimit: overrides.gasLimit,
+      gasLimit: overrides?.gasLimit,
       // gas price is populated by the provider if undefined
-      gasPrice: overrides.gasPrice,
+      gasPrice: overrides?.gasPrice,
       chainId: this.chainId,
     };
     // no gas limit was specified, explicitly estimate
