@@ -1,4 +1,11 @@
-import { ContractTransactionResponse, JsonRpcProvider, Overrides, Signer, TransactionResponse } from "ethers";
+import {
+  BigNumberish,
+  ContractTransactionResponse,
+  JsonRpcProvider,
+  Overrides,
+  Signer,
+  TransactionResponse,
+} from "ethers";
 import { PayableOverrides } from "./contracts/common";
 import { IPyth__factory } from "./contracts/factories";
 import { ABK64x64ToFloat, floatToABK64x64, entropy } from "./d8XMath";
@@ -98,7 +105,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
     traderAddr: string,
     liquidatorAddr: string = "",
     submission?: PriceFeedSubmission,
-    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean }
+    overrides?: PayableOverrides & { rpcURL?: string; splitTx?: boolean; maxGasLimit?: BigNumberish }
   ): Promise<TransactionResponse> {
     // this operation spends gas, so signer is required
     if (this.proxyContract == null || this.signer == null) {
@@ -110,20 +117,17 @@ export default class LiquidatorTool extends WriteAccessHandler {
     }
     let rpcURL: string | undefined;
     let splitTx: boolean | undefined;
+    let maxGasLimit: BigNumberish | undefined;
     if (overrides) {
-      ({ rpcURL, splitTx, ...overrides } = overrides);
+      ({ rpcURL, splitTx, maxGasLimit, ...overrides } = overrides);
     }
+
     const provider = new JsonRpcProvider(rpcURL ?? this.nodeURL, this.network, { staticNetwork: true });
     let perpID = LiquidatorTool.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     if (submission == undefined) {
       submission = await this.fetchLatestFeedPriceInfo(symbol);
     }
-    if (!overrides || overrides.gasLimit == undefined) {
-      overrides = {
-        gasLimit: overrides?.gasLimit ?? this.gasLimit,
-        ...overrides,
-      } as PayableOverrides;
-    }
+
     // update first
     let nonceInc = 0;
     let txData: string;
@@ -139,7 +143,7 @@ export default class LiquidatorTool extends WriteAccessHandler {
           {
             value: this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length,
             gasLimit: overrides?.gasLimit ?? this.gasLimit,
-            nonce: overrides.nonce,
+            nonce: overrides?.nonce,
           }
         );
         nonceInc += 1;
@@ -164,21 +168,50 @@ export default class LiquidatorTool extends WriteAccessHandler {
       ]);
       value = this.PRICE_UPDATE_FEE_GWEI * submission.timestamps.length;
     }
-    if (!!overrides?.nonce) {
+    if (overrides?.nonce != undefined) {
       overrides.nonce = overrides.nonce + nonceInc;
+    }
+
+    if (overrides?.gasLimit !== undefined) {
+      overrides.gasLimit = await overrides.gasLimit;
+    }
+
+    if (overrides?.gasPrice !== undefined) {
+      overrides.gasPrice = await overrides.gasPrice;
     }
     let unsignedTx = {
       to: this.proxyAddr,
       from: this.traderAddr,
-      nonce: overrides.nonce,
+      nonce: overrides?.nonce,
       data: txData,
       value: value,
-      gasLimit: overrides.gasLimit,
+      gasLimit: overrides?.gasLimit,
       // gas price is populated by the provider if undefined
-      gasPrice: overrides.gasPrice,
+      gasPrice: overrides?.gasPrice,
       chainId: this.chainId,
     };
-    return await this.signer.sendTransaction(unsignedTx);
+    // no gas limit was specified, explicitly estimate
+    if (!overrides?.gasLimit) {
+      let gasLimit = await this.signer
+        .estimateGas(unsignedTx)
+        .then((gas) => (gas * 1500n) / 1000n)
+        .catch((_e) => undefined);
+      if (!gasLimit) {
+        // gas estimate failed - txn would probably revert, double check (and possibly re-throw):
+        overrides = { gasLimit: maxGasLimit ?? this.gasLimit, value: unsignedTx.value, ...overrides };
+        await this.proxyContract.liquidateByAMM.staticCall(
+          perpID,
+          liquidatorAddr,
+          traderAddr,
+          submission.priceFeedVaas,
+          submission.timestamps,
+          overrides
+        );
+        gasLimit = BigInt(maxGasLimit ?? this.gasLimit);
+      }
+      unsignedTx.gasLimit = gasLimit;
+    }
+    return await this.signer.connect(provider).sendTransaction(unsignedTx);
   }
 
   /**
