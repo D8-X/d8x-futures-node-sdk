@@ -44,7 +44,7 @@ No gas required for the queries here.</p>
         * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
         * [.fetchPrdMktMetaData(symbol)](#MarketData+fetchPrdMktMetaData) ⇒
     * _static_
-        * [.exchangeFeePrdMkts(state, maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate)](#MarketData.exchangeFeePrdMkts) ⇒
+        * [.exchangeFeePrdMkts(maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate)](#MarketData.exchangeFeePrdMkts) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -810,7 +810,7 @@ main();
 
 <a name="MarketData.exchangeFeePrdMkts"></a>
 
-### MarketData.exchangeFeePrdMkts(state, maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate) ⇒
+### MarketData.exchangeFeePrdMkts(maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate) ⇒
 <p>Fee is relative to base-currency amount (=trade amount)</p>
 
 **Kind**: static method of [<code>MarketData</code>](#MarketData)  
@@ -818,7 +818,6 @@ main();
 
 | Param | Description |
 | --- | --- |
-| state | <p>current perpetual state (need longBC and shortBC)</p> |
 | maxMaintMgnRate | <p>maintenance margin rate param for pred mkts</p> |
 | Sm | <p>Mark price</p> |
 | tradeAmtBC | <p>signed trade amount</p> |

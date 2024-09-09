@@ -15,8 +15,6 @@ describe("Front-end-like functionality", () => {
     let markPrice = 1.54;
     let indexPriceS2 = 1.54;
     let indexPriceS3 = 0.95;
-    let tot_long = 200;
-    let tot_short = 600;
     let trade_lvg = 1.5;
     let wallet_bal_cc = 50;
     let slippage = 0.01;
@@ -34,8 +32,6 @@ describe("Front-end-like functionality", () => {
       indexPriceS2,
       markPrice,
       indexPriceS3,
-      tot_long,
-      tot_short,
       maxShort,
       maxLong
     );
@@ -67,8 +63,34 @@ describe("Front-end-like functionality", () => {
         console.log(`lvg  = ${lvgs[k]}, tradeAmt=${tradeAmt} -> fee=${f}`);
       }
     }
-
-    console.log("done");
+  });
+  it("pmFindMaxPersonalTradeSizeAtLeverage", async () => {
+    const direction = 1;
+    const leverage = 1;
+    const walletBalCC = 10_000_000;
+    const slippage = 0.02;
+    const currentPosition = 20500;
+    const currentCashCC = 0;
+    const currentLockedInValue = 31_106;
+    const indexPrice = 1.518;
+    const markPrice = 1.52036;
+    const collToQuoteIndexPrice = 0.99999;
+    const maxTraderOrderSize = 4009;
+    let personalMax = pmFindMaxPersonalTradeSizeAtLeverage(
+      direction,
+      leverage,
+      walletBalCC,
+      slippage,
+      currentPosition,
+      currentCashCC,
+      currentLockedInValue,
+      indexPrice,
+      markPrice,
+      collToQuoteIndexPrice,
+      maxTraderOrderSize,
+      maxTraderOrderSize
+    );
+    console.log("personalMax = ", personalMax);
   });
   it("order digest", async () => {
     let pk: string = <string>process.env.PK;

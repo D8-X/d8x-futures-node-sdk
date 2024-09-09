@@ -149,10 +149,11 @@ on-chain</p></dd>
     * [~pmMarginThresh(pos, s2, s3, m)](#module_d8xMath..pmMarginThresh) ⇒
     * [~pmMaintenanceMarginRate(posSign, sm, m)](#module_d8xMath..pmMaintenanceMarginRate) ⇒
     * [~pmInitialMarginRate(posSign, sm, m)](#module_d8xMath..pmInitialMarginRate) ⇒
-    * [~expectedLoss(p, m, totLong, totShort, tradeAmt, tradeMgnRate)](#module_d8xMath..expectedLoss)
-    * [~pmExchangeFee(prob, m, totShort, totLong, tradeAmt, tradeMgnRate)](#module_d8xMath..pmExchangeFee) ⇒
+    * [~expectedLoss(p, m, totLong, totShort, tradeAmt, tradeMgnRate)](#module_d8xMath..expectedLoss) ⇒
+    * [~expectedLossImpact(p, m, tradeAmt, tradeMgnRate)](#module_d8xMath..expectedLossImpact) ⇒
+    * [~pmExchangeFee(prob, m, tradeAmt, tradeMgnRate)](#module_d8xMath..pmExchangeFee) ⇒
     * [~pmMarginBalance(pos, s2, s3, ell, mc)](#module_d8xMath..pmMarginBalance) ⇒
-    * [~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3, totLong, totShort)](#module_d8xMath..excessMargin) ⇒
+    * [~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3)](#module_d8xMath..excessMargin) ⇒
     * [~pmGetDepositAmtForLvgTrade(tradeAmt, targetLvg, price, S3, S2Mark)](#module_d8xMath..pmGetDepositAmtForLvgTrade) ⇒
     * [~pmExcessCashAtLvg(tradeAmt, lvg, walletBalCC, currentCashCC, currentPosition, currentLockedInValue, slippage, S2, Sm, S3, totLong, totShort)](#module_d8xMath..pmExcessCashAtLvg) ⇒
     * [~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, totLong, totShort, maxShort, maxLong)](#module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage) ⇒
@@ -464,11 +465,12 @@ Smart contract equivalent: calcMarginForTargetLeverage(..., _ignorePosBalance = 
 
 <a name="module_d8xMath..expectedLoss"></a>
 
-### d8xMath~expectedLoss(p, m, totLong, totShort, tradeAmt, tradeMgnRate)
+### d8xMath~expectedLoss(p, m, totLong, totShort, tradeAmt, tradeMgnRate) ⇒
 <p>Calculate the expected loss for a prediction market trade used for
 prediction market fees</p>
 
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>expected loss in dollars</p>  
 
 | Param | Description |
 | --- | --- |
@@ -479,21 +481,37 @@ prediction market fees</p>
 | tradeAmt | <p>signed trade amount, can be zero</p> |
 | tradeMgnRate | <p>margin rate of the trader</p> |
 
+<a name="module_d8xMath..expectedLossImpact"></a>
+
+### d8xMath~expectedLossImpact(p, m, tradeAmt, tradeMgnRate) ⇒
+<p>Equivalent to
+const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
+const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate)
+const fee = (el1 - el0) / Math.abs(tradeAmt);</p>
+
+**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
+**Returns**: <p>dollar fee</p>  
+
+| Param | Description |
+| --- | --- |
+| p | <p>prob long probability</p> |
+| m | <p>max maintenance margin rate (0.18)</p> |
+| tradeAmt | <p>trade amount in base currency</p> |
+| tradeMgnRate | <p>margin rate for this trade</p> |
+
 <a name="module_d8xMath..pmExchangeFee"></a>
 
-### d8xMath~pmExchangeFee(prob, m, totShort, totLong, tradeAmt, tradeMgnRate) ⇒
+### d8xMath~pmExchangeFee(prob, m, tradeAmt, tradeMgnRate) ⇒
 <p>Exchange fee as a rate for prediction markets
 For opening trades only</p>
 
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
-**Returns**: <p>fee relative to tradeAmt</p>  
+**Returns**: <p>dollar fee relative to tradeAmt</p>  
 
 | Param | Description |
 | --- | --- |
 | prob | <p>long probability</p> |
 | m | <p>max maintenance margin rate (0.18)</p> |
-| totShort |  |
-| totLong |  |
 | tradeAmt | <p>trade amount in base currency</p> |
 | tradeMgnRate | <p>margin rate for this trade</p> |
 
@@ -515,7 +533,7 @@ For opening trades only</p>
 
 <a name="module_d8xMath..excessMargin"></a>
 
-### d8xMath~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3, totLong, totShort) ⇒
+### d8xMath~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3) ⇒
 <p>Calculate the excess margin defined as
 excess := margin balance - trading fee - initial margin threshold
 for the given trade and position</p>
@@ -532,8 +550,6 @@ for the given trade and position</p>
 | limitPrice | 
 | Sm | 
 | S3 | 
-| totLong | 
-| totShort | 
 
 <a name="module_d8xMath..pmGetDepositAmtForLvgTrade"></a>
 
@@ -3773,7 +3789,7 @@ No gas required for the queries here.</p>
         * [.getABI(contract)](#PerpetualDataHandler+getABI) ⇒
         * [.isPredictionMarket(symbol)](#PerpetualDataHandler+isPredictionMarket) ⇒
     * _static_
-        * [.exchangeFeePrdMkts(state, maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate)](#MarketData.exchangeFeePrdMkts) ⇒
+        * [.exchangeFeePrdMkts(maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate)](#MarketData.exchangeFeePrdMkts) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -4942,7 +4958,7 @@ main();
 
 <a name="MarketData.exchangeFeePrdMkts"></a>
 
-### MarketData.exchangeFeePrdMkts(state, maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate) ⇒
+### MarketData.exchangeFeePrdMkts(maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate) ⇒
 <p>Fee is relative to base-currency amount (=trade amount)</p>
 
 **Kind**: static method of [<code>MarketData</code>](#MarketData)  
@@ -4950,7 +4966,6 @@ main();
 
 | Param | Description |
 | --- | --- |
-| state | <p>current perpetual state (need longBC and shortBC)</p> |
 | maxMaintMgnRate | <p>maintenance margin rate param for pred mkts</p> |
 | Sm | <p>Mark price</p> |
 | tradeAmtBC | <p>signed trade amount</p> |

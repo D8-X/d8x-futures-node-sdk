@@ -748,10 +748,10 @@ function pmExcessCashAtLvg(
   if (tradeAmt < 0) {
     p0 = 2 - Sm; //=1-(Sm-1)
   }
-  const feeCc = pmExchangeFee(p0, m0, tradeAmt, 1 / lvg) / S3;
+  const feeCc = (tradeAmt * pmExchangeFee(p0, m0, tradeAmt, 1 / lvg)) / S3;
 
   //excess cash
-  let exc = walletBalCC - depositFromWallet - feeCc;
+  let exc = walletBalCC - depositFromWallet;
 
   // margin balance
   let pos = currentPosition + tradeAmt;
@@ -792,10 +792,8 @@ function pmExcessCashAtLvg(
  * @param S2
  * @param Sm
  * @param S3
- * @param totLong
- * @param totShort
- * @param maxShort
- * @param maxLong
+ * @param maxShort global max short order size (sign irrelevant)
+ * @param maxLong global max long order size (positive)
  * @returns max trade size
  */
 export function pmFindMaxPersonalTradeSizeAtLeverage(
@@ -809,8 +807,6 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
   S2: number,
   Sm: number,
   S3: number,
-  totLong: number,
-  totShort: number,
   maxShort: number,
   maxLong: number
 ): number {
@@ -891,10 +887,10 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
   }
   // ensure trade maximal trade sNew does not exceed
   // the contract limits
-  if (currentPosition + sNew < maxShort) {
-    sNew = maxShort - currentPosition;
-  } else if (currentPosition + sNew > maxLong) {
-    sNew = maxLong - currentPosition;
+  if (sNew < -Math.abs(maxShort)) {
+    sNew = -Math.abs(maxShort);
+  } else if (sNew > maxLong) {
+    sNew = maxLong;
   }
   // round trade size down to lot
   sNew = Math.sign(sNew) * Math.floor(Math.abs(sNew) / lot) * lot;
