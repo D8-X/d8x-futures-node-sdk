@@ -156,7 +156,7 @@ on-chain</p></dd>
     * [~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3)](#module_d8xMath..excessMargin) ⇒
     * [~pmGetDepositAmtForLvgTrade(tradeAmt, targetLvg, price, S3, S2Mark)](#module_d8xMath..pmGetDepositAmtForLvgTrade) ⇒
     * [~pmExcessCashAtLvg(tradeAmt, lvg, walletBalCC, currentCashCC, currentPosition, currentLockedInValue, slippage, S2, Sm, S3, totLong, totShort)](#module_d8xMath..pmExcessCashAtLvg) ⇒
-    * [~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, totLong, totShort, maxShort, maxLong)](#module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage) ⇒
+    * [~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, maxShort, maxLong)](#module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage) ⇒
     * [~pmFindMaxTradeSize(dir, currentPosition, currentCashCC, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort, maxShort, maxLong)](#module_d8xMath..pmFindMaxTradeSize) ⇒
 
 <a name="module_d8xMath..ABDK29ToFloat"></a>
@@ -594,7 +594,7 @@ after a trade of size tradeAmt in prediction markets</p>
 
 <a name="module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage"></a>
 
-### d8xMath~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, totLong, totShort, maxShort, maxLong) ⇒
+### d8xMath~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, maxShort, maxLong) ⇒
 <p>Find maximal trade size (short dir=-1 or long dir=1) for prediction
 markets at provided leverage and incorporating the current position
 and wallet balance.
@@ -615,10 +615,8 @@ Factors in lot size and global max short/long</p>
 | S2 |  |
 | Sm |  |
 | S3 |  |
-| totLong |  |
-| totShort |  |
-| maxShort |  |
-| maxLong |  |
+| maxShort | <p>global max short order size (sign irrelevant)</p> |
+| maxLong | <p>global max long order size (positive)</p> |
 
 <a name="module_d8xMath..pmFindMaxTradeSize"></a>
 
