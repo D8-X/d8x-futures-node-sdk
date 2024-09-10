@@ -14,8 +14,8 @@ let mktData: MarketData;
 let perp = "BTC-USDC-USDC";
 describe("priceFeed", () => {
   it("polymarket feed", async () => {
-    const tokenIdHex = "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7";
-    const tokenIdDec = PolyMktsPxFeed.hexToDecimalString(tokenIdHex);
+    //const tokenIdHex = "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7";
+    const tokenIdHex = "0xe40f3ef726a04ad63510baf90238f6bcacf4365db2a38e02a6e8623c2bedc97d";
     const cnf: PriceFeedConfig = {
       network: "blabla",
       ids: [],

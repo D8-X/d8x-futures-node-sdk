@@ -71,12 +71,12 @@ export default class PolyMktsPxFeed {
     const data = await response.json();
     const emaObj = data.parsed[0].ema_price as PriceFeedJson;
     const pxObj = data.parsed[0].price as PriceFeedJson;
-
+    const marketClosed = data.parsed[0].metadata.market_closed;
     const px = Number(pxObj.price) * Math.pow(10, pxObj.expo);
     const ema = Number(emaObj.price) * Math.pow(10, emaObj.expo);
     const params = BigInt(emaObj.conf);
     const conf = BigInt(pxObj.conf);
-    return { s2: px, ema: ema, s2MktClosed: false, conf: conf, predMktCLOBParams: params } as PredMktPriceInfo;
+    return { s2: px, ema: ema, s2MktClosed: marketClosed, conf: conf, predMktCLOBParams: params } as PredMktPriceInfo;
   }
 
   public async fetchPriceFromAPI(tokenIdDec: string): Promise<number> {
