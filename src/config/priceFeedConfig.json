@@ -45,12 +45,6 @@
         "origin": "Crypto.ETH/USD"
       },
       {
-        "symbol": "MATIC-USD",
-        "id": "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52",
-        "type": "pyth",
-        "origin": "Crypto.MATIC/USD"
-      },
-      {
         "symbol": "USD-CHF",
         "id": "0x0b1e3297e69f162877b577b0d6a47a0d63b2392bc8499e6540da4187a63e28f8",
         "type": "pyth",
@@ -207,12 +201,6 @@
         "id": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
         "type": "odin",
         "origin": "Crypto.ETH/USD"
-      },
-      {
-        "symbol": "MATIC-USD",
-        "id": "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52",
-        "type": "odin",
-        "origin": "Crypto.MATIC/USD"
       },
       {
         "symbol": "USD-CHF",
