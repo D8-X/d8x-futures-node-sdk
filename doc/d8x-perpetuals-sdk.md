@@ -156,8 +156,7 @@ on-chain</p></dd>
     * [~excessMargin(tradeAmt, currentCashCC, currentPos, currentLockedInQC, limitPrice, Sm, S3)](#module_d8xMath..excessMargin) ⇒
     * [~pmGetDepositAmtForLvgTrade(tradeAmt, targetLvg, price, S3, S2Mark)](#module_d8xMath..pmGetDepositAmtForLvgTrade) ⇒
     * [~pmExcessCashAtLvg(tradeAmt, lvg, walletBalCC, currentCashCC, currentPosition, currentLockedInValue, slippage, S2, Sm, S3, totLong, totShort)](#module_d8xMath..pmExcessCashAtLvg) ⇒
-    * [~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, maxShort, maxLong)](#module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage) ⇒
-    * [~pmFindMaxTradeSize(dir, currentPosition, currentCashCC, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort, maxShort, maxLong)](#module_d8xMath..pmFindMaxTradeSize) ⇒
+    * [~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, glblMaxTrade)](#module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage) ⇒
 
 <a name="module_d8xMath..ABDK29ToFloat"></a>
 
@@ -594,53 +593,28 @@ after a trade of size tradeAmt in prediction markets</p>
 
 <a name="module_d8xMath..pmFindMaxPersonalTradeSizeAtLeverage"></a>
 
-### d8xMath~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, maxShort, maxLong) ⇒
-<p>Find maximal trade size (short dir=-1 or long dir=1) for prediction
+### d8xMath~pmFindMaxPersonalTradeSizeAtLeverage(dir, lvg, walletBalCC, slippage, currentPosition, currentCashCC, currentLockedInValue, S2, Sm, S3, glblMaxTrade) ⇒
+<p>Find maximal <em>affordable</em> trade size (short dir=-1 or long dir=1) for prediction
 markets at provided leverage and incorporating the current position
 and wallet balance.
 Factors in lot size and global max short/long</p>
 
 **Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
-**Returns**: <p>max trade size</p>  
+**Returns**: <p>max <em>signed</em> trade size</p>  
 
 | Param | Description |
 | --- | --- |
-| dir |  |
-| lvg |  |
-| walletBalCC |  |
-| slippage | <p>slippage percent</p> |
-| currentPosition |  |
-| currentCashCC |  |
-| currentLockedInValue |  |
-| S2 |  |
-| Sm |  |
-| S3 |  |
-| maxShort | <p>global max short order size (sign irrelevant)</p> |
-| maxLong | <p>global max long order size (positive)</p> |
-
-<a name="module_d8xMath..pmFindMaxTradeSize"></a>
-
-### d8xMath~pmFindMaxTradeSize(dir, currentPosition, currentCashCC, currentLockedInValue, limitPrice, Sm, S3, totLong, totShort, maxShort, maxLong) ⇒
-<p>Find maximal trade size (short dir=-1 or long dir=1) for prediction
-markets at maximal leverage and incorporating the current position.
-Agnostic about wallet balance.</p>
-
-**Kind**: inner method of [<code>d8xMath</code>](#module_d8xMath)  
-**Returns**: <p>signed max trade size</p>  
-
-| Param |
-| --- |
-| dir | 
-| currentPosition | 
-| currentCashCC | 
-| currentLockedInValue | 
-| limitPrice | 
-| Sm | 
-| S3 | 
-| totLong | 
-| totShort | 
-| maxShort | 
-| maxLong | 
+| dir | <p>direction of trade (-1 sell, 1 buy)</p> |
+| lvg | <p>leverage of the trade</p> |
+| walletBalCC | <p>wallet balance of the trader (collateral currency)</p> |
+| slippage | <p>slippage percent used to estimate a traded price</p> |
+| currentPosition | <p>position in base currency of the trader</p> |
+| currentCashCC | <p>this is the cash available net of unpaid funding (often called available cash)</p> |
+| currentLockedInValue | <p>average entry price * signed position size in base currency, in margin account</p> |
+| S2 | <p>current index price of the form 1+p (regardless whether short or long)</p> |
+| Sm | <p>current mark price (not just the mark price index but including the ema-premium from the contract)</p> |
+| S3 | <p>current collateral to quote index price</p> |
+| glblMaxTrade | <p>global max short or long order size that we retreive, e.g., from position risk (sign irrelevant) based on  long: (<em>ℓ+n) * (1-p) - m (1-p) s = F → n = (F+m</em>(1-p)<em>s)/(1-p)-ℓ</em> short: (s+n)<em>p - m p <em>ℓ</em> = F →n = (F+m</em>p**ℓ*)/p-s</p> |
 
 <a name="module_utils"></a>
 
@@ -3741,6 +3715,7 @@ No gas required for the queries here.</p>
         * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides)](#MarketData+pmMaxOrderSizeForTrader) ⇒
         * [.getMaxShortLongPos(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongPos) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
@@ -4145,7 +4120,7 @@ considering the existing position, state of the perpetual
 Accounts for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Maximal trade sizes</p>  
+**Returns**: <p>Maximal buy and sell trade sizes (positive)</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -4167,6 +4142,22 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+pmMaxOrderSizeForTrader"></a>
+
+### marketData.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides) ⇒
+<p>pmMaxOrderSizeForTrader returns the max order size for the
+trader that is possible from AMM perspective (agnostic about wallet
+balance and leverage)</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>buy: number; sell: number absolute</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>address of trader</p> |
+| symbol | <p>perp symbol</p> |
+| overrides | <p>optional</p> |
+
 <a name="MarketData+getMaxShortLongPos"></a>
 
 ### marketData.getMaxShortLongPos(perpId, currentTraderPos, overrides) ⇒
@@ -7191,6 +7182,7 @@ so that signatures can be handled in frontend via wallet</p>
         * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides)](#MarketData+pmMaxOrderSizeForTrader) ⇒
         * [.getMaxShortLongPos(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongPos) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
@@ -7848,7 +7840,7 @@ Accounts for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
 **Overrides**: [<code>maxOrderSizeForTrader</code>](#MarketData+maxOrderSizeForTrader)  
-**Returns**: <p>Maximal trade sizes</p>  
+**Returns**: <p>Maximal buy and sell trade sizes (positive)</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -7870,6 +7862,23 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+pmMaxOrderSizeForTrader"></a>
+
+### traderInterface.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides) ⇒
+<p>pmMaxOrderSizeForTrader returns the max order size for the
+trader that is possible from AMM perspective (agnostic about wallet
+balance and leverage)</p>
+
+**Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
+**Overrides**: [<code>pmMaxOrderSizeForTrader</code>](#MarketData+pmMaxOrderSizeForTrader)  
+**Returns**: <p>buy: number; sell: number absolute</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>address of trader</p> |
+| symbol | <p>perp symbol</p> |
+| overrides | <p>optional</p> |
+
 <a name="MarketData+getMaxShortLongPos"></a>
 
 ### traderInterface.getMaxShortLongPos(perpId, currentTraderPos, overrides) ⇒

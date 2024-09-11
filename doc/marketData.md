@@ -26,6 +26,7 @@ No gas required for the queries here.</p>
         * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides)](#MarketData+pmMaxOrderSizeForTrader) ⇒
         * [.getMaxShortLongPos(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongPos) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
@@ -402,7 +403,7 @@ considering the existing position, state of the perpetual
 Accounts for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Maximal trade sizes</p>  
+**Returns**: <p>Maximal buy and sell trade sizes (positive)</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -424,6 +425,22 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+pmMaxOrderSizeForTrader"></a>
+
+### marketData.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides) ⇒
+<p>pmMaxOrderSizeForTrader returns the max order size for the
+trader that is possible from AMM perspective (agnostic about wallet
+balance and leverage)</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>buy: number; sell: number absolute</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>address of trader</p> |
+| symbol | <p>perp symbol</p> |
+| overrides | <p>optional</p> |
+
 <a name="MarketData+getMaxShortLongPos"></a>
 
 ### marketData.getMaxShortLongPos(perpId, currentTraderPos, overrides) ⇒
