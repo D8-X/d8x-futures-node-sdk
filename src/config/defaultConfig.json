@@ -159,5 +159,17 @@
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
+    "name": "zkevm",
+    "chainId": 1101,
+    "version": 1,
+    "proxyAddr": "0xaB7794EcD2c8e9Decc6B577864b40eBf9204720f",
+    "nodeURL": "https://zkevm-rpc.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   }
 ]
