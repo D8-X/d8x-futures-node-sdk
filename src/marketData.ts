@@ -571,13 +571,13 @@ export default class MarketData extends PerpetualDataHandler {
       "getMaxSignedOpenTradeSizeForPos",
       encodedResults[2].returnData
     )[0] as bigint;
-    const maxLongTrade = Math.max(0, ABK64x64ToFloat(fMaxLong) - signedPositionNotionalBaseCCY);
+    const maxLongTrade = ABK64x64ToFloat(fMaxLong);
     // max sell
     const fMaxShort = this.proxyContract.interface.decodeFunctionResult(
       "getMaxSignedOpenTradeSizeForPos",
       encodedResults[3].returnData
     )[0] as bigint;
-    const maxShortTrade = Math.max(0, Math.abs(ABK64x64ToFloat(fMaxShort)) - signedPositionNotionalBaseCCY);
+    const maxShortTrade = ABK64x64ToFloat(fMaxShort);
     return { account: account, ammPrice: ammPrice, maxShortTrade: maxShortTrade, maxLongTrade: maxLongTrade };
   }
 

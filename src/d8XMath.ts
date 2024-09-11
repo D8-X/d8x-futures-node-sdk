@@ -778,23 +778,24 @@ function pmExcessCashAtLvg(
 }
 
 /**
- * Find maximal trade size (short dir=-1 or long dir=1) for prediction
+ * Find maximal *affordable* trade size (short dir=-1 or long dir=1) for prediction
  * markets at provided leverage and incorporating the current position
  * and wallet balance.
  * Factors in lot size and global max short/long
- * @param dir
- * @param lvg
- * @param walletBalCC
- * @param slippage  slippage percent
- * @param currentPosition
- * @param currentCashCC
- * @param currentLockedInValue
- * @param S2
- * @param Sm
- * @param S3
- * @param maxShort global max short order size (sign irrelevant)
- * @param maxLong global max long order size (positive)
- * @returns max trade size
+ * @param dir   direction of trade (-1 sell, 1 buy)
+ * @param lvg   leverage of the trade
+ * @param walletBalCC wallet balance of the trader (collateral currency)
+ * @param slippage  slippage percent used to estimate a traded price
+ * @param currentPosition position in base currency of the trader
+ * @param currentCashCC this is the cash available net of unpaid funding (often called available cash)
+ * @param currentLockedInValue average entry price * signed position size in base currency, in margin account
+ * @param S2  current index price of the form 1+p (regardless whether short or long)
+ * @param Sm  current mark price (not just the mark price index but including the ema-premium from the contract)
+ * @param S3  current collateral to quote index price
+ * @param glblMaxTrade global max short or long order size that we retreive, e.g., from position risk (sign irrelevant)
+ *        based on  long: (*ℓ+n) * (1-p) - m (1-p) s = F → n = (F+m*(1-p)*s)/(1-p)-ℓ*
+ *                  short: (s+n)*p - m p *ℓ* = F →n = (F+m*p**ℓ*)/p-s
+ * @returns max *signed* trade size
  */
 export function pmFindMaxPersonalTradeSizeAtLeverage(
   dir: number,
@@ -807,8 +808,7 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
   S2: number,
   Sm: number,
   S3: number,
-  maxShort: number,
-  maxLong: number
+  glblMaxTrade: number
 ): number {
   if (dir < 0) {
     dir = -1;
@@ -880,17 +880,17 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
     // Newton algorithm failed,
     // choose new starting value
     if (dir > 0) {
-      sNew = Math.random() * (maxLong - currentPosition);
+      sNew = Math.random() * (glblMaxTrade - currentPosition);
     } else {
-      sNew = -Math.random() * (Math.abs(maxShort) + currentPosition);
+      sNew = -Math.random() * (Math.abs(glblMaxTrade) + currentPosition);
     }
   }
   // ensure trade maximal trade sNew does not exceed
   // the contract limits
-  if (sNew < -Math.abs(maxShort)) {
-    sNew = -Math.abs(maxShort);
-  } else if (sNew > maxLong) {
-    sNew = maxLong;
+  if (sNew < -Math.abs(glblMaxTrade)) {
+    sNew = -Math.abs(glblMaxTrade);
+  } else if (sNew > glblMaxTrade) {
+    sNew = glblMaxTrade;
   }
   // round trade size down to lot
   sNew = Math.sign(sNew) * Math.floor(Math.abs(sNew) / lot) * lot;

@@ -32,7 +32,6 @@ describe("package tests", () => {
       indexPriceS2,
       markPrice,
       indexPriceS3,
-      maxShort,
       maxLong
     );
     const expected = Math.floor(267.221800621 / 10) * 10;
@@ -87,7 +86,6 @@ describe("package tests", () => {
       indexPrice,
       markPrice,
       collToQuoteIndexPrice,
-      maxTraderOrderSize,
       maxTraderOrderSize
     );
     console.log("personalMax = ", personalMax);
