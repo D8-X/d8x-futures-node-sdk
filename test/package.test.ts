@@ -6,7 +6,7 @@ import { NodeSDKConfig, ExchangeInfo, Order, PerpetualState } from "../src/nodeS
 import { pmFindMaxPersonalTradeSizeAtLeverage, pmExchangeFee } from "../src/d8XMath";
 // npm link "@d8x/perpetuals-sdk"
 jest.setTimeout(300000);
-describe("Front-end-like functionality", () => {
+describe("package tests", () => {
   beforeAll(async () => {});
   it("pmFindMaxPersonalTradeSizeAtLeverage", async () => {
     let marginCollateral = 20;
@@ -65,15 +65,15 @@ describe("Front-end-like functionality", () => {
     }
   });
   it("pmFindMaxPersonalTradeSizeAtLeverage", async () => {
-    const direction = 1;
+    const direction = -1;
     const leverage = 1;
-    const walletBalCC = 10_000_000;
+    const walletBalCC = 925_022.48;
     const slippage = 0.02;
-    const currentPosition = 20500;
+    const currentPosition = 0;
     const currentCashCC = 0;
-    const currentLockedInValue = 31_106;
-    const indexPrice = 1.518;
-    const markPrice = 1.52036;
+    const currentLockedInValue = 0;
+    const indexPrice = 1.519;
+    const markPrice = 1.52;
     const collToQuoteIndexPrice = 0.99999;
     const maxTraderOrderSize = 4009;
     let personalMax = pmFindMaxPersonalTradeSizeAtLeverage(
