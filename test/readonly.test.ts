@@ -19,7 +19,6 @@ import AccountTrade from "../src/accountTrade";
 import TraderInterface from "../src/traderInterface";
 import { IPerpetualManager, IPerpetualManager__factory } from "../src/contracts";
 import { BUY_SIDE, SELL_SIDE } from "../src/constants";
-import { pmFindMaxTradeSize } from "../src/d8XMath";
 
 let pk: string = <string>process.env.PK;
 let RPC: string | undefined = <string>process.env.RPC;
@@ -301,33 +300,7 @@ describe("readOnly", () => {
       let maxTradeSize = await mktData.maxOrderSizeForTrader(wallet.address, "BTC-USDC-USDC");
       console.log(`max trade sizes for symbol BTC-USDC-USDC`, maxTradeSize);
     });
-    it("max trade size pred mkts", async () => {
-      let currentPosition = 1;
-      let currentCashCC = 50;
-      let currentLockedInValue = currentPosition * 1.545;
-      let limitPrice = 1.56;
-      let Sm = 1.54;
-      let S3 = 0.95;
-      let totLong = 200;
-      let totShort = 600;
-      let maxShort = -200;
-      let maxLong = 200;
-      let v = pmFindMaxTradeSize(
-        1,
-        currentPosition,
-        currentCashCC,
-        currentLockedInValue,
-        limitPrice,
-        Sm,
-        S3,
-        totLong,
-        totShort,
-        maxShort,
-        maxLong
-      );
-      const expectedRes = Math.floor(184 / 10) * 10;
-      expect(expectedRes == v);
-    });
+
     it("openOrders in perpetual", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "ETH-USDC-USDC");
       console.log("order ids in perpetual=", ordersStruct[0].orderIds);

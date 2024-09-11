@@ -38,7 +38,6 @@ import {
   entropy,
   expectedLoss,
   pmExchangeFee,
-  pmFindMaxTradeSize,
 } from "./d8XMath";
 import {
   type ExchangeInfo,
@@ -1160,7 +1159,7 @@ export default class MarketData extends PerpetualDataHandler {
    * Accounts for user's wallet balance.
    * @param {string} traderAddr Address of trader
    * @param {symbol} symbol Symbol of the form ETH-USD-MATIC
-   * @returns Maximal trade sizes
+   * @returns Maximal buy and sell trade sizes (positive)
    * @example
    * import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
    * async function main() {
@@ -1191,6 +1190,15 @@ export default class MarketData extends PerpetualDataHandler {
     return this.rmMaxOrderSizeForTrader(traderAddr, symbol, overrides);
   }
 
+  /**
+   * pmMaxOrderSizeForTrader returns the max order size for the
+   * trader that is possible from AMM perspective (agnostic about wallet
+   * balance and leverage)
+   * @param traderAddr address of trader
+   * @param symbol perp symbol
+   * @param overrides optional
+   * @returns buy: number; sell: number absolute
+   */
   private async pmMaxOrderSizeForTrader(
     traderAddr: string,
     symbol: string,
@@ -1199,32 +1207,15 @@ export default class MarketData extends PerpetualDataHandler {
     if (!this.proxyContract || !this.multicall) {
       throw new Error("proxy contract not initialized");
     }
-    const IERC20 = new Interface(ERC20_ABI) as ERC20Interface;
     const perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
-    const poolInfo = this.poolStaticInfos[this.getPoolStaticInfoIndexFromSymbol(symbol)];
     const indexPriceInfo = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
-    const [fS2, fS3, fEma] = [indexPriceInfo.s2, indexPriceInfo.s3 ?? 0, indexPriceInfo.ema].map((x) =>
-      floatToABK64x64(x)
-    ) as [bigint, bigint, bigint];
+    const [fS3, fEma] = [indexPriceInfo.s3 ?? 0, indexPriceInfo.ema].map((x) => floatToABK64x64(x)) as [bigint, bigint];
     const proxyCalls: Multicall3.Call3Struct[] = [
       // 0: traderState
       {
         target: this.proxyContract.target,
         allowFailure: false,
         callData: this.proxyContract.interface.encodeFunctionData("getTraderState", [perpId, traderAddr, [fEma, fS3]]),
-      },
-
-      // 1: wallet balance
-      {
-        target: poolInfo.poolSettleTokenAddr,
-        allowFailure: false,
-        callData: IERC20.encodeFunctionData("balanceOf", [traderAddr]),
-      },
-      // 2: amm state
-      {
-        target: this.proxyContract.target,
-        allowFailure: false,
-        callData: this.proxyContract.interface.encodeFunctionData("getAMMState", [perpId, [fS2, fS3]]),
       },
     ];
 
@@ -1234,11 +1225,6 @@ export default class MarketData extends PerpetualDataHandler {
       "getTraderState",
       encodedResults[0].returnData
     )[0];
-    const walletBalance = decNToFloat(
-      IERC20.decodeFunctionResult("balanceOf", encodedResults[1].returnData)[0],
-      poolInfo.poolSettleTokenDecimals
-    );
-    const ammState = this.proxyContract.interface.decodeFunctionResult("getAMMState", encodedResults[2].returnData)[0];
 
     const account = MarketData.buildMarginAccountFromState(
       symbol,
@@ -1247,51 +1233,17 @@ export default class MarketData extends PerpetualDataHandler {
       indexPriceInfo,
       true //isPredMkt
     );
-    const openInterestBC = ABK64x64ToFloat(ammState[11]);
-    const net = -ABK64x64ToFloat(ammState[1]);
-    let totLong, totShort;
-    if (net < 0) {
-      totLong = openInterestBC;
-      totShort = openInterestBC - Math.abs(net);
-    } else {
-      totLong = openInterestBC - net;
-      totShort = openInterestBC;
-    }
-
     let currentPositionBC = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
-    const Sm = ABK64x64ToFloat(traderState[8]);
-    // settlement token must be equal to collateral token for walletBalance to be correct
-    const availCashCC = account.collateralCC + walletBalance + account.unrealizedFundingCollateralCCY;
     const idxNotional = 4;
     const [maxShortPosPerp, maxLongPosPerp] = await this.getMaxShortLongPos(
       perpId,
       traderState[idxNotional],
       overrides
     );
-
-    const maxShort = pmFindMaxTradeSize(
-      -1,
-      currentPositionBC,
-      availCashCC,
-      account.entryPrice * currentPositionBC,
-      Sm,
-      Sm,
-      indexPriceInfo.s3 ?? 0,
-      maxShortPosPerp,
-      maxLongPosPerp
-    );
-    const maxLong = pmFindMaxTradeSize(
-      1,
-      currentPositionBC,
-      availCashCC,
-      account.entryPrice * currentPositionBC,
-      Sm,
-      Sm,
-      indexPriceInfo.s3 ?? 0,
-      maxShortPosPerp,
-      maxLongPosPerp
-    );
-    return { buy: maxLong, sell: maxShort };
+    // max trade size from position; return positive value
+    const maxLongTrade = Math.abs(maxLongPosPerp - currentPositionBC);
+    const maxShortTrade = Math.abs(maxShortPosPerp - currentPositionBC);
+    return { buy: maxLongTrade, sell: maxShortTrade };
   }
 
   /**

@@ -6,8 +6,35 @@ import { NodeSDKConfig, ExchangeInfo, Order, PerpetualState } from "../src/nodeS
 import { pmFindMaxPersonalTradeSizeAtLeverage, pmExchangeFee } from "../src/d8XMath";
 // npm link "@d8x/perpetuals-sdk"
 jest.setTimeout(300000);
+
+let marketData: MarketData;
+let pk: string = <string>process.env.PK;
+let RPC: string | undefined = <string>process.env.RPC;
+let config;
+
 describe("package tests", () => {
-  beforeAll(async () => {});
+  beforeAll(async () => {
+    const chainId = 421614;
+    if (pk == undefined) {
+      console.log(`Define private key: export PK="CA52A..."`);
+      expect(false);
+      return;
+    }
+    config = PerpetualDataHandler.readSDKConfig(chainId);
+    if (RPC != undefined) {
+      config.nodeURL = RPC;
+    }
+    marketData = new MarketData(config);
+    await marketData.createProxyInstance();
+  });
+
+  it("maxOrderSizeForTrader", async () => {
+    const traderAddr = "0x863AD9Ce46acF07fD9390147B619893461036194";
+    const sym = "TRUMP24-USD-USDC";
+    let personalMax = await marketData.maxOrderSizeForTrader(traderAddr, sym);
+    console.log("personalMax = ", personalMax);
+  });
+
   it("pmFindMaxPersonalTradeSizeAtLeverage", async () => {
     let marginCollateral = 20;
     let currentPosition = 1;
