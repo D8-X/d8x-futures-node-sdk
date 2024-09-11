@@ -440,7 +440,7 @@ export function probToPrice(prob: number) {
 
 // shannon entropy
 export function entropy(prob: number) {
-  if (prob < 1e-15 || prob - 1 > 1e-15) {
+  if (prob < 1e-15 || prob > 1 - 1e-15) {
     return 0;
   }
   return -prob * Math.log2(prob) - (1 - prob) * Math.log2(1 - prob);
