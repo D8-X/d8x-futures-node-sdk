@@ -28,9 +28,22 @@ describe("package tests", () => {
     await marketData.createProxyInstance();
   });
 
-  it("maxOrderSizeForTrader", async () => {
-    const traderAddr = "0x863AD9Ce46acF07fD9390147B619893461036194";
+  it("Pred Mkts maxOrderSizeForTrader", async () => {
+    //const traderAddr = "0x863AD9Ce46acF07fD9390147B619893461036194";
+    const traderAddr = "0xdef43CF2Dd024abc5447C1Dcdc2fE3FE58547b84";
     const sym = "TRUMP24-USD-USDC";
+    //let maxls = await marketData.getMaxShortLongPos(10007, traderAddr, )
+
+    let personalMax = await marketData.maxOrderSizeForTrader(traderAddr, sym);
+    console.log("personalMax = ", personalMax);
+  });
+
+  it("Reg Mkts  maxOrderSizeForTrader", async () => {
+    //const traderAddr = "0x863AD9Ce46acF07fD9390147B619893461036194";
+    const traderAddr = "0xdef43CF2Dd024abc5447C1Dcdc2fE3FE58547b84";
+    const sym = "BTC-USDC-USDC";
+    //let maxls = await marketData.getMaxShortLongPos(10007, traderAddr, )
+
     let personalMax = await marketData.maxOrderSizeForTrader(traderAddr, sym);
     console.log("personalMax = ", personalMax);
   });

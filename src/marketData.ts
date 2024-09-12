@@ -1210,51 +1210,22 @@ export default class MarketData extends PerpetualDataHandler {
     const perpId = PerpetualDataHandler.symbolToPerpetualId(symbol, this.symbolToPerpStaticInfo);
     const indexPriceInfo = await this.priceFeedGetter.fetchPricesForPerpetual(symbol);
     const [fS3, fEma] = [indexPriceInfo.s3 ?? 0, indexPriceInfo.ema].map((x) => floatToABK64x64(x)) as [bigint, bigint];
-    const proxyCalls: Multicall3.Call3Struct[] = [
-      // 0: traderState
-      {
-        target: this.proxyContract.target,
-        allowFailure: false,
-        callData: this.proxyContract.interface.encodeFunctionData("getTraderState", [perpId, traderAddr, [fEma, fS3]]),
-      },
-    ];
 
-    // multicall
-    const encodedResults = await this.multicall.aggregate3.staticCall(proxyCalls, overrides || {});
-    const traderState = this.proxyContract.interface.decodeFunctionResult(
-      "getTraderState",
-      encodedResults[0].returnData
-    )[0];
-
-    const account = MarketData.buildMarginAccountFromState(
-      symbol,
-      traderState,
-      this.symbolToPerpStaticInfo,
-      indexPriceInfo,
-      true //isPredMkt
-    );
-    let currentPositionBC = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
+    const traderState = await this.proxyContract.getTraderState(perpId, traderAddr, [fEma, fS3], overrides || {});
     const idxNotional = 4;
-    const [maxShortPosPerp, maxLongPosPerp] = await this.getMaxShortLongPos(
-      perpId,
-      traderState[idxNotional],
-      overrides
-    );
-    // max trade size from position; return positive value
-    const maxLongTrade = Math.abs(maxLongPosPerp - currentPositionBC);
-    const maxShortTrade = Math.abs(maxShortPosPerp - currentPositionBC);
-    return { buy: maxLongTrade, sell: maxShortTrade };
+    const [maxShortTrade, maxLongTrade] = await this.getMaxShortLongTrade(perpId, traderState[idxNotional], overrides);
+    return { buy: maxLongTrade, sell: Math.abs(maxShortTrade) };
   }
 
   /**
-   * Returns the maximal allowed short pos and long pos (signed) for a trader
-   * with given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance
+   * Returns the maximal allowed short trade and long trade (signed) for a trader
+   * that has a given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance
    * @param perpId
-   * @param currentTraderPos ABDK64x64 notional position of trader
+   * @param currentTraderPos ABDK64x64 signed notional position of trader
    * @param overrides
-   * @returns [maxShortPos, maxLongPos] signed maximal position sizes
+   * @returns [maxShortPos, maxLongPos] signed maximal trade sizes
    */
-  public async getMaxShortLongPos(
+  public async getMaxShortLongTrade(
     perpId: number,
     currentTraderPos: bigint,
     overrides?: Overrides
@@ -1290,22 +1261,29 @@ export default class MarketData extends PerpetualDataHandler {
 
     // Max based on perp:
     // max buy
-    const maxLongOrderPerp = ABK64x64ToFloat(
+    let maxLongOrderPerp = ABK64x64ToFloat(
       this.proxyContract.interface.decodeFunctionResult(
         "getMaxSignedOpenTradeSizeForPos",
         encodedResults2[0].returnData
       )[0] as bigint
     );
-    const maxLongPosPerp = maxLongOrderPerp + ABK64x64ToFloat(currentTraderPos);
+
     // max short
-    const maxShortOrderPerp = ABK64x64ToFloat(
+    let maxShortOrderPerp = ABK64x64ToFloat(
       this.proxyContract.interface.decodeFunctionResult(
         "getMaxSignedOpenTradeSizeForPos",
         encodedResults2[1].returnData
       )[0] as bigint
     );
-    const maxShortPosPerp = maxShortOrderPerp + ABK64x64ToFloat(currentTraderPos);
-    return [maxShortPosPerp, maxLongPosPerp];
+    // now we ensure that closing direction can at least close position (always possible in smart contract)
+    if (currentTraderPos > 0n) {
+      // pos > 0, so short is closing direction
+      maxShortOrderPerp = -Math.max(Math.abs(maxShortOrderPerp), ABK64x64ToFloat(currentTraderPos));
+    } else {
+      // pos <=0, so long is closing direction
+      maxLongOrderPerp = Math.max(maxLongOrderPerp, Math.abs(ABK64x64ToFloat(currentTraderPos)));
+    }
+    return [maxShortOrderPerp, maxLongOrderPerp];
   }
 
   private async rmMaxOrderSizeForTrader(
@@ -1384,11 +1362,7 @@ export default class MarketData extends PerpetualDataHandler {
       poolInfo.poolSettleTokenDecimals
     );
 
-    const [maxShortPosPerp, maxLongPosPerp] = await this.getMaxShortLongPos(
-      perpId,
-      traderState[idxNotional],
-      overrides
-    );
+    const [maxShortTrade, maxLongTrade] = await this.getMaxShortLongTrade(perpId, traderState[idxNotional], overrides);
     const curPos = (account.side == BUY_SIDE ? 1 : -1) * account.positionNotionalBaseCCY;
 
     const px: number = await coll2SettlePromise;
@@ -1418,22 +1392,22 @@ export default class MarketData extends PerpetualDataHandler {
       account.collToQuoteConversion
     );
 
-    // max long/short all accounted for
-    const maxLong = Math.min(Math.abs(maxLongPosPerp), Math.abs(maxLongPosAccount));
-    const maxShort = Math.min(Math.abs(maxShortPosPerp), Math.abs(maxShortPosAccount));
+    // max long/short position all accounted for
+    const maxShort = Math.min(Math.abs(curPos + maxShortTrade), Math.abs(maxShortPosAccount));
+    const maxLong = Math.min(Math.abs(curPos + maxLongTrade), Math.abs(maxLongPosAccount));
 
     // max long order
-    const maxLongTrade =
+    const maxAffordableLongTrade =
       account.side == BUY_SIDE
         ? Math.max(0, maxLong - account.positionNotionalBaseCCY)
         : maxLong + account.positionNotionalBaseCCY;
     // max short order
-    const maxShortTrade =
+    const maxAffordableShortTrade =
       account.side == SELL_SIDE
         ? Math.max(0, maxShort - account.positionNotionalBaseCCY)
         : maxShort + account.positionNotionalBaseCCY;
 
-    return { buy: maxLongTrade, sell: maxShortTrade };
+    return { buy: maxAffordableLongTrade, sell: maxAffordableShortTrade };
   }
 
   /**
