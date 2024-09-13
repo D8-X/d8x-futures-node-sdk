@@ -3716,7 +3716,7 @@ No gas required for the queries here.</p>
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides)](#MarketData+pmMaxOrderSizeForTrader) ⇒
-        * [.getMaxShortLongPos(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongPos) ⇒
+        * [.getMaxShortLongTrade(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongTrade) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
         * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
@@ -4158,19 +4158,19 @@ balance and leverage)</p>
 | symbol | <p>perp symbol</p> |
 | overrides | <p>optional</p> |
 
-<a name="MarketData+getMaxShortLongPos"></a>
+<a name="MarketData+getMaxShortLongTrade"></a>
 
-### marketData.getMaxShortLongPos(perpId, currentTraderPos, overrides) ⇒
-<p>Returns the maximal allowed short pos and long pos (signed) for a trader
-with given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance</p>
+### marketData.getMaxShortLongTrade(perpId, currentTraderPos, overrides) ⇒
+<p>Returns the maximal allowed short trade and long trade (signed) for a trader
+that has a given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>[maxShortPos, maxLongPos] signed maximal position sizes</p>  
+**Returns**: <p>[maxShortPos, maxLongPos] signed maximal trade sizes</p>  
 
 | Param | Description |
 | --- | --- |
 | perpId |  |
-| currentTraderPos | <p>ABDK64x64 notional position of trader</p> |
+| currentTraderPos | <p>ABDK64x64 signed notional position of trader</p> |
 | overrides |  |
 
 <a name="MarketData+maxSignedPosition"></a>
@@ -7183,7 +7183,7 @@ so that signatures can be handled in frontend via wallet</p>
         * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
         * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
         * [.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides)](#MarketData+pmMaxOrderSizeForTrader) ⇒
-        * [.getMaxShortLongPos(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongPos) ⇒
+        * [.getMaxShortLongTrade(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongTrade) ⇒
         * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
         * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
         * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
@@ -7879,20 +7879,20 @@ balance and leverage)</p>
 | symbol | <p>perp symbol</p> |
 | overrides | <p>optional</p> |
 
-<a name="MarketData+getMaxShortLongPos"></a>
+<a name="MarketData+getMaxShortLongTrade"></a>
 
-### traderInterface.getMaxShortLongPos(perpId, currentTraderPos, overrides) ⇒
-<p>Returns the maximal allowed short pos and long pos (signed) for a trader
-with given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance</p>
+### traderInterface.getMaxShortLongTrade(perpId, currentTraderPos, overrides) ⇒
+<p>Returns the maximal allowed short trade and long trade (signed) for a trader
+that has a given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance</p>
 
 **Kind**: instance method of [<code>TraderInterface</code>](#TraderInterface)  
-**Overrides**: [<code>getMaxShortLongPos</code>](#MarketData+getMaxShortLongPos)  
-**Returns**: <p>[maxShortPos, maxLongPos] signed maximal position sizes</p>  
+**Overrides**: [<code>getMaxShortLongTrade</code>](#MarketData+getMaxShortLongTrade)  
+**Returns**: <p>[maxShortPos, maxLongPos] signed maximal trade sizes</p>  
 
 | Param | Description |
 | --- | --- |
 | perpId |  |
-| currentTraderPos | <p>ABDK64x64 notional position of trader</p> |
+| currentTraderPos | <p>ABDK64x64 signed notional position of trader</p> |
 | overrides |  |
 
 <a name="MarketData+maxSignedPosition"></a>
