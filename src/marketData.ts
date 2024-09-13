@@ -2033,6 +2033,7 @@ export default class MarketData extends PerpetualDataHandler {
   /**
    * Collect all mid-prices
    * @param _proxyContract contract instance
+   * @param _poolStaticInfos static info to get whether pool is active or not
    * @param _nestedPerpetualIDs contains all perpetual ids for each pool
    * @param _symbolToPerpStaticInfo maps symbol to static info
    * @param _perpetualIdToSymbol maps perpetual id to symbol of the form BTC-USD-MATIC
@@ -2042,6 +2043,7 @@ export default class MarketData extends PerpetualDataHandler {
    */
   private static async _queryMidPrices(
     _proxyContract: Contract,
+    _poolStaticInfos: Array<PoolStaticInfo>,
     _multicall: Multicall3,
     _nestedPerpetualIDs: Array<Array<number>>,
     _symbolToPerpStaticInfo: Map<string, PerpetualStaticInfo>,
@@ -2063,6 +2065,10 @@ export default class MarketData extends PerpetualDataHandler {
       // collect/order all index prices
       for (let j = 0; j < perpetualIDChunks[k].length; j++) {
         let id = perpetualIDChunks[k][j];
+        const poolId = Math.floor(id / 100000);
+        if (!_poolStaticInfos[poolId - 1].isRunning) {
+          continue;
+        }
         let symbol3s = _perpetualIdToSymbol.get(id);
         let info = _symbolToPerpStaticInfo.get(symbol3s!);
         let S2 = floatToABK64x64(_idxPriceMap.get(info!.S2Symbol)![0]);
@@ -2079,6 +2085,7 @@ export default class MarketData extends PerpetualDataHandler {
         callData: _proxyContract.interface.encodeFunctionData("queryMidPrices", [perpetualIDChunks[k], indexPrices]),
       });
     }
+
     // multicall
     const encodedResults = await _multicall.aggregate3.staticCall(proxyCalls, overrides || {});
     // apply results
@@ -2279,9 +2286,11 @@ export default class MarketData extends PerpetualDataHandler {
 
     // get all prices from off-chain price-sources: no RPC calls
     let idxPriceMap = await MarketData._getAllIndexPrices(_symbolToPerpStaticInfo, _priceFeedGetter);
+
     // query mid-prices from on-chain conditional on the off-chain prices
     let midPriceMap: Map<string, number> = await MarketData._queryMidPrices(
       _proxyContract,
+      _poolStaticInfos,
       _multicall,
       _nestedPerpetualIDs,
       _symbolToPerpStaticInfo,
