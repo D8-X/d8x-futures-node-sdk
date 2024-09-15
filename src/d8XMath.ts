@@ -748,11 +748,13 @@ function pmExcessCashAtLvg(
   if (tradeAmt < 0) {
     p0 = 2 - Sm; //=1-(Sm-1)
   }
-  const feeCc = (tradeAmt * pmExchangeFee(p0, m0, tradeAmt, 1 / lvg)) / S3;
+  const feeCc = (Math.abs(tradeAmt) * pmExchangeFee(p0, m0, tradeAmt, 1 / lvg)) / S3;
 
   //excess cash
-  let exc = walletBalCC - depositFromWallet;
-
+  let exc = walletBalCC - depositFromWallet - feeCc;
+  if (exc < 0) {
+    return exc;
+  }
   // margin balance
   let pos = currentPosition + tradeAmt;
   let p = Sm - 1;
@@ -772,7 +774,7 @@ function pmExcessCashAtLvg(
   // b0 - fee - threshold > 0
   // extra_cash = b0 - fee - threshold
   // missing: referral rebate
-  const bal = b0 / S3 - thresh / S3 - feeCc;
+  const bal = b0 / S3 - thresh / S3;
   exc = exc + bal;
   return exc;
 }
@@ -829,7 +831,7 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
     Sm,
     S3
   );
-  if (f0 < lot) {
+  if (f0 < 0) {
     // no trade possible
     return 0;
   }
@@ -868,7 +870,7 @@ export function pmFindMaxPersonalTradeSizeAtLeverage(
         ) ** 2;
       let ds = (f2 - f) / deltaS;
       if (ds == 0) {
-        sNew = s + Math.random() * ds - ds / 2;
+        sNew = s + Math.random() * deltaS - deltaS / 2;
       } else {
         sNew = s - f / ds;
       }
