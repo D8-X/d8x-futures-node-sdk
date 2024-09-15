@@ -423,9 +423,6 @@ export function getDepositAmountForLvgTrade(
  * @returns Probability in [0,1]
  */
 export function priceToProb(px: number) {
-  if (px <= 0) {
-    throw new Error(`Price must be positive: ${px}`);
-  }
   return px - 1;
 }
 
