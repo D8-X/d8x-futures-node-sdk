@@ -1,4 +1,3 @@
-import { BigNumber } from "@ethersproject/bignumber";
 import { ONE_64x64 } from "./constants";
 import { ABK64x64ToFloat, mul64x64 } from "./d8XMath";
 import MarketData from "./marketData";
@@ -176,7 +175,7 @@ export default class PerpetualEventHandler {
     perp.state = perpState.state;
     perp.indexPrice = perpState.indexPrice;
     perp.collToQuoteIndexPrice = perpState.collToQuoteIndexPrice;
-    perp.markPrice = perpState.markPrice;
+    perp.markPremium = perpState.markPremium;
     perp.midPrice = perpState.midPrice;
     perp.currentFundingRateBps = perpState.currentFundingRateBps;
     perp.openInterestBC = perpState.openInterestBC;
@@ -194,11 +193,11 @@ export default class PerpetualEventHandler {
    */
   public onUpdateMarkPrice(
     perpetualId: number,
-    fMidPricePremium: BigNumber,
-    fMarkPricePremium: BigNumber,
-    fSpotIndexPrice: BigNumber
+    fMidPricePremium: bigint,
+    fMarkPricePremium: bigint,
+    fSpotIndexPrice: bigint
   ): void {
-    let [newMidPrice, newMarkPrice, newIndexPrice] = PerpetualEventHandler.ConvertUpdateMarkPrice(
+    let [newMidPrice, newMarkPricePrem, newIndexPrice] = PerpetualEventHandler.ConvertUpdateMarkPrice(
       fMidPricePremium,
       fMarkPricePremium,
       fSpotIndexPrice
@@ -208,7 +207,7 @@ export default class PerpetualEventHandler {
       return;
     }
     perpetual.midPrice = newMidPrice;
-    perpetual.markPrice = newMarkPrice;
+    perpetual.markPremium = newMarkPricePrem;
     perpetual.indexPrice = newIndexPrice;
   }
 
@@ -218,7 +217,7 @@ export default class PerpetualEventHandler {
    * UpdateFundingRate(uint24 indexed perpetualId, int128 fFundingRate)
    * @param fFundingRate funding rate in ABDK format
    */
-  public onUpdateUpdateFundingRate(perpetualId: number, fFundingRate: BigNumber): void {
+  public onUpdateUpdateFundingRate(perpetualId: number, fFundingRate: bigint): void {
     let newRate = ABK64x64ToFloat(fFundingRate);
     let perpetual = this.getPerpetualData(perpetualId.toString());
     if (perpetual == undefined) {
@@ -332,11 +331,11 @@ export default class PerpetualEventHandler {
     perpetualId: number,
     trader: string,
     _positionId: string,
-    _fPositionBC: BigNumber,
-    _fCashCC: BigNumber,
-    _fLockedInValueQC: BigNumber,
-    _fFundingPaymentCC: BigNumber,
-    fOpenInterestBC: BigNumber
+    _fPositionBC: bigint,
+    _fCashCC: bigint,
+    _fLockedInValueQC: bigint,
+    _fFundingPaymentCC: bigint,
+    fOpenInterestBC: bigint
   ): Promise<void> {
     let perpetual = this.getPerpetualData(perpetualId.toString());
     if (perpetual == undefined) {
@@ -369,8 +368,8 @@ export default class PerpetualEventHandler {
     positionId: string,
     _order: SmartContractOrder,
     orderDigest: string,
-    newPositionSizeBC: BigNumber,
-    _price: BigNumber
+    newPositionSizeBC: bigint,
+    _price: bigint
   ): TradeEvent {
     // remove order digest from open orders
     let orderStructs = this.ordersInPerpetual.get(perpetualId);
@@ -437,18 +436,17 @@ export default class PerpetualEventHandler {
    * )
    * @param fMarkPricePremium premium rate in ABDK format
    * @param fSpotIndexPrice spot index price in ABDK format
-   * @returns mark price and spot index in float
+   * @returns midPrice, markPricePremium, indexPrice in float
    */
   private static ConvertUpdateMarkPrice(
-    fMidPricePremium: BigNumber,
-    fMarkPricePremium: BigNumber,
-    fSpotIndexPrice: BigNumber
+    fMidPricePremium: bigint,
+    fMarkPricePremium: bigint,
+    fSpotIndexPrice: bigint
   ): [number, number, number] {
-    let fMarkPrice = mul64x64(fSpotIndexPrice, ONE_64x64.add(fMarkPricePremium));
-    let fMidPrice = mul64x64(fSpotIndexPrice, ONE_64x64.add(fMidPricePremium));
+    let fMidPrice = mul64x64(fSpotIndexPrice, ONE_64x64 + fMidPricePremium);
     let midPrice = ABK64x64ToFloat(fMidPrice);
-    let markPrice = ABK64x64ToFloat(fMarkPrice);
+    let markPricePremium = ABK64x64ToFloat(fMarkPricePremium);
     let indexPrice = ABK64x64ToFloat(fSpotIndexPrice);
-    return [midPrice, markPrice, indexPrice];
+    return [midPrice, markPricePremium, indexPrice];
   }
 }

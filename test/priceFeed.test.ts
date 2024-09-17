@@ -2,22 +2,32 @@ import MarketData from "../src/marketData";
 import { NodeSDKConfig, PriceFeedConfig, PriceFeedSubmission } from "../src/nodeSDKTypes";
 import PerpetualDataHandler from "../src/perpetualDataHandler";
 import PriceFeeds from "../src/priceFeeds";
-
+import PolyMktsPxFeed from "../src/polyMktsPxFeed";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
-const SdkConfigName = "arbitrum";
+const SdkConfigName = "x1";
 
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
 let mktData: MarketData;
-let perp = "BTC-USD-STUSD";
+let perp = "BTC-USDC-USDC";
+describe("priceFeed", () => {
+  it("polymarket feed", async () => {
+    //const tokenIdHex = "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7";
+    const tokenIdHex = "0xe40f3ef726a04ad63510baf90238f6bcacf4365db2a38e02a6e8623c2bedc97d";
+    const cnf: PriceFeedConfig = {
+      network: "blabla",
+      ids: [],
+      endpoints: [{ type: "polymarket", endpoints: [""], writeEndpoints: ["https://odin-poly.d8x.xyz"] }],
+    };
+    let pm = new PolyMktsPxFeed(cnf);
+    let px = await pm.fetchPrice(tokenIdHex);
+    console.log("polymarket price:", px);
+  });
+});
 describe("priceFeed", () => {
   beforeAll(async () => {
-    if (pk == undefined) {
-      console.log(`Define private key: export PK="CA52A..."`);
-      expect(false);
-    }
     //config = PerpetualDataHandler.readSDKConfig("xlayer");
     //perp="BTC-USDT-USDT"
     config = PerpetualDataHandler.readSDKConfig(SdkConfigName);
@@ -103,7 +113,7 @@ describe("priceFeed", () => {
   it("get recent prices for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
     let symbolSet = new Set<string>();
-    symbolSet.add("ETH-USDC");
+    symbolSet.add("BTC-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
     let prices = await priceFeeds.fetchPricesForPerpetual(perp);
     console.log("pyth price info = ", prices);
@@ -132,7 +142,7 @@ describe("priceFeed", () => {
     let s = ["BTC-USD", "ETH-USD", "USDC-USD"];
     for (let j = 0; j < s.length; j++) {
       const id = "0x" + j.toString();
-      symbols[id] = [s[j]];
+      symbols.set(id, [s[j]]);
       ids.push(id);
     }
     let fakeSubmission: PriceFeedSubmission = {

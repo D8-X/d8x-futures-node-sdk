@@ -175,10 +175,12 @@ main();
 ### brokerTool.determineExchangeFee(order, traderAddr) ⇒ <code>number</code>
 <p>Determine exchange fee based on an order and a trader.
 This is the fee charged by the exchange only, excluding the white-label partner fee,
-and it takes into account whether the order given here has been signed by a white-label partner or not.
+For regular perpetuals, the result takes into account whether the order given here has been
+signed by a white-label partner or not.
 Use this, for instance, to verify that the fee to be charged for a given order is as expected,
 before and after signing it with brokerTool.signOrder.
 This fee is equal or lower than the white-label partner induced fee, provided the order is properly signed.</p>
+<p>For prediction markets, the correct fee is to be applied as tradeamt * fee/s3.</p>
 
 **Kind**: instance method of [<code>BrokerTool</code>](#BrokerTool)  
 **Returns**: <code>number</code> - <p>Fee in decimals (i.e. 0.1% is 0.001).</p>  

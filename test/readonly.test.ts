@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers, JsonRpcProvider } from "ethers";
 import {
   NodeSDKConfig,
   ExchangeInfo,
@@ -39,7 +39,7 @@ let wallet: ethers.Wallet;
 
 describe("readOnly", () => {
   beforeAll(() => {
-    config = PerpetualDataHandler.readSDKConfig("bartio");
+    config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
     if (RPC != undefined) {
       config.nodeURL = RPC;
     }
@@ -99,8 +99,8 @@ describe("readOnly", () => {
       wallet = new ethers.Wallet(pk);
     });
     it("Read ABI", () => {
-      let proxyABI = apiInterface.getABI("sharetoken") as string;
-      expect(proxyABI.length > 0).toBeTruthy;
+      let proxyABI = apiInterface.getABI("sharetoken");
+      expect(proxyABI != undefined).toBeTruthy;
     });
 
     it("order digest", async () => {
@@ -122,7 +122,7 @@ describe("readOnly", () => {
     });
     it("get proxy ABI", async () => {
       // Signer or provider
-      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      const provider = new JsonRpcProvider(config.nodeURL);
       // Address of the contract
       let contractAddr = apiInterface.getProxyAddress();
       // ABI as it would come from the API:
@@ -133,13 +133,13 @@ describe("readOnly", () => {
       expect(abi.length > 2).toBeTruthy;
       // contract instance
       let contract = new ethers.Contract(contractAddr, [abi], provider);
-      let px = await contract.getOraclePrice([toBytes4("USDC"), toBytes4("USD")]);
-      expect(px.gt(0)).toBeTruthy;
+      let px = (await contract.getOraclePrice([toBytes4("USDC"), toBytes4("USD")])) as bigint;
+      expect(px > 0).toBeTruthy;
       // console.log(`price of USDC-USD: ${ABK64x64ToFloat(px)}`);
     });
     it("get LOB ABI", async () => {
       // Signer or provider
-      const provider = new ethers.providers.JsonRpcProvider(config.nodeURL);
+      const provider = new JsonRpcProvider(config.nodeURL);
       // Address of the contract
       let contractAddr = apiInterface.getOrderBookAddress("ETH-USDC-USDC");
       // ABI as it would come from the API:
@@ -168,6 +168,12 @@ describe("readOnly", () => {
       mktData = new MarketData(config);
       wallet = new ethers.Wallet(pk);
       await mktData.createProxyInstance();
+    });
+    it("fetchPrdMktMetaData", async () => {
+      let q = await mktData.fetchPrdMktMetaData("TRUMP24-USD");
+      console.log(q);
+      q = await mktData.fetchPrdMktMetaData("BTLJ-USD");
+      console.log(q);
     });
     it("init from instance", async () => {
       let mktData2 = new MarketData(config);
@@ -227,7 +233,8 @@ describe("readOnly", () => {
       // base, quote, quanto
       for (let symbol of ["BTC-USDC-USDC", "ETH-USDC-USDC"]) {
         let markPrice1 = await mktData.getMarkPrice(symbol);
-        let markPrice2 = (await mktData.getPerpetualState(symbol)).markPrice;
+        let state = await mktData.getPerpetualState(symbol);
+        let markPrice2 = state.indexPrice * (1 + state.markPremium);
         let success = Math.abs((markPrice1 - markPrice2) / markPrice1) < 1e-6;
         if (!success) {
           console.log(`markPrice direct: ${markPrice1}, markPrice from state: ${markPrice2}`);
@@ -293,6 +300,7 @@ describe("readOnly", () => {
       let maxTradeSize = await mktData.maxOrderSizeForTrader(wallet.address, "BTC-USDC-USDC");
       console.log(`max trade sizes for symbol BTC-USDC-USDC`, maxTradeSize);
     });
+
     it("openOrders in perpetual", async () => {
       let ordersStruct = await mktData.openOrders(wallet.address, "ETH-USDC-USDC");
       console.log("order ids in perpetual=", ordersStruct[0].orderIds);
@@ -324,7 +332,9 @@ describe("readOnly", () => {
       };
       let { newPositionRisk, orderCost, maxLongTrade, maxShortTrade } = await mktData.positionRiskOnTrade(
         wallet.address,
-        order
+        order,
+        0,
+        100
       );
       console.log("mgn before opening=", mgnBefore, "\norder=", order);
       console.log("mgn after  opening=", newPositionRisk, "\ndeposit =", orderCost);
@@ -344,7 +354,9 @@ describe("readOnly", () => {
       };
       let { newPositionRisk, orderCost, maxLongTrade, maxShortTrade } = await mktData.positionRiskOnTrade(
         wallet.address,
-        order
+        order,
+        0,
+        100
       );
       console.log("mgn before closing=", mgnBefore, "\norder=", order);
       console.log("mgn after  closing=", newPositionRisk, "\ndeposit =", orderCost);
@@ -361,9 +373,19 @@ describe("readOnly", () => {
     it("get margin info if collateral is removed", async () => {
       let mgnBefore = (await mktData.positionRisk(wallet.address, "ETH-USDC-USDC"))[0];
       let deposit = -2;
-      let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
-      console.log("mgnBefore:", mgnBefore);
-      console.log("mgnAfter :", mgnAfter);
+      let errored = false;
+      try {
+        let mgnAfter = await mktData.positionRiskOnCollateralAction(deposit, mgnBefore);
+        console.log("mgnBefore:", mgnBefore);
+        console.log("mgnAfter :", mgnAfter);
+      } catch (e) {
+        errored = true;
+        console.log(e);
+      }
+      expect(
+        errored ==
+          deposit + mgnBefore.collateralCC + mgnBefore.unrealizedPnlQuoteCCY / mgnBefore.collToQuoteConversion < 0
+      ).toBeTruthy();
     });
 
     it("get pool id", async () => {

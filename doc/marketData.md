@@ -10,36 +10,42 @@ No gas required for the queries here.</p>
 
 * [MarketData](#MarketData) ⇐ <code>PerpetualDataHandler</code>
     * [new MarketData(config)](#new_MarketData_new)
-    * [.createProxyInstance(providerOrMarketData)](#MarketData+createProxyInstance)
-    * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒ <code>string</code>
-    * [.getTriangulations()](#MarketData+getTriangulations) ⇒
-    * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒ <code>Order</code>
-    * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒ <code>Contract</code>
-    * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
-    * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
-    * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
-    * [.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
-    * [.positionRiskOnCollateralAction(deltaCollateral, account)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
-    * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
-    * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance) ⇒ <code>number</code>
-    * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
-    * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
-    * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
-    * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
-    * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
-    * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
-    * [.getOrdersStatus(symbol, orderId)](#MarketData+getOrdersStatus) ⇒
-    * [.getMarkPrice(symbol)](#MarketData+getMarkPrice) ⇒ <code>number</code>
-    * [.getPerpetualPrice(symbol, quantity)](#MarketData+getPerpetualPrice) ⇒ <code>number</code>
-    * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒ <code>PerpetualState</code>
-    * [.getPoolState(poolSymbol)](#MarketData+getPoolState) ⇒ <code>PoolState</code>
-    * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒ <code>PerpetualStaticInfo</code>
-    * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
-    * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
-    * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
-    * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
-    * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
-    * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
+    * _instance_
+        * [.createProxyInstance(providerOrMarketData)](#MarketData+createProxyInstance)
+        * [.getProxyAddress()](#MarketData+getProxyAddress) ⇒ <code>string</code>
+        * [.getTriangulations()](#MarketData+getTriangulations) ⇒
+        * [.smartContractOrderToOrder(smOrder)](#MarketData+smartContractOrderToOrder) ⇒ <code>Order</code>
+        * [.getReadOnlyProxyInstance()](#MarketData+getReadOnlyProxyInstance) ⇒
+        * [.exchangeInfo()](#MarketData+exchangeInfo) ⇒ <code>ExchangeInfo</code>
+        * [.openOrders(traderAddr, symbol)](#MarketData+openOrders) ⇒
+        * [.positionRisk(traderAddr, symbol)](#MarketData+positionRisk) ⇒ <code>Array.&lt;MarginAccount&gt;</code>
+        * [.positionRiskOnTrade(traderAddr, order, signedPositionNotionalBaseCCY, tradingFeeTbps, indexPriceInfo)](#MarketData+positionRiskOnTrade) ⇒
+        * [.positionRiskOnCollateralAction(deltaCollateral, account)](#MarketData+positionRiskOnCollateralAction) ⇒ <code>MarginAccount</code>
+        * [.getWalletBalance(address, symbol)](#MarketData+getWalletBalance) ⇒
+        * [.getPoolShareTokenBalance(address, symbolOrId)](#MarketData+getPoolShareTokenBalance) ⇒ <code>number</code>
+        * [.getShareTokenPrice(symbolOrId)](#MarketData+getShareTokenPrice) ⇒ <code>number</code>
+        * [.getParticipationValue(address, symbolOrId)](#MarketData+getParticipationValue) ⇒
+        * [.maxOrderSizeForTrader(traderAddr, symbol)](#MarketData+maxOrderSizeForTrader) ⇒
+        * [.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides)](#MarketData+pmMaxOrderSizeForTrader) ⇒
+        * [.getMaxShortLongTrade(perpId, currentTraderPos, overrides)](#MarketData+getMaxShortLongTrade) ⇒
+        * [.maxSignedPosition(side, symbol)](#MarketData+maxSignedPosition) ⇒ <code>number</code>
+        * [.getOraclePrice(base, quote)](#MarketData+getOraclePrice) ⇒ <code>number</code>
+        * [.getOrderStatus(symbol, orderId, overrides)](#MarketData+getOrderStatus) ⇒
+        * [.getOrdersStatus(symbol, orderId)](#MarketData+getOrdersStatus) ⇒
+        * [.getMarkPrice(symbol, indexPrices)](#MarketData+getMarkPrice) ⇒ <code>number</code>
+        * [.getPerpetualPrice(symbol, quantity, priceInfo)](#MarketData+getPerpetualPrice) ⇒ <code>number</code>
+        * [.getPerpetualState(symbol)](#MarketData+getPerpetualState) ⇒ <code>PerpetualState</code>
+        * [.getPoolState(poolSymbol)](#MarketData+getPoolState) ⇒ <code>PoolState</code>
+        * [.getPerpetualStaticInfo(symbol)](#MarketData+getPerpetualStaticInfo) ⇒ <code>PerpetualStaticInfo</code>
+        * [.getPerpetualMidPrice(symbol)](#MarketData+getPerpetualMidPrice) ⇒ <code>number</code>
+        * [.getAvailableMargin(traderAddr, symbol, indexPrices)](#MarketData+getAvailableMargin) ⇒
+        * [.getTraderLoyalityScore(traderAddr)](#MarketData+getTraderLoyalityScore) ⇒ <code>number</code>
+        * [.isMarketClosed(symbol)](#MarketData+isMarketClosed) ⇒ <code>boolean</code>
+        * [.getPriceInUSD(symbol)](#MarketData+getPriceInUSD) ⇒ <code>Map.&lt;string, number&gt;</code>
+        * [.fetchPricesForPerpetual(symbol)](#MarketData+fetchPricesForPerpetual) ⇒
+        * [.fetchPrdMktMetaData(symbol)](#MarketData+fetchPrdMktMetaData) ⇒
+    * _static_
+        * [.exchangeFeePrdMkts(maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate)](#MarketData.exchangeFeePrdMkts) ⇒
 
 <a name="new_MarketData_new"></a>
 
@@ -106,11 +112,11 @@ about perpetual currencies</p>
 
 <a name="MarketData+getReadOnlyProxyInstance"></a>
 
-### marketData.getReadOnlyProxyInstance() ⇒ <code>Contract</code>
+### marketData.getReadOnlyProxyInstance() ⇒
 <p>Get contract instance. Useful for event listening.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <code>Contract</code> - <p>read-only proxy instance</p>  
+**Returns**: <p>read-only proxy instance</p>  
 **Example**  
 ```js
 import { MarketData, PerpetualDataHandler } from '@d8x/perpetuals-sdk';
@@ -209,7 +215,7 @@ main();
 ```
 <a name="MarketData+positionRiskOnTrade"></a>
 
-### marketData.positionRiskOnTrade(traderAddr, order, account, indexPriceInfo) ⇒
+### marketData.positionRiskOnTrade(traderAddr, order, signedPositionNotionalBaseCCY, tradingFeeTbps, indexPriceInfo) ⇒
 <p>Estimates what the position risk will be if a given order is executed.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -219,7 +225,8 @@ main();
 | --- | --- |
 | traderAddr | <p>Address of trader</p> |
 | order | <p>Order to be submitted</p> |
-| account | <p>Position risk before trade. Defaults to current position if not given.</p> |
+| signedPositionNotionalBaseCCY | <p>signed position notional of current position (before trade)</p> |
+| tradingFeeTbps | <p>trading fee in tenth of basis points (exchange fee and broker fee)</p> |
 | indexPriceInfo | <p>Index prices and market status (open/closed). Defaults to current market status if not given.</p> |
 
 **Example**  
@@ -240,7 +247,7 @@ async function main() {
        executionTimestamp: Date.now()/1000,
    };
   // Get position risk conditional on this order being executed
-  const posRisk = await mktData.positionRiskOnTrade("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", order);
+  const posRisk = await mktData.positionRiskOnTrade("0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B", order, 0, 60);
   console.log(posRisk);
 }
 main();
@@ -396,7 +403,7 @@ considering the existing position, state of the perpetual
 Accounts for user's wallet balance.</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
-**Returns**: <p>Maximal trade sizes</p>  
+**Returns**: <p>Maximal buy and sell trade sizes (positive)</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -418,6 +425,37 @@ async function main() {
 }
 main();
 ```
+<a name="MarketData+pmMaxOrderSizeForTrader"></a>
+
+### marketData.pmMaxOrderSizeForTrader(traderAddr, symbol, overrides) ⇒
+<p>pmMaxOrderSizeForTrader returns the max order size for the
+trader that is possible from AMM perspective (agnostic about wallet
+balance and leverage)</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>buy: number; sell: number absolute</p>  
+
+| Param | Description |
+| --- | --- |
+| traderAddr | <p>address of trader</p> |
+| symbol | <p>perp symbol</p> |
+| overrides | <p>optional</p> |
+
+<a name="MarketData+getMaxShortLongTrade"></a>
+
+### marketData.getMaxShortLongTrade(perpId, currentTraderPos, overrides) ⇒
+<p>Returns the maximal allowed short trade and long trade (signed) for a trader
+that has a given notional (in ABDK format) in the perpetual, ignoring the traders wallet balance</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>[maxShortPos, maxLongPos] signed maximal trade sizes</p>  
+
+| Param | Description |
+| --- | --- |
+| perpId |  |
+| currentTraderPos | <p>ABDK64x64 signed notional position of trader</p> |
+| overrides |  |
+
 <a name="MarketData+maxSignedPosition"></a>
 
 ### marketData.maxSignedPosition(side, symbol) ⇒ <code>number</code>
@@ -533,7 +571,7 @@ main();
 ```
 <a name="MarketData+getMarkPrice"></a>
 
-### marketData.getMarkPrice(symbol) ⇒ <code>number</code>
+### marketData.getMarkPrice(symbol, indexPrices) ⇒ <code>number</code>
 <p>Get the current mark price</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -542,6 +580,7 @@ main();
 | Param | Description |
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
+| indexPrices | <p>optional. IdxPriceInfo</p> |
 
 **Example**  
 ```js
@@ -560,7 +599,7 @@ main();
 ```
 <a name="MarketData+getPerpetualPrice"></a>
 
-### marketData.getPerpetualPrice(symbol, quantity) ⇒ <code>number</code>
+### marketData.getPerpetualPrice(symbol, quantity, priceInfo) ⇒ <code>number</code>
 <p>get the current price for a given quantity</p>
 
 **Kind**: instance method of [<code>MarketData</code>](#MarketData)  
@@ -570,6 +609,7 @@ main();
 | --- | --- |
 | symbol | <p>symbol of the form ETH-USD-MATIC</p> |
 | quantity | <p>quantity to be traded, negative if short</p> |
+| priceInfo | <p>[s2, s3, conf, params]; for non-prediction markets conf/params can be 0</p> |
 
 **Example**  
 ```js
@@ -663,7 +703,7 @@ Result is in collateral currency</p>
 | --- | --- | --- |
 | traderAddr | <code>string</code> | <p>address of the trader</p> |
 | symbol | <code>string</code> | <p>perpetual symbol of the form BTC-USD-MATIC</p> |
-| indexPrices |  | <p>optional index prices, will otherwise fetch from REST API</p> |
+| indexPrices |  | <p>optional indexPriceInfo</p> |
 
 **Example**  
 ```js
@@ -772,4 +812,31 @@ main();
 | Param | Description |
 | --- | --- |
 | symbol | <p>Perpetual symbol of the form BTC-USDc-USDC</p> |
+
+<a name="MarketData+fetchPrdMktMetaData"></a>
+
+### marketData.fetchPrdMktMetaData(symbol) ⇒
+<p>fetch prediction markets meta data</p>
+
+**Kind**: instance method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>question for given symbol</p>  
+
+| Param | Description |
+| --- | --- |
+| symbol | <p>symbol of the form &quot;TRUMP24-USD&quot;</p> |
+
+<a name="MarketData.exchangeFeePrdMkts"></a>
+
+### MarketData.exchangeFeePrdMkts(maxMaintMgnRate, Sm, tradeAmtBC, tradeMgnRate) ⇒
+<p>Fee is relative to base-currency amount (=trade amount)</p>
+
+**Kind**: static method of [<code>MarketData</code>](#MarketData)  
+**Returns**: <p>relative exchange fee in decimals</p>  
+
+| Param | Description |
+| --- | --- |
+| maxMaintMgnRate | <p>maintenance margin rate param for pred mkts</p> |
+| Sm | <p>Mark price</p> |
+| tradeAmtBC | <p>signed trade amount</p> |
+| tradeMgnRate | <p>margin rate param from perpetual</p> |
 
