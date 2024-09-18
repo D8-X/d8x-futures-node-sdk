@@ -22,7 +22,70 @@ describe("priceFeed", () => {
       endpoints: [{ type: "polymarket", endpoints: [""], writeEndpoints: ["https://odin-poly.d8x.xyz"] }],
     };
     let pm = new PolyMktsPxFeed(cnf);
-    let px = await pm.fetchPrice(tokenIdHex);
+    let px = await pm.fetchPrices([tokenIdHex]);
+    console.log("polymarket price:", px);
+  });
+  it("multiple polymarket feeds", async () => {
+    const tokenIdHex = "0xe40f3ef726a04ad63510baf90238f6bcacf4365db2a38e02a6e8623c2bedc97d";
+
+    const ids = [
+      {
+        symbol: "WALZNOM-USD",
+        id: "0x6710f215fe01867219fc338d0a68290f84c471d002b14b6decd92c2260d94cce",
+        type: "polymarket",
+        origin: "0x76dbb81a9fd937efa736aa23e6c0eb33aaf0f2ca4aa6c06da1d5529ed236ebfb",
+        storkSym: "",
+      },
+      {
+        symbol: "HARRIS24P-USD",
+        id: "0x2f06f5a323466c1ad9a9a8afb19a21dd3fe0f39853a16ae58637086e8ff5838d",
+        type: "polymarket",
+        origin: "0x265366ede72d73e137b2b9095a6cdc9be6149290caa295738a95e3d881ad0865",
+        storkSym: "",
+      },
+      {
+        symbol: "SUPBWL49-USD",
+        id: "0x7eea0b94fc1916efdd031978918abba566b9aef7f12b3d5a5b0f7141fd8e0b33",
+        type: "polymarket",
+        origin: "0x67e68c5eee8ac767dd1177de8c653b20642fee48f0f2a56d784e4856b130749d",
+        storkSym: "",
+      },
+      {
+        symbol: "INSOUT2-USD",
+        id: "0x6ec8114a0dba99a037c7122c93a68f2ab905c3e42e2b82e1ce659aef96de58f2",
+        type: "polymarket",
+        origin: "0x1ab07117f9f698f28490f57754d6fe5309374230c95867a7eba572892a11d710",
+        storkSym: "",
+      },
+      {
+        symbol: "TRUMP24-USD",
+        id: "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7",
+        type: "polymarket",
+        origin: "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917",
+        storkSym: "DJTWINYESUSD",
+      },
+      {
+        symbol: "BTLJ-USD",
+        id: "0xe40f3ef726a04ad63510baf90238f6bcacf4365db2a38e02a6e8623c2bedc97d",
+        type: "polymarket",
+        origin: "0x3157ea263270be44bd68a3d6bde1f6f639be2746974f65de24e00ea6378d7838",
+        storkSym: "",
+      },
+    ];
+    const cnf: PriceFeedConfig = {
+      network: "blabla",
+      ids: ids,
+      endpoints: [{ type: "polymarket", endpoints: [""], writeEndpoints: ["https://odin-poly.d8x.xyz"] }],
+    };
+    let pm = new PolyMktsPxFeed(cnf);
+    let px = await pm.fetchPricesForSyms([
+      "BTLJ-USD",
+      "TRUMP24-USD",
+      "INSOUT2-USD",
+      "SUPBWL49-USD",
+      "HARRIS24P-USD",
+      "WALZNOM-USD",
+    ]);
     console.log("polymarket price:", px);
   });
 });

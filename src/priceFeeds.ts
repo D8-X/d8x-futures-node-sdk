@@ -249,7 +249,7 @@ export default class PriceFeeds {
     }
     let indexSymbols = this.dataHandler.getIndexSymbols(symbol).filter((x) => x != "");
     if (this.dataHandler.isPredictionMarket(symbol)) {
-      let priceObj = await this.polyMktsPxFeed.fetchPriceForSym(indexSymbols[0]);
+      let priceObj = (await this.polyMktsPxFeed.fetchPricesForSyms([indexSymbols[0]]))[0];
       const s3map = await this.fetchFeedPrices([indexSymbols[1]]);
       const s3 = s3map.get(indexSymbols[1])!;
       return {
@@ -391,19 +391,22 @@ export default class PriceFeeds {
     if (this.polyMktsPxFeed == undefined) {
       throw Error("init() required");
     }
-    let prices = new Array<PredMktPriceInfo | undefined>();
-    for (let k = 0; k < symbols.length; k++) {
+    let prices;
+    let trial = 0;
+    while (true) {
       try {
-        let info = await this.polyMktsPxFeed.fetchPriceForSym(symbols[k]);
-        prices.push(info);
+        prices = await this.polyMktsPxFeed.fetchPricesForSyms(symbols);
       } catch (error) {
-        console.log("fetchPriceForSym failed for " + symbols[k]);
+        if (trial > 4) {
+          throw error;
+        }
+        console.log("fetchPriceForSym failed for " + symbols);
         console.log(error);
-        prices.push(undefined);
+        trial++;
+        await sleep(1); //seconds
+        continue;
       }
-      if (k > 0) {
-        await sleep(0.25);
-      }
+      break;
     }
     return prices;
   }

@@ -50,17 +50,27 @@ export default class PolyMktsPxFeed {
   }
 
   // returns index price, ema price, conf in tbps, parameters for order book
-  public async fetchPriceForSym(sym: string): Promise<PredMktPriceInfo> {
-    const mkt = this.ids.get(sym);
-    if (mkt == undefined) {
-      throw new Error(`symbol not in polymarket universe: ${sym}`);
+  // for the provided symbols
+  public async fetchPricesForSyms(syms: string[]): Promise<PredMktPriceInfo[]> {
+    let ids = new Array<string>();
+    for (let k = 0; k < syms.length; k++) {
+      const mkt = this.ids.get(syms[k]);
+      if (mkt == undefined) {
+        throw new Error(`symbol not in polymarket universe: ${syms[k]}`);
+      }
+      ids.push(mkt.id);
     }
-    return this.fetchPrice(mkt.id);
+    return this.fetchPrices(ids);
   }
 
   // fetch price of the form 1+p from oracle, also fetches ema
-  public async fetchPrice(tokenIdHex: string): Promise<PredMktPriceInfo> {
-    const query = this.oracleEndpoint + tokenIdHex;
+  public async fetchPrices(tokenIdHex: string[]): Promise<PredMktPriceInfo[]> {
+    // build query
+    let query = this.oracleEndpoint + tokenIdHex[0];
+    for (let k = 1; k < tokenIdHex.length; k++) {
+      query += "&ids[]=" + tokenIdHex[k];
+    }
+
     let response = await fetch(query);
     if (response.status !== 200) {
       throw new Error(`unexpected status code: ${response.status}`);
@@ -69,14 +79,25 @@ export default class PolyMktsPxFeed {
       throw new Error(`failed to fetch posts (${response.status}): ${response.statusText} ${query}`);
     }
     const data = await response.json();
-    const emaObj = data.parsed[0].ema_price as PriceFeedJson;
-    const pxObj = data.parsed[0].price as PriceFeedJson;
-    const marketClosed = data.parsed[0].metadata.market_closed;
-    const px = Number(pxObj.price) * Math.pow(10, pxObj.expo);
-    const ema = Number(emaObj.price) * Math.pow(10, emaObj.expo);
-    const params = BigInt(emaObj.conf);
-    const conf = BigInt(pxObj.conf);
-    return { s2: px, ema: ema, s2MktClosed: marketClosed, conf: conf, predMktCLOBParams: params } as PredMktPriceInfo;
+    let res = new Array<PredMktPriceInfo>();
+    for (let k = 0; k < tokenIdHex.length; k++) {
+      const emaObj = data.parsed[0].ema_price as PriceFeedJson;
+      const pxObj = data.parsed[0].price as PriceFeedJson;
+      const marketClosed = data.parsed[0].metadata.market_closed;
+      const px = Number(pxObj.price) * Math.pow(10, pxObj.expo);
+      const ema = Number(emaObj.price) * Math.pow(10, emaObj.expo);
+      const params = BigInt(emaObj.conf);
+      const conf = BigInt(pxObj.conf);
+      const info = {
+        s2: px,
+        ema: ema,
+        s2MktClosed: marketClosed,
+        conf: conf,
+        predMktCLOBParams: params,
+      } as PredMktPriceInfo;
+      res.push(info);
+    }
+    return res;
   }
 
   public async fetchPriceFromAPI(tokenIdDec: string): Promise<number> {
