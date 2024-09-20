@@ -9,8 +9,8 @@ let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
 
 async function trade() {
-  const sym = "BTLJ-USD-USDC"; //"ETH-USD-WEETH"; //
-  let config = PerpetualDataHandler.readSDKConfig(421614); //42161); //
+  const sym = "ETH-USD-WEETH"; //
+  let config = PerpetualDataHandler.readSDKConfig(42161); //42161); //
   if (RPC != undefined) {
     config.nodeURL = RPC;
   }
@@ -57,16 +57,17 @@ async function trade() {
 }
 
 async function main() {
+  const sym = "ETH-USD-WEETH"; //"TRUMP24-USD-USDC"
   let c = PerpetualDataHandler.getAvailableConfigs();
   console.log(c);
-  let config = PerpetualDataHandler.readSDKConfig(195);
+  let config = PerpetualDataHandler.readSDKConfig(42161);
 
   let mktData = new MarketData(config);
   await mktData.createProxyInstance();
-  let isP = mktData.isPredictionMarket("TRUMP24-USD-USDC");
+  let isP = mktData.isPredictionMarket(sym);
   console.log(isP);
 
-  let p = await mktData.fetchLatestFeedPriceInfo("TRUMP24-USD-USDC");
+  let p = await mktData.fetchLatestFeedPriceInfo(sym);
   console.log(p);
   let v = mktData.getPerpetualSymbolsInPool("USDC");
 
@@ -76,5 +77,5 @@ async function main() {
 
   //await trade();
 }
-//main();
-trade();
+main();
+//trade();
