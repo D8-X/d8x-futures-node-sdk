@@ -140,6 +140,6 @@ export function loadConfigAbis(config: NodeSDKConfig) {
   config.shareTokenABI = require(config.shareTokenABILocation);
 }
 
-export async function sleep(seconds: number) {
+export async function sleepForSec(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1_000));
 }

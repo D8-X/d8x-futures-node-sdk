@@ -15,7 +15,7 @@ import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
 import OnChainPxFactory from "./onChainPxFactory";
 import PolyMktsPxFeed from "./polyMktsPxFeed";
-import { sleep } from "./utils";
+import { sleepForSec } from "./utils";
 /**
  * This class communicates with the REST API that provides price-data that is
  * to be submitted to the smart contracts for certain functions such as
@@ -249,7 +249,7 @@ export default class PriceFeeds {
     }
     let indexSymbols = this.dataHandler.getIndexSymbols(symbol).filter((x) => x != "");
     if (this.dataHandler.isPredictionMarket(symbol)) {
-      let priceObj = await this.polyMktsPxFeed.fetchPriceForSym(indexSymbols[0]);
+      let priceObj = (await this.polyMktsPxFeed.fetchPricesForSyms([indexSymbols[0]]))[0];
       const s3map = await this.fetchFeedPrices([indexSymbols[1]]);
       const s3 = s3map.get(indexSymbols[1])!;
       return {
@@ -387,23 +387,29 @@ export default class PriceFeeds {
   }
 
   // returns an array with two values per symbol: price, ema
-  private async queryPolyMktsPxFeeds(symbols: string[]) {
+  private async queryPolyMktsPxFeeds(symbols: string[]): Promise<PredMktPriceInfo[]> {
+    if (symbols.length == 0) {
+      return [];
+    }
     if (this.polyMktsPxFeed == undefined) {
       throw Error("init() required");
     }
-    let prices = new Array<PredMktPriceInfo | undefined>();
-    for (let k = 0; k < symbols.length; k++) {
+    let prices;
+    let trial = 0;
+    while (true) {
       try {
-        let info = await this.polyMktsPxFeed.fetchPriceForSym(symbols[k]);
-        prices.push(info);
+        prices = await this.polyMktsPxFeed.fetchPricesForSyms(symbols);
       } catch (error) {
-        console.log("fetchPriceForSym failed for " + symbols[k]);
+        if (trial > 4) {
+          throw error;
+        }
+        console.log("fetchPriceForSym failed for " + symbols);
         console.log(error);
-        prices.push(undefined);
+        trial++;
+        await sleepForSec(1); //seconds
+        continue;
       }
-      if (k > 0) {
-        await sleep(0.25);
-      }
+      break;
     }
     return prices;
   }
