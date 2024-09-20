@@ -387,7 +387,10 @@ export default class PriceFeeds {
   }
 
   // returns an array with two values per symbol: price, ema
-  private async queryPolyMktsPxFeeds(symbols: string[]) {
+  private async queryPolyMktsPxFeeds(symbols: string[]): Promise<PredMktPriceInfo[]> {
+    if (symbols.length == 0) {
+      return [];
+    }
     if (this.polyMktsPxFeed == undefined) {
       throw Error("init() required");
     }

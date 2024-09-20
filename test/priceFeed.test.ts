@@ -5,13 +5,13 @@ import PriceFeeds from "../src/priceFeeds";
 import PolyMktsPxFeed from "../src/polyMktsPxFeed";
 let pk: string = <string>process.env.PK;
 let RPC: string = <string>process.env.RPC;
-const SdkConfigName = "x1";
+const SdkConfigName = "arbitrum";
 
 jest.setTimeout(150000);
 
 let config: NodeSDKConfig;
 let mktData: MarketData;
-let perp = "BTC-USDC-USDC";
+let perp = "BTC-USD-STUSD";
 describe("priceFeed", () => {
   it("polymarket feed", async () => {
     //const tokenIdHex = "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7";
@@ -169,12 +169,14 @@ describe("priceFeed", () => {
 
   it("get recent prices and submission info for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+    await priceFeeds.init();
     let prices = await priceFeeds.fetchLatestFeedPriceInfoForPerpetual(perp);
     console.log("pyth price info = ", prices.prices);
     console.log("symbols = ", prices.symbols);
   });
   it("get recent prices for perpetual", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+    await priceFeeds.init();
     let symbolSet = new Set<string>();
     symbolSet.add("BTC-USDC");
     priceFeeds.initializeTriangulations(symbolSet);
@@ -183,6 +185,7 @@ describe("priceFeed", () => {
   });
   it("get recent prices", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+    await priceFeeds.init();
     let prices = await priceFeeds.fetchAllFeedPrices();
     console.log("pyth price info = ", prices);
   });
@@ -194,6 +197,7 @@ describe("priceFeed", () => {
   });
   it("triangulation test", async () => {
     let priceFeeds = new PriceFeeds(mktData, config.priceFeedConfigNetwork);
+    await priceFeeds.init();
     let symbolSet = new Set<string>();
     symbolSet.add("BTC-USD");
     symbolSet.add("BTC-USDC");
@@ -261,6 +265,7 @@ describe("priceFeed configs", () => {
     // Do not create proxy instance
     // await md.createProxyInstance();
     const priceFeeds = new PriceFeeds(md, cfg.priceFeedConfigNetwork);
+    await priceFeeds.init();
     expect(priceFeeds.writeFeedEndpoints.length).toBeGreaterThan(0);
   });
 });
