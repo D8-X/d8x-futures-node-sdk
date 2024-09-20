@@ -15,7 +15,7 @@ import Triangulator from "./triangulator";
 import OnChainPxFeed from "./onChainPxFeed";
 import OnChainPxFactory from "./onChainPxFactory";
 import PolyMktsPxFeed from "./polyMktsPxFeed";
-import { sleep } from "./utils";
+import { sleepForSec } from "./utils";
 /**
  * This class communicates with the REST API that provides price-data that is
  * to be submitted to the smart contracts for certain functions such as
@@ -403,7 +403,7 @@ export default class PriceFeeds {
         console.log("fetchPriceForSym failed for " + symbols);
         console.log(error);
         trial++;
-        await sleep(1); //seconds
+        await sleepForSec(1); //seconds
         continue;
       }
       break;

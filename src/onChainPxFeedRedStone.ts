@@ -1,5 +1,5 @@
 import { decNToFloat } from "./d8XMath";
-import { sleep } from "./utils";
+import { sleepForSec } from "./utils";
 import OnChainPxFeed from "./onChainPxFeed";
 import { Contract } from "ethers";
 
@@ -45,7 +45,7 @@ export default class OnChainPxFeedRedStone extends OnChainPxFeed {
       }
 
       if (delay) {
-        await sleep(this.delayMs);
+        await sleepForSec(this.delayMs / 1000);
       }
       this.fetchInProgress = false;
     }
