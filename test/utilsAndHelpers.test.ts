@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import {
   MASK_CLOSE_ONLY,
   MASK_KEEP_POS_LEVERAGE,
@@ -79,7 +78,7 @@ describe("utils", () => {
   });
   it("read config", async function () {
     // get config by chain id (latest version)
-    const chainId = 1101;
+    const chainId = "arbitrumSepolia";
     config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
@@ -117,14 +116,14 @@ describe("utils", () => {
   });
   it("combine flags 1", async () => {
     let flag = combineFlags(MASK_STOP_ORDER, MASK_KEEP_POS_LEVERAGE);
-    expect(flag.gt(0)).toBeTruthy;
+    expect(flag > 0).toBeTruthy;
     expect(containsFlag(flag, MASK_STOP_ORDER)).toBeTruthy;
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeTruthy;
     expect(containsFlag(flag, MASK_MARKET_ORDER)).toBeFalsy;
   });
   it("combine flags 2", async () => {
     let flag = combineFlags(MASK_LIMIT_ORDER, MASK_STOP_ORDER);
-    expect(flag.gt(0)).toBeTruthy;
+    expect(flag > 0).toBeTruthy;
     expect(containsFlag(flag, MASK_STOP_ORDER)).toBeTruthy;
     expect(containsFlag(flag, MASK_LIMIT_ORDER)).toBeTruthy;
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeFalsy;
@@ -132,7 +131,7 @@ describe("utils", () => {
 
   it("combine flags 3", async () => {
     let flag = combineFlags(MASK_LIMIT_ORDER, MASK_CLOSE_ONLY);
-    expect(flag.gt(0)).toBeTruthy;
+    expect(flag > 0).toBeTruthy;
     expect(containsFlag(flag, MASK_LIMIT_ORDER)).toBeTruthy;
     expect(containsFlag(flag, MASK_CLOSE_ONLY)).toBeTruthy;
     expect(containsFlag(flag, MASK_KEEP_POS_LEVERAGE)).toBeFalsy;
@@ -224,8 +223,8 @@ describe("utils", () => {
     );
   }
 
-  function orderTypeToFlagCOPY(order: Order): BigNumber {
-    let flag: BigNumber;
+  function orderTypeToFlagCOPY(order: Order) {
+    let flag: bigint;
     order.type = order.type.toUpperCase();
     switch (order.type) {
       case ORDER_TYPE_LIMIT:

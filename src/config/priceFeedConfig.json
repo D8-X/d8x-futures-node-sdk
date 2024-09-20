@@ -3,6 +3,18 @@
     "network": "mainnet",
     "ids": [
       {
+        "symbol": "BTLJ-USD",
+        "id": "0xE40F3EF726A04AD63510BAF90238F6BCACF4365DB2A38E02A6E8623C2BEDC97D",
+        "type": "polymarket",
+        "origin": "0x3157ea263270be44bd68a3d6bde1f6f639be2746974f65de24e00ea6378d7838"
+      },
+      {
+        "symbol": "TRUMP24-USD",
+        "id": "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7",
+        "type": "polymarket",
+        "origin": "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917"
+      },
+      {
         "symbol": "USDC-USD",
         "id": "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
         "type": "pyth",
@@ -15,6 +27,18 @@
         "origin": "Crypto.USDT/USD"
       },
       {
+        "symbol": "STUSD-USDC",
+        "id": "",
+        "type": "onchain",
+        "origin": ""
+      },
+      {
+        "symbol": "WEETH-ETH",
+        "id": "",
+        "type": "onchain",
+        "origin": ""
+      },
+      {
         "symbol": "BTC-USD",
         "id": "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
         "type": "pyth",
@@ -25,12 +49,6 @@
         "id": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
         "type": "pyth",
         "origin": "Crypto.ETH/USD"
-      },
-      {
-        "symbol": "MATIC-USD",
-        "id": "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52",
-        "type": "pyth",
-        "origin": "Crypto.MATIC/USD"
       },
       {
         "symbol": "USD-CHF",
@@ -87,26 +105,79 @@
         "origin": "Crypto.OKB/USD"
       },
       {
-        "symbol": "WEETH-ETH",
-        "id": "",
-        "type": "onchain",
-        "origin": ""
-      },
-      {
         "symbol": "DOGE-USD",
         "id": "0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c",
         "type": "pyth",
         "origin": "Crypto.DOGE/USD"
+      },
+      {
+        "symbol": "WIF-USD",
+        "id": "0x4ca4beeca86f0d164160323817a4e42b10010a724c2217c6ee41b54cd4cc61fc",
+        "type": "pyth",
+        "origin": "Crypto.WIF/USD"
+      },
+      {
+        "symbol": "PEPE-USD",
+        "id": "0xd69731a2e74ac1ce884fc3890f7ee324b6deb66147055249568869ed700882e4",
+        "type": "pyth",
+        "origin": "Crypto.PEPE/USD"
+      },
+      {
+        "symbol": "SOL-USD",
+        "id": "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+        "type": "pyth",
+        "origin": "Crypto.SOL/USD"
+      },
+      {
+        "symbol": "ZRO-USD",
+        "id": "0x3bd860bea28bf982fa06bcf358118064bb114086cc03993bd76197eaab0b8018",
+        "type": "pyth",
+        "origin": "Crypto.ZRO/USD"
+      },
+      {
+        "symbol": "ETHFI-USD",
+        "id": "0xb27578a9654246cb0a2950842b92330e9ace141c52b63829cc72d5c45a5a595a",
+        "type": "pyth",
+        "origin": "Crypto.ETHFI/USD"
+      },
+      {
+        "symbol": "ZK-USD",
+        "id": "0xcc03dc09298fb447e0bf9afdb760d5b24340fd2167fd33d8967dd8f9a141a2e8",
+        "type": "pyth",
+        "origin": "Crypto.ZK/USD"
+      },
+      {
+        "symbol": "PENDLE-USD",
+        "id": "0x9a4df90b25497f66b1afb012467e316e801ca3d839456db028892fe8c70c8016",
+        "type": "pyth",
+        "origin": "Crypto.PENDLE/USD"
       }
     ],
     "endpoints": [
-      { "type": "pyth", "endpoints": ["https://hermes.pyth.network/api"] },
-      { "type": "onchain", "endpoints": [] }
+      {
+        "type": "pyth",
+        "endpoints": ["https://hermes.pyth.network"],
+        "writeEndpoints": ["https://hermes.pyth.network"]
+      },
+      { "type": "onchain", "endpoints": [], "writeEndpoints": [] },
+      { "type": "polymarket", "endpoints": [], "writeEndpoints": ["https://odin-poly.d8x.xyz"] }
     ]
   },
   {
     "network": "odin",
     "ids": [
+      {
+        "symbol": "BTLJ-USD",
+        "id": "0xE40F3EF726A04AD63510BAF90238F6BCACF4365DB2A38E02A6E8623C2BEDC97D",
+        "type": "polymarket",
+        "origin": "0x3157ea263270be44bd68a3d6bde1f6f639be2746974f65de24e00ea6378d7838"
+      },
+      {
+        "symbol": "TRUMP24-USD",
+        "id": "0x3011e4ede0f6befa0ad3f571001d3e1ffeef3d4af78c3112aaac90416e3a43e7",
+        "type": "polymarket",
+        "origin": "0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917"
+      },
       {
         "symbol": "USDC-USD",
         "id": "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
@@ -124,12 +195,6 @@
         "id": "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
         "type": "odin",
         "origin": "Crypto.ETH/USD"
-      },
-      {
-        "symbol": "MATIC-USD",
-        "id": "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52",
-        "type": "odin",
-        "origin": "Crypto.MATIC/USD"
       },
       {
         "symbol": "USD-CHF",
@@ -180,6 +245,9 @@
         "origin": "Crypto.USDT/USD"
       }
     ],
-    "endpoints": [{ "type": "odin", "endpoints": ["https://odin.d8x.xyz/api"] }]
+    "endpoints": [
+      { "type": "odin", "endpoints": ["https://hermes.pyth.network"], "writeEndpoints": ["https://odin-poly.d8x.xyz"] },
+      { "type": "polymarket", "endpoints": [""], "writeEndpoints": ["https://odin-poly.d8x.xyz"] }
+    ]
   }
 ]

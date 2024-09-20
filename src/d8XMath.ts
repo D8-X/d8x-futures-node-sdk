@@ -1,4 +1,4 @@
-import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
+import { BigNumberish } from "ethers";
 import { DECIMALS, ONE_64x64 } from "./constants";
 
 /**
@@ -12,7 +12,7 @@ import { DECIMALS, ONE_64x64 } from "./constants";
  * @param  {BigNumber|number} x number in ABDK-format/2^35
  * @returns {number} x/2^64 in number-format (float)
  */
-export function ABDK29ToFloat(x: BigNumber | number): number {
+export function ABDK29ToFloat(x: bigint | number): number {
   return Number(x) / 2 ** 29;
 }
 
@@ -22,22 +22,21 @@ export function ABDK29ToFloat(x: BigNumber | number): number {
  * @param  {BigNumberish|number} x number in ABDK-format or 2^29
  * @returns {number} x/2^64 in number-format (float)
  */
-export function ABK64x64ToFloat(x: BigNumberish | number): number {
+export function ABK64x64ToFloat(x: bigint | number): number {
   if (typeof x == "number") {
     return x / 2 ** 29;
   }
-  x = BigNumber.from(x);
-  let s = x.lt(0) ? -1 : 1;
-  x = x.mul(s);
-  let xInt = x.div(ONE_64x64);
-  let dec18 = BigNumber.from(10).pow(BigNumber.from(18));
-  let xDec = x.sub(xInt.mul(ONE_64x64));
-  xDec = xDec.mul(dec18).div(ONE_64x64);
+  let s = x < 0n ? -1n : 1n;
+  x = x * s;
+  let xInt = x / ONE_64x64;
+  let dec18 = 10n ** 18n; // BigNumber.from(10).pow(BigNumber.from(18));
+  let xDec = x - xInt * ONE_64x64;
+  xDec = (xDec * dec18) / ONE_64x64;
   let k = 18 - xDec.toString().length;
   // console.assert(k >= 0);
   let sPad = "0".repeat(k);
   let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
-  return parseFloat(NumberStr) * s;
+  return parseFloat(NumberStr) * Number(s);
 }
 
 /**
@@ -45,18 +44,19 @@ export function ABK64x64ToFloat(x: BigNumberish | number): number {
  * @param {BigNumberish} x BigNumber in Dec-N format
  * @returns {number} x as a float (number)
  */
-export function decNToFloat(x: BigNumberish, numDec: number) {
+export function decNToFloat(x: BigNumberish, numDec: BigNumberish): number {
   //x: BigNumber in DecN format to float
-  const DECIMALS = BigNumber.from(10).pow(BigNumber.from(numDec));
-  x = BigNumber.from(x);
-  let s = x.lt(0) ? -1 : 1;
-  x = x.mul(s);
-  let xInt = x.div(DECIMALS);
-  let xDec = x.sub(xInt.mul(DECIMALS));
-  let k = numDec - xDec.toString().length;
+  const DECIMALS = 10n ** BigInt(numDec); // BigNumber.from(10).pow(BigNumber.from(numDec));
+  x = BigInt(x);
+  numDec = BigInt(numDec);
+  let s = x < 0n ? -1n : 1n;
+  x = x * s;
+  let xInt = x / DECIMALS;
+  let xDec = x - xInt * DECIMALS;
+  let k = Number(numDec) - xDec.toString().length;
   let sPad = "0".repeat(k);
   let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
-  return parseFloat(NumberStr) * s;
+  return parseFloat(NumberStr) * Number(s);
 }
 
 /**
@@ -66,38 +66,38 @@ export function decNToFloat(x: BigNumberish, numDec: number) {
  */
 export function dec18ToFloat(x: BigNumberish): number {
   //x: BigNumber in Dec18 format to float
-  x = BigNumber.from(x);
-  let s = x.lt(0) ? -1 : 1;
-  x = x.mul(s);
-  let xInt = x.div(DECIMALS);
-  let xDec = x.sub(xInt.mul(DECIMALS));
+  x = BigInt(x);
+  let s = x < 0n ? -1n : 1n;
+  x = x * s;
+  let xInt = x / DECIMALS;
+  let xDec = x - xInt * DECIMALS;
   let k = 18 - xDec.toString().length;
   let sPad = "0".repeat(k);
   let NumberStr = xInt.toString() + "." + sPad + xDec.toString();
-  return parseFloat(NumberStr) * s;
+  return parseFloat(NumberStr) * Number(s);
 }
 
 /**
  * Converts x into ABDK64x64 format
  * @param {number} x   number (float)
- * @returns {BigNumber} x^64 in big number format
+ * @returns {bigint} x^64 in big number format
  */
-export function floatToABK64x64(x: number): BigNumber {
+export function floatToABK64x64(x: number): bigint {
   // convert float to ABK64x64 bigint-format
   // Create string from number with 18 decimals
   if (x === 0) {
-    return BigNumber.from(0);
+    return 0n;
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
   let strX = Number(x).toFixed(18);
   const arrX = strX.split(".");
-  let xInt = BigNumber.from(arrX[0]);
-  let xDec = BigNumber.from(arrX[1]);
-  let xIntBig = xInt.mul(ONE_64x64);
-  let dec18 = BigNumber.from(10).pow(BigNumber.from(18));
-  let xDecBig = xDec.mul(ONE_64x64).div(dec18);
-  return xIntBig.add(xDecBig).mul(sg);
+  let xInt = BigInt(arrX[0]);
+  let xDec = BigInt(arrX[1]);
+  let xIntBig = xInt * ONE_64x64;
+  let dec18 = 10n ** 18n; //BigNumber.from(10).pow(BigNumber.from(18));
+  let xDecBig = (xDec * ONE_64x64) / dec18;
+  return (xIntBig + xDecBig) * BigInt(sg);
 }
 
 /**
@@ -105,19 +105,19 @@ export function floatToABK64x64(x: number): BigNumber {
  * @param {number} x number (float)
  * @returns {BigNumber} x as a BigNumber in Dec18 format
  */
-export function floatToDec18(x: number): BigNumber {
+export function floatToDec18(x: number): bigint {
   // float number to dec 18
   if (x === 0) {
-    return BigNumber.from(0);
+    return 0n;
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
   let strX = x.toFixed(18);
   const arrX = strX.split(".");
-  let xInt = BigNumber.from(arrX[0]);
-  let xDec = BigNumber.from(arrX[1]);
-  let xIntBig = xInt.mul(DECIMALS);
-  return xIntBig.add(xDec).mul(sg);
+  let xInt = BigInt(arrX[0]);
+  let xDec = BigInt(arrX[1]);
+  let xIntBig = xInt * DECIMALS;
+  return (xIntBig + xDec) * BigInt(sg);
 }
 
 /**
@@ -126,19 +126,19 @@ export function floatToDec18(x: number): BigNumber {
  * @param {number} decimals number of decimals
  * @returns {BigNumber} x as a BigNumber in Dec18 format
  */
-export function floatToDecN(x: number, decimals: number): BigNumber {
+export function floatToDecN(x: number, decimals: number): bigint {
   // float number to dec 18
   if (x === 0) {
-    return BigNumber.from(0);
+    return 0n;
   }
   let sg = Math.sign(x);
   x = Math.abs(x);
   let strX = x.toFixed(decimals);
   const arrX = strX.split(".");
-  let xInt = BigNumber.from(arrX[0]);
-  let xDec = BigNumber.from(arrX[1]);
-  let xIntBig = xInt.mul(BigNumber.from(10).pow(BigNumber.from(decimals)));
-  return xIntBig.add(xDec).mul(sg);
+  let xInt = BigInt(arrX[0]);
+  let xDec = BigInt(arrX[1]);
+  let xIntBig = xInt * 10n ** BigInt(decimals);
+  return (xIntBig + xDec) * BigInt(sg);
 }
 
 /**
@@ -189,22 +189,22 @@ export function roundToLotString(x: number, lot: number, precision: number = 7):
 
 /**
  *
- * @param {BigNumber} x
- * @param {BigNumber} y
- * @returns {BigNumber} x * y
+ * @param {bigint} x
+ * @param {bigint} y
+ * @returns {bigint} x * y
  */
-export function mul64x64(x: BigNumber, y: BigNumber) {
-  return x.mul(y).div(ONE_64x64);
+export function mul64x64(x: bigint, y: bigint): bigint {
+  return (x * y) / ONE_64x64;
 }
 
 /**
  *
- * @param {BigNumber} x
- * @param {BigNumber} y
- * @returns {BigNumber} x / y
+ * @param {bigint} x
+ * @param {bigint} y
+ * @returns {bigint} x / y
  */
-export function div64x64(x: BigNumber, y: BigNumber) {
-  return x.mul(ONE_64x64).div(y);
+export function div64x64(x: bigint, y: bigint): bigint {
+  return (x * ONE_64x64) / y;
 }
 
 /**
@@ -383,6 +383,7 @@ export function getNewPositionLeverage(
  * @param {number} price - price to trade amount 'tradeAmnt'
  * @param {number} S3 - collateral to quote conversion (=S2 if base-collateral, =1 if quote collateral, = index S3 if quanto)
  * @param {number} S2Mark - mark price
+ * @param {boolean} isPredMkt - true if prediction market
  * @returns {number} Amount to be deposited to have the given leverage when trading into position pos before fees
  */
 export function getDepositAmountForLvgTrade(
@@ -392,12 +393,505 @@ export function getDepositAmountForLvgTrade(
   targetLvg: number,
   price: number,
   S3: number,
-  S2Mark: number
+  S2Mark: number,
+  isPredMkt: boolean
 ) {
   let pnl = (tradeAmnt * (S2Mark - price)) / S3;
+  let S2MarkBefore = S2Mark;
+  if (isPredMkt) {
+    // adjust mark price to 'probability'
+    S2Mark = S2Mark - 1;
+    S2MarkBefore = S2Mark;
+    if (pos0 < 0) {
+      S2MarkBefore = 1 - S2Mark;
+    }
+    if (pos0 + tradeAmnt < 0) {
+      S2Mark = 1 - S2Mark;
+    }
+  }
   if (targetLvg == 0) {
-    targetLvg = (Math.abs(pos0) * S2Mark) / S3 / b0;
+    // use current leverage
+    targetLvg = (Math.abs(pos0) * S2MarkBefore) / S3 / b0;
   }
   let b = (Math.abs(pos0 + tradeAmnt) * S2Mark) / S3 / targetLvg;
   return -(b0 + pnl - b);
+}
+
+/**
+ * Convert a perpetual price to probability (predtictive markets)
+ * @param px Perpetual price
+ * @returns Probability in [0,1]
+ */
+export function priceToProb(px: number) {
+  return px - 1;
+}
+
+/**
+ * Convert a probability to a predictive market price
+ * @param prob Probability in [0,1]
+ * @returns Perpetual price
+ */
+export function probToPrice(prob: number) {
+  return 1 + prob;
+}
+
+// shannon entropy
+export function entropy(prob: number) {
+  if (prob < 1e-15 || prob > 1 - 1e-15) {
+    return 0;
+  }
+  return -prob * Math.log2(prob) - (1 - prob) * Math.log2(1 - prob);
+}
+
+/**
+ * Maintenance margin requirement for prediction markets
+ * @param pos signed position
+ * @param s2 mark price
+ * @param s3 collateral to quote conversion
+ * @param m base margin rate
+ * @returns required margin balance
+ */
+function pmMarginThresh(pos: number, s2: number, s3: number, m: number | undefined = 0.18) {
+  let p = s2 - 1;
+  if (pos < 0) {
+    p = 1 - p;
+  }
+  const h = entropy(p);
+  const tau = m + (0.4 - m) * h;
+  return (Math.abs(pos) * p * tau) / s3;
+}
+
+/**
+ * Maintenance margin rate for prediction markets.
+ * @param posSign sign of position in base currency (can be signed position or -1, 1)
+ * @param sm  mark-price (=1+p)
+ * @param m   max margin rate from fInitialMarginRate
+ * @returns margin rate to be applied (Math.abs(pos) * p * tau) / s3;
+ */
+export function pmMaintenanceMarginRate(posSign: number, sm: number, m: number | undefined = 0.18): number {
+  let p = sm - 1;
+  if (posSign < 0) {
+    p = 1 - p;
+  }
+  const h = entropy(p);
+  return m + (0.4 - m) * h;
+}
+
+/**
+ * Maintenance margin rate for prediction markets.
+ * @param posSign sign of position in base currency (can be signed position or -1, 1)
+ * @param sm  mark-price (=1+p)
+ * @param m   max margin rate from fMaintenanceMarginRate
+ * @returns margin rate to be applied (Math.abs(pos) * p * tau) / s3;
+ */
+export function pmInitialMarginRate(posSign: number, sm: number, m: number | undefined = 0.2): number {
+  let p = sm - 1;
+  if (posSign < 0) {
+    p = 1 - p;
+  }
+  const h = entropy(p);
+  return m + (0.5 - m) * h;
+}
+
+/**
+ * Calculate the expected loss for a prediction market trade used for
+ * prediction market fees
+ * @param p probability derived from mark price (long)
+ * @param m maximal maintenance rate from which we defer the actual maintenance margin rate
+ * @param totLong total long in base currency
+ * @param totShort total short
+ * @param tradeAmt signed trade amount, can be zero
+ * @param tradeMgnRate margin rate of the trader
+ * @returns expected loss in dollars
+ */
+export function expectedLoss(
+  p: number,
+  m: number,
+  totLong: number,
+  totShort: number,
+  tradeAmt: number,
+  tradeMgnRate: number
+): number {
+  // maintenance margin rate
+  m = (0.4 - m) * entropy(p) + m;
+  let dlm = 0;
+  let dl = 0;
+  let dsm = 0;
+  let ds = 0;
+  if (tradeAmt > 0) {
+    dlm = p * tradeAmt * tradeMgnRate;
+    dl = tradeAmt;
+  } else if (tradeAmt < 0) {
+    dsm = (1 - p) * Math.abs(tradeAmt) * tradeMgnRate;
+    ds = Math.abs(tradeAmt);
+  }
+  const a = dl + totLong - m * totShort - dsm;
+  const b = ds + totShort - m * totLong - dlm;
+  return p * (1 - p) * Math.max(0, a + b);
+}
+
+/**
+ * Equivalent to
+ * const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
+ * const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate)
+ * const fee = (el1 - el0) / Math.abs(tradeAmt);
+ * @param p prob long probability
+ * @param m max maintenance margin rate (0.18)
+ * @param tradeAmt trade amount in base currency
+ * @param tradeMgnRate margin rate for this trade
+ * @returns dollar fee
+ */
+function expectedLossImpact(p: number, m: number, tradeAmt: number, tradeMgnRate: number) {
+  m = (0.4 - m) * entropy(p) + m;
+  let dlm = 0;
+  let dl = 0;
+  let dsm = 0;
+  let ds = 0;
+  if (tradeAmt > 0) {
+    dlm = p * tradeAmt * tradeMgnRate;
+    dl = tradeAmt;
+  } else if (tradeAmt < 0) {
+    dsm = (1 - p) * Math.abs(tradeAmt) * tradeMgnRate;
+    ds = Math.abs(tradeAmt);
+  }
+  //long: p * (1 - p) max(0, dl-dlm) = p * (1 - p) max(0, tradeAmt - p * tradeAmt * tradeMgnRate)
+  const a = dl - dsm;
+  const b = ds - dlm;
+  return p * (1 - p) * Math.max(0, a + b);
+}
+
+/**
+ * Exchange fee as a rate for prediction markets
+ * For opening trades only
+ * @param prob long probability
+ * @param m max maintenance margin rate (0.18)
+ * @param tradeAmt trade amount in base currency
+ * @param tradeMgnRate margin rate for this trade
+ * @returns dollar fee relative to tradeAmt
+ */
+export function pmExchangeFee(prob: number, m: number, tradeAmt: number, tradeMgnRate: number): number {
+  /*
+  equivalent:
+    const el0 = expectedLoss(prob, m, totLong, totShort, 0, 0);
+    const el1 = expectedLoss(prob, m, totLong, totShort, tradeAmt, tradeMgnRate);
+    const fee = (el1 - el0) / Math.abs(tradeAmt);
+  */
+  let fee = expectedLossImpact(prob, m, tradeAmt, tradeMgnRate) / Math.abs(tradeAmt);
+  return Math.max(fee, 0.001);
+}
+
+/**
+ * Margin balance for prediction markets
+ * @param pos signed position
+ * @param s2 mark price
+ * @param s3 collateral to quote conversion
+ * @param ell locked in value
+ * @param mc margin cash in collateral currency
+ * @returns current margin balance
+ */
+export function pmMarginBalance(pos: number, s2: number, s3: number, ell: number, mc: number): number {
+  return (pos * s2) / s3 - ell / s3 + mc;
+}
+
+export function pmExcessBalance(
+  pos: number,
+  s2: number,
+  s3: number,
+  ell: number,
+  mc: number,
+  m: number | undefined
+): number {
+  return pmMarginBalance(pos, s2, s3, ell, mc) - pmMarginThresh(pos, s2, s3, m);
+}
+
+// finds the liquidation price for prediction markets
+// using Newton's algorithm
+export function pmFindLiquidationPrice(
+  pos: number,
+  s3: number,
+  ell: number,
+  mc: number,
+  baseMarginRate: number | undefined,
+  s2Start: number | undefined = 0.5
+): number {
+  const delta_s = 0.01;
+  let s = 100;
+  let s_new = s2Start;
+
+  while (Math.abs(s_new - s) > 0.01) {
+    s = s_new;
+    const f = Math.pow(pmExcessBalance(pos, s, s3, ell, mc, baseMarginRate), 2);
+    const ds = (Math.pow(pmExcessBalance(pos, s + delta_s, s3, ell, mc, baseMarginRate), 2) - f) / delta_s;
+    s_new = s - f / ds;
+
+    if (s_new < 1) {
+      return 1;
+    }
+    if (s_new > 2) {
+      return 2;
+    }
+  }
+  return s;
+}
+
+/**
+ * Calculate the excess margin defined as
+ * excess := margin balance - trading fee - initial margin threshold
+ * for the given trade and position
+ * @param tradeAmt
+ * @param currentCashCC
+ * @param currentPos
+ * @param currentLockedInQC
+ * @param limitPrice
+ * @param Sm
+ * @param S3
+ * @returns excess margin as defined above
+ */
+function excessMargin(
+  tradeAmt: number,
+  currentCashCC: number,
+  currentPos: number,
+  currentLockedInQC: number,
+  limitPrice: number,
+  Sm: number,
+  S3: number
+): number {
+  const m = 0.18; //max maintenance margin rate
+  const m0 = 0.2; //max initial margin rate
+  const pos = currentPos + tradeAmt;
+  let p = Sm - 1;
+  if (pos < 0) {
+    p = 2 - Sm; //=1-(Sm-1)
+  }
+  const h = entropy(p);
+  const tau = m0 + (0.5 - m0) * h;
+  const thresh = Math.abs(pos) * p * tau;
+  const b0 = currentCashCC + Math.abs(currentPos) * Sm - currentLockedInQC + Math.max(0, tradeAmt * (Sm - limitPrice));
+  // b0 + margin - fee > threshold
+  // margin = threshold - b0 + fee
+  const fee_cc = pmExchangeFee(p, m, tradeAmt, tau) / S3;
+
+  // missing: referral rebate
+  return b0 / S3 - thresh / S3 - fee_cc;
+}
+
+/**
+ * Internal function to find the deposit amount required
+ * for a given trade amount and target leverage
+ * @param tradeAmt
+ * @param targetLvg
+ * @param price
+ * @param S3
+ * @param S2Mark
+ * @returns deposit amount
+ */
+function pmGetDepositAmtForLvgTrade(
+  tradeAmt: number,
+  targetLvg: number,
+  price: number,
+  S3: number,
+  S2Mark: number
+): number {
+  const pnl = (tradeAmt * (S2Mark - price)) / S3;
+  let p = S2Mark - 1;
+  if (tradeAmt < 0) {
+    p = 1 - p;
+  }
+  const b = (Math.abs(tradeAmt) * p) / S3 / targetLvg;
+  const amt = -(pnl - b);
+  // check:
+  //bal = amt+pnl
+  //pos_val = (np.abs(trade_amt) * p) / S3
+  //lvg = pos_val/bal
+  //assert(np.abs(lvg-targetLvg)<0.1)
+  return amt;
+}
+
+/**
+ * Internal function to calculate cash over initial margin rate
+ * after a trade of size tradeAmt in prediction markets
+ * @param tradeAmt
+ * @param lvg
+ * @param walletBalCC
+ * @param currentCashCC
+ * @param currentPosition
+ * @param currentLockedInValue
+ * @param slippage
+ * @param S2
+ * @param Sm
+ * @param S3
+ * @param totLong
+ * @param totShort
+ * @returns excess cash
+ */
+function pmExcessCashAtLvg(
+  tradeAmt: number,
+  lvg: number,
+  walletBalCC: number,
+  currentCashCC: number,
+  currentPosition: number,
+  currentLockedInValue: number,
+  slippage: number,
+  S2: number,
+  Sm: number,
+  S3: number
+): number {
+  //determine deposit amount for given leverage
+  const limitPrice = S2 * (1 + Math.sign(tradeAmt) * slippage);
+  const depositFromWallet = pmGetDepositAmtForLvgTrade(tradeAmt, lvg, limitPrice, S3, Sm);
+  const m0 = 0.18;
+  //leverage fee
+  let p0 = Sm - 1;
+  if (tradeAmt < 0) {
+    p0 = 2 - Sm; //=1-(Sm-1)
+  }
+  const feeCc = (Math.abs(tradeAmt) * pmExchangeFee(p0, m0, tradeAmt, 1 / lvg)) / S3;
+
+  //excess cash
+  let exc = walletBalCC - depositFromWallet - feeCc;
+  if (exc < 0) {
+    return exc;
+  }
+  // margin balance
+  let pos = currentPosition + tradeAmt;
+  let p = Sm - 1;
+  if (pos < 0) {
+    p = 2 - Sm;
+  }
+  const h = entropy(p);
+  const tau = m0 + (0.5 - m0) * h;
+  const thresh = Math.abs(pos) * p * tau;
+  const b0 =
+    depositFromWallet +
+    currentCashCC +
+    Math.abs(currentPosition) * Sm -
+    currentLockedInValue +
+    Math.max(0, tradeAmt * (Sm - limitPrice));
+  // b0 - fee > threshold
+  // b0 - fee - threshold > 0
+  // extra_cash = b0 - fee - threshold
+  // missing: referral rebate
+  const bal = b0 / S3 - thresh / S3;
+  exc = exc + bal;
+  return exc;
+}
+
+/**
+ * Find maximal *affordable* trade size (short dir=-1 or long dir=1) for prediction
+ * markets at provided leverage and incorporating the current position
+ * and wallet balance.
+ * Factors in lot size and global max short/long
+ * @param dir   direction of trade (-1 sell, 1 buy)
+ * @param lvg   leverage of the trade
+ * @param walletBalCC wallet balance of the trader (collateral currency)
+ * @param slippage  slippage percent used to estimate a traded price
+ * @param currentPosition position in base currency of the trader
+ * @param currentCashCC this is the cash available net of unpaid funding (often called available cash)
+ * @param currentLockedInValue average entry price * signed position size in base currency, in margin account
+ * @param S2  current index price of the form 1+p (regardless whether short or long)
+ * @param Sm  current mark price (not just the mark price index but including the ema-premium from the contract)
+ * @param S3  current collateral to quote index price
+ * @param glblMaxTrade global max short or long order size that we retreive, e.g., from position risk (sign irrelevant)
+ *        based on  long: (*ℓ+n) * (1-p) - m (1-p) s = F → n = (F+m*(1-p)*s)/(1-p)-ℓ*
+ *                  short: (s+n)*p - m p *ℓ* = F →n = (F+m*p**ℓ*)/p-s
+ * @returns max *signed* trade size
+ */
+export function pmFindMaxPersonalTradeSizeAtLeverage(
+  dir: number,
+  lvg: number,
+  walletBalCC: number,
+  slippage: number,
+  currentPosition: number,
+  currentCashCC: number,
+  currentLockedInValue: number,
+  S2: number,
+  Sm: number,
+  S3: number,
+  glblMaxTrade: number
+): number {
+  if (dir < 0) {
+    dir = -1;
+  } else {
+    dir = 1;
+  }
+  const lot = 10;
+  const deltaS = 1; //for derivative
+  const f0 = pmExcessCashAtLvg(
+    dir * deltaS,
+    lvg,
+    walletBalCC,
+    currentCashCC,
+    currentPosition,
+    currentLockedInValue,
+    slippage,
+    S2,
+    Sm,
+    S3
+  );
+  if (f0 < 0) {
+    // no trade possible
+    return 0;
+  }
+  // numerically find maximal trade size
+  let sNew = dir * lot * 10;
+  let s = 2 * sNew;
+  while (true) {
+    let count = 0;
+    while (Math.abs(sNew - s) > 1 && count < 100) {
+      s = sNew;
+      const f =
+        pmExcessCashAtLvg(
+          s,
+          lvg,
+          walletBalCC,
+          currentCashCC,
+          currentPosition,
+          currentLockedInValue,
+          slippage,
+          S2,
+          Sm,
+          S3
+        ) ** 2;
+      const f2 =
+        pmExcessCashAtLvg(
+          s + deltaS,
+          lvg,
+          walletBalCC,
+          currentCashCC,
+          currentPosition,
+          currentLockedInValue,
+          slippage,
+          S2,
+          Sm,
+          S3
+        ) ** 2;
+      let ds = (f2 - f) / deltaS;
+      if (ds == 0) {
+        sNew = s + Math.random() * deltaS - deltaS / 2;
+      } else {
+        sNew = s - f / ds;
+      }
+      count += 1;
+    }
+    if (count < 100) {
+      break;
+    }
+    // Newton algorithm failed,
+    // choose new starting value
+    if (dir > 0) {
+      sNew = Math.random() * (glblMaxTrade - currentPosition);
+    } else {
+      sNew = -Math.random() * (Math.abs(glblMaxTrade) + currentPosition);
+    }
+  }
+  // ensure trade maximal trade sNew does not exceed
+  // the contract limits
+  if (sNew < -Math.abs(glblMaxTrade)) {
+    sNew = -Math.abs(glblMaxTrade);
+  } else if (sNew > glblMaxTrade) {
+    sNew = glblMaxTrade;
+  }
+  // round trade size down to lot
+  sNew = Math.sign(sNew) * Math.floor(Math.abs(sNew) / lot) * lot;
+  return sNew;
 }

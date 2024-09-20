@@ -1,9 +1,22 @@
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { Signer } from "@ethersproject/abstract-signer";
-import { keccak256 } from "@ethersproject/keccak256";
-import { Provider, StaticJsonRpcProvider } from "@ethersproject/providers";
-import { Wallet, verifyMessage } from "@ethersproject/wallet";
-import type { APIReferPayload, APIReferralCodePayload, APIReferralCodeSelectionPayload } from "./nodeSDKTypes";
+import {
+  AbiCoder,
+  JsonRpcProvider,
+  keccak256,
+  Provider,
+  Signer,
+  TypedDataDomain,
+  TypedDataField,
+  verifyMessage,
+  verifyTypedData,
+  Wallet,
+} from "ethers";
+import {
+  APIReferPayload,
+  APIReferralCodePayload,
+  APIReferralCodeSelectionPayload,
+  referralDomain,
+  referralTypes,
+} from "./nodeSDKTypes";
 
 /**
  * This is a 'standalone' class that deals with signatures
@@ -18,11 +31,26 @@ import type { APIReferPayload, APIReferralCodePayload, APIReferralCodeSelectionP
 export default class ReferralCodeSigner {
   private provider: Provider | undefined;
   private rpcURL: string;
-  private signingFun: (x: string | Uint8Array) => Promise<string>;
+  private signingFun: ((x: string | Uint8Array) => Promise<string>) | undefined;
+  private signingTypedDataFun:
+    | ((
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => Promise<string>)
+    | undefined;
   private address: string;
 
   constructor(
-    signer: Signer | string | ((x: string | Uint8Array) => Promise<string>),
+    signer:
+      | Signer
+      | string
+      | ((x: string | Uint8Array) => Promise<string>)
+      | ((
+          domain: TypedDataDomain,
+          types: Record<string, TypedDataField[]>,
+          value: Record<string, any>
+        ) => Promise<string>),
     address: string,
     _rpcURL: string
   ) {
@@ -31,38 +59,88 @@ export default class ReferralCodeSigner {
     if (typeof signer == "string") {
       const wallet = this.createSignerInstance(signer);
       this.signingFun = (x: string | Uint8Array) => wallet.signMessage(x);
-    } else if (Signer.isSigner(signer)) {
+      this.signingTypedDataFun = (
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => wallet.signTypedData(domain, types, value);
+    } else if ("signMessage" in signer) {
       this.signingFun = (x: string | Uint8Array) => signer.signMessage(x);
+      this.signingTypedDataFun = (
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => signer.signTypedData(domain, types, value);
+    } else if (signer.length === 1) {
+      this.signingFun = signer as (x: string | Uint8Array) => Promise<string>;
     } else {
-      this.signingFun = signer;
+      this.signingTypedDataFun = signer as (
+        domain: TypedDataDomain,
+        types: Record<string, TypedDataField[]>,
+        value: Record<string, any>
+      ) => Promise<string>;
     }
   }
 
   public createSignerInstance(_privateKey: string): Signer {
-    this.provider = new StaticJsonRpcProvider(this.rpcURL);
+    this.provider = new JsonRpcProvider(this.rpcURL);
     const wallet = new Wallet(_privateKey);
-    return wallet.connect(this.provider);
+    wallet.connect(this.provider);
+    this.signingFun = (x: string | Uint8Array) => wallet.signMessage(x);
+    this.signingTypedDataFun = (
+      domain: TypedDataDomain,
+      types: Record<string, TypedDataField[]>,
+      value: Record<string, any>
+    ) => wallet.signTypedData(domain, types, value);
+    return wallet;
   }
 
   public async getSignatureForNewReferral(rp: APIReferPayload): Promise<string> {
-    if (this.signingFun == undefined) {
+    if (this.signingTypedDataFun != undefined) {
+      return await this.signingTypedDataFun(
+        referralDomain,
+        {
+          NewReferral: referralTypes.NewReferral,
+        },
+        ReferralCodeSigner.newReferralPayloadToTypedData(rp)
+      );
+    } else if (this.signingFun != undefined) {
+      return await ReferralCodeSigner.getSignatureForNewReferral(rp, this.signingFun);
+    } else {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForNewReferral(rp, this.signingFun);
   }
 
   public async getSignatureForNewCode(rc: APIReferralCodePayload): Promise<string> {
-    if (this.signingFun == undefined) {
+    if (this.signingTypedDataFun != undefined) {
+      return await this.signingTypedDataFun(
+        referralDomain,
+        {
+          NewCode: referralTypes.NewCode,
+        },
+        ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc)
+      );
+    } else if (this.signingFun != undefined) {
+      return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signingFun);
+    } else {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForNewCode(rc, this.signingFun);
   }
 
   public async getSignatureForCodeSelection(rc: APIReferralCodeSelectionPayload): Promise<string> {
-    if (this.signingFun == undefined) {
+    if (this.signingTypedDataFun != undefined) {
+      return await this.signingTypedDataFun(
+        referralDomain,
+        {
+          CodeSelection: referralTypes.CodeSelection,
+        },
+        ReferralCodeSigner.codeSelectionPayloadToTypedData(rc)
+      );
+    } else if (this.signingFun != undefined) {
+      return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signingFun);
+    } else {
       throw Error("no signer defined, call createSignerInstance()");
     }
-    return await ReferralCodeSigner.getSignatureForCodeSelection(rc, this.signingFun);
   }
 
   public async getAddress(): Promise<string> {
@@ -120,7 +198,7 @@ export default class ReferralCodeSigner {
   }
 
   private static _referralNewToMessage(rc: APIReferPayload): string {
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     const passOnPercTwoDigitsFormat = Math.round(rc.passOnPercTDF);
     let digest = keccak256(
       abiCoder.encode(
@@ -132,12 +210,26 @@ export default class ReferralCodeSigner {
   }
 
   /**
+   * Convert payload to data struct to sign
+   * @param rc payload
+   * @returns typed data
+   */
+  public static newReferralPayloadToTypedData(rc: APIReferPayload) {
+    return {
+      ParentAddr: rc.parentAddr as `0x${string}`,
+      ReferToAddr: rc.referToAddr as `0x${string}`,
+      PassOnPercTDF: Math.round(rc.passOnPercTDF),
+      CreatedOn: BigInt(Math.round(rc.createdOn)),
+    };
+  }
+
+  /**
    * Create digest for referralCodePayload that is to be signed
    * @param rc payload
    * @returns the hex-string to be signed
    */
   private static _referralCodeNewCodePayloadToMessage(rc: APIReferralCodePayload): string {
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     const passOnPercTwoDigitsFormat = Math.round(rc.passOnPercTDF);
     let digest = keccak256(
       abiCoder.encode(
@@ -149,16 +241,43 @@ export default class ReferralCodeSigner {
   }
 
   /**
+   * Convert payload to data struct to sign
+   * @param rc payload
+   * @returns typed data
+   */
+  public static referralCodeNewCodePayloadToTypedData(rc: APIReferralCodePayload) {
+    return {
+      Code: rc.code,
+      ReferrerAddr: rc.referrerAddr as `0x${string}`,
+      PassOnPercTDF: Math.round(rc.passOnPercTDF),
+      CreatedOn: BigInt(Math.round(rc.createdOn)),
+    };
+  }
+
+  /**
    * Create digest for APIReferralCodeSelectionPayload that is to be signed
    * @param rc payload
    * @returns the hex-string to be signed
    */
   private static _codeSelectionPayloadToMessage(rc: APIReferralCodeSelectionPayload): string {
-    let abiCoder = defaultAbiCoder;
+    let abiCoder = new AbiCoder();
     let digest = keccak256(
       abiCoder.encode(["string", "address", "uint256"], [rc.code, rc.traderAddr, Math.round(rc.createdOn)])
     );
     return digest;
+  }
+
+  /**
+   * Convert payload to data struct to sign
+   * @param rc payload
+   * @returns typed data
+   */
+  public static codeSelectionPayloadToTypedData(rc: APIReferralCodeSelectionPayload) {
+    return {
+      Code: rc.code,
+      TraderAddr: rc.traderAddr as `0x${string}`,
+      CreatedOn: BigInt(Math.round(rc.createdOn)),
+    };
   }
 
   /**
@@ -168,31 +287,60 @@ export default class ReferralCodeSigner {
    * @param rc referralcode payload with a signature
    * @returns true if correctly signed, false otherwise
    */
-  public static async checkNewCodeSignature(rc: APIReferralCodePayload): Promise<boolean> {
+  public static checkNewCodeSignature(rc: APIReferralCodePayload) {
     if (rc.signature == undefined || rc.signature == "") {
       return false;
     }
     try {
-      let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
-      let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-      const signerAddress = await verifyMessage(digestBuffer, rc.signature);
+      // typed-data (^2.x.x)
+      const typedData = ReferralCodeSigner.referralCodeNewCodePayloadToTypedData(rc);
+      const signerAddress = verifyTypedData(
+        referralDomain,
+        { NewCode: referralTypes.NewCode },
+        typedData,
+        rc.signature
+      );
       return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
-      return false;
+      console.log(err);
+      // digest (1.x.x)
+      try {
+        let digest = ReferralCodeSigner._referralCodeNewCodePayloadToMessage(rc);
+        let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+        const signerAddress = verifyMessage(digestBuffer, rc.signature);
+        return rc.referrerAddr.toLowerCase() == signerAddress.toLowerCase();
+      } catch (err) {
+        console.log(err);
+        return false;
+      }
     }
   }
 
-  public static async checkCodeSelectionSignature(rc: APIReferralCodeSelectionPayload): Promise<boolean> {
+  public static checkCodeSelectionSignature(rc: APIReferralCodeSelectionPayload) {
     if (rc.signature == undefined || rc.signature == "") {
       return false;
     }
     try {
-      let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
-      let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
-      const signerAddress = await verifyMessage(digestBuffer, rc.signature);
+      // typed-data (^2.x.x)
+      const typedData = ReferralCodeSigner.codeSelectionPayloadToTypedData(rc);
+      const signerAddress = verifyTypedData(
+        referralDomain,
+        { CodeSelection: referralTypes.CodeSelection },
+        typedData,
+        rc.signature
+      );
       return rc.traderAddr.toLowerCase() == signerAddress.toLowerCase();
     } catch (err) {
-      return false;
+      console.log(err);
+      // digest (1.x.x)
+      try {
+        let digest = ReferralCodeSigner._codeSelectionPayloadToMessage(rc);
+        let digestBuffer = Buffer.from(digest.substring(2, digest.length), "hex");
+        const signerAddress = verifyMessage(digestBuffer, rc.signature);
+        return rc.traderAddr.toLowerCase() == signerAddress.toLowerCase();
+      } catch (err) {
+        return false;
+      }
     }
   }
 }

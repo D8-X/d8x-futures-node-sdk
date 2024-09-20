@@ -1,6 +1,6 @@
 {
   "name": "@d8x/perpetuals-sdk",
-  "version": "1.1.31",
+  "version": "2.2.0",
   "description": "Node TypeScript SDK for D8X Perpetual Futures",
   "author": "D8X",
   "homepage": "https://github.com/D8-X/d8x-futures-node-sdk#readme",
@@ -30,7 +30,8 @@
     "prebuild": "node -p \"'export const D8X_SDK_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "prepublish": "yarn build",
     "prepare": "npm run build",
-    "typechain": "typechain --target ethers-v5 --out-dir ./src/contracts './src/abi/**/*.json'"
+    "typechain": "typechain --target ethers-v6 --out-dir ./src/contracts './src/abi/**/*.json'",
+    "postinstall": "npx patch-package"
   },
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -41,21 +42,11 @@
     "doc"
   ],
   "dependencies": {
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/abstract-signer": "^5.7.0",
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/contracts": "^5.7.0",
-    "@ethersproject/keccak256": "^5.7.0",
-    "@ethersproject/providers": "^5.7.2",
-    "@ethersproject/strings": "^5.7.0",
-    "@ethersproject/units": "^5.7.0",
-    "@ethersproject/wallet": "^5.7.0",
-    "@typechain/ethers-v5": "^11.1.1",
-    "buffer": "^6.0.3",
-    "ethers": "^5.7.2",
-    "process": "^0.11.10",
-    "typechain": "^8.2.0"
+    "@typechain/ethers-v6": "^0.5.1",
+    "buffer": "6.0.3",
+    "ethers": "^6.13.1",
+    "process": "0.11.10",
+    "typechain": "^8.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
@@ -70,6 +61,7 @@
     "jsdoc-babel": "^0.5.0",
     "jsdoc-to-markdown": "^7.1.1",
     "json2md": "^2.0.0",
+    "patch-package": "^8.0.0",
     "prettier": "^2.8.7",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",

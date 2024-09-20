@@ -18,5 +18,14 @@
   "EURA": "EURA",
   "LUSD": "LUSD",
   "wETH": "WEETH",
-  "OKB": "WOKB"
+  "OKB": "WOKB",
+  "WIF": "WIF",
+  "PEPE": "PEPE",
+  "SOL": "SOL",
+  "ZRO": "ZRO",
+  "ETHf": "ETHFI",
+  "ZK": "ZK",
+  "PNDL": "PENDLE",
+  "TR24": "TRUMP24",
+  "BTLJ": "BTLJ"
 }

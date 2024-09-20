@@ -1,5 +1,4 @@
-import { Signer } from "@ethersproject/abstract-signer";
-import type { ContractTransaction, Overrides } from "@ethersproject/contracts";
+import { ContractTransactionResponse, Overrides, Signer } from "ethers";
 import { floatToDec18, floatToDecN } from "./d8XMath";
 import type { NodeSDKConfig } from "./nodeSDKTypes";
 import PerpetualDataHandler from "./perpetualDataHandler";
@@ -60,7 +59,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     poolSymbolName: string,
     amountCC: number,
     overrides?: Overrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -101,7 +100,7 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
     poolSymbolName: string,
     amountPoolShares: number,
     overrides?: Overrides
-  ): Promise<ContractTransaction> {
+  ): Promise<ContractTransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }
@@ -135,7 +134,10 @@ export default class LiquidityProviderTool extends WriteAccessHandler {
    *
    * @returns Transaction object.
    */
-  public async executeLiquidityWithdrawal(poolSymbolName: string, overrides?: Overrides): Promise<ContractTransaction> {
+  public async executeLiquidityWithdrawal(
+    poolSymbolName: string,
+    overrides?: Overrides
+  ): Promise<ContractTransactionResponse> {
     if (this.proxyContract == null || this.signer == null) {
       throw Error("no proxy contract or wallet initialized. Use createProxyInstance().");
     }

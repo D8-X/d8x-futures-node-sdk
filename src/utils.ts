@@ -1,4 +1,3 @@
-import { BigNumber } from "@ethersproject/bignumber";
 import { Buffer } from "buffer";
 import { NodeSDKConfig } from "./nodeSDKTypes";
 
@@ -126,11 +125,11 @@ export function symbol4BToLongSymbol(s: string, mapping: Map<string, string>): s
   return longCCY.substring(1);
 }
 
-export function combineFlags(f1: BigNumber, f2: BigNumber): BigNumber {
-  return BigNumber.from((parseInt(f1.toString()) | parseInt(f2.toString())) >>> 0);
+export function combineFlags(f1: bigint, f2: bigint): bigint {
+  return BigInt((parseInt(f1.toString()) | parseInt(f2.toString())) >>> 0);
 }
 
-export function containsFlag(f1: BigNumber, f2: BigNumber): boolean {
+export function containsFlag(f1: bigint, f2: bigint): boolean {
   return (BigInt(f1.toString()) & BigInt(f2.toString())) > 0;
 }
 
@@ -141,6 +140,6 @@ export function loadConfigAbis(config: NodeSDKConfig) {
   config.shareTokenABI = require(config.shareTokenABILocation);
 }
 
-export async function sleep(seconds: number) {
+export async function sleepForSec(seconds: number) {
   return new Promise((resolve) => setTimeout(resolve, seconds * 1_000));
 }

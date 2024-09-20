@@ -1,5 +1,4 @@
-import { JsonRpcProvider } from "@ethersproject/providers";
-import { ethers } from "ethers";
+import { ethers, JsonRpcProvider } from "ethers";
 import AccountTrade from "../src/accountTrade";
 import LiquidatorTool from "../src/liquidatorTool";
 import MarketData from "../src/marketData";

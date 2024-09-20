@@ -1,18 +1,5 @@
 [
   {
-    "name": "zkevm",
-    "chainId": 1101,
-    "version": 1,
-    "proxyAddr": "0xaB7794EcD2c8e9Decc6B577864b40eBf9204720f",
-    "nodeURL": "https://zkevm-rpc.com",
-    "priceFeedConfigNetwork": "mainnet",
-    "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
-  },
-
-  {
     "name": "x1",
     "chainId": 195,
     "version": 1,
@@ -106,7 +93,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "artio",
@@ -131,7 +119,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "xlayer",
@@ -142,6 +131,44 @@
     "priceFeedConfigNetwork": "odin",
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
+  },
+  {
+    "name": "bartio",
+    "chainId": 80084,
+    "version": 1,
+    "proxyAddr": "0xf922A26375967130aeaB637cB3eE59f498CB2d24",
+    "nodeURL": "https://bartio.rpc.berachain.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
+  },
+  {
+    "name": "europaTestnet",
+    "chainId": 1444673419,
+    "version": 1,
+    "proxyAddr": "0xDF2406f251766747148F8aDE8EF2BB5fa343Db93",
+    "nodeURL": "https://testnet.skalenodes.com/v1/juicy-low-small-testnet",
+    "priceFeedConfigNetwork": "odin",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
+    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+  },
+  {
+    "name": "zkevm",
+    "chainId": 1101,
+    "version": 1,
+    "proxyAddr": "0xaB7794EcD2c8e9Decc6B577864b40eBf9204720f",
+    "nodeURL": "https://zkevm-rpc.com",
+    "priceFeedConfigNetwork": "mainnet",
+    "shareTokenABILocation": "./abi/ShareToken.json",
+    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   }

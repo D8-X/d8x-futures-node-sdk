@@ -26,7 +26,7 @@ let orderId: string;
 
 describe("write and spoil gas and tokens", () => {
   beforeAll(async function () {
-    config = PerpetualDataHandler.readSDKConfig("x1");
+    config = PerpetualDataHandler.readSDKConfig("arbitrumSepolia");
     // if (RPC != undefined) {
     //   config.nodeURL = RPC;
     // }
@@ -42,23 +42,25 @@ describe("write and spoil gas and tokens", () => {
     await execTool.createProxyInstance();
   });
 
-  // it("set allowance", async () => {
-  //   //*uncomment
-  //   let tx = await accTrade.setAllowance("MATIC");
-  //   console.log(`set allowance tx hash = ${tx.hash}`);
-  //   //*/
-  // });
+  it("set allowance", async () => {
+    //*uncomment
+    let tx = await accTrade.setAllowance("USDC");
+    console.log(`set allowance tx hash = ${tx.hash}`);
+    await tx.wait();
+    //*/
+  });
 
   // it("swaps MATIC for mock token", async () => {
   //   await accTrade.swapForMockToken("USDC", "0.001");
   // });
 
-  // it("add collateral", async () => {
-  //   //*uncomment
-  //   let tx = await accTrade.addCollateral("MATIC-USD-MATIC", 10);
-  //   console.log(`add collateral tx hash = ${tx.hash}`);
-  //   //*/
-  // });
+  it("add collateral", async () => {
+    //*uncomment
+    let tx = await accTrade.addCollateral("BTC-USDC-USDC", 200);
+    console.log(`add collateral tx hash = ${tx.hash}`);
+    await tx.wait();
+    //*/
+  });
 
   // it("remove collateral", async () => {
   //   //*uncomment

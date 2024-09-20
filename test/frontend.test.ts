@@ -1,7 +1,9 @@
-import { BigNumber, Contract } from "ethers";
+import { Contract } from "ethers";
 import { stringify } from "querystring";
 import { sys } from "typescript";
+import { LimitOrderBook, LimitOrderBook__factory } from "../src";
 import AccountTrade from "../src/accountTrade";
+import { IPerpetualOrder } from "../src/contracts/IPerpetualManager";
 import MarketData from "../src/marketData";
 import {
   NodeSDKConfig,
@@ -29,7 +31,7 @@ let mktData: MarketData;
 let eventHandler: PerpetualEventHandler;
 let proxyContract: Contract;
 let accTrade1: AccountTrade, accTrade2: AccountTrade;
-let LOBContracts = new Map<string, Contract>();
+let LOBContracts = new Map<string, LimitOrderBook>();
 
 let poolSymbols = new Array<string>(); // e.g. [USDC, MATIC]
 let perpSymbols = new Map<string, string[]>(); // e.g. {USDC: [BTC, ETH, GBP], MATIC: [BTC, ETH, MATIC]}
@@ -41,7 +43,7 @@ const flushPromises = () => {
 
 describe("Front-end-like functionality", () => {
   beforeAll(async () => {
-    const chainId = 80001;
+    const chainId = 195;
     config = PerpetualDataHandler.readSDKConfig(chainId);
     if (RPC != undefined) {
       config.nodeURL = RPC;
@@ -110,8 +112,8 @@ describe("Front-end-like functionality", () => {
         positionId: string,
         order: SmartContractOrder,
         orderDigest: string,
-        newPositionSizeBC: BigNumber,
-        price: BigNumber
+        newPositionSizeBC: bigint,
+        price: bigint
       ) => {
         if (trader == accTrade1.getAddress()) {
           eventHandler.onTrade(perpetualId, trader, positionId, order, orderDigest, newPositionSizeBC, price);
@@ -122,19 +124,26 @@ describe("Front-end-like functionality", () => {
     // listen to limit order books to keep the connected trader's info up to date
     for (let poolSymbol of poolSymbols) {
       for (let perpSymbol of perpSymbols.get(poolSymbol)!) {
-        LOBContracts.get(perpSymbol)!.on(
-          "PerpetualLimitOrderCreated",
+        const contract = LOBContracts.get(perpSymbol)!;
+        contract.on(
+          contract.getEvent("PerpetualLimitOrderCreated"),
           (
-            perpetualId: number,
+            perpetualId: bigint,
             trader: string,
-            executorAddr: string,
             brokerAddr: string,
-            Order: SmartContractOrder,
+            order: IPerpetualOrder.OrderStructOutput,
             digest: string
           ) => {
             if (trader == accTrade1.getAddress()) {
               // console.log(`PerpetualLimitOrderCreated event for connected trader caught, perpetualId = ${perpetualId}`);
-              eventHandler.onPerpetualLimitOrderCreated(perpetualId, trader, executorAddr, brokerAddr, Order, digest);
+              eventHandler.onPerpetualLimitOrderCreated(
+                Number(perpetualId),
+                trader,
+                order.executorAddr,
+                brokerAddr,
+                order,
+                digest
+              );
             }
           }
         );
@@ -200,6 +209,6 @@ describe("Front-end-like functionality", () => {
     let perpDataAfter = eventHandler.getPerpetualData(symbol);
 
     // await flushPromises();
-    expect(perpDataAfter!.markPrice != perpDataBefore!.markPrice);
+    expect(perpDataAfter!.markPremium != perpDataBefore!.markPremium);
   });
 });

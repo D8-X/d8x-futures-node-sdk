@@ -1,10 +1,16 @@
-import { defaultAbiCoder } from "@ethersproject/abi";
-import { Bytes, concat } from "@ethersproject/bytes";
-import { keccak256 } from "@ethersproject/keccak256";
-import { StaticJsonRpcProvider } from "@ethersproject/providers";
-import { toUtf8Bytes } from "@ethersproject/strings";
-import { Wallet } from "@ethersproject/wallet";
-import { ethers } from "ethers";
+import {
+  AbiCoder,
+  BytesLike,
+  concat,
+  ethers,
+  JsonRpcProvider,
+  keccak256,
+  recoverAddress,
+  toUtf8Bytes,
+  verifyMessage,
+  Wallet,
+  ZeroAddress,
+} from "ethers";
 import { BUY_SIDE, MASK_MARKET_ORDER, ORDER_TYPE_MARKET } from "../src/constants";
 import { floatToABK64x64 } from "../src/d8XMath";
 import { Order, SmartContractOrder } from "../src/nodeSDKTypes";
@@ -19,7 +25,7 @@ async function BrokerDigest(
 ): Promise<[string, string, string]> {
   const NAME = "Perpetual Trade Manager";
   const DOMAIN_TYPEHASH = keccak256(Buffer.from("EIP712Domain(string name,uint256 chainId,address verifyingContract)"));
-  let abiCoder = defaultAbiCoder;
+  let abiCoder = new AbiCoder();
   let domainSeparator = keccak256(
     abiCoder.encode(
       ["bytes32", "bytes32", "uint256", "address"],
@@ -43,7 +49,7 @@ async function BrokerDigest(
 
   // get private key
   let pk: string = <string>process.env.PK;
-  let provider = new StaticJsonRpcProvider("https://polygon-mumbai.gateway.tenderly.co");
+  let provider = new JsonRpcProvider("https://polygon-mumbai.gateway.tenderly.co");
   const wallet = new Wallet(pk);
   let signer = wallet.connect(provider);
   let toHash = hashMessage(digestBuffer);
@@ -52,15 +58,15 @@ async function BrokerDigest(
   console.log("sig=", signature);
   console.log("wallet addr=", wallet.address);
 
-  let addr = ethers.utils.recoverAddress(digestBuffer, signature);
-  let addr2 = ethers.utils.verifyMessage(digestBuffer, signature);
-  let addr3 = ethers.utils.verifyMessage(digest, signature);
+  let addr = recoverAddress(digestBuffer, signature);
+  let addr2 = verifyMessage(digestBuffer, signature);
+  let addr3 = verifyMessage(digest, signature);
   return [signature, digest, wallet.address];
 }
 
 export const messagePrefix = "\x19Ethereum Signed Message:\n";
 
-export function hashMessage(message: Bytes | string): string {
+export function hashMessage(message: BytesLike | string): string {
   if (typeof message === "string") {
     message = toUtf8Bytes(message);
   }
@@ -76,9 +82,9 @@ function toSCOrder(order: Order, traderAddr: string): SmartContractOrder {
     iPerpetualId: perpetualId,
     brokerFeeTbps: order.brokerFeeTbps == undefined ? 0 : order.brokerFeeTbps,
     traderAddr: traderAddr,
-    brokerAddr: order.brokerAddr == undefined ? ethers.constants.AddressZero : order.brokerAddr,
-    executorAddr: ethers.constants.AddressZero,
-    brokerSignature: [],
+    brokerAddr: order.brokerAddr == undefined ? ZeroAddress : order.brokerAddr,
+    executorAddr: ZeroAddress,
+    brokerSignature: "0x",
     fAmount: floatToABK64x64(order.quantity),
     fLimitPrice: floatToABK64x64(order.limitPrice!),
     fTriggerPrice: floatToABK64x64(order.stopPrice!),
@@ -148,8 +154,8 @@ async function brokerDigest() {
   console.log("Sig = ", sig);
   console.log("Digest = ", dgst);
   let dgstB = Buffer.from(dgst.substring(2, dgst.length), "hex");
-  let recoveredAddr1 = ethers.utils.verifyMessage(dgstB, sig);
-  let recoveredAddr = ethers.utils.recoverAddress(dgst, sig);
+  let recoveredAddr1 = verifyMessage(dgstB, sig);
+  let recoveredAddr = recoverAddress(dgst, sig);
   console.log("recovered1 = ", recoveredAddr1);
   //console.log("recovered = ", recoveredAddr);
   console.log("addr = ", addr);
@@ -161,7 +167,7 @@ async function brokerDigest2() {
   let dgst = "0x67ea569dd56486634411bee7c5ea9e6d28da78fb70ba8c1f830aa4e74f0a65c9";
   console.log("Sig = ", sig);
   console.log("Digest = ", dgst);
-  let recoveredAddr = ethers.utils.recoverAddress(dgst, sig);
+  let recoveredAddr = recoverAddress(dgst, sig);
   console.log("recovered = ", recoveredAddr);
 }
 
@@ -178,7 +184,7 @@ async function brokerDigest3() {
   console.log("Sig = ", sig);
   console.log("Digest = ", dgst);
   let dgstB = Buffer.from(dgst.substring(2, dgst.length), "hex");
-  let recoveredAddr = ethers.utils.verifyMessage(dgstB, sig);
+  let recoveredAddr = verifyMessage(dgstB, sig);
   console.log("recovered = ", recoveredAddr);
 }
 //main();
