@@ -81,9 +81,9 @@ export default class PolyMktsPxFeed {
     const data = await response.json();
     let res = new Array<PredMktPriceInfo>();
     for (let k = 0; k < tokenIdHex.length; k++) {
-      const emaObj = data.parsed[0].ema_price as PriceFeedJson;
-      const pxObj = data.parsed[0].price as PriceFeedJson;
-      const marketClosed = data.parsed[0].metadata.market_closed;
+      const emaObj = data.parsed[k].ema_price as PriceFeedJson;
+      const pxObj = data.parsed[k].price as PriceFeedJson;
+      const marketClosed = data.parsed[k].metadata.market_closed;
       const px = Number(pxObj.price) * Math.pow(10, pxObj.expo);
       const ema = Number(emaObj.price) * Math.pow(10, emaObj.expo);
       const params = BigInt(emaObj.conf);
