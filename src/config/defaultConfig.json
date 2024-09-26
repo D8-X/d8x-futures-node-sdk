@@ -9,7 +9,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "x1",
@@ -21,7 +22,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "x1",
@@ -33,43 +35,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
-  },
-  {
-    "name": "cardona",
-    "chainId": 2442,
-    "version": 1,
-    "proxyAddr": "0x70212F1E2eB66C82990312FA5AB3f851706fD1E1",
-    "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
-    "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
-  },
-  {
-    "name": "cardona",
-    "chainId": 2442,
-    "version": 2,
-    "proxyAddr": "0xef64b7A00AFf37ECbf85eD8EB355395B72FDBCF0",
-    "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
-    "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
-  },
-  {
-    "name": "cardona",
-    "chainId": 2442,
-    "version": 3,
-    "proxyAddr": "0x36ce59a9cC9b0cBc68B19143240357a0b51E70c6",
-    "nodeURL": "https://rpc.cardona.zkevm-rpc.com",
-    "priceFeedConfigNetwork": "odin",
-    "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
-    "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "arbitrumSepolia",
@@ -81,7 +48,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "arbitrumSepolia",
@@ -107,7 +75,8 @@
     "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
-    "multicall": "0x9d1dB8253105b007DDDE65Ce262f701814B91125"
+    "multicall": "0x9d1dB8253105b007DDDE65Ce262f701814B91125",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "arbitrum",
@@ -158,7 +127,8 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   },
   {
     "name": "zkevm",
@@ -170,6 +140,7 @@
     "shareTokenABILocation": "./abi/ShareToken.json",
     "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
-    "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
+    "limitOrderBookABILocation": "./abi/LimitOrderBook.json",
+    "configSource": "https://raw.githubusercontent.com/D8-X/sync-hub/main/d8x-futures-node-sdk/"
   }
 ]
