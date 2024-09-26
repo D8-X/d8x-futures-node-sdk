@@ -164,11 +164,11 @@
     "name": "zkevm",
     "chainId": 1101,
     "version": 1,
-    "proxyAddr": "0xaB7794EcD2c8e9Decc6B577864b40eBf9204720f",
+    "proxyAddr": "0x900DfC161C34656a9D9c43307F92255C2aa06162",
     "nodeURL": "https://zkevm-rpc.com",
     "priceFeedConfigNetwork": "mainnet",
     "shareTokenABILocation": "./abi/ShareToken.json",
-    "proxyABILocation": "./abi-zkevm/IPerpetualManager.json",
+    "proxyABILocation": "./abi/IPerpetualManager.json",
     "limitOrderBookFactoryABILocation": "./abi/LimitOrderBookFactory.json",
     "limitOrderBookABILocation": "./abi/LimitOrderBook.json"
   }

@@ -14,7 +14,7 @@ let config;
 
 describe("package tests", () => {
   beforeAll(async () => {
-    const chainId = 42161;
+    const chainId = 1101;
     if (pk == undefined) {
       console.log(`Define private key: export PK="CA52A..."`);
       expect(false);
@@ -26,9 +26,10 @@ describe("package tests", () => {
     }
     marketData = new MarketData(config);
     await marketData.createProxyInstance();
-    //let p = await marketData.getPerpetuals([200000]);
-    //console.log(p);
-    //let info = await marketData.exchangeInfo();
+    let p = await marketData.getPerpetuals([100000]);
+    console.log(p);
+    let info = await marketData.exchangeInfo();
+    console.log(info);
   });
 
   it("Pred Mkts maxOrderSizeForTrader", async () => {
