@@ -1404,6 +1404,30 @@
   {
     "inputs": [
       {
+        "internalType": "uint8",
+        "name": "_id",
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_bulkSize",
+        "type": "uint256"
+      }
+    ],
+    "name": "clearTradersInPool",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint24",
         "name": "_perpetualId",
         "type": "uint24"
@@ -4267,16 +4291,6 @@
       },
       {
         "internalType": "int128",
-        "name": "_fTotLong",
-        "type": "int128"
-      },
-      {
-        "internalType": "int128",
-        "name": "_fTotShort",
-        "type": "int128"
-      },
-      {
-        "internalType": "int128",
         "name": "_fTradeAmt",
         "type": "int128"
       },
@@ -4541,6 +4555,19 @@
       }
     ],
     "name": "reduceMarginCollateral",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint24",
+        "name": "_iPerpetualId",
+        "type": "uint24"
+      }
+    ],
+    "name": "resetMarkPremium",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -4994,6 +5021,30 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint24",
+        "name": "_perpetualID",
+        "type": "uint24"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_bulkSize",
+        "type": "uint256"
+      }
+    ],
+    "name": "settleTraders",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "_settled",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
